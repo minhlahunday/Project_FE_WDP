@@ -173,9 +173,6 @@ export const Dashboard: React.FC = () => {
                     <button className="bg-white text-black px-8 py-3 text-sm font-medium hover:bg-gray-100 transition-colors">
                       Discover more
                     </button>
-                    <button className="border border-white text-white px-8 py-3 text-sm font-medium hover:bg-white hover:text-black transition-colors">
-                      Build & Price
-                    </button>
                   </div>
                 </div>
               </div>

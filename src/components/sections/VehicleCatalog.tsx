@@ -1,71 +1,9 @@
 import React, { useState } from 'react';
-import { Car, Battery, Zap, Clock, Eye, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Car, Battery, Zap, Clock, Eye, ShoppingCart } from 'lucide-react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { mockVehicles } from '../../data/mockData';
 import { Vehicle } from '../../types';
 import './VehicleCatalog.css';
-
-// Custom Carousel Component
-const CustomCarousel: React.FC<{ children: React.ReactNode[] }> = ({ children }) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const totalSlides = children.length;
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-  };
-
-  React.useEffect(() => {
-    const interval = setInterval(nextSlide, 5000); // Auto advance every 5 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="relative h-full w-full overflow-hidden">
-      <div
-        className="flex h-full transition-transform duration-500 ease-in-out"
-        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-      >
-        {children.map((child, index) => (
-          <div key={index} className="w-full h-full flex-shrink-0">
-            {child}
-          </div>
-        ))}
-      </div>
-
-      {/* Custom Arrow Controls */}
-      <button
-        onClick={prevSlide}
-        className="carousel-arrow carousel-arrow-prev absolute left-6 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 transition-colors z-10"
-      >
-        <ChevronLeft size={24} />
-      </button>
-
-      <button
-        onClick={nextSlide}
-        className="carousel-arrow carousel-arrow-next absolute right-6 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 transition-colors z-10"
-      >
-        <ChevronRight size={24} />
-      </button>
-
-      {/* Dots indicator */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {children.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-colors ${
-              index === currentSlide ? 'bg-white' : 'bg-white/50'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
 
 export const VehicleCatalog: React.FC = () => {
   const navigate = useNavigate();
@@ -73,7 +11,8 @@ export const VehicleCatalog: React.FC = () => {
 
   const handleNavigation = (path: string) => {
     if (navigate) {
-      navigate(path);
+      // Preserve sidebar state when navigating
+      navigate(path, { replace: false });
     }
   };
 
@@ -103,87 +42,230 @@ export const VehicleCatalog: React.FC = () => {
   }));
 
   const handleTestDrive = (vehicleId: string) => {
-    navigate(`/portal/test-drive?vehicleId=${vehicleId}`);
+    // Use handleNavigation instead of direct navigate
+    handleNavigation(`/portal/test-drive?vehicleId=${vehicleId}`);
   };
 
   const handleDeposit = (vehicleId: string) => {
-    navigate(`/portal/deposit?vehicleId=${vehicleId}`);
+    // Use handleNavigation instead of direct navigate
+    handleNavigation(`/portal/deposit?vehicleId=${vehicleId}`);
   };
 
   return (
-    <div className="-mx-6 bg-gray-900 hover:bg-black transition-colors duration-500">
-      {/* Carousel Section */}
-      <section className="h-[66.666vh] relative w-screen group">
-        <div className="absolute inset-0 mx-auto w-[99%]">
-          <CustomCarousel>
-            {carSlides.map(s => (
-              <div className="h-[66.666vh] relative group/slide" key={s.name}>
-                <img src={s.img} alt={s.name} className="w-full h-full object-cover group-hover/slide:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 flex flex-col justify-between pb-10 bg-black/20 group-hover/slide:bg-black/40 transition-colors duration-500">
-                  <div className="pt-16 text-center transform group-hover/slide:translate-y-[-10px] transition-transform duration-500">
-                    <h3 className="text-6xl font-medium text-white mb-2 hover:text-gray-200 transition-colors duration-300">{s.name}</h3>
-                    <p className="text-xl text-white/90 hover:text-white transition-colors duration-300">STARTING AT {formatPrice(s.price)}</p>
-                  </div>
-
-                  <div className="flex justify-center gap-4 px-4">
-                    <button
-                      onClick={() => handleDeposit(s.id)}
-                      className="bg-white/80 backdrop-blur-sm hover:bg-black hover:text-white text-gray-900 px-12 py-2 rounded text-sm font-medium min-w-[264px] transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                    >
-                      Đặt cọc ngay
-                    </button>
-                    <button
-                      onClick={() => setSelectedVehicle(mockVehicles.find(v => v.id === s.id) || null)}
-                      className="bg-gray-900/80 backdrop-blur-sm hover:bg-white hover:text-black text-white px-12 py-2 rounded text-sm font-medium min-w-[264px] transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                    >
-                      Xem chi tiết
-                    </button>
+    <div className="-mx-6 bg-gray-900">
+      {/* Three Vehicle Cards Section */}
+      <section className="bg-white py-20 px-8">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">Our best electric cars</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {/* VF7 */}
+            <div 
+              className="text-center group cursor-pointer"
+              onClick={() => {
+                const vf7 = mockVehicles.find(v => v.model.includes('VF 7'));
+                if (vf7) navigate(`/portal/car-detail/${vf7.id}`);
+              }}
+            >
+              <div className="relative overflow-hidden rounded-2xl mb-6">
+                <img
+                  src="https://media.vov.vn/sites/default/files/styles/large/public/2024-06/a1_8.jpg"
+                  alt="VF7"
+                  className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+                  <div className="text-white p-6 w-full">
+                    <h3 className="text-2xl font-bold mb-2">VF7</h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm opacity-90">Compact SUV</span>
+                      <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </CustomCarousel>
+            </div>
+
+            {/* VF8 */}
+            <div 
+              className="text-center group cursor-pointer"
+              onClick={() => {
+                const vf8 = mockVehicles.find(v => v.model.includes('VF 8'));
+                if (vf8) navigate(`/portal/car-detail/${vf8.id}`);
+              }}
+            >
+              <div className="relative overflow-hidden rounded-2xl mb-6">
+                <img
+                  src="https://vinfastotominhdao.vn/wp-content/uploads/VinFast-VF8-1.jpg"
+                  alt="VF8"
+                  className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+                  <div className="text-white p-6 w-full">
+                    <h3 className="text-2xl font-bold mb-2">VF8</h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm opacity-90">Mid-size SUV</span>
+                      <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* VF9 */}
+            <div 
+              className="text-center group cursor-pointer"
+              onClick={() => {
+                const vf9 = mockVehicles.find(v => v.model.includes('VF 9'));
+                if (vf9) navigate(`/portal/car-detail/${vf9.id}`);
+              }}
+            >
+              <div className="relative overflow-hidden rounded-2xl mb-6">
+                <img
+                  src="https://vinfastotominhdao.vn/wp-content/uploads/VinFast-VF9-9.jpg"
+                  alt="VF9"
+                  className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+                  <div className="text-white p-6 w-full">
+                    <h3 className="text-2xl font-bold mb-2">VF9</h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm opacity-90">Full-size SUV</span>
+                      <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* Your VinFast Journey Section */}
+      <section className="bg-white py-20 px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">Your VinFast journey starts now.</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[60vh]">
+            {/* Car Section */}
+            <div className="group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-500 hover:scale-105">
+              <video
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted
+                playsInline
+              >
+                <source src="/videos/VF8.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+              
+              {/* Car Label */}
+              <div className="absolute top-6 left-6">
+                <span className="text-white text-3xl font-light tracking-wider">Car</span>
+              </div>
+              
+              {/* Car Info */}
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex items-end justify-between">
+                  <div className="text-white">
+                    <p className="text-sm mb-1">Electric SUV with premium features</p>
+                    <p className="text-xs opacity-80">4 doors, 5 seats</p>
+                  </div>
+                  <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center group-hover:bg-opacity-40 transition-all">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Motorcycle Section */}
+            <div className="group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-500 hover:scale-105">
+              <video
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted
+                playsInline
+              >
+                <source src="/videos/Moto.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+              
+              {/* Motorcycle Label */}
+              <div className="absolute top-6 left-6">
+                <span className="text-white text-3xl font-light tracking-wider">Motorcycle</span>
+              </div>
+              
+              {/* Motorcycle Info */}
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex items-end justify-between">
+                  <div className="text-white">
+                    <p className="text-sm mb-1">Electric scooter for urban mobility</p>
+                    <p className="text-xs opacity-80">2 wheels, eco-friendly</p>
+                  </div>
+                  <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center group-hover:bg-opacity-40 transition-all">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Content sections with hover effects */}
-      <div className="bg-white hover:bg-gray-50 transition-colors duration-500">
+
+      {/* Content sections with updated background */}
+      <div className="bg-white">
         {/* Title Section */}
         <div className="p-6 max-w-7xl mx-auto">
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 hover:text-black transition-colors duration-300">Danh mục xe điện</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Danh mục xe điện</h1>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setCompareMode(!compareMode)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg ${
-                    compareMode 
-                      ? 'bg-green-600 text-white hover:bg-black' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-black hover:text-white'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium ${compareMode ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
                 >
                   So sánh xe ({compareList.length})
                 </button>
               </div>
             </div>
-            {/* Vehicle Grid with hover effects */}
+            {/* Vehicle Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {mockVehicles.map((vehicle) => (
-                <div key={vehicle.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:scale-105 hover:bg-black hover:text-white transition-all duration-300 group">
+                <div key={vehicle.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="relative">
                     <img
                       src={vehicle.images[0]}
                       alt={vehicle.model}
-                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-48 object-cover"
                     />
                     {compareMode && (
                       <button
                         onClick={() => toggleCompare(vehicle)}
-                        className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 hover:scale-110 ${
-                          compareList.find(v => v.id === vehicle.id)
-                            ? 'bg-green-600 text-white hover:bg-black'
-                            : 'bg-white text-gray-600 hover:bg-black hover:text-white'
-                        }`}
+                        className={`absolute top-2 right-2 p-2 rounded-full ${compareList.find(v => v.id === vehicle.id)
+                            ? 'bg-green-600 text-white'
+                            : 'bg-white text-gray-600'
+                          }`}
                       >
                         <Car className="h-4 w-4" />
                       </button>
@@ -191,24 +273,24 @@ export const VehicleCatalog: React.FC = () => {
                   </div>
 
                   <div className="p-4">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-white transition-colors duration-300">{vehicle.model}</h3>
-                    <p className="text-sm text-gray-600 mb-2 group-hover:text-gray-300 transition-colors duration-300">{vehicle.version} - {vehicle.color}</p>
-                    <p className="text-2xl font-bold text-green-600 mb-4 group-hover:text-green-400 transition-colors duration-300">{formatPrice(vehicle.price)}</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{vehicle.model}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{vehicle.version} - {vehicle.color}</p>
+                    <p className="text-2xl font-bold text-green-600 mb-4">{formatPrice(vehicle.price)}</p>
 
                     <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
-                        <Battery className="h-4 w-4 text-blue-500 group-hover:text-blue-400" />
+                      <div className="flex items-center space-x-2">
+                        <Battery className="h-4 w-4 text-blue-500" />
                         <span>{vehicle.range}km</span>
                       </div>
-                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
+                      <div className="flex items-center space-x-2">
                         <Zap className="h-4 w-4 text-yellow-500" />
                         <span>{vehicle.maxSpeed}km/h</span>
                       </div>
-                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
+                      <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-red-500" />
                         <span>{vehicle.chargingTime}</span>
                       </div>
-                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
+                      <div className="flex items-center space-x-2">
                         <Car className="h-4 w-4 text-gray-500" />
                         <span>{vehicle.stock} xe</span>
                       </div>
@@ -216,15 +298,15 @@ export const VehicleCatalog: React.FC = () => {
 
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => setSelectedVehicle(vehicle)}
-                        className="flex-1 bg-gray-100 hover:bg-white hover:text-black text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105"
+                        onClick={() => navigate(`/portal/car-detail/${vehicle.id}`)}
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
                       >
                         <Eye className="h-4 w-4" />
                         <span>Chi tiết</span>
                       </button>
                       <button
                         onClick={() => handleDeposit(vehicle.id)}
-                        className="flex-1 bg-green-600 hover:bg-white hover:text-black text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
                       >
                         <ShoppingCart className="h-4 w-4" />
                         <span>Đặt cọc</span>
@@ -237,48 +319,49 @@ export const VehicleCatalog: React.FC = () => {
           </div>
         </div>
 
-        {/* Features Section with hover effects */}
+        {/* Full-width Features Section */}
         <div className="w-full">
+          {/* Features Grid */}
           <div className="grid grid-cols-12 min-h-[85vh]">
-            {/* Safety System Section */}
-            <div className="col-span-12 lg:col-span-8 bg-white p-16 flex flex-col hover:bg-gray-50 transition-colors duration-500 group">
+            {/* Safety System Section - 70% */}
+            <div className="col-span-12 lg:col-span-8 bg-white p-16 flex flex-col">
               <div className="max-w-lg mb-8">
-                <h2 className="text-5xl font-medium text-black mb-4 group-hover:text-gray-800 transition-colors duration-300">Safety System</h2>
-                <p className="text-xl text-black leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                <h2 className="text-5xl font-medium text-black mb-4">Safety System</h2>
+                <p className="text-xl text-black leading-relaxed">
                   Advanced driver assistance features designed to deliver the future of driving
                 </p>
               </div>
-              <div className="flex-1 w-full flex items-center justify-center bg-black rounded-lg overflow-hidden hover:shadow-2xl transition-shadow duration-500" style={{ height: '66.666vh' }}>
+              <div className="flex-1 w-full flex items-center justify-center bg-black rounded-lg overflow-hidden" style={{ height: '66.666vh' }}>
                 <video
-                  className="w-full h-full object-contain hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-contain"
                   controls
                   autoPlay
                   loop
                   muted
                   playsInline
                 >
-                  <source src="/videos/VF8.mp4" type="video/mp4" />
+                  <source src="/videos/VinFast.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
             </div>
 
-            {/* Interior Section */}
-            <div className="col-span-12 lg:col-span-4 bg-white p-16 flex flex-col hover:bg-gray-50 transition-colors duration-500 group">
+            {/* Interior Section - 30% */}
+            <div className="col-span-12 lg:col-span-4 bg-white p-16 flex flex-col">
               <div className="max-w-lg mb-8">
-                <h2 className="text-5xl font-medium text-black mb-4 group-hover:text-gray-800 transition-colors duration-300">Interior of the Future</h2>
-                <p className="text-xl text-black leading-relaxed mb-8 group-hover:text-gray-700 transition-colors duration-300">
+                <h2 className="text-5xl font-medium text-black mb-4">Interior of the Future</h2>
+                <p className="text-xl text-black leading-relaxed mb-8">
                   17" Touchscreen Display with immersive sound system
                 </p>
-                <button className="bg-[#f5f5f5] text-black px-8 py-2 text-sm font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105">
+                <button className="bg-[#f5f5f5] text-black px-8 py-2 text-sm font-medium hover:bg-gray-200 transition-colors">
                   Learn More
                 </button>
               </div>
-              <div className="flex-1 w-full rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-500">
+              <div className="flex-1 w-full rounded-lg overflow-hidden">
                 <img
                   src="https://vinfast-chevrolet.net/upload/sanpham/z4877208876342_5947d53dceb47e39e8b03c816063ac1b-8837.jpg"
                   alt="VinFast Interior"
-                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
