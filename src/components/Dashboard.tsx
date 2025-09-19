@@ -170,9 +170,9 @@ export const Dashboard: React.FC = () => {
                     VinFast VF9
                   </h1>
                   <div className="flex flex-wrap gap-4 mb-8">
-                    <button className="bg-white text-black px-8 py-3 text-sm font-medium hover:bg-gray-100 transition-colors">
-                      Discover more
-                    </button>
+                    {/* <button className="bg-white text-black px-8 py-3 text-sm font-medium hover:bg-gray-100 transition-colors">
+                      Khám phá sản phẩm
+                    </button> */}
                   </div>
                 </div>
               </div>

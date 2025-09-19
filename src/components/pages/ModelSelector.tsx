@@ -174,12 +174,12 @@ export const ModelSelector: React.FC = () => {
 
             {/* Start Comparison Button */}
             {selectedModels.length === 2 && (
-              <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-2xl shadow-xl">
+              <div className="mt-8 bg-gradient-to-r from-gray-800 to-black text-white p-6 rounded-2xl shadow-xl">
                 <h4 className="font-semibold mb-3">Sẵn sàng so sánh</h4>
-                <p className="text-blue-100 text-sm mb-4">Bạn đã chọn 2 mẫu xe để so sánh</p>
+                <p className="text-gray-200 text-sm mb-4">Bạn đã chọn 2 mẫu xe để so sánh</p>
                 <button
                   onClick={startComparison}
-                  className="w-full bg-white text-blue-700 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all duration-200 shadow-md"
+                  className="w-full bg-white text-black px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 shadow-md"
                 >
                   Bắt đầu so sánh
                 </button>
@@ -192,8 +192,8 @@ export const ModelSelector: React.FC = () => {
             <div className="mb-10">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-gray-900">Mẫu xe VinFast</h2>
-                <div className="bg-blue-50 px-4 py-2 rounded-full">
-                  <span className="text-blue-700 font-medium text-sm">
+                <div className="bg-gray-900 px-4 py-2 rounded-full">
+                  <span className="text-white font-medium text-sm">
                     Đã chọn: {selectedModels.length}/2 mẫu xe
                   </span>
                 </div>
@@ -217,18 +217,18 @@ export const ModelSelector: React.FC = () => {
                     {/* Selection Badge */}
                     <div className="absolute top-4 right-4 z-10">
                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'
+                        isSelected ? 'bg-black border-black' : 'bg-white border-gray-300'
                       }`}>
                         {isSelected && <Check className="w-4 h-4 text-white" />}
                       </div>
                     </div>
 
                     {/* Electric Badge */}
-                    <div className="absolute top-4 left-4 z-10">
+                    {/* <div className="absolute top-4 left-4 z-10">
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Điện • 2024
                       </span>
-                    </div>
+                    </div> */}
 
                     {/* Vehicle Image */}
                     <div className="relative">
@@ -282,7 +282,7 @@ export const ModelSelector: React.FC = () => {
                             e.stopPropagation();
                             navigate(`/portal/deposit?vehicleId=${vehicle.id}`);
                           }}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
+                          className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
                         >
                           <ShoppingCart className="h-4 w-4" />
                           <span>Đặt cọc</span>

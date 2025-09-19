@@ -60,7 +60,7 @@ export const VehicleCatalog: React.FC = () => {
             <h2 className="text-4xl font-bold text-gray-900">Những chiếc xe điện tốt nhất của chúng tôi</h2>
             <button
               onClick={() => navigate('/portal/car-product')}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="text-black hover:text-gray-700 text-sm font-medium"
             >
               Xem tất cả mẫu xe →
             </button>
@@ -245,7 +245,8 @@ export const VehicleCatalog: React.FC = () => {
 
       {/* Content sections with updated background */}
       <div className="bg-white">
-
+        {/* Title Section */}
+        
         {/* Full-width Features Section */}
         <div className="w-full">
           {/* Features Grid */}
@@ -299,7 +300,7 @@ export const VehicleCatalog: React.FC = () => {
         {/* Comparison Table */}
         {compareMode && compareList.length > 0 && (
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-4 bg-green-600 text-white">
+            <div className="p-4 bg-black text-white">
               <h2 className="text-xl font-bold">So sánh xe điện</h2>
             </div>
             <div className="overflow-x-auto">
@@ -326,7 +327,7 @@ export const VehicleCatalog: React.FC = () => {
                   <tr className="border-b">
                     <td className="p-4 font-medium">Giá bán</td>
                     {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-4 text-center font-bold text-green-600">
+                      <td key={vehicle.id} className="p-4 text-center font-bold text-black">
                         {formatPrice(vehicle.price)}
                       </td>
                     ))}
@@ -412,7 +413,7 @@ export const VehicleCatalog: React.FC = () => {
                       <ul className="space-y-1">
                         {selectedVehicle.features.map((feature, index) => (
                           <li key={index} className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span className="w-2 h-2 bg-black rounded-full"></span>
                             <span>{feature}</span>
                           </li>
                         ))}
@@ -420,13 +421,13 @@ export const VehicleCatalog: React.FC = () => {
                     </div>
 
                     <div className="mb-6">
-                      <div className="text-3xl font-bold text-green-600 mb-4">
+                      <div className="text-3xl font-bold text-black mb-4">
                         {formatPrice(selectedVehicle.price)}
                       </div>
                       <div className="flex space-x-4">
                         <button
                           onClick={() => handleDeposit(selectedVehicle.id)}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium"
+                          className="flex-1 bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium"
                         >
                           Đặt cọc ngay
                         </button>

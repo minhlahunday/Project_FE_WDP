@@ -125,7 +125,7 @@ export const CarDetail: React.FC = () => {
           <div className="mt-12 text-center">
             <button
               onClick={() => navigate(`/portal/deposit?vehicleId=${vehicle.id}`)}
-              className="bg-green-600 hover:bg-green-700 text-white px-12 py-3 rounded-lg font-medium mr-4"
+              className="bg-black hover:bg-gray-800 text-white px-12 py-3 rounded-lg font-medium mr-4"
             >
               Đặt cọc ngay
             </button>
