@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
 import { Dashboard } from './components/Dashboard';
 import { Layout } from './components/common/Layout';
+import { CarDetail } from './components/pages/CarDetail';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -20,7 +21,12 @@ function AppContent() {
     return <LoginPage />;
   }
 
-  return <Dashboard />;
+  return (
+    <Routes>
+      <Route path="/portal/car-detail/:id" element={<CarDetail />} />
+      <Route path="*" element={<Dashboard />} />
+    </Routes>
+  );
 }
 
 function App() {
