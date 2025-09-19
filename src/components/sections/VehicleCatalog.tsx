@@ -1,11 +1,71 @@
 import React, { useState } from 'react';
-import { Car, Battery, Zap, Clock, Eye, ShoppingCart } from 'lucide-react';
-import { Carousel } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { Car, Battery, Zap, Clock, Eye, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { mockVehicles } from '../../data/mockData';
 import { Vehicle } from '../../types';
 import './VehicleCatalog.css';
+
+// Custom Carousel Component
+const CustomCarousel: React.FC<{ children: React.ReactNode[] }> = ({ children }) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const totalSlides = children.length;
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  };
+
+  React.useEffect(() => {
+    const interval = setInterval(nextSlide, 5000); // Auto advance every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      <div
+        className="flex h-full transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+      >
+        {children.map((child, index) => (
+          <div key={index} className="w-full h-full flex-shrink-0">
+            {child}
+          </div>
+        ))}
+      </div>
+
+      {/* Custom Arrow Controls */}
+      <button
+        onClick={prevSlide}
+        className="carousel-arrow carousel-arrow-prev absolute left-6 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 transition-colors z-10"
+      >
+        <ChevronLeft size={24} />
+      </button>
+
+      <button
+        onClick={nextSlide}
+        className="carousel-arrow carousel-arrow-next absolute right-6 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 transition-colors z-10"
+      >
+        <ChevronRight size={24} />
+      </button>
+
+      {/* Dots indicator */}
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {children.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            className={`w-3 h-3 rounded-full transition-colors ${
+              index === currentSlide ? 'bg-white' : 'bg-white/50'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export const VehicleCatalog: React.FC = () => {
   const navigate = useNavigate();
@@ -51,44 +111,30 @@ export const VehicleCatalog: React.FC = () => {
   };
 
   return (
-    <div className="-mx-6 bg-gray-900">
+    <div className="-mx-6 bg-gray-900 hover:bg-black transition-colors duration-500">
       {/* Carousel Section */}
-      <section className="h-[66.666vh] relative w-screen"> {/* Changed from h-screen */}
+      <section className="h-[66.666vh] relative w-screen group">
         <div className="absolute inset-0 mx-auto w-[99%]">
-          <Carousel
-            autoplay
-            className="h-full w-full"
-            arrows
-            prevArrow={
-              <div className="carousel-arrow carousel-arrow-prev">
-                <LeftOutlined style={{ fontSize: '24px', fontWeight: 'bold' }} />
-              </div>
-            }
-            nextArrow={
-              <div className="carousel-arrow carousel-arrow-next">
-                <RightOutlined style={{ fontSize: '24px', fontWeight: 'bold' }} />
-              </div>
-            }
-          >
+          <CustomCarousel>
             {carSlides.map(s => (
-              <div className="h-[66.666vh] relative" key={s.name}> {/* Changed from h-screen */}
-                <img src={s.img} alt={s.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 flex flex-col justify-between pb-10"> {/* Changed pb-20 to pb-10 */}
-                  <div className="pt-16 text-center"> {/* Changed from pt-32 */}
-                    <h3 className="text-6xl font-medium text-white mb-2">{s.name}</h3>
-                    <p className="text-xl text-white/90">STARTING AT {formatPrice(s.price)}</p>
+              <div className="h-[66.666vh] relative group/slide" key={s.name}>
+                <img src={s.img} alt={s.name} className="w-full h-full object-cover group-hover/slide:scale-105 transition-transform duration-700" />
+                <div className="absolute inset-0 flex flex-col justify-between pb-10 bg-black/20 group-hover/slide:bg-black/40 transition-colors duration-500">
+                  <div className="pt-16 text-center transform group-hover/slide:translate-y-[-10px] transition-transform duration-500">
+                    <h3 className="text-6xl font-medium text-white mb-2 hover:text-gray-200 transition-colors duration-300">{s.name}</h3>
+                    <p className="text-xl text-white/90 hover:text-white transition-colors duration-300">STARTING AT {formatPrice(s.price)}</p>
                   </div>
 
                   <div className="flex justify-center gap-4 px-4">
                     <button
                       onClick={() => handleDeposit(s.id)}
-                      className="bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 px-12 py-2 rounded text-sm font-medium min-w-[264px]"
+                      className="bg-white/80 backdrop-blur-sm hover:bg-black hover:text-white text-gray-900 px-12 py-2 rounded text-sm font-medium min-w-[264px] transition-all duration-300 hover:scale-105 hover:shadow-lg"
                     >
                       Đặt cọc ngay
                     </button>
                     <button
                       onClick={() => setSelectedVehicle(mockVehicles.find(v => v.id === s.id) || null)}
-                      className="bg-gray-900/80 backdrop-blur-sm hover:bg-gray-900 text-white px-12 py-2 rounded text-sm font-medium min-w-[264px]"
+                      className="bg-gray-900/80 backdrop-blur-sm hover:bg-white hover:text-black text-white px-12 py-2 rounded text-sm font-medium min-w-[264px] transition-all duration-300 hover:scale-105 hover:shadow-lg"
                     >
                       Xem chi tiết
                     </button>
@@ -96,44 +142,48 @@ export const VehicleCatalog: React.FC = () => {
                 </div>
               </div>
             ))}
-          </Carousel>
+          </CustomCarousel>
         </div>
       </section>
 
-      {/* Content sections with updated background */}
-      <div className="bg-white">
+      {/* Content sections with hover effects */}
+      <div className="bg-white hover:bg-gray-50 transition-colors duration-500">
         {/* Title Section */}
         <div className="p-6 max-w-7xl mx-auto">
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">Danh mục xe điện</h1>
+              <h1 className="text-3xl font-bold text-gray-900 hover:text-black transition-colors duration-300">Danh mục xe điện</h1>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setCompareMode(!compareMode)}
-                  className={`px-4 py-2 rounded-lg font-medium ${compareMode ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
-                    }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    compareMode 
+                      ? 'bg-green-600 text-white hover:bg-black' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-black hover:text-white'
+                  }`}
                 >
                   So sánh xe ({compareList.length})
                 </button>
               </div>
             </div>
-            {/* Vehicle Grid */}
+            {/* Vehicle Grid with hover effects */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {mockVehicles.map((vehicle) => (
-                <div key={vehicle.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div key={vehicle.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:scale-105 hover:bg-black hover:text-white transition-all duration-300 group">
                   <div className="relative">
                     <img
                       src={vehicle.images[0]}
                       alt={vehicle.model}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     {compareMode && (
                       <button
                         onClick={() => toggleCompare(vehicle)}
-                        className={`absolute top-2 right-2 p-2 rounded-full ${compareList.find(v => v.id === vehicle.id)
-                            ? 'bg-green-600 text-white'
-                            : 'bg-white text-gray-600'
-                          }`}
+                        className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 hover:scale-110 ${
+                          compareList.find(v => v.id === vehicle.id)
+                            ? 'bg-green-600 text-white hover:bg-black'
+                            : 'bg-white text-gray-600 hover:bg-black hover:text-white'
+                        }`}
                       >
                         <Car className="h-4 w-4" />
                       </button>
@@ -141,24 +191,24 @@ export const VehicleCatalog: React.FC = () => {
                   </div>
 
                   <div className="p-4">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{vehicle.model}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{vehicle.version} - {vehicle.color}</p>
-                    <p className="text-2xl font-bold text-green-600 mb-4">{formatPrice(vehicle.price)}</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-white transition-colors duration-300">{vehicle.model}</h3>
+                    <p className="text-sm text-gray-600 mb-2 group-hover:text-gray-300 transition-colors duration-300">{vehicle.version} - {vehicle.color}</p>
+                    <p className="text-2xl font-bold text-green-600 mb-4 group-hover:text-green-400 transition-colors duration-300">{formatPrice(vehicle.price)}</p>
 
                     <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Battery className="h-4 w-4 text-blue-500" />
+                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
+                        <Battery className="h-4 w-4 text-blue-500 group-hover:text-blue-400" />
                         <span>{vehicle.range}km</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
                         <Zap className="h-4 w-4 text-yellow-500" />
                         <span>{vehicle.maxSpeed}km/h</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
                         <Clock className="h-4 w-4 text-red-500" />
                         <span>{vehicle.chargingTime}</span>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 group-hover:text-white transition-colors duration-300">
                         <Car className="h-4 w-4 text-gray-500" />
                         <span>{vehicle.stock} xe</span>
                       </div>
@@ -167,14 +217,14 @@ export const VehicleCatalog: React.FC = () => {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => setSelectedVehicle(vehicle)}
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
+                        className="flex-1 bg-gray-100 hover:bg-white hover:text-black text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105"
                       >
                         <Eye className="h-4 w-4" />
                         <span>Chi tiết</span>
                       </button>
                       <button
                         onClick={() => handleDeposit(vehicle.id)}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
+                        className="flex-1 bg-green-600 hover:bg-white hover:text-black text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105"
                       >
                         <ShoppingCart className="h-4 w-4" />
                         <span>Đặt cọc</span>
@@ -187,49 +237,48 @@ export const VehicleCatalog: React.FC = () => {
           </div>
         </div>
 
-        {/* Full-width Features Section */}
+        {/* Features Section with hover effects */}
         <div className="w-full">
-          {/* Features Grid */}
           <div className="grid grid-cols-12 min-h-[85vh]">
-            {/* Safety System Section - 70% */}
-            <div className="col-span-12 lg:col-span-8 bg-white p-16 flex flex-col">
+            {/* Safety System Section */}
+            <div className="col-span-12 lg:col-span-8 bg-white p-16 flex flex-col hover:bg-gray-50 transition-colors duration-500 group">
               <div className="max-w-lg mb-8">
-                <h2 className="text-5xl font-medium text-black mb-4">Safety System</h2>
-                <p className="text-xl text-black leading-relaxed">
+                <h2 className="text-5xl font-medium text-black mb-4 group-hover:text-gray-800 transition-colors duration-300">Safety System</h2>
+                <p className="text-xl text-black leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
                   Advanced driver assistance features designed to deliver the future of driving
                 </p>
               </div>
-              <div className="flex-1 w-full flex items-center justify-center bg-black rounded-lg overflow-hidden" style={{ height: '66.666vh' }}>
-                <video 
-                  className="w-full h-full object-contain"
+              <div className="flex-1 w-full flex items-center justify-center bg-black rounded-lg overflow-hidden hover:shadow-2xl transition-shadow duration-500" style={{ height: '66.666vh' }}>
+                <video
+                  className="w-full h-full object-contain hover:scale-105 transition-transform duration-700"
                   controls
                   autoPlay
                   loop
                   muted
                   playsInline
                 >
-                  <source src="/videos/VF9.mp4" type="video/mp4" />
+                  <source src="/videos/VF8.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
             </div>
 
-            {/* Interior Section - 30% */}
-            <div className="col-span-12 lg:col-span-4 bg-white p-16 flex flex-col">
+            {/* Interior Section */}
+            <div className="col-span-12 lg:col-span-4 bg-white p-16 flex flex-col hover:bg-gray-50 transition-colors duration-500 group">
               <div className="max-w-lg mb-8">
-                <h2 className="text-5xl font-medium text-black mb-4">Interior of the Future</h2>
-                <p className="text-xl text-black leading-relaxed mb-8">
+                <h2 className="text-5xl font-medium text-black mb-4 group-hover:text-gray-800 transition-colors duration-300">Interior of the Future</h2>
+                <p className="text-xl text-black leading-relaxed mb-8 group-hover:text-gray-700 transition-colors duration-300">
                   17" Touchscreen Display with immersive sound system
                 </p>
-                <button className="bg-[#f5f5f5] text-black px-8 py-2 text-sm font-medium hover:bg-gray-200 transition-colors">
+                <button className="bg-[#f5f5f5] text-black px-8 py-2 text-sm font-medium hover:bg-black hover:text-white transition-all duration-300 hover:scale-105">
                   Learn More
                 </button>
               </div>
-              <div className="flex-1 w-full rounded-lg overflow-hidden">
+              <div className="flex-1 w-full rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-500">
                 <img
                   src="https://vinfast-chevrolet.net/upload/sanpham/z4877208876342_5947d53dceb47e39e8b03c816063ac1b-8837.jpg"
                   alt="VinFast Interior"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                 />
               </div>
             </div>

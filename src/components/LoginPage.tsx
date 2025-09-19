@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Car, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-export const LoginPage: React.FC = () => {
+export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -118,4 +118,4 @@ export const LoginPage: React.FC = () => {
       </div>
     </div>
   );
-};
+}
