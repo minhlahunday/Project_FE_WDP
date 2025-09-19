@@ -5,6 +5,9 @@ import { LoginPage } from './components/LoginPage';
 import { Dashboard } from './components/Dashboard';
 import { Layout } from './components/common/Layout';
 import { CarDetail } from './components/pages/CarDetail';
+import { CarProduct } from './components/pages/CarProduct';
+import { CompareModels } from './components/pages/CompareModels';
+import { ModelSelector } from './components/pages/ModelSelector';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -24,6 +27,9 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/portal/car-detail/:id" element={<CarDetail />} />
+      <Route path="/portal/car-product" element={<CarProduct />} />
+      <Route path="/portal/compare-models" element={<CompareModels />} />
+      <Route path="/portal/model-selector" element={<ModelSelector />} />
       <Route path="*" element={<Dashboard />} />
     </Routes>
   );
