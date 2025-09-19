@@ -8,6 +8,7 @@ import { CarDetail } from './components/pages/CarDetail';
 import { CarProduct } from './components/pages/CarProduct';
 import { CompareModels } from './components/pages/CompareModels';
 import { ModelSelector } from './components/pages/ModelSelector';
+import { TestDrive } from './components/pages/TestDrive';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -15,7 +16,7 @@ function AppContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
       </div>
     );
   }
@@ -30,6 +31,7 @@ function AppContent() {
       <Route path="/portal/car-product" element={<CarProduct />} />
       <Route path="/portal/compare-models" element={<CompareModels />} />
       <Route path="/portal/model-selector" element={<ModelSelector />} />
+      <Route path="/portal/test-drive" element={<TestDrive />} />
       <Route path="*" element={<Dashboard />} />
     </Routes>
   );
