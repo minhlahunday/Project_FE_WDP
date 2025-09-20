@@ -38,12 +38,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   ];
 
   const evmMenuItems = [
-    { id: 'product-management', label: 'Quản lý sản phẩm', icon: Package },
-    { id: 'inventory', label: 'Tồn kho', icon: Car },
-    { id: 'dealer-management', label: 'Quản lý đại lý', icon: Building2 },
-    { id: 'pricing', label: 'Giá & Khuyến mãi', icon: CreditCard },
-    { id: 'analytics', label: 'Báo cáo & Phân tích', icon: BarChart3 },
-    { id: 'forecasting', label: 'Dự báo nhu cầu', icon: BarChart3 },
+    { id: 'vehicles', label: 'Danh mục xe', icon: Car, route: '/portal/car' },
+    { id: 'product-management', label: 'Quản lý sản phẩm', icon: Package, route: '/admin/product-management' },
+    { id: 'inventory', label: 'Tồn kho', icon: Car, route: '/sections/inventory' },
+    { id: 'dealer-management', label: 'Quản lý đại lý', icon: Building2, route: '/admin/dealer-management' },
+    { id: 'pricing', label: 'Giá & Khuyến mãi', icon: CreditCard, route: '/sections/product-management' },
+    { id: 'analytics', label: 'Báo cáo & Phân tích', icon: BarChart3, route: '/sections/reports' },
+    { id: 'forecasting', label: 'Dự báo nhu cầu', icon: BarChart3, route: '/sections/forecasting' },
   ];
 
   const menuItems = user?.role === 'evm_staff' || user?.role === 'admin' ? evmMenuItems : dealerMenuItems;
@@ -51,8 +52,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   const handleMenuItemClick = (sectionId: string) => {
     onSectionChange(sectionId);
     
-    // Special case for forecasting to navigate to the forecasting route
-   
+    // Navigate to specific routes for admin/EVM staff
+    if (user?.role === 'evm_staff' || user?.role === 'admin') {
+      const menuItem = evmMenuItems.find(item => item.id === sectionId);
+      if (menuItem?.route) {
+        navigate(menuItem.route);
+        return;
+      }
+    }
+    
+    // Handle specific section changes for dashboard
+    switch (sectionId) {
+      case 'vehicles':
+        navigate('/portal/car');
+        break;
+      case 'forecasting':
+        navigate('/portal/forecasting');
+        break;
+      case 'product-management':
+      case 'inventory':
+      case 'dealer-management':
+      case 'pricing':
+      case 'analytics':
+        // These will be handled by the dashboard sections
+        break;
+      default:
+        break;
+    }
   };
 
   return (

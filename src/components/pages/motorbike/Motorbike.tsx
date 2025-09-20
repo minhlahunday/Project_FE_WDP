@@ -194,32 +194,6 @@ export const Motorbike: React.FC = () => {
               >
                 Đặt lại bộ lọc
               </button>
-
-              {/* Compare Section */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">So sánh</h3>
-                  <button
-                    onClick={() => setCompareMode(!compareMode)}
-                    className={`px-3 py-1 rounded text-sm font-medium ${compareMode ? 'bg-black text-white' : 'bg-gray-200 text-gray-700'}`}
-                  >
-                    {compareMode ? 'Thoát' : 'Kích hoạt'}
-                  </button>
-                </div>
-                {compareMode && (
-                  <p className="text-sm text-gray-600 mb-4">
-                    Chọn tối đa 3 xe để so sánh. Nhấn vào biểu tượng xe để thêm vào danh sách so sánh.
-                  </p>
-                )}
-                {compareList.length > 1 && (
-                  <button
-                    onClick={() => setShowCompareModal(true)}
-                    className="w-full bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800"
-                  >
-                    So sánh ({compareList.length})
-                  </button>
-                )}
-              </div>
             </div>
           </div>
 
@@ -235,7 +209,7 @@ export const Motorbike: React.FC = () => {
                   </span>
                 )}
                 <button 
-                  onClick={() => navigate('/portal/compare-models')}
+                  onClick={() => navigate('/portal/compare-motorbikes')}
                   className="text-black hover:text-gray-700 text-sm font-medium"
                 >
                   ↔ So sánh mẫu xe

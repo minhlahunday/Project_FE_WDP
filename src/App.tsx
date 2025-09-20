@@ -11,9 +11,16 @@ import { ModelSelector } from './components/pages/car/ModelSelector';
 import { TestDrive } from './components/pages/car/TestDrive';
 import { Motorbike } from './components/pages/motorbike/Motorbike';
 import { MotorbikeDetail } from './components/pages/motorbike/MotorbikeDetail';
-import { CompareMotorbikes } from './components/pages/car/CompareMotorbikes';
+import { CompareMotorbikes } from './components/pages/motorbike/CompareMotorbikes';
+import { MotorbikeModelSelector } from './components/pages/motorbike/MotorbikeModelSelector';
 import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit';
 import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
+import { AdminProductManagement } from './components/admin/AdminProductManagement';
+import { AdminDealerManagement } from './components/admin/AdminDealerManagement';
+import Inventory from './components/sections/Inventory';
+import { ProductManagement } from './components/sections/ProductManagement';
+import { Reports } from './components/sections/Reports';
+import { Forecasting } from './components/sections/Forecasting';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -40,8 +47,15 @@ function AppContent() {
       <Route path="/portal/motorbike-product" element={<Motorbike />} />
       <Route path="/portal/motorbike-detail/:id" element={<MotorbikeDetail />} />
       <Route path="/portal/compare-motorbikes" element={<CompareMotorbikes />} />
+      <Route path="/portal/motorbike-model-selector" element={<MotorbikeModelSelector />} />
       <Route path="/portal/motorbike-deposit" element={<MotorbikeDeposit />} />
       <Route path="/portal/motorbike-schedule" element={<MotorbikeSchedule />} />
+      <Route path="/admin/product-management" element={<AdminProductManagement />} />
+      <Route path="/admin/dealer-management" element={<AdminDealerManagement />} />
+      <Route path="/sections/inventory" element={<Inventory />} />
+      <Route path="/sections/product-management" element={<ProductManagement />} />
+      <Route path="/sections/reports" element={<Reports />} />
+       <Route path="/sections/forecasting" element={<Forecasting />} />
       <Route path="*" element={<Dashboard />} />
     </Routes>
   );

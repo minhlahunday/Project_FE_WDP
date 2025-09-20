@@ -7,10 +7,11 @@ import { SalesManagement } from './sections/SalesManagement';
 import { CustomerManagement } from './sections/CustomerManagement';
 import { Reports } from './sections/Reports';
 import { ProductManagement } from './sections/ProductManagement';
-import { DealerManagement } from './sections/DealerManagement';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Forecasting } from './sections/Forecasting';
 import Inventory from './sections/Inventory';
+import { AdminProductManagement } from './admin/AdminProductManagement';
+import { AdminDealerManagement } from './admin/AdminDealerManagement';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -92,12 +93,14 @@ export const Dashboard: React.FC = () => {
     // For EVM Staff and Admin
     if (user?.role === 'evm_staff' || user?.role === 'admin') {
       switch (activeSection) {
+        case 'vehicles':
+        return <VehicleCatalog />;
         case 'product-management':
-          return <ProductManagement />;
+          return <AdminProductManagement />;
         case 'inventory':
           return <Inventory />;
         case 'dealer-management':
-          return <DealerManagement />;
+          return <AdminDealerManagement />;
         case 'pricing':
           return <ProductManagement />;
         case 'analytics':
@@ -105,7 +108,7 @@ export const Dashboard: React.FC = () => {
         case 'forecasting':
           return <Forecasting />;
         default:
-          return <ProductManagement />;
+          return <AdminProductManagement />;
       }
     }
 
