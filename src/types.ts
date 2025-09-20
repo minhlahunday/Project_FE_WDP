@@ -1,19 +1,10 @@
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'dealer_staff' | 'dealer_manager' | 'evm_staff' | 'admin';
-  dealerId?: string;
-  dealerName?: string;
-}
-
 export interface Vehicle {
   id: string;
   model: string;
   version: string;
   color: string;
   price: number;
-  wholesalePrice?: number;
+  wholesalePrice: number;
   range: number;
   maxSpeed: number;
   chargingTime: string;
@@ -29,33 +20,31 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
-  notes?: string;
-  testDrives: string[];
-  orders: string[];
-  debt: number;
-  lastPurchaseDate: string;
-  totalSpent: number;
+  testDrives: TestDrive[];
+  orders: Order[];
+  debt?: number;
+  lastPurchaseDate?: string;
+  totalSpent?: number;
 }
 
 export interface TestDrive {
   id: string;
   customerId: string;
   vehicleId: string;
-  scheduledDate: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  notes?: string;
+  date: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
 }
 
 export interface Order {
   id: string;
   customerId: string;
   vehicleId: string;
-  dealerId?: string;
-  status: 'quote' | 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+  dealerId: string;
+  status: 'pending' | 'processing' | 'completed' | 'cancelled';
   totalAmount: number;
-  paymentMethod: 'cash' | 'installment';
+  paymentMethod: string;
   createdAt: string;
-  deliveryDate?: string;
+  deliveryDate: string;
 }
 
 export interface Dealer {

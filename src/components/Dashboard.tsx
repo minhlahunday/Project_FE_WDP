@@ -9,6 +9,8 @@ import { Reports } from './sections/Reports';
 import { ProductManagement } from './sections/ProductManagement';
 import { DealerManagement } from './sections/DealerManagement';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Forecasting } from './sections/Forecasting';
+import Inventory from './sections/Inventory';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -93,7 +95,7 @@ export const Dashboard: React.FC = () => {
         case 'product-management':
           return <ProductManagement />;
         case 'inventory':
-          return <VehicleCatalog />;
+          return <Inventory />;
         case 'dealer-management':
           return <DealerManagement />;
         case 'pricing':
@@ -101,7 +103,7 @@ export const Dashboard: React.FC = () => {
         case 'analytics':
           return <Reports />;
         case 'forecasting':
-          return <Reports />;
+          return <Forecasting />;
         default:
           return <ProductManagement />;
       }

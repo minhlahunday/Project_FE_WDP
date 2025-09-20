@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Car, 
   ShoppingCart, 
@@ -23,6 +24,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange, isOpen, onClose, onOpen }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();  // Add this to use navigation
 
   const dealerMenuItems = [
     { id: 'vehicles', label: 'Danh mục xe', icon: Car },
@@ -45,6 +47,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   ];
 
   const menuItems = user?.role === 'evm_staff' || user?.role === 'admin' ? evmMenuItems : dealerMenuItems;
+
+  const handleMenuItemClick = (sectionId: string) => {
+    onSectionChange(sectionId);
+    
+    // Special case for forecasting to navigate to the forecasting route
+   
+  };
 
   return (
     <>
@@ -88,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
               return (
                 <button
                   key={item.id}
-                  onClick={() => onSectionChange(item.id)}
+                  onClick={() => handleMenuItemClick(item.id)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
                     activeSection === item.id
                       ? 'bg-gradient-to-r from-green-600/90 to-green-500/90 text-white shadow-lg shadow-green-600/20'

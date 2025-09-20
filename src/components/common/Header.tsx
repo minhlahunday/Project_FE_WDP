@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Bell, Search, User, ChevronDown, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom'; // Fix import
-import { Button } from 'antd';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -10,7 +9,7 @@ interface HeaderProps {
   isSidebarOpen?: boolean; // Thêm prop mới
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = false, isSidebarOpen = false }) => {
+export const Header: React.FC<HeaderProps> = ({  isTransparent = false, isSidebarOpen = false }) => {
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);

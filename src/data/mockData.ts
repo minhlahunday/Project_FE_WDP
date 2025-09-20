@@ -12,7 +12,7 @@ export const mockVehicles: Vehicle[] = [
     maxSpeed: 200,
     chargingTime: '8 giờ',
     features: ['Autopilot', 'Màn hình cảm ứng 17"', 'Sạc nhanh', 'Camera 360'],
-    images: ['https://vinfastotominhdao.vn/wp-content/uploads/VinFast-VF8-1.jpg'],
+    images: ['https://vinFastotominhdao.vn/wp-content/uploads/VinFast-VF8-1.jpg'],
     stock: 15,
     description: 'Xe điện cao cấp với công nghệ tiên tiến'
   },
@@ -27,7 +27,7 @@ export const mockVehicles: Vehicle[] = [
     maxSpeed: 180,
     chargingTime: '6 giờ',
     features: ['Tự động đỗ xe', 'Màn hình 12"', 'Sạc nhanh'],
-    images: ['https://vinfastotominhdao.vn/wp-content/uploads/VinFast-VF9-9.jpg'],
+    images: ['https://vinFastotominhdao.vn/wp-content/uploads/VinFast-VF9-9.jpg'],
     stock: 25,
     description: 'Xe điện phổ thông với tính năng cơ bản'
   },
@@ -57,7 +57,7 @@ export const mockVehicles: Vehicle[] = [
     maxSpeed: 200,
     chargingTime: '8 giờ',
     features: ['Autopilot', 'Màn hình cảm ứng 17"', 'Sạc nhanh', 'Camera 360'],
-    images: ['https://vinfastyenbai.com.vn/wp-content/uploads/2024/07/vinfastyenbai-com-vn-KNZod2y9Bz.jpg'],
+    images: ['https://vinFastyenbai.com.vn/wp-content/uploads/2024/07/vinfastyenbai-com-vn-KNZod2y9Bz.jpg'],
     stock: 15,
     description: 'Xe điện cao cấp với công nghệ tiên tiến'
   }
@@ -71,7 +71,10 @@ export const mockCustomers: Customer[] = [
     phone: '0901234567',
     address: 'Hà Nội',
     testDrives: [],
-    orders: []
+    orders: [],
+    debt: 15000000,
+    lastPurchaseDate: '2024-06-15',
+    totalSpent: 1200000000,
   },
   {
     id: '2',
@@ -80,7 +83,34 @@ export const mockCustomers: Customer[] = [
     phone: '0902345678',
     address: 'TP.HCM',
     testDrives: [],
-    orders: []
+    orders: [],
+    debt: 0,
+    lastPurchaseDate: '2024-05-20',
+    totalSpent: 2000000000,
+  },
+  {
+    id: '3',
+    name: 'Lê Hoàng Dũng',
+    email: 'dung.le@email.com',
+    phone: '0912345679',
+    address: 'Đà Nẵng',
+    testDrives: [],
+    orders: [],
+    debt: 5000000,
+    lastPurchaseDate: '2024-07-01',
+    totalSpent: 850000000,
+  },
+  {
+    id: '4',
+    name: 'Phạm Mỹ Linh',
+    email: 'linh.pham@email.com',
+    phone: '0987654321',
+    address: 'Hải Phòng',
+    testDrives: [],
+    orders: [],
+    debt: 0,
+    lastPurchaseDate: '2024-07-10',
+    totalSpent: 610000000,
   }
 ];
 
@@ -162,7 +192,7 @@ export const mockMotorbikes: Vehicle[] = [
     maxSpeed: 78,
     chargingTime: '5 giờ',
     features: ['Động cơ 1500W', 'Pin Lithium 2.9 kWh', 'Đèn LED', 'Cốp rộng'],
-    images: ['https://vinfastquangninh.com.vn/wp-content/uploads/2022/09/BUW.png'],
+    images: ['https://vinFastquangninh.com.vn/wp-content/uploads/2022/09/BUW.png'],
     stock: 75,
     description: 'Xe máy điện thông minh cho mọi người'
   },
@@ -192,7 +222,7 @@ export const mockMotorbikes: Vehicle[] = [
     maxSpeed: 50,
     chargingTime: '4 giờ',
     features: ['Động cơ 1000W', 'Pin Lithium 1.8 kWh', 'Phanh cơ', 'Khóa điện'],
-    images: ['https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw91eed064/images/PDP-XMD/evo200/img-pin.png'],
+    images: ['https://shop.vinFastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw91eed064/images/PDP-XMD/evo200/img-pin.png'],
     stock: 120,
     description: 'Xe máy điện giá rẻ cho sinh viên'
   }
