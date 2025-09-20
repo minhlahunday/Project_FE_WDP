@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({  isTransparent = false, isSideba
               className={`text-xl font-semibold cursor-pointer ${
                 isTransparent ? 'text-white' : 'text-gray-900'
               }`}
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/portal/dashboard')}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >

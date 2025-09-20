@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Car, Bike, Package, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { mockVehicles, mockMotorbikes } from '../../data/mockData';
+import { Header } from '../common/Header';
 
 export const AdminProductManagement: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'cars' | 'motorbikes'>('cars');
 
   if (!user || (user.role !== 'admin' && user.role !== 'evm_staff')) {
@@ -28,8 +31,15 @@ export const AdminProductManagement: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+      <Header 
+        onMenuClick={() => navigate('/')}
+        isSidebarOpen={false}
+      />
+      
+      <div className="pt-[73px]">
+        {/* Content */}
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
@@ -219,6 +229,7 @@ export const AdminProductManagement: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

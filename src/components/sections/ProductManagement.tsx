@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Eye, Trash2, Package, DollarSign, Palette, Settings, Bike } from 'lucide-react';
 import { mockVehicles, mockPromotions, mockMotorbikes } from '../../data/mockData';
-import { Vehicle, Promotion } from '../../types';
+import { Header } from '../common/Header';
 
 export const ProductManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('vehicles');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -23,17 +25,19 @@ export const ProductManagement: React.FC = () => {
   ];
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Thêm mới</span>
-        </button>
-      </div>
+    <div className="pt-[73px]">
+      <Header onMenuClick={() => {}} />
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Thêm mới</span>
+          </button>
+        </div>
 
       {/* Tabs */}
       <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
@@ -1069,6 +1073,7 @@ export const ProductManagement: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BarChart3, LineChart, TrendingUp, Users, DollarSign, Download, Filter, Clock, Car, CalendarClock } from 'lucide-react';
+import { Header } from '../common/Header';
 
 // Chart component for demand trends
 const DemandTrendChart = ({ formatNumber }: any) => {
@@ -397,6 +399,7 @@ const SeasonalVariationChart = () => {
 };
 
 export const Forecasting: React.FC = () => {
+  const navigate = useNavigate();
   const [timeRange, setTimeRange] = useState('year');
 
   const formatNumber = (number: number) => {
@@ -407,8 +410,15 @@ export const Forecasting: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header 
+        onMenuClick={() => navigate('/')}
+        isSidebarOpen={false}
+      />
+      
+      <div className="pt-[73px] p-6">
+        <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Dự báo nhu cầu</h1>
         <div className="flex items-center space-x-4">
           <select 
@@ -488,6 +498,7 @@ export const Forecasting: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RegionalForecast formatNumber={formatNumber} />
         <SeasonalVariationChart />
+      </div>
       </div>
     </div>
   );

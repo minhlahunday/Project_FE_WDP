@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Car, 
   Package, 
@@ -21,6 +22,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Header } from '../common/Header';
 
 // Định nghĩa kiểu dữ liệu
 export interface InventoryHistory {
@@ -208,6 +210,7 @@ const initialInventoryData: InventoryProduct[] = [
 
 export const Inventory: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<InventoryProduct[]>(initialInventoryData);
   const [activeTab, setActiveTab] = useState<'car' | 'motorbike' | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -347,9 +350,16 @@ export const Inventory: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Thông báo */}
-      {notification && (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header 
+        onMenuClick={() => navigate('/')}
+        isSidebarOpen={false}
+      />
+      
+      <div className="pt-[73px] p-6">
+        {/* Thông báo */}
+        {notification && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${
           notification.type === 'success' ? 'bg-green-500 text-white' :
           notification.type === 'error' ? 'bg-red-500 text-white' :
@@ -655,6 +665,7 @@ export const Inventory: React.FC = () => {
           onStockOperation={modalType === 'import' || modalType === 'export' ? handleStockOperation : undefined}
         />
       )}
+    </div>
     </div>
   );
 };
@@ -1025,7 +1036,7 @@ const InventoryModal: React.FC<InventoryModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+      </div>
   );
 };
 

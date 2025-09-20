@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, Users, DollarSign, Download, Filter, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BarChart3, TrendingUp, Users, DollarSign, Download, FileText } from 'lucide-react';
 import { mockCustomers } from '../../data/mockData';
+import { Header } from '../common/Header';
 
 // Define Customer interface to match the data structure
 interface Customer {
@@ -181,6 +183,7 @@ const CustomerReport = ({ formatPrice }: any) => (
 
 
 export const Reports: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [selectedReport, setSelectedReport] = useState('sales');
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
@@ -237,8 +240,15 @@ export const Reports: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header 
+        onMenuClick={() => navigate('/')}
+        isSidebarOpen={false}
+      />
+      
+      <div className="pt-[73px] p-6">
+        <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Báo cáo & Phân tích</h1>
         <div className="flex items-center space-x-4">
           <select 
@@ -330,6 +340,7 @@ export const Reports: React.FC = () => {
       {/* Dynamic Report Content */}
       <div>
         {renderReportContent()}
+      </div>
       </div>
     </div>
   );
