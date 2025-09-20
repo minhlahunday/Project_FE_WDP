@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Bell, Search, User, Menu, ChevronDown, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom'; // Fix import
+import { Button } from 'antd';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -10,6 +12,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = false }) => {
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const navigate = useNavigate(); // Fix: Use useNavigate hook directly
 
   const handleLogout = () => {
     logout();
@@ -39,9 +42,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
           </button>
           
           <div className="hidden md:block">
-            <h1 className={`text-xl font-semibold ${
-              isTransparent ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h1 
+              className={`text-xl font-semibold cursor-pointer ${
+                isTransparent ? 'text-white' : 'text-gray-900'
+              }`}
+              onClick={() => navigate('/')}  // Changed to navigate to root path
+            >
               VinFast Dashboard
             </h1>
           </div>

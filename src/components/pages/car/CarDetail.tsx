@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { mockVehicles } from '../../data/mockData';
+import { mockVehicles } from '../../../data/mockData';
 
 export const CarDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();

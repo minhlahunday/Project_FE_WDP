@@ -134,3 +134,66 @@ export const mockOrders: Order[] = [
     deliveryDate: '2024-12-25'
   }
 ];
+
+export const mockMotorbikes: Vehicle[] = [
+  {
+    id: 'mb1',
+    model: 'Vinfast Theon',
+    version: 'Cao cấp',
+    color: 'Đỏ',
+    price: 69900000,
+    wholesalePrice: 50000000,
+    range: 101,
+    maxSpeed: 99,
+    chargingTime: '6 giờ',
+    features: ['Động cơ 4200W', 'Pin LFP 3.5 kWh', 'Phanh ABS', 'Khóa thông minh'],
+    images: ['https://product.hstatic.net/200000960063/product/theon_transparent_back__2__c41cadb55bd74375a9941617e409ff7f_master.png'],
+    stock: 50,
+    description: 'Xe máy điện cao cấp dành cho đô thị'
+  },
+  {
+    id: 'mb2',
+    model: 'Vinfast Klara S',
+    version: 'Tiêu chuẩn',
+    color: 'Xanh',
+    price: 39900000,
+    wholesalePrice: 30000000,
+    range: 120,
+    maxSpeed: 78,
+    chargingTime: '5 giờ',
+    features: ['Động cơ 1500W', 'Pin Lithium 2.9 kWh', 'Đèn LED', 'Cốp rộng'],
+    images: ['https://vinfastquangninh.com.vn/wp-content/uploads/2022/09/BUW.png'],
+    stock: 75,
+    description: 'Xe máy điện thông minh cho mọi người'
+  },
+  {
+    id: 'mb3',
+    model: 'Vinfast Feliz',
+    version: 'Tiêu chuẩn',
+    color: 'Trắng',
+    price: 29900000,
+    wholesalePrice: 22000000,
+    range: 90,
+    maxSpeed: 60,
+    chargingTime: '4 giờ',
+    features: ['Động cơ 1200W', 'Pin Lithium 2.4 kWh', 'Phanh đĩa', 'Khóa từ'],
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSfoJs4ft2hXjGGZy-XpjmX2KWQ3jSWq3QNcg&s'],
+    stock: 100,
+    description: 'Xe máy điện phân khúc phổ thông'
+  },
+  {
+    id: 'mb4',
+    model: 'Vinfast Evo200',
+    version: 'Lite',
+    color: 'Đen',
+    price: 22000000,
+    wholesalePrice: 16000000,
+    range: 80,
+    maxSpeed: 50,
+    chargingTime: '4 giờ',
+    features: ['Động cơ 1000W', 'Pin Lithium 1.8 kWh', 'Phanh cơ', 'Khóa điện'],
+    images: ['https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw91eed064/images/PDP-XMD/evo200/img-pin.png'],
+    stock: 120,
+    description: 'Xe máy điện giá rẻ cho sinh viên'
+  }
+];

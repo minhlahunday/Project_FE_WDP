@@ -205,7 +205,10 @@ export const VehicleCatalog: React.FC = () => {
             </div>
 
             {/* Motorcycle Section */}
-            <div className="group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-500 hover:scale-105">
+            <div
+              className="group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-500 hover:scale-105"
+              onClick={() => navigate('/portal/motorbike-product')}
+            >
               <video
                 className="w-full h-full object-cover"
                 autoPlay

@@ -4,11 +4,16 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
 import { Dashboard } from './components/Dashboard';
 import { Layout } from './components/common/Layout';
-import { CarDetail } from './components/pages/CarDetail';
-import { CarProduct } from './components/pages/CarProduct';
-import { CompareModels } from './components/pages/CompareModels';
-import { ModelSelector } from './components/pages/ModelSelector';
-import { TestDrive } from './components/pages/TestDrive';
+import { CarDetail } from './components/pages/car/CarDetail';
+import { CarProduct } from './components/pages/car/CarProduct';
+import { CompareModels } from './components/pages/car/CompareModels';
+import { ModelSelector } from './components/pages/car/ModelSelector';
+import { TestDrive } from './components/pages/car/TestDrive';
+import { Motorbike } from './components/pages/motorbike/Motorbike';
+import { MotorbikeDetail } from './components/pages/motorbike/MotorbikeDetail';
+import { CompareMotorbikes } from './components/pages/car/CompareMotorbikes';
+import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit';
+import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -32,6 +37,11 @@ function AppContent() {
       <Route path="/portal/compare-models" element={<CompareModels />} />
       <Route path="/portal/model-selector" element={<ModelSelector />} />
       <Route path="/portal/test-drive" element={<TestDrive />} />
+      <Route path="/portal/motorbike-product" element={<Motorbike />} />
+      <Route path="/portal/motorbike-detail/:id" element={<MotorbikeDetail />} />
+      <Route path="/portal/compare-motorbikes" element={<CompareMotorbikes />} />
+      <Route path="/portal/motorbike-deposit" element={<MotorbikeDeposit />} />
+      <Route path="/portal/motorbike-schedule" element={<MotorbikeSchedule />} />
       <Route path="*" element={<Dashboard />} />
     </Routes>
   );

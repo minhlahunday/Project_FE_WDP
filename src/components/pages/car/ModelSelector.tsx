@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Check, Battery, Zap, Clock, Car, Eye, ShoppingCart } from 'lucide-react';
-import { mockVehicles } from '../../data/mockData';
-import { Vehicle } from '../../types';
+import { mockVehicles } from '../../../data/mockData';
+import { Vehicle } from '../../../types';
 
 export const ModelSelector: React.FC = () => {
   const navigate = useNavigate();

@@ -1,18 +1,48 @@
 import React, { useState } from 'react';
 import { Plus, Search, Phone, Mail, MapPin, Calendar, MessageSquare, Edit, Eye } from 'lucide-react';
-import { mockCustomers, mockVehicles } from '../../data/mockData';
-import { Customer } from '../../types';
+import { mockCustomers, mockVehicles, mockMotorbikes } from '../../data/mockData';
+import { Customer, Vehicle } from '../../types';
+import { useNavigate } from 'react-router-dom';
 
 export const CustomerManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedCustomerForSchedule, setSelectedCustomerForSchedule] = useState<Customer | null>(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    vehicleId: '',
+    vehicleType: 'car', // 'car' or 'motorbike'
+    date: '',
+    time: '',
+    purpose: '',
+    notes: ''
+  });
+
+  const allVehicles = [...mockVehicles, ...mockMotorbikes];
 
   const filteredCustomers = mockCustomers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.includes(searchTerm)
   );
+
+  const handleScheduleClick = (customer: Customer) => {
+    setSelectedCustomerForSchedule(customer);
+    setShowScheduleModal(true);
+  };
+
+  const handleScheduleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (scheduleForm.vehicleId) {
+      const vehicle = allVehicles.find(v => v.id === scheduleForm.vehicleId);
+      if (vehicle) {
+        navigate(`/portal/test-drive?vehicleId=${scheduleForm.vehicleId}&customerId=${selectedCustomerForSchedule?.id}`);
+      }
+    }
+    setShowScheduleModal(false);
+  };
 
   return (
     <div className="p-6">
@@ -94,7 +124,10 @@ export const CustomerManagement: React.FC = () => {
             </div>
 
             <div className="flex space-x-2 mt-4">
-              <button className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center justify-center space-x-1">
+              <button 
+                onClick={() => handleScheduleClick(customer)}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center justify-center space-x-1"
+              >
                 <Calendar className="h-3 w-3" />
                 <span>Đặt lịch</span>
               </button>
@@ -285,6 +318,101 @@ export const CustomerManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Schedule Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Đặt lịch cho khách hàng</h2>
+                <button
+                  onClick={() => setShowScheduleModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleScheduleSubmit} className="space-y-4">
+                {/* Vehicle Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Loại xe *
+                  </label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="vehicleType"
+                        value="car"
+                        checked={scheduleForm.vehicleType === 'car'}
+                        onChange={(e) => setScheduleForm({...scheduleForm, vehicleType: e.target.value, vehicleId: ''})}
+                        className="mr-2"
+                      />
+                      <span>Ô tô điện</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="vehicleType"
+                        value="motorbike"
+                        checked={scheduleForm.vehicleType === 'motorbike'}
+                        onChange={(e) => setScheduleForm({...scheduleForm, vehicleType: e.target.value, vehicleId: ''})}
+                        className="mr-2"
+                      />
+                      <span>Xe máy điện</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Vehicle Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chọn xe *
+                  </label>
+                  <select
+                    required
+                    value={scheduleForm.vehicleId}
+                    onChange={(e) => setScheduleForm({...scheduleForm, vehicleId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Chọn xe</option>
+                    {scheduleForm.vehicleType === 'car' 
+                      ? mockVehicles.map(vehicle => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {vehicle.model} - {vehicle.version}
+                          </option>
+                        ))
+                      : mockMotorbikes.map(vehicle => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {vehicle.model} - {vehicle.version}
+                          </option>
+                        ))
+                    }
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowScheduleModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Tiếp tục
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

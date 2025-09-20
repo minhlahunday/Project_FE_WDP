@@ -1,22 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Car, Battery, Zap, Clock, Eye, ShoppingCart, X } from 'lucide-react';
-import { mockVehicles } from '../../data/mockData';
-import { Vehicle } from '../../types';
+import { Bike, Battery, Zap, Clock, Eye, ShoppingCart, X } from 'lucide-react';
+import { mockMotorbikes } from '../../../data/mockData';
+import { Vehicle } from '../../../types';
 
-export const CarProduct: React.FC = () => {
+export const Motorbike: React.FC = () => {
   const navigate = useNavigate();
   const compareTableRef = useRef<HTMLDivElement>(null);
   const [selectedFilters, setSelectedFilters] = useState({
     all: true,
-    vf7: false,
-    vf8: false,
-    vf9: false,
-    vf6: false
+    theon: false,
+    klaraS: false,
+    feliz: false,
+    evo200: false
   });
-  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>(mockVehicles);
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>(mockMotorbikes);
   const [compareMode, setCompareMode] = useState(false);
   const [compareList, setCompareList] = useState<Vehicle[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -55,23 +56,23 @@ export const CarProduct: React.FC = () => {
   };
 
   const handleTestDrive = (vehicleId: string) => {
-    navigate(`/portal/test-drive?vehicleId=${vehicleId}`);
+    navigate(`/portal/motorbike-schedule?vehicleId=${vehicleId}`);
   };
 
   const handleDeposit = (vehicleId: string) => {
-    navigate(`/portal/deposit?vehicleId=${vehicleId}`);
+    navigate(`/portal/motorbike-deposit?vehicleId=${vehicleId}`);
   };
 
   const handleFilterChange = (filterType: string) => {
     if (filterType === 'all') {
       setSelectedFilters({
         all: true,
-        vf7: false,
-        vf8: false,
-        vf9: false,
-        vf6: false
+        theon: false,
+        klaraS: false,
+        feliz: false,
+        evo200: false
       });
-      setFilteredVehicles(mockVehicles);
+      setFilteredVehicles(mockMotorbikes);
     } else {
       const newFilters = {
         ...selectedFilters,
@@ -81,14 +82,25 @@ export const CarProduct: React.FC = () => {
       setSelectedFilters(newFilters);
 
       // Filter vehicles based on selected filters
-      let filtered = mockVehicles;
+      let filtered = mockMotorbikes;
       const activeFilters = Object.entries(newFilters)
         .filter(([key, value]) => value && key !== 'all')
-        .map(([key]) => key.toUpperCase());
+        .map(([key]) => {
+          // Map filter keys to actual model names
+          switch(key) {
+            case 'theon': return 'Theon';
+            case 'klaraS': return 'Klara S';
+            case 'feliz': return 'Feliz';
+            case 'evo200': return 'Evo200';
+            default: return '';
+          }
+        });
 
       if (activeFilters.length > 0) {
-        filtered = mockVehicles.filter(vehicle =>
-          activeFilters.some(filter => vehicle.model.includes(filter.replace('VF', 'VF ')))
+        filtered = mockMotorbikes.filter(vehicle =>
+          activeFilters.some(filter => 
+            vehicle.model.toLowerCase().includes(filter.toLowerCase())
+          )
         );
       }
       setFilteredVehicles(filtered);
@@ -98,12 +110,12 @@ export const CarProduct: React.FC = () => {
   const resetFilters = () => {
     setSelectedFilters({
       all: true,
-      vf7: false,
-      vf8: false,
-      vf9: false,
-      vf6: false
+      theon: false,
+      klaraS: false,
+      feliz: false,
+      evo200: false
     });
-    setFilteredVehicles(mockVehicles);
+    setFilteredVehicles(mockMotorbikes);
   };
 
   return (
@@ -117,7 +129,7 @@ export const CarProduct: React.FC = () => {
           >
             ← Trở lại
           </button>
-          <h1 className="text-4xl font-light text-gray-900">Tổng quan mẫu xe</h1>
+          <h1 className="text-4xl font-light text-gray-900">Xe máy điện VinFast</h1>
         </div>
       </div>
 
@@ -136,43 +148,43 @@ export const CarProduct: React.FC = () => {
                     onChange={() => handleFilterChange('all')}
                     className="mr-3"
                   />
-                  <span className="text-gray-700">Tất cả ({mockVehicles.length})</span>
+                  <span className="text-gray-700">Tất cả ({mockMotorbikes.length})</span>
                 </label>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedFilters.vf7}
-                    onChange={() => handleFilterChange('vf7')}
+                    checked={selectedFilters.theon}
+                    onChange={() => handleFilterChange('theon')}
                     className="mr-3"
                   />
-                  <span className="text-gray-700">VF7 (1)</span>
+                  <span className="text-gray-700">Theon (1)</span>
                 </label>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedFilters.vf8}
-                    onChange={() => handleFilterChange('vf8')}
+                    checked={selectedFilters.klaraS}
+                    onChange={() => handleFilterChange('klaraS')}
                     className="mr-3"
                   />
-                  <span className="text-gray-700">VF8 (1)</span>
+                  <span className="text-gray-700">Klara S (1)</span>
                 </label>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedFilters.vf9}
-                    onChange={() => handleFilterChange('vf9')}
+                    checked={selectedFilters.feliz}
+                    onChange={() => handleFilterChange('feliz')}
                     className="mr-3"
                   />
-                  <span className="text-gray-700">VF9 (1)</span>
+                  <span className="text-gray-700">Feliz (1)</span>
                 </label>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedFilters.vf6}
-                    onChange={() => handleFilterChange('vf6')}
+                    checked={selectedFilters.evo200}
+                    onChange={() => handleFilterChange('evo200')}
                     className="mr-3"
                   />
-                  <span className="text-gray-700">VF6 (1)</span>
+                  <span className="text-gray-700">Evo 200 (1)</span>
                 </label>
               </div>
               
@@ -201,7 +213,7 @@ export const CarProduct: React.FC = () => {
                 )}
                 {compareList.length > 1 && (
                   <button
-                    onClick={() => setCompareMode(false)}
+                    onClick={() => setShowCompareModal(true)}
                     className="w-full bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800"
                   >
                     So sánh ({compareList.length})
@@ -248,7 +260,7 @@ export const CarProduct: React.FC = () => {
                             : 'bg-white text-gray-600 hover:bg-blue-50'
                         } shadow-md`}
                       >
-                        <Car className="h-4 w-4" />
+                        <Bike className="h-4 w-4" />
                       </button>
                     </div>
                   )}
@@ -280,14 +292,14 @@ export const CarProduct: React.FC = () => {
                         <span>{vehicle.chargingTime}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Car className="h-4 w-4 text-gray-500" />
+                        <Bike className="h-4 w-4 text-gray-500" />
                         <span>{vehicle.stock} xe</span>
                       </div>
                     </div>
 
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => navigate(`/portal/car-detail/${vehicle.id}`)}
+                        onClick={() => navigate(`/portal/motorbike-detail/${vehicle.id}`)}
                         className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
                       >
                         <Eye className="h-4 w-4" />
@@ -308,108 +320,116 @@ export const CarProduct: React.FC = () => {
           </div>
         </div>
 
-        {/* Professional Comparison Table */}
-        {!compareMode && compareList.length > 1 && (
-          <div ref={compareTableRef} className="mt-12 bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">So sánh chi tiết</h2>
-                <button
-                  onClick={clearCompare}
-                  className="text-white hover:text-gray-200"
-                >
-                  <X className="h-6 w-6" />
-                </button>
+        {/* Professional Comparison Table - Modal */}
+        {showCompareModal && compareList.length > 1 && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 sticky top-0">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-white">So sánh chi tiết</h2>
+                  <button
+                    onClick={() => setShowCompareModal(false)}
+                    className="text-white hover:text-gray-200"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left p-6 font-semibold text-gray-900 border-b">Thông số</th>
-                    {compareList.map(vehicle => (
-                      <th key={vehicle.id} className="text-center p-6 font-semibold text-gray-900 border-b min-w-[200px]">
-                        {vehicle.model}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Hình ảnh</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center">
-                        <img src={vehicle.images[0]} alt={vehicle.model} className="w-24 h-18 object-cover mx-auto rounded-lg shadow-sm" />
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Giá bán</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center font-bold text-green-600 text-lg">
-                        {formatPrice(vehicle.price)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Phiên bản</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center text-gray-700">{vehicle.version}</td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Màu sắc</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center text-gray-700">{vehicle.color}</td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Tầm hoạt động</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center text-blue-600 font-semibold">{vehicle.range} km</td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Tốc độ tối đa</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center text-yellow-600 font-semibold">{vehicle.maxSpeed} km/h</td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Thời gian sạc</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center text-red-600 font-semibold">{vehicle.chargingTime}</td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="p-6 font-medium text-gray-900">Tồn kho</td>
-                    {compareList.map(vehicle => (
-                      <td key={vehicle.id} className="p-6 text-center text-gray-600">{vehicle.stock} xe</td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="bg-gray-50 p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {compareList.map(vehicle => (
-                  <div key={vehicle.id} className="flex space-x-2">
-                    <button
-                      onClick={() => navigate(`/portal/car-detail/${vehicle.id}`)}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded font-medium"
-                    >
-                      Xem {vehicle.model}
-                    </button>
-                    <button
-                      onClick={() => handleDeposit(vehicle.id)}
-                      className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded font-medium"
-                    >
-                      Đặt cọc
-                    </button>
-                  </div>
-                ))}
+              
+              <div className="overflow-x-auto p-6">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left p-6 font-semibold text-gray-900 border-b">Thông số</th>
+                      {compareList.map(vehicle => (
+                        <th key={vehicle.id} className="text-center p-6 font-semibold text-gray-900 border-b min-w-[200px]">
+                          {vehicle.model}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Hình ảnh</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center">
+                          <img src={vehicle.images[0]} alt={vehicle.model} className="w-24 h-18 object-cover mx-auto rounded-lg shadow-sm" />
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Giá bán</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center font-bold text-green-600 text-lg">
+                          {formatPrice(vehicle.price)}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Phiên bản</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center text-gray-700">{vehicle.version}</td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Màu sắc</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center text-gray-700">{vehicle.color}</td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Tầm hoạt động</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center text-blue-600 font-semibold">{vehicle.range} km</td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Tốc độ tối đa</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center text-yellow-600 font-semibold">{vehicle.maxSpeed} km/h</td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Thời gian sạc</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center text-red-600 font-semibold">{vehicle.chargingTime}</td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="p-6 font-medium text-gray-900">Tồn kho</td>
+                      {compareList.map(vehicle => (
+                        <td key={vehicle.id} className="p-6 text-center text-gray-600">{vehicle.stock} xe</td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="bg-gray-50 p-6 sticky bottom-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {compareList.map(vehicle => (
+                    <div key={vehicle.id} className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setShowCompareModal(false);
+                          navigate(`/portal/motorbike-detail/${vehicle.id}`);
+                        }}
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded font-medium"
+                      >
+                        Xem {vehicle.model}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCompareModal(false);
+                          handleDeposit(vehicle.id);
+                        }}
+                        className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded font-medium"
+                      >
+                        Đặt cọc
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
