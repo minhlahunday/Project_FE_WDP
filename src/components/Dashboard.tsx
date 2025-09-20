@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from './common/Header';
 import { Sidebar } from './common/Sidebar';
@@ -17,6 +17,7 @@ export const Dashboard: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [scrollY, setScrollY] = useState(0);
+  const sidebarHoverTimeout = useRef<NodeJS.Timeout>();
 
   // Track scroll position for background color changes
   useEffect(() => {
@@ -72,6 +73,19 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const handleSidebarOpen = () => {
+    if (sidebarHoverTimeout.current) {
+      clearTimeout(sidebarHoverTimeout.current);
+    }
+    setIsSidebarOpen(true);
+  };
+
+  const handleSidebarClose = () => {
+    sidebarHoverTimeout.current = setTimeout(() => {
+      setIsSidebarOpen(false);
+    }, 300); // Thêm độ trễ để người dùng có thể di chuyển chuột vào sidebar
+  };
+
   const renderContent = () => {
     // For EVM Staff and Admin
     if (user?.role === 'evm_staff' || user?.role === 'admin') {
@@ -120,11 +134,15 @@ export const Dashboard: React.FC = () => {
     <div className={`flex min-h-screen transition-colors duration-1000 ${getBackgroundColor()}`}>
       <Sidebar
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={(section) => {
+          setActiveSection(section);
+          setIsSidebarOpen(false); // Tự động đóng sidebar khi chọn mục
+        }}
         isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
+        onClose={handleSidebarClose}
+        onOpen={handleSidebarOpen}
       />
-      <div className="flex-1 relative">
+      <div className={`flex-1 relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'}`}>
         {/* Hero Video Section - Full screen */}
         {activeSection === 'vehicles' && (
           <>
@@ -157,8 +175,9 @@ export const Dashboard: React.FC = () => {
                 <div className="bg-gradient-to-b from-black/50 via-black/20 to-transparent h-32" />
                 <div className="absolute top-0 left-0 right-0">
                   <Header 
-                    onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                    onMenuClick={() => {}} // Giữ lại để không gây lỗi, nhưng không có tác dụng
                     isTransparent={true}
+                    isSidebarOpen={isSidebarOpen}
                   />
                 </div>
               </div>
@@ -213,7 +232,7 @@ export const Dashboard: React.FC = () => {
 
         {/* Regular Header for other sections */}
         {activeSection !== 'vehicles' && (
-          <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+          <Header onMenuClick={() => {}} isSidebarOpen={isSidebarOpen} /> // Giữ lại để không gây lỗi
         )}
 
         {/* Content for non-vehicle sections */}
