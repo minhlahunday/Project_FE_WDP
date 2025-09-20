@@ -17,10 +17,10 @@ import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit'
 import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
 import { AdminProductManagement } from './components/admin/AdminProductManagement';
 import { AdminDealerManagement } from './components/admin/AdminDealerManagement';
-import Inventory from './components/sections/Inventory';
-import { ProductManagement } from './components/sections/ProductManagement';
-import { Reports } from './components/sections/Reports';
-import { Forecasting } from './components/sections/Forecasting';
+import Inventory from './components/admin/Inventory';
+import { ProductManagement } from './components/admin/ProductManagement';
+import { Reports } from './components/admin/Reports';
+import { Forecasting } from './components/admin/Forecasting';
 
 function AppContent() {
   const { user, isLoading } = useAuth();

@@ -5,11 +5,11 @@ import { Sidebar } from './common/Sidebar';
 import { VehicleCatalog } from './sections/VehicleCatalog';
 import { SalesManagement } from './sections/SalesManagement';
 import { CustomerManagement } from './sections/CustomerManagement';
-import { Reports } from './sections/Reports';
-import { ProductManagement } from './sections/ProductManagement';
+import { Reports } from './admin/Reports';
+import { ProductManagement } from './admin/ProductManagement';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
-import { Forecasting } from './sections/Forecasting';
-import Inventory from './sections/Inventory';
+import { Forecasting } from './admin/Forecasting';
+import Inventory from './admin/Inventory';
 import { AdminProductManagement } from './admin/AdminProductManagement';
 import { AdminDealerManagement } from './admin/AdminDealerManagement';
 
