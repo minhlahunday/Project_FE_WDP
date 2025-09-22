@@ -22,7 +22,7 @@ import { ProductManagement } from './components/admin/ProductManagement';
 import { Reports } from './components/admin/Reports';
 import { Forecasting } from './components/admin/Forecasting';
 import { CarDeposit } from './components/pages/car/CarDeposit';
-import { StaffManagement } from './components/admin/StaffManagement';
+import { StaffManagement } from './components/pages/staff/StaffManagement';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
