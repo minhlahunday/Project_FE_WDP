@@ -1,18 +1,16 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 // Base API URL - change this to your actual API URL
-const API_BASE_URL = 'https://api.vinfast-dealer.example.com/v1';
+const API_BASE_URL = 'http://localhost:5000';
 
-// Create axios instance with default config
 const httpClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds
+  timeout: 10000, 
 });
 
-// Request interceptor for adding auth token
 httpClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -24,13 +22,10 @@ httpClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
 httpClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // Handle specific error cases
     if (error.response?.status === 401) {
-      // Unauthorized - clear local storage and redirect to login
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -40,7 +35,6 @@ httpClient.interceptors.response.use(
   }
 );
 
-// Generic request method with type parameters
 export const request = async<T = any>(
   config: AxiosRequestConfig
 ): Promise<T> => {

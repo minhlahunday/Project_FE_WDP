@@ -40,30 +40,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   ];
 
   const evmMenuItems = [
-    { id: 'vehicles', label: 'Danh mục xe', icon: Car, route: '/portal/car' },
     { id: 'product-management', label: 'Quản lý sản phẩm', icon: Package, route: '/admin/product-management' },
-    { id: 'inventory', label: 'Tồn kho', icon: Car, route: '/sections/inventory' },
+    { id: 'inventory', label: 'Quản lý tồn kho', icon: Car, route: '/admin/inventory' },
     { id: 'dealer-management', label: 'Quản lý đại lý', icon: Building2, route: '/admin/dealer-management' },
-    { id: 'pricing', label: 'Giá & Khuyến mãi', icon: CreditCard, route: '/sections/product-management' },
-    { id: 'analytics', label: 'Báo cáo & Phân tích', icon: BarChart3, route: '/sections/reports' },
-    { id: 'forecasting', label: 'Dự báo nhu cầu', icon: BarChart3, route: '/sections/forecasting' },
+    { id: 'pricing', label: 'Giá & Khuyến mãi', icon: CreditCard, route: '/admin/pricing' },
+    { id: 'analytics', label: 'Báo cáo & Phân tích', icon: BarChart3, route: '/admin/reports' },
+    { id: 'forecasting', label: 'Dự báo nhu cầu', icon: BarChart3, route: '/admin/forecasting' },
   ];
 
-  const menuItems = user?.role === 'evm_staff' || user?.role === 'admin' ? evmMenuItems : dealerMenuItems;
+  // Xác định menu items dựa trên vai trò
+  const getMenuItems = () => {
+    console.log('Current user role:', user?.role);
+    
+    if (user?.role === 'admin' || user?.role === 'evm_staff') {
+      return evmMenuItems;
+    } else {
+      return dealerMenuItems;
+    }
+  };
+
+  const menuItems = getMenuItems();
 
   const handleMenuItemClick = (sectionId: string) => {
     onSectionChange(sectionId);
     
     // Navigate to specific routes
-    const allMenuItems = [...dealerMenuItems, ...evmMenuItems];
-    const menuItem = allMenuItems.find(item => item.id === sectionId);
+    const currentMenuItems = getMenuItems();
+    const menuItem = currentMenuItems.find(item => item.id === sectionId);
     
     if (menuItem?.route) {
+      console.log('Navigating to:', menuItem.route);
       navigate(menuItem.route);
       return;
     }
     
     // Fallback navigation
+    console.log('Using fallback navigation for:', sectionId);
     switch (sectionId) {
       case 'vehicles':
         navigate('/portal/car');
@@ -77,10 +89,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       case 'staff-management':
         navigate('/portal/staff-management');
         break;
+      case 'product-management':
+        navigate('/admin/product-management');
+        break;
+      case 'dealer-management':
+        navigate('/admin/dealer-management');
+        break;
+      case 'inventory':
+        navigate('/admin/inventory');
+        break;
+      case 'pricing':
+        navigate('/admin/pricing');
+        break;
+      case 'analytics':
+        navigate('/admin/reports');
+        break;
       case 'forecasting':
-        navigate('/portal/forecasting');
+        navigate('/admin/forecasting');
         break;
       default:
+        console.warn('No route defined for section:', sectionId);
         break;
     }
   };
@@ -113,7 +141,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
               isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 lg:opacity-0'
             }`}>
               <h1 className="text-lg font-bold whitespace-nowrap">VinFast EVM</h1>
-              <p className="text-xs text-gray-400 whitespace-nowrap">Dealer Management</p>
+              <p className="text-xs text-gray-400 whitespace-nowrap">
+                {user?.role === 'admin' || user?.role === 'evm_staff' 
+                  ? 'Admin Panel'
+                  : 'Dealer Management'
+                }
+              </p>
             </div>
           </div>
         </div>
@@ -125,7 +158,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
             isOpen ? 'opacity-100' : 'opacity-0 lg:opacity-0'
           }`}>
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Menu
+              {user?.role === 'admin' || user?.role === 'evm_staff' 
+                ? 'Admin Menu'
+                : 'Portal Menu'
+              }
             </h2>
           </div>
 

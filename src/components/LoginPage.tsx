@@ -37,7 +37,14 @@ export function LoginPage() {
   // Redirect if user is already authenticated
   useEffect(() => {
     if (user) {
-      navigate('/portal/dashboard');
+      // Điều hướng dựa trên vai trò người dùng
+      if (user.role === 'admin' || user.role === 'evm_staff') {
+        navigate('/admin/product-management');
+      } else if (user.role === 'dealer_staff') {
+        navigate('/portal/car');
+      } else {
+        navigate('/portal/dashboard');
+      }
     }
   }, [user, navigate]);
 
@@ -67,7 +74,14 @@ export function LoginPage() {
         
         // Navigate to dashboard after a short delay
         setTimeout(() => {
-          navigate('/portal/dashboard');
+          // Điều hướng dựa trên vai trò người dùng
+          if (user?.role === 'admin' || user?.role === 'evm_staff') {
+            navigate('/admin/product-management');
+          } else if (user?.role === 'dealer_staff') {
+            navigate('/portal/car');
+          } else {
+            navigate('/portal/dashboard');
+          }
         }, 1000);
       } else {
         // Handle failed login
@@ -92,12 +106,7 @@ export function LoginPage() {
     }
   }, []);
 
-  const demoAccounts = [
-    { email: 'dealer.staff@example.com', role: 'Nhân viên đại lý' },
-    { email: 'dealer.manager@example.com', role: 'Quản lý đại lý' },
-    { email: 'evm.staff@example.com', role: 'Nhân viên hãng' },
-    { email: 'admin@example.com', role: 'Quản trị viên' },
-  ];
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4">
@@ -228,35 +237,6 @@ export function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Demo Accounts */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Tài khoản demo:</h3>
-            <div className="grid grid-cols-1 gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
-              {demoAccounts.map((account, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setEmail(account.email);
-                    setPassword('password');
-                  }}
-                  className="flex justify-between items-center p-2 hover:bg-white rounded-md transition-colors text-sm group"
-                >
-                  <div>
-                    <div className="font-medium text-gray-900">{account.email}</div>
-                    <div className="text-gray-500 text-xs">{account.role}</div>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                    Dùng
-                  </div>
-                </button>
-              ))}
-              <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                Mật khẩu cho tất cả các tài khoản: <code className="bg-gray-200 px-2 py-0.5 rounded font-mono">password</code>
-              </p>
-            </div>
-          </div>
-          
           {/* Footer */}
           <div className="mt-6 text-center text-xs text-gray-500">
             <p>© 2025 VinFast EVM. Tất cả quyền được bảo lưu.</p>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types/index';
-import { mockLoginUser } from '../services/authService';
+import { loginUser } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +29,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        // Clear potentially corrupted data
         localStorage.removeItem('user');
         localStorage.removeItem('authToken');
       } finally {
@@ -45,16 +44,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthError(null);
     
     try {
-      // For production, use the real API call
-      // const response = await loginUser({ email, password });
-      
-      // Using mock implementation for development
-      const response = await mockLoginUser({ email, password });
-      
-      setUser(response.user);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      localStorage.setItem('authToken', response.token);
-      return true;
+  const response = await loginUser({ email, password });
+  setUser(response.user);
+  localStorage.setItem('user', JSON.stringify(response.user));
+  localStorage.setItem('authToken', response.token);
+  return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
       setAuthError(errorMessage);

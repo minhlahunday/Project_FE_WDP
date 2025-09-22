@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Footer } from '../common/Footer';
 import { Sidebar } from '../common/Sidebar';
 import { Header } from '../common/Header';
 
@@ -42,8 +41,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </main>
       </div>
-      
-      <Footer />
     </div>
   );
 };
