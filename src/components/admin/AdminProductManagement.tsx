@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Car, Bike, Package, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { mockVehicles, mockMotorbikes } from '../../data/mockData';
-import { Header } from '../common/Header';
+import { AdminLayout } from './AdminLayout';
 
 export const AdminProductManagement: React.FC = () => {
   const { user } = useAuth();
@@ -29,14 +29,7 @@ export const AdminProductManagement: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header 
-        onMenuClick={() => navigate('/')}
-        isSidebarOpen={false}
-      />
-      
-      <div className="pt-[73px]">
+    <AdminLayout activeSection="product-management">
         {/* Content */}
         <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-6 py-6">
@@ -230,7 +223,6 @@ export const AdminProductManagement: React.FC = () => {
           </div>
         )}
       </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 };

@@ -2,17 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart3, TrendingUp, Users, DollarSign, Download, FileText } from 'lucide-react';
 import { mockCustomers } from '../../data/mockData';
-import { Header } from '../common/Header';
-
-// Define Customer interface to match the data structure
-interface Customer {
-  name: string;
-  phone: string;
-  email: string;
-  totalSpent: number;
-  debt: number;
-  lastPurchaseDate: string;
-}
+import { AdminLayout } from './AdminLayout';
 
 // Báo cáo Doanh số
 const SalesReport = ({ formatPrice, salesData, hoveredBar, setHoveredBar }: any) => {
@@ -115,14 +105,16 @@ const DebtReport = ({ formatPrice }: any) => (
           </tr>
         </thead>
         <tbody>
-          {mockCustomers.map((customer, index) => (
+          {mockCustomers
+            .filter(customer => customer.debt !== undefined)
+            .map((customer, index) => (
             <tr key={index} className="border-b hover:bg-gray-50">
               <td className="p-4 font-medium">{customer.name}</td>
               <td className="p-4">{customer.phone}</td>
-              <td className="p-4">{formatPrice(customer.totalSpent)}</td>
-              <td className="p-4 text-red-600 font-medium">{formatPrice(customer.debt)}</td>
+              <td className="p-4">{formatPrice(customer.totalSpent || 0)}</td>
+              <td className="p-4 text-red-600 font-medium">{formatPrice(customer.debt || 0)}</td>
               <td className="p-4">
-                {customer.debt > 0 ? (
+                {(customer.debt || 0) > 0 ? (
                   <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
                     Cần thu
                   </span>
@@ -156,14 +148,17 @@ const CustomerReport = ({ formatPrice }: any) => (
           </tr>
         </thead>
         <tbody>
-          {mockCustomers.sort((a, b) => b.totalSpent - a.totalSpent).map((customer, index) => (
+          {mockCustomers
+            .filter(customer => customer.totalSpent !== undefined)
+            .sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0))
+            .map((customer, index) => (
             <tr key={index} className="border-b hover:bg-gray-50">
               <td className="p-4 font-medium">{customer.name}</td>
               <td className="p-4">{customer.email}</td>
               <td className="p-4">{customer.lastPurchaseDate}</td>
-              <td className="p-4 text-green-600 font-medium">{formatPrice(customer.totalSpent)}</td>
+              <td className="p-4 text-green-600 font-medium">{formatPrice(customer.totalSpent || 0)}</td>
               <td className="p-4">
-                {customer.totalSpent > 1000000000 ? (
+                {(customer.totalSpent || 0) > 1000000000 ? (
                   <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
                     VIP
                   </span>
@@ -240,15 +235,8 @@ export const Reports: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header 
-        onMenuClick={() => navigate('/')}
-        isSidebarOpen={false}
-      />
-      
-      <div className="pt-[73px] p-6">
-        <div className="flex justify-between items-center mb-6">
+    <AdminLayout activeSection="analytics">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Báo cáo & Phân tích</h1>
         <div className="flex items-center space-x-4">
           <select 
@@ -341,7 +329,6 @@ export const Reports: React.FC = () => {
       <div>
         {renderReportContent()}
       </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 };

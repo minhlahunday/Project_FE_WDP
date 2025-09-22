@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Eye, Trash2, Package, DollarSign, Palette, Settings, Bike } from 'lucide-react';
 import { mockVehicles, mockPromotions, mockMotorbikes } from '../../data/mockData';
-import { Header } from '../common/Header';
+import { AdminLayout } from './AdminLayout';
 
 export const ProductManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -25,8 +25,7 @@ export const ProductManagement: React.FC = () => {
   ];
 
   return (
-    <div className="pt-[73px]">
-      <Header onMenuClick={() => {}} />
+    <AdminLayout activeSection="pricing">
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
@@ -1074,6 +1073,6 @@ export const ProductManagement: React.FC = () => {
         </div>
       )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };

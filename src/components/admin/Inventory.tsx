@@ -22,7 +22,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Header } from '../common/Header';
+import { AdminLayout } from './AdminLayout';
 
 // Định nghĩa kiểu dữ liệu
 export interface InventoryHistory {
@@ -350,14 +350,8 @@ export const Inventory: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header 
-        onMenuClick={() => navigate('/')}
-        isSidebarOpen={false}
-      />
-      
-      <div className="pt-[73px] p-6">
+    <AdminLayout activeSection="inventory">
+      <div className="p-6">
         {/* Thông báo */}
         {notification && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${
@@ -666,7 +660,7 @@ export const Inventory: React.FC = () => {
         />
       )}
     </div>
-    </div>
+    </AdminLayout>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Users, MapPin, Phone, Mail, Plus, Edit, Trash2, Eye, Star, TrendingUp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Header } from '../common/Header';
+import { AdminLayout } from './AdminLayout';
 
 interface Dealer {
   id: string;
@@ -130,16 +130,8 @@ export const AdminDealerManagement: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header 
-        onMenuClick={() => navigate('/')}
-        isSidebarOpen={false}
-      />
-      
-      <div className="pt-[73px]">
-        {/* Content */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
+    <AdminLayout activeSection="dealer-management">
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -316,7 +308,6 @@ export const AdminDealerManagement: React.FC = () => {
           </div>
         )}
       </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 };
