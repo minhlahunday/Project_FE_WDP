@@ -1,90 +1,78 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '../types';
+import { User } from '../types/index';
+import { mockLoginUser } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  authError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data
-const mockUsers: (User & { password: string })[] = [
-  {
-    id: '1',
-    email: 'dealer.staff@example.com',
-    password: 'password',
-    name: 'Nguyễn Văn A',
-    role: 'dealer_staff',
-    dealerId: 'dealer1',
-    dealerName: 'Đại lý Hà Nội'
-  },
-  {
-    id: '2',
-    email: 'dealer.manager@example.com',
-    password: 'password',
-    name: 'Trần Thị B',
-    role: 'dealer_manager',
-    dealerId: 'dealer1',
-    dealerName: 'Đại lý Hà Nội'
-  },
-  {
-    id: '3',
-    email: 'evm.staff@example.com',
-    password: 'password',
-    name: 'Lê Văn C',
-    role: 'evm_staff'
-  },
-  {
-    id: '4',
-    email: 'admin@example.com',
-    password: 'password',
-    name: 'Admin',
-    role: 'admin'
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    const initializeAuth = async () => {
+      setIsLoading(true);
+      try {
+        const savedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('authToken');
+        
+        if (savedUser && token) {
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        // Clear potentially corrupted data
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
+    setAuthError(null);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      setIsLoading(false);
+    try {
+      // For production, use the real API call
+      // const response = await loginUser({ email, password });
+      
+      // Using mock implementation for development
+      const response = await mockLoginUser({ email, password });
+      
+      setUser(response.user);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('authToken', response.token);
       return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
+      setAuthError(errorMessage);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
+    setAuthError(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, authError }}>
       {children}
     </AuthContext.Provider>
   );

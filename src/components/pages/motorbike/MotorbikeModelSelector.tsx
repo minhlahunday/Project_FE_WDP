@@ -59,6 +59,7 @@ export const MotorbikeModelSelector: React.FC = () => {
         onSectionChange={(section) => setActiveSection(section)}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onOpen={() => setIsSidebarOpen(true)}
       />
 
       <div className={`pt-[73px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
