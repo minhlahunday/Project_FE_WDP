@@ -21,6 +21,7 @@ import Inventory from './components/admin/Inventory';
 import { ProductManagement } from './components/admin/ProductManagement';
 import { Reports } from './components/admin/Reports';
 import { Forecasting } from './components/admin/Forecasting';
+import { CarDeposit } from './components/pages/car/CarDeposit';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -39,6 +40,7 @@ function AppContent() {
 
   return (
     <Routes>
+      {/* Portal routes */}
       <Route path="/portal/car-detail/:id" element={<CarDetail />} />
       <Route path="/portal/car-product" element={<CarProduct />} />
       <Route path="/portal/compare-models" element={<CompareModels />} />
@@ -50,12 +52,26 @@ function AppContent() {
       <Route path="/portal/motorbike-model-selector" element={<MotorbikeModelSelector />} />
       <Route path="/portal/motorbike-deposit" element={<MotorbikeDeposit />} />
       <Route path="/portal/motorbike-schedule" element={<MotorbikeSchedule />} />
+      <Route path="/portal/deposit" element={<CarDeposit />} />
+      
+      {/* Admin routes */}
       <Route path="/admin/product-management" element={<AdminProductManagement />} />
       <Route path="/admin/dealer-management" element={<AdminDealerManagement />} />
+      
+      {/* Section routes */}
       <Route path="/sections/inventory" element={<Inventory />} />
       <Route path="/sections/product-management" element={<ProductManagement />} />
       <Route path="/sections/reports" element={<Reports />} />
-       <Route path="/sections/forecasting" element={<Forecasting />} />
+      <Route path="/sections/forecasting" element={<Forecasting />} />
+      <Route path="/sections/sales" element={<Dashboard />} />
+      <Route path="/sections/customers" element={<Dashboard />} />
+      <Route path="/sections/orders" element={<Dashboard />} />
+      <Route path="/sections/payments" element={<Dashboard />} />
+      <Route path="/sections/feedback" element={<Dashboard />} />
+      <Route path="/sections/pricing" element={<Dashboard />} />
+      <Route path="/car-deposit" element={<CarDeposit />} />
+      
+      {/* Default route */}
       <Route path="*" element={<Dashboard />} />
     </Routes>
   );
@@ -63,13 +79,13 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <Layout>
           <AppContent />
         </Layout>
-      </AuthProvider>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 

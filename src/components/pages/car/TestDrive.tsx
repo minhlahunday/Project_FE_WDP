@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { mockVehicles, mockDealers } from '../../../data/mockData';
 import { Vehicle } from '../../../types';
 import { Calendar, Clock, MapPin, Phone, Mail, AlertCircle } from 'lucide-react';
+import { Header } from '../../common/Header';
+import { Sidebar } from '../../common/Sidebar';
 
 export const TestDrive: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +28,8 @@ export const TestDrive: React.FC = () => {
     pickupLocation: 'dealer', // dealer hoặc home
     agreement: false
   });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('test-drives');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -183,328 +187,345 @@ export const TestDrive: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <button 
-            onClick={() => navigate(-1)}
-            className="text-gray-600 hover:text-gray-900 mb-4"
-          >
-            ← Quay lại
-          </button>
-          <h1 className="text-4xl font-bold text-gray-900">Đặt lịch lái thử</h1>
-        </div>
-      </div>
+      <Header 
+        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        isSidebarOpen={isSidebarOpen}
+      />
+      
+      {/* Sidebar */}
+      <Sidebar
+        activeSection={activeSection}
+        onSectionChange={(section) => setActiveSection(section)}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Vehicle Info */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Thông tin xe</h2>
-            
-            <div className="mb-6">
-              <img
-                src={selectedVehicle.images[0]}
-                alt={selectedVehicle.model}
-                className="w-full h-64 object-cover rounded-xl"
-              />
-            </div>
-
-            <h3 className="text-3xl font-bold text-gray-900 mb-2">{selectedVehicle.model}</h3>
-            <p className="text-lg text-gray-600 mb-2">{selectedVehicle.version} - {selectedVehicle.color}</p>
-            <p className="text-3xl font-bold text-green-600 mb-6">{formatPrice(selectedVehicle.price)}</p>
-
-            {/* Specifications */}
-            <div className="space-y-4">
-              <div className="flex justify-between py-3 border-b border-gray-200">
-                <span className="font-medium text-gray-700">Tầm hoạt động</span>
-                <span className="text-gray-900">{selectedVehicle.range} km</span>
-              </div>
-              <div className="flex justify-between py-3 border-b border-gray-200">
-                <span className="font-medium text-gray-700">Tốc độ tối đa</span>
-                <span className="text-gray-900">{selectedVehicle.maxSpeed} km/h</span>
-              </div>
-              <div className="flex justify-between py-3 border-b border-gray-200">
-                <span className="font-medium text-gray-700">Thời gian sạc</span>
-                <span className="text-gray-900">{selectedVehicle.chargingTime}</span>
-              </div>
-              <div className="flex justify-between py-3">
-                <span className="font-medium text-gray-700">Tồn kho</span>
-                <span className="text-gray-900">{selectedVehicle.stock} xe</span>
-              </div>
-            </div>
+      <div className={`pt-[73px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Back Button */}
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <button 
+              onClick={() => navigate(-1)}
+              className="text-gray-600 hover:text-gray-900 flex items-center space-x-2"
+            >
+              <span>← Quay lại</span>
+            </button>
           </div>
+        </div>
 
-          {/* Updated Booking Form */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Thông tin đặt lịch</h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium text-gray-900">Thông tin cá nhân</h3>
-                
-                <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Họ và tên *
-                  </label>
-                  <input
-                    type="text"
-                    id="fullName"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                      formErrors.fullName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Nhập họ và tên"
-                  />
-                  {formErrors.fullName && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.fullName}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="identityCard" className="block text-sm font-medium text-gray-700 mb-2">
-                    CMND/CCCD *
-                  </label>
-                  <input
-                    type="text"
-                    id="identityCard"
-                    name="identityCard"
-                    value={formData.identityCard}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                      formErrors.identityCard ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Nhập số CMND/CCCD"
-                  />
-                  {formErrors.identityCard && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.identityCard}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Số điện thoại *
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    required
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="Nhập số điện thoại"
-                  />
-                  {formErrors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="Nhập email"
-                  />
-                  {formErrors.email && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
-                  )}
-                </div>
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <h1 className="text-4xl font-bold text-gray-900 mb-8">Đặt lịch lái thử</h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Vehicle Info */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Thông tin xe</h2>
+              
+              <div className="mb-6">
+                <img
+                  src={selectedVehicle.images[0]}
+                  alt={selectedVehicle.model}
+                  className="w-full h-64 object-cover rounded-xl"
+                />
               </div>
 
-              {/* Date and Time Selection */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium text-gray-900">Thời gian lái thử</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="preferredDate" className="block text-sm font-medium text-gray-700 mb-2">
-                      Ngày mong muốn *
-                    </label>
-                    <input
-                      type="date"
-                      id="preferredDate"
-                      name="preferredDate"
-                      value={formData.preferredDate}
-                      onChange={handleInputChange}
-                      min={new Date().toISOString().split('T')[0]}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        formErrors.preferredDate ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {formErrors.preferredDate && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.preferredDate}</p>
-                    )}
-                  </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-2">{selectedVehicle.model}</h3>
+              <p className="text-lg text-gray-600 mb-2">{selectedVehicle.version} - {selectedVehicle.color}</p>
+              <p className="text-3xl font-bold text-green-600 mb-6">{formatPrice(selectedVehicle.price)}</p>
 
-                  <div>
-                    <label htmlFor="preferredTime" className="block text-sm font-medium text-gray-700 mb-2">
-                      Giờ mong muốn *
-                    </label>
-                    <select
-                      id="preferredTime"
-                      name="preferredTime"
-                      value={formData.preferredTime}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        formErrors.preferredTime ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    >
-                      <option value="">Chọn giờ</option>
-                      <option value="09:00">09:00</option>
-                      <option value="10:00">10:00</option>
-                      <option value="11:00">11:00</option>
-                      <option value="14:00">14:00</option>
-                      <option value="15:00">15:00</option>
-                      <option value="16:00">16:00</option>
-                    </select>
-                    {formErrors.preferredTime && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.preferredTime}</p>
-                    )}
-                  </div>
+              {/* Specifications */}
+              <div className="space-y-4">
+                <div className="flex justify-between py-3 border-b border-gray-200">
+                  <span className="font-medium text-gray-700">Tầm hoạt động</span>
+                  <span className="text-gray-900">{selectedVehicle.range} km</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-200">
+                  <span className="font-medium text-gray-700">Tốc độ tối đa</span>
+                  <span className="text-gray-900">{selectedVehicle.maxSpeed} km/h</span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-gray-200">
+                  <span className="font-medium text-gray-700">Thời gian sạc</span>
+                  <span className="text-gray-900">{selectedVehicle.chargingTime}</span>
+                </div>
+                <div className="flex justify-between py-3">
+                  <span className="font-medium text-gray-700">Tồn kho</span>
+                  <span className="text-gray-900">{selectedVehicle.stock} xe</span>
                 </div>
               </div>
+            </div>
 
-              {/* Test Drive Location */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium text-gray-900">Địa điểm lái thử</h3>
-                
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="pickupLocation"
-                      value="dealer"
-                      checked={formData.pickupLocation === 'dealer'}
-                      onChange={handleInputChange}
-                      className="mr-2"
-                    />
-                    <span>Tại đại lý</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="pickupLocation"
-                      value="home"
-                      checked={formData.pickupLocation === 'home'}
-                      onChange={handleInputChange}
-                      className="mr-2"
-                    />
-                    <span>Tại nhà</span>
-                  </label>
-                </div>
-
-                {formData.pickupLocation === 'dealer' ? (
+            {/* Updated Booking Form */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Thông tin đặt lịch</h2>
+              
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Personal Information */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium text-gray-900">Thông tin cá nhân</h3>
+                  
                   <div>
-                    <label htmlFor="dealerId" className="block text-sm font-medium text-gray-700 mb-2">
-                      Chọn đại lý *
-                    </label>
-                    <select
-                      id="dealerId"
-                      name="dealerId"
-                      value={formData.dealerId}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        formErrors.dealerId ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    >
-                      <option value="">Chọn đại lý</option>
-                      {mockDealers.map(dealer => (
-                        <option key={dealer.id} value={dealer.id}>
-                          {dealer.name} - {dealer.address}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.dealerId && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.dealerId}</p>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                      Địa chỉ *
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Họ và tên *
                     </label>
                     <input
                       type="text"
-                      id="address"
-                      name="address"
-                      value={formData.address}
+                      id="fullName"
+                      name="fullName"
+                      value={formData.fullName}
                       onChange={handleInputChange}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        formErrors.address ? 'border-red-500' : 'border-gray-300'
+                        formErrors.fullName ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Nhập địa chỉ của bạn"
+                      placeholder="Nhập họ và tên"
                     />
-                    {formErrors.address && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.address}</p>
+                    {formErrors.fullName && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.fullName}</p>
                     )}
                   </div>
+
+                  <div>
+                    <label htmlFor="identityCard" className="block text-sm font-medium text-gray-700 mb-2">
+                      CMND/CCCD *
+                    </label>
+                    <input
+                      type="text"
+                      id="identityCard"
+                      name="identityCard"
+                      value={formData.identityCard}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                        formErrors.identityCard ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Nhập số CMND/CCCD"
+                    />
+                    {formErrors.identityCard && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.identityCard}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                      Số điện thoại *
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      required
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="Nhập số điện thoại"
+                    />
+                    {formErrors.phone && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="Nhập email"
+                    />
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Date and Time Selection */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium text-gray-900">Thời gian lái thử</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="preferredDate" className="block text-sm font-medium text-gray-700 mb-2">
+                        Ngày mong muốn *
+                      </label>
+                      <input
+                        type="date"
+                        id="preferredDate"
+                        name="preferredDate"
+                        value={formData.preferredDate}
+                        onChange={handleInputChange}
+                        min={new Date().toISOString().split('T')[0]}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                          formErrors.preferredDate ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {formErrors.preferredDate && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.preferredDate}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="preferredTime" className="block text-sm font-medium text-gray-700 mb-2">
+                        Giờ mong muốn *
+                      </label>
+                      <select
+                        id="preferredTime"
+                        name="preferredTime"
+                        value={formData.preferredTime}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                          formErrors.preferredTime ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">Chọn giờ</option>
+                        <option value="09:00">09:00</option>
+                        <option value="10:00">10:00</option>
+                        <option value="11:00">11:00</option>
+                        <option value="14:00">14:00</option>
+                        <option value="15:00">15:00</option>
+                        <option value="16:00">16:00</option>
+                      </select>
+                      {formErrors.preferredTime && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.preferredTime}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Test Drive Location */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium text-gray-900">Địa điểm lái thử</h3>
+                  
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="pickupLocation"
+                        value="dealer"
+                        checked={formData.pickupLocation === 'dealer'}
+                        onChange={handleInputChange}
+                        className="mr-2"
+                      />
+                      <span>Tại đại lý</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="pickupLocation"
+                        value="home"
+                        checked={formData.pickupLocation === 'home'}
+                        onChange={handleInputChange}
+                        className="mr-2"
+                      />
+                      <span>Tại nhà</span>
+                    </label>
+                  </div>
+
+                  {formData.pickupLocation === 'dealer' ? (
+                    <div>
+                      <label htmlFor="dealerId" className="block text-sm font-medium text-gray-700 mb-2">
+                        Chọn đại lý *
+                      </label>
+                      <select
+                        id="dealerId"
+                        name="dealerId"
+                        value={formData.dealerId}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                          formErrors.dealerId ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">Chọn đại lý</option>
+                        {mockDealers.map(dealer => (
+                          <option key={dealer.id} value={dealer.id}>
+                            {dealer.name} - {dealer.address}
+                          </option>
+                        ))}
+                      </select>
+                      {formErrors.dealerId && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.dealerId}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                        Địa chỉ *
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                          formErrors.address ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Nhập địa chỉ của bạn"
+                      />
+                      {formErrors.address && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.address}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Message Field */}
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                    Ghi chú (tùy chọn)
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={4}
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="Nhập ghi chú nếu có"
+                  />
+                </div>
+
+                {/* Agreement Checkbox */}
+                <div className="flex items-start">
+                  <input
+                    type="checkbox"
+                    id="agreement"
+                    name="agreement"
+                    checked={formData.agreement}
+                    onChange={(e) => setFormData(prev => ({ ...prev, agreement: e.target.checked }))
+                    }
+                    className="mt-1"
+                  />
+                  <label htmlFor="agreement" className="ml-2 text-sm text-gray-600">
+                    Tôi đồng ý với các điều khoản và điều kiện của VinFast *
+                  </label>
+                </div>
+                {formErrors.agreement && (
+                  <p className="text-sm text-red-600">{formErrors.agreement}</p>
                 )}
-              </div>
 
-              {/* Message Field */}
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú (tùy chọn)
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows={4}
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Nhập ghi chú nếu có"
-                />
-              </div>
-
-              {/* Agreement Checkbox */}
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="agreement"
-                  name="agreement"
-                  checked={formData.agreement}
-                  onChange={(e) => setFormData(prev => ({ ...prev, agreement: e.target.checked }))
-                  }
-                  className="mt-1"
-                />
-                <label htmlFor="agreement" className="ml-2 text-sm text-gray-600">
-                  Tôi đồng ý với các điều khoản và điều kiện của VinFast *
-                </label>
-              </div>
-              {formErrors.agreement && (
-                <p className="text-sm text-red-600">{formErrors.agreement}</p>
-              )}
-
-              {/* Submit Buttons */}
-              <div className="flex space-x-4">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Đang xử lý...' : 'Đặt lịch lái thử'}
-                </button>
-              </div>
-            </form>
+                {/* Submit Buttons */}
+                <div className="flex space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? 'Đang xử lý...' : 'Đặt lịch lái thử'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>

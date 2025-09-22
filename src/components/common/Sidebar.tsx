@@ -19,22 +19,22 @@ interface SidebarProps {
   onSectionChange: (section: string) => void;
   isOpen: boolean;
   onClose: () => void;
-  onOpen: () => void; // Thêm prop onOpen
+  onOpen: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange, isOpen, onClose, onOpen }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();  // Add this to use navigation
+  const navigate = useNavigate();
 
   const dealerMenuItems = [
-    { id: 'vehicles', label: 'Danh mục xe', icon: Car },
-    { id: 'sales', label: 'Quản lý bán hàng', icon: ShoppingCart },
-    { id: 'customers', label: 'Quản lý khách hàng', icon: Users },
-    { id: 'test-drives', label: 'Lịch lái thử', icon: Calendar },
-    { id: 'orders', label: 'Đơn hàng', icon: FileText },
-    { id: 'payments', label: 'Thanh toán', icon: CreditCard },
-    { id: 'feedback', label: 'Phản hồi', icon: MessageSquare },
-    { id: 'reports', label: 'Báo cáo', icon: BarChart3 },
+    { id: 'vehicles', label: 'Danh mục xe', icon: Car, route: '/portal/car' },
+    { id: 'sales', label: 'Quản lý bán hàng', icon: ShoppingCart, route: '/portal/sales' },
+    { id: 'customers', label: 'Quản lý khách hàng', icon: Users, route: '/portal/customers' },
+    { id: 'test-drives', label: 'Lịch lái thử', icon: Calendar, route: '/portal/test-drives' },
+    { id: 'orders', label: 'Đơn hàng', icon: FileText, route: '/portal/orders' },
+    { id: 'payments', label: 'Thanh toán', icon: CreditCard, route: '/portal/payments' },
+    { id: 'feedback', label: 'Phản hồi', icon: MessageSquare, route: '/portal/feedback' },
+    { id: 'reports', label: 'Báo cáo', icon: BarChart3, route: '/portal/reports' },
   ];
 
   const evmMenuItems = [
@@ -52,29 +52,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   const handleMenuItemClick = (sectionId: string) => {
     onSectionChange(sectionId);
     
-    // Navigate to specific routes for admin/EVM staff
-    if (user?.role === 'evm_staff' || user?.role === 'admin') {
-      const menuItem = evmMenuItems.find(item => item.id === sectionId);
-      if (menuItem?.route) {
-        navigate(menuItem.route);
-        return;
-      }
+    // Navigate to specific routes
+    const allMenuItems = [...dealerMenuItems, ...evmMenuItems];
+    const menuItem = allMenuItems.find(item => item.id === sectionId);
+    
+    if (menuItem?.route) {
+      navigate(menuItem.route);
+      return;
     }
     
-    // Handle specific section changes for dashboard
+    // Fallback navigation
     switch (sectionId) {
       case 'vehicles':
         navigate('/portal/car');
         break;
+      case 'sales':
+        navigate('/portal/sales');
+        break;
+      case 'customers':
+        navigate('/portal/customers');
+        break;
       case 'forecasting':
         navigate('/portal/forecasting');
-        break;
-      case 'product-management':
-      case 'inventory':
-      case 'dealer-management':
-      case 'pricing':
-      case 'analytics':
-        // These will be handled by the dashboard sections
         break;
       default:
         break;
@@ -83,62 +82,87 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
 
   return (
     <>
-      {/* Overlay for mobile */}
+      {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-20 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
       )}
       
-      {/* Sidebar */}
+      {/* Sidebar Container */}
       <aside 
-        className={`fixed top-0 left-0 bg-gray-900/80 backdrop-blur-sm text-white w-64 h-screen overflow-y-auto transform transition-transform duration-300 ease-in-out z-30 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:-translate-x-0 lg:w-16'
+        className={`fixed top-0 left-0 h-full bg-gray-900 text-white z-50 transition-all duration-300 ease-in-out shadow-2xl ${
+          isOpen 
+            ? 'w-64 translate-x-0' 
+            : 'w-16 -translate-x-full lg:translate-x-0'
         }`}
-        onMouseEnter={onOpen}
-        onMouseLeave={onClose}
+        onMouseEnter={() => !isOpen && onOpen()}
+        onMouseLeave={() => isOpen && onClose()}
       >
-        {/* Header Section */}
-        <div className="p-4 border-b border-white/10 h-[73px] flex items-center">
+        {/* Header */}
+        <div className="h-[73px] px-4 border-b border-gray-700 flex items-center bg-gray-800">
           <div className="flex items-center space-x-3 overflow-hidden">
             <Car className="h-8 w-8 text-green-500 flex-shrink-0" />
-            <div className={`transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'lg:opacity-0'}`}>
+            <div className={`transition-all duration-300 ${
+              isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 lg:opacity-0'
+            }`}>
               <h1 className="text-lg font-bold whitespace-nowrap">VinFast EVM</h1>
-              <p className="text-sm text-white/70 whitespace-nowrap">Dealer Management</p>
+              <p className="text-xs text-gray-400 whitespace-nowrap">Dealer Management</p>
             </div>
           </div>
         </div>
 
-        {/* Menu Section */}
-        <div className="p-4">
-          <div className={`mb-6 transition-all duration-300 ${isOpen ? 'w-full' : 'lg:w-8 mx-auto'}`}>
-            <h2 className={`text-sm font-semibold text-white/50 uppercase tracking-wider px-2 transition-opacity ${isOpen ? 'opacity-100' : 'lg:opacity-0 lg:hidden'}`}>Menu</h2>
-            <div className={`w-full h-px bg-white/20 mt-2 transition-opacity ${isOpen ? 'opacity-0' : 'lg:opacity-100'}`}></div>
+        {/* Navigation Menu */}
+        <nav className="flex-1 py-4 px-2 overflow-y-auto">
+          {/* Menu Title */}
+          <div className={`px-3 mb-4 transition-all duration-300 ${
+            isOpen ? 'opacity-100' : 'opacity-0 lg:opacity-0'
+          }`}>
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Menu
+            </h2>
           </div>
-          
+
+          {/* Menu Items */}
           <div className="space-y-1">
             {menuItems.map((item) => {
               const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              
               return (
                 <button
                   key={item.id}
                   onClick={() => handleMenuItemClick(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
-                    activeSection === item.id
-                      ? 'bg-gradient-to-r from-green-600/90 to-green-500/90 text-white shadow-lg shadow-green-600/20'
-                      : 'text-white/90 hover:bg-white/10 hover:text-white'
-                  } ${!isOpen && 'lg:justify-center'}`}
+                  className={`w-full group relative flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'bg-green-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
                 >
-                  <Icon className={`h-5 w-5 flex-shrink-0 transition-transform ${
-                    activeSection === item.id ? 'scale-110' : ''
-                  }`} />
-                  <span className={`font-semibold transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'lg:opacity-0 lg:hidden'}`}>{item.label}</span>
+                  {/* Icon */}
+                  <Icon className={`h-5 w-5 flex-shrink-0 transition-transform duration-200 ${
+                    isActive ? 'scale-110' : 'group-hover:scale-105'
+                  } ${isOpen ? 'mr-3' : 'mx-auto'}`} />
+                  
+                  {/* Label */}
+                  <span className={`whitespace-nowrap transition-all duration-300 ${
+                    isOpen 
+                      ? 'opacity-100 translate-x-0' 
+                      : 'opacity-0 -translate-x-4'
+                  }`}>
+                    {item.label}
+                  </span>
+
+                  {/* Active Indicator */}
+                  {isActive && (
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-green-400 rounded-l-full" />
+                  )}
                 </button>
               );
             })}
           </div>
-        </div>
+        </nav>
       </aside>
     </>
   );

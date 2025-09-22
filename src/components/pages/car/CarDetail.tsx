@@ -45,12 +45,15 @@ export const CarDetail: React.FC = () => {
       {/* Hero Section with Vehicle Name */}
       <div className="relative bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 h-[70vh] flex items-center justify-center overflow-hidden">
         {/* Back Button */}
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-6 left-6 z-20">
           <button 
             onClick={() => navigate(-1)}
-            className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-all"
+            className="inline-flex items-center bg-black/20 backdrop-blur-sm hover:bg-black/30 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 group border border-white/20"
           >
-            <span>← Trở lại</span>
+            <svg className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Trở lại
           </button>
         </div>
 
@@ -124,7 +127,7 @@ export const CarDetail: React.FC = () => {
           
           <div className="mt-12 text-center">
             <button
-              onClick={() => navigate(`/portal/deposit?vehicleId=${vehicle.id}`)}
+              onClick={() => navigate(`/car-deposit?vehicleId=${vehicle.id}`)}
               className="bg-black hover:bg-gray-800 text-white px-12 py-3 rounded-lg font-medium mr-4"
             >
               Đặt cọc ngay
