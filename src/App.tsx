@@ -22,6 +22,7 @@ import { ProductManagement } from './components/admin/ProductManagement';
 import { Reports } from './components/admin/Reports';
 import { Forecasting } from './components/admin/Forecasting';
 import { CarDeposit } from './components/pages/car/CarDeposit';
+import { StaffManagement } from './components/admin/StaffManagement';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -53,6 +54,7 @@ function AppContent() {
       <Route path="/portal/motorbike-deposit" element={<MotorbikeDeposit />} />
       <Route path="/portal/motorbike-schedule" element={<MotorbikeSchedule />} />
       <Route path="/portal/deposit" element={<CarDeposit />} />
+      <Route path="/portal/staff-management" element={<StaffManagement />} />
       
       {/* Admin routes */}
       <Route path="/admin/product-management" element={<AdminProductManagement />} />

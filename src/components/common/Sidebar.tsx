@@ -10,7 +10,8 @@ import {
   Calendar,
   FileText,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  UserCog
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -30,6 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
     { id: 'vehicles', label: 'Danh mục xe', icon: Car, route: '/portal/car' },
     { id: 'sales', label: 'Quản lý bán hàng', icon: ShoppingCart, route: '/portal/sales' },
     { id: 'customers', label: 'Quản lý khách hàng', icon: Users, route: '/portal/customers' },
+    ...(user?.role === 'dealer_manager' ? [{ id: 'staff-management', label: 'Quản lý nhân viên', icon: UserCog, route: '/portal/staff-management' }] : []),
     { id: 'test-drives', label: 'Lịch lái thử', icon: Calendar, route: '/portal/test-drives' },
     { id: 'orders', label: 'Đơn hàng', icon: FileText, route: '/portal/orders' },
     { id: 'payments', label: 'Thanh toán', icon: CreditCard, route: '/portal/payments' },
@@ -71,6 +73,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
         break;
       case 'customers':
         navigate('/portal/customers');
+        break;
+      case 'staff-management':
+        navigate('/portal/staff-management');
         break;
       case 'forecasting':
         navigate('/portal/forecasting');
