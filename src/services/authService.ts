@@ -307,3 +307,38 @@ export const mockLoginUser = async (credentials: LoginRequest): Promise<LoginRes
     user: userWithoutPassword
   };
 };
+
+export interface RegisterRequest {
+  full_name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role_name: string;
+  dealership_id?: string;
+  manufacturer_id?: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
+export const authService = {
+  async registerStaff(data: RegisterRequest): Promise<RegisterResponse> {
+    try {
+      const response = await post<any>('/api/auth/register', data);
+      
+      return {
+        success: true,
+        message: 'Đăng ký nhân viên thành công',
+        data: response
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || 'Có lỗi xảy ra khi đăng ký nhân viên'
+      };
+    }
+  }
+};

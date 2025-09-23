@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Eye, UserCheck, UserX, Filter, X } from 'lucide-react';
 import { Sidebar } from '../../common/Sidebar';
 import { Header } from '../../common/Header';
+import { authService, RegisterRequest } from '../../../services/authService';
 
 interface Staff {
   id: string;
@@ -20,44 +21,7 @@ interface Staff {
 export const StaffManagement: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('staff-management');
-  const [staffList, setStaffList] = useState<Staff[]>([
-    {
-      id: '1',
-      fullName: 'Nguyễn Văn An',
-      email: 'an.nguyen@vinfast.vn',
-      phone: '0901234567',
-      position: 'Nhân viên bán hàng',
-      department: 'Bán hàng',
-      startDate: '2023-01-15',
-      status: 'active',
-      salary: 15000000,
-      address: 'Hà Nội'
-    },
-    {
-      id: '2',
-      fullName: 'Trần Thị Bình',
-      email: 'binh.tran@vinfast.vn',
-      phone: '0907654321',
-      position: 'Chuyên viên tư vấn',
-      department: 'Tư vấn',
-      startDate: '2023-03-20',
-      status: 'active',
-      salary: 18000000,
-      address: 'TP.HCM'
-    },
-    {
-      id: '3',
-      fullName: 'Lê Minh Cường',
-      email: 'cuong.le@vinfast.vn',
-      phone: '0912345678',
-      position: 'Kỹ thuật viên',
-      department: 'Kỹ thuật',
-      startDate: '2022-11-10',
-      status: 'inactive',
-      salary: 20000000,
-      address: 'Đà Nẵng'
-    }
-  ]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
 
   const [filteredStaff, setFilteredStaff] = useState<Staff[]>(staffList);
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,11 +34,31 @@ export const StaffManagement: React.FC = () => {
     fullName: '',
     email: '',
     phone: '',
-    position: '',
-    department: '',
-    address: '',
-    salary: 0
+    password: '',
+    roleName: '',
+    dealershipId: '',
+    manufacturerId: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Thêm hàm lấy vai trò user hiện tại
+  const getCurrentUserRole = () => {
+    // Lấy role từ localStorage hoặc sessionStorage, tùy cách bạn lưu
+    const userRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
+    return userRole;
+  };
+
+  // Hàm trả về các vai trò có thể tạo dựa trên quyền user hiện tại
+  const getAvailableRoles = () => {
+    const currentRole = getCurrentUserRole();
+    
+    // Tất cả role chỉ có thể tạo Dealer Staff
+    return [
+      { value: 'Dealer Staff', label: 'Dealer Staff' }
+    ];
+  };
 
   useEffect(() => {
     let filtered = staffList;
@@ -127,32 +111,76 @@ export const StaffManagement: React.FC = () => {
       fullName: '',
       email: '',
       phone: '',
-      position: '',
-      department: '',
-      address: '',
-      salary: 0
+      password: '',
+      roleName: '',
+      dealershipId: '',
+      manufacturerId: ''
     });
+    setError(null);
+    setSuccess(null);
     setShowAddModal(true);
   };
 
-  const handleSaveNewStaff = (e: React.FormEvent) => {
+  const handleSaveNewStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newId = (staffList.length + 1).toString();
-    const staffToAdd: Staff = {
-      id: newId,
-      ...newStaff,
-      startDate: new Date().toISOString().split('T')[0],
-      status: 'active'
-    };
-    setStaffList([...staffList, staffToAdd]);
-    setShowAddModal(false);
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Chuẩn bị dữ liệu cho API
+      const registerData: RegisterRequest = {
+        full_name: newStaff.fullName,
+        email: newStaff.email,
+        phone: newStaff.phone,
+        password: newStaff.password,
+        role_name: newStaff.roleName,
+        dealership_id: newStaff.dealershipId,
+        manufacturer_id: newStaff.manufacturerId
+      };
+
+      // Gọi API đăng ký
+      const result = await authService.registerStaff(registerData);
+
+      if (result.success) {
+        // Thêm nhân viên vào danh sách local
+        const newId = (staffList.length + 1).toString();
+        const staffToAdd: Staff = {
+          id: newId,
+          fullName: newStaff.fullName,
+          email: newStaff.email,
+          phone: newStaff.phone,
+          position: newStaff.roleName,
+          department: '', // Có thể map từ role_name
+          address: '',
+          salary: 0,
+          startDate: new Date().toISOString().split('T')[0],
+          status: 'active'
+        };
+        
+        setStaffList([...staffList, staffToAdd]);
+        setSuccess('Đăng ký nhân viên thành công!');
+        
+        // Đóng modal sau 2 giây
+        setTimeout(() => {
+          setShowAddModal(false);
+          setSuccess(null);
+        }, 2000);
+      } else {
+        setError(result.message);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra khi đăng ký nhân viên');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewStaff(prev => ({
       ...prev,
-      [name]: name === 'salary' ? Number(value) : value
+      [name]: value
     }));
   };
 
@@ -372,16 +400,31 @@ export const StaffManagement: React.FC = () => {
       {/* Add Staff Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">Thêm nhân viên mới</h2>
               <button
                 onClick={() => setShowAddModal(false)}
                 className="text-gray-400 hover:text-gray-600"
+                disabled={loading}
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
+
+            {/* Hiển thị thông báo lỗi */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+
+            {/* Hiển thị thông báo thành công */}
+            {success && (
+              <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                {success}
+              </div>
+            )}
 
             <form onSubmit={handleSaveNewStaff} className="space-y-4">
               <div>
@@ -394,7 +437,8 @@ export const StaffManagement: React.FC = () => {
                   required
                   value={newStaff.fullName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   placeholder="Nhập họ và tên"
                 />
               </div>
@@ -409,7 +453,8 @@ export const StaffManagement: React.FC = () => {
                   required
                   value={newStaff.email}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   placeholder="Nhập email"
                 />
               </div>
@@ -424,76 +469,77 @@ export const StaffManagement: React.FC = () => {
                   required
                   value={newStaff.phone}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   placeholder="Nhập số điện thoại"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Chức vụ *
-                </label>
-                <select
-                  name="position"
-                  required
-                  value={newStaff.position}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Chọn chức vụ</option>
-                  <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
-                  <option value="Chuyên viên tư vấn">Chuyên viên tư vấn</option>
-                  <option value="Kỹ thuật viên">Kỹ thuật viên</option>
-                  <option value="Nhân viên hành chính">Nhân viên hành chính</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phòng ban *
-                </label>
-                <select
-                  name="department"
-                  required
-                  value={newStaff.department}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Chọn phòng ban</option>
-                  <option value="Bán hàng">Bán hàng</option>
-                  <option value="Tư vấn">Tư vấn</option>
-                  <option value="Kỹ thuật">Kỹ thuật</option>
-                  <option value="Hành chính">Hành chính</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Lương (VND) *
+                  Mật khẩu *
                 </label>
                 <input
-                  type="number"
-                  name="salary"
+                  type="password"
+                  name="password"
                   required
-                  value={newStaff.salary}
+                  value={newStaff.password}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Nhập mức lương"
-                  min="0"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập mật khẩu"
+                  minLength={6}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Địa chỉ
+                  Vai trò *
+                </label>
+                <select
+                  name="roleName"
+                  required
+                  value={newStaff.roleName}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                >
+                  <option value="">Chọn vai trò</option>
+                  {getAvailableRoles().map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ID Đại lý
                 </label>
                 <input
                   type="text"
-                  name="address"
-                  value={newStaff.address}
+                  name="dealershipId"
+                  value={newStaff.dealershipId}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Nhập địa chỉ"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập ID đại lý (tùy chọn)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ID Nhà sản xuất
+                </label>
+                <input
+                  type="text"
+                  name="manufacturerId"
+                  value={newStaff.manufacturerId}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập ID nhà sản xuất (tùy chọn)"
                 />
               </div>
 
@@ -501,15 +547,24 @@ export const StaffManagement: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 flex items-center justify-center"
                 >
-                  Thêm nhân viên
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    'Thêm nhân viên'
+                  )}
                 </button>
               </div>
             </form>
@@ -519,5 +574,4 @@ export const StaffManagement: React.FC = () => {
     </div>
   );
 };
-
 
