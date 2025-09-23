@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({  isTransparent = false, isSideba
         : 'bg-white border-b border-gray-200'
       }
       right-0 
-      ${isSidebarOpen ? 'lg:left-64' : 'lg:left-16'}
+      ${isSidebarOpen ? 'lg:left-[280px]' : 'lg:left-16'}
     `}>
       <div className="h-[73px] px-6 flex items-center justify-between">
         <div className="flex items-center space-x-4">
