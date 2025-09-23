@@ -20,7 +20,7 @@ import { AdminDealerManagement } from './components/pages/admin/AdminDealerManag
 import { AdminStaffManagement } from './components/pages/admin/AdminStaffManagement';
 
 import { CarDeposit } from './components/pages/car/CarDeposit';
-import { StaffManagement } from './components/pages/staff/StaffManagement';
+import { StaffManagement } from './components/pages/DealerManager/StaffManagement';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
