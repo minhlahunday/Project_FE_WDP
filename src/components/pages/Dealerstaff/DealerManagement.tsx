@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, MapPin, Phone, Mail, TrendingUp, AlertTriangle, Eye, Edit } from 'lucide-react';
-import { mockDealers } from '../../data/mockData';
-import { Dealer } from '../../types';
+import { mockDealers } from '../../../data/mockData';
+import { Dealer } from '../../../types';
 
 export const DealerManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');

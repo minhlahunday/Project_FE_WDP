@@ -1,194 +1,422 @@
-import React from 'react';
-import { Sidebar } from '../../common/Sidebar';
-import { Header } from '../../common/Header';
+import React, { useState } from 'react';
+import { Plus, Search, Phone, Mail, MapPin, Calendar, MessageSquare, Edit, Eye } from 'lucide-react';
+import { mockCustomers, mockVehicles, mockMotorbikes } from '../../../data/mockData';
+import { Customer, Vehicle } from '../../../types';
+import { useNavigate } from 'react-router-dom';
 
 export const CustomerManagement: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedCustomerForSchedule, setSelectedCustomerForSchedule] = useState<Customer | null>(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    vehicleId: '',
+    vehicleType: 'car', // 'car' or 'motorbike'
+    date: '',
+    time: '',
+    purpose: '',
+    notes: ''
+  });
+
+  const allVehicles = [...mockVehicles, ...mockMotorbikes];
+
+  const filteredCustomers = mockCustomers.filter(customer =>
+    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.phone.includes(searchTerm)
+  );
+
+  const handleScheduleClick = (customer: Customer) => {
+    setSelectedCustomerForSchedule(customer);
+    setShowScheduleModal(true);
+  };
+
+  const handleScheduleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (scheduleForm.vehicleId) {
+      const vehicle = allVehicles.find(v => v.id === scheduleForm.vehicleId);
+      if (vehicle) {
+        navigate(`/portal/test-drive?vehicleId=${scheduleForm.vehicleId}&customerId=${selectedCustomerForSchedule?.id}`);
+      }
+    }
+    setShowScheduleModal(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar
-        activeSection="customers"
-        onSectionChange={() => {}}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        onOpen={() => setIsSidebarOpen(true)}
-      />
-      
-      <Header
-        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        isSidebarOpen={isSidebarOpen}
-      />
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Quản lý khách hàng</h1>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Thêm khách hàng</span>
+        </button>
+      </div>
 
-      <main className={`transition-all duration-300 pt-[73px] ${
-        isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
-      }`}>
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Quản lý khách hàng</h1>
-            <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-              Thêm khách hàng
-            </button>
-          </div>
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm khách hàng..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          />
+        </div>
+      </div>
 
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Tìm kiếm khách hàng..."
-              className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Customer Card 1 */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Nguyễn Văn An</h3>
-                <div className="flex space-x-2">
-                  <button className="text-green-600 hover:text-green-800">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                    </svg>
-                  </button>
-                  <button className="text-blue-600 hover:text-blue-800">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2 mb-4">
-                <p className="text-sm text-gray-600">📧 an.nguyen@email.com</p>
-                <p className="text-sm text-gray-600">📞 0901234567</p>
-                <p className="text-sm text-gray-600">📍 Hà Nội</p>
-              </div>
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-center">
-                  <p className="text-xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500">Đơn hàng</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500">Lái thử</p>
-                </div>
-                <div className="text-center">
-                  <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                    VIP
-                  </span>
-                  <p className="text-xs text-gray-500">Hạng</p>
+      {/* Customer Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredCustomers.map((customer) => (
+          <div key={customer.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-1">{customer.name}</h3>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4" />
+                    <span>{customer.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="h-4 w-4" />
+                    <span>{customer.phone}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{customer.address}</span>
+                  </div>
                 </div>
               </div>
               <div className="flex space-x-2">
-                <button className="flex-1 bg-black text-white py-2 px-3 rounded text-sm hover:bg-gray-800">
-                  📋 Đặt lịch
+                <button 
+                  onClick={() => setSelectedCustomer(customer)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <Eye className="h-4 w-4" />
                 </button>
-                <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200">
-                  💬 Nhắn tin
+                <button className="text-green-600 hover:text-green-800">
+                  <Edit className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            {/* Customer Card 2 */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Trần Thị Bình</h3>
-                <div className="flex space-x-2">
-                  <button className="text-green-600 hover:text-green-800">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                    </svg>
-                  </button>
-                  <button className="text-blue-600 hover:text-blue-800">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </button>
+            <div className="border-t pt-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xl font-bold text-gray-900">{customer.orders?.length || 0}</p>
+                  <p className="text-xs text-gray-600">Đơn hàng</p>
                 </div>
-              </div>
-              <div className="space-y-2 mb-4">
-                <p className="text-sm text-gray-600">📧 binh.tran@email.com</p>
-                <p className="text-sm text-gray-600">📞 0902345678</p>
-                <p className="text-sm text-gray-600">📍 TP.HCM</p>
-              </div>
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-center">
-                  <p className="text-xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500">Đơn hàng</p>
+                <div>
+                  <p className="text-xl font-bold text-gray-900">{customer.testDrives?.length || 0}</p>
+                  <p className="text-xs text-gray-600">Lái thử</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500">Lái thử</p>
+                <div>
+                  <p className="text-xl font-bold text-green-600">VIP</p>
+                  <p className="text-xs text-gray-600">Hạng</p>
                 </div>
-                <div className="text-center">
-                  <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                    VIP
-                  </span>
-                  <p className="text-xs text-gray-500">Hạng</p>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <button className="flex-1 bg-black text-white py-2 px-3 rounded text-sm hover:bg-gray-800">
-                  📋 Đặt lịch
-                </button>
-                <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200">
-                  💬 Nhắn tin
-                </button>
               </div>
             </div>
 
-            {/* Customer Card 3 */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Lê Hoàng Dũng</h3>
-                <div className="flex space-x-2">
-                  <button className="text-green-600 hover:text-green-800">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                    </svg>
-                  </button>
-                  <button className="text-blue-600 hover:text-blue-800">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2 mb-4">
-                <p className="text-sm text-gray-600">📧 dung.le@email.com</p>
-                <p className="text-sm text-gray-600">📞 0912345679</p>
-                <p className="text-sm text-gray-600">📍 Đà Nẵng</p>
-              </div>
+            <div className="flex space-x-2 mt-4">
+              <button 
+                onClick={() => handleScheduleClick(customer)}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center justify-center space-x-1"
+              >
+                <Calendar className="h-3 w-3" />
+                <span>Đặt lịch</span>
+              </button>
+              <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm font-medium flex items-center justify-center space-x-1">
+                <MessageSquare className="h-3 w-3" />
+                <span>Nhắn tin</span>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Create Customer Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <div className="text-center">
-                  <p className="text-xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500">Đơn hàng</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500">Lái thử</p>
-                </div>
-                <div className="text-center">
-                  <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                    VIP
-                  </span>
-                  <p className="text-xs text-gray-500">Hạng</p>
-                </div>
+                <h2 className="text-xl font-bold text-gray-900">Thêm khách hàng mới</h2>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
               </div>
-              <div className="flex space-x-2">
-                <button className="flex-1 bg-black text-white py-2 px-3 rounded text-sm hover:bg-gray-800">
-                  📋 Đặt lịch
+
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Họ và tên *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    placeholder="Nhập họ và tên"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    placeholder="Nhập email"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Số điện thoại *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Địa chỉ
+                  </label>
+                  <textarea
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    rows={3}
+                    placeholder="Nhập địa chỉ"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    rows={2}
+                    placeholder="Ghi chú về khách hàng"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Thêm khách hàng
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Detail Modal */}
+      {selectedCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Thông tin chi tiết khách hàng</h2>
+                <button
+                  onClick={() => setSelectedCustomer(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
                 </button>
-                <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200">
-                  💬 Nhắn tin
-                </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Customer Info */}
+                <div className="lg:col-span-1">
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Thông tin cá nhân</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-600">Họ và tên</p>
+                        <p className="font-medium">{selectedCustomer.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-medium">{selectedCustomer.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Số điện thoại</p>
+                        <p className="font-medium">{selectedCustomer.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Địa chỉ</p>
+                        <p className="font-medium">{selectedCustomer.address}</p>
+                      </div>
+                    </div>
+
+                    <button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
+                      Chỉnh sửa thông tin
+                    </button>
+                  </div>
+                </div>
+
+                {/* Activity History */}
+                <div className="lg:col-span-2">
+                  <div className="space-y-6">
+                    {/* Test Drives */}
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Lịch sử lái thử</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-gray-600 text-center py-8">Chưa có lịch lái thử nào</p>
+                        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+                          Đặt lịch lái thử mới
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Orders */}
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Lịch sử đơn hàng</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-gray-600 text-center py-8">Chưa có đơn hàng nào</p>
+                        <button className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
+                          Tạo đơn hàng mới
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Feedback */}
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Phản hồi & Khiếu nại</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-gray-600 text-center py-8">Chưa có phản hồi nào</p>
+                        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium">
+                          Ghi nhận phản hồi
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
+      )}
+
+      {/* Add Schedule Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Đặt lịch cho khách hàng</h2>
+                <button
+                  onClick={() => setShowScheduleModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleScheduleSubmit} className="space-y-4">
+                {/* Vehicle Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Loại xe *
+                  </label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="vehicleType"
+                        value="car"
+                        checked={scheduleForm.vehicleType === 'car'}
+                        onChange={(e) => setScheduleForm({...scheduleForm, vehicleType: e.target.value, vehicleId: ''})}
+                        className="mr-2"
+                      />
+                      <span>Ô tô điện</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="vehicleType"
+                        value="motorbike"
+                        checked={scheduleForm.vehicleType === 'motorbike'}
+                        onChange={(e) => setScheduleForm({...scheduleForm, vehicleType: e.target.value, vehicleId: ''})}
+                        className="mr-2"
+                      />
+                      <span>Xe máy điện</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Vehicle Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chọn xe *
+                  </label>
+                  <select
+                    required
+                    value={scheduleForm.vehicleId}
+                    onChange={(e) => setScheduleForm({...scheduleForm, vehicleId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Chọn xe</option>
+                    {scheduleForm.vehicleType === 'car' 
+                      ? mockVehicles.map(vehicle => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {vehicle.model} - {vehicle.version}
+                          </option>
+                        ))
+                      : mockMotorbikes.map(vehicle => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {vehicle.model} - {vehicle.version}
+                          </option>
+                        ))
+                    }
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowScheduleModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Tiếp tục
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

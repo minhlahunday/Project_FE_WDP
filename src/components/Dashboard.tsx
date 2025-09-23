@@ -3,8 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Header } from './common/Header';
 import { Sidebar } from './common/Sidebar';
 import { VehicleCatalog } from './sections/VehicleCatalog';
-import { SalesManagement } from './sections/SalesManagement';
-import { CustomerManagement } from './sections/CustomerManagement';
+import { SalesManagement } from './pages/Dealerstaff/SalesManagement';
+import { CustomerManagement } from './pages/Dealerstaff/CustomerManagement';
 
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
