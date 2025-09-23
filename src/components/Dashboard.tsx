@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from './common/Header';
 import { Sidebar } from './common/Sidebar';
@@ -17,41 +17,12 @@ export const Dashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
-  const [scrollY, setScrollY] = useState(0);
   const sidebarHoverTimeout = useRef<NodeJS.Timeout>();
 
-  // Track scroll position for background color changes
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Calculate background color based on scroll position
+  // Calculate background color based on scroll position - chỉ cho non-video sections
   const getBackgroundColor = () => {
     if (activeSection !== 'vehicles') return 'bg-gray-100';
-    
-    const windowHeight = window.innerHeight;
-    const section1 = windowHeight; // Video section = black
-    const section2 = windowHeight * 2; // Safety System section = white  
-    const section3 = windowHeight * 3; // Catalog section = white (from VehicleCatalog)
-
-    if (scrollY < section1) {
-      return 'bg-black';
-    } else if (scrollY < section2) {
-      return 'bg-white';
-    } else {
-      return 'bg-white'; // Keep white for catalog section
-    }
-  };
-
-  // Calculate text color based on background
-  const getTextColor = () => {
-    const bgColor = getBackgroundColor();
-    return bgColor.includes('black') ? 'text-white' : 'text-black';
+    return ''; // Không set background cho video section
   };
 
   const togglePlayPause = () => {
@@ -118,7 +89,7 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className={`flex min-h-screen transition-colors duration-1000 ${getBackgroundColor()}`}>
+    <div className={`flex min-h-screen ${activeSection === 'vehicles' ? '' : getBackgroundColor()}`}>
       <Sidebar
         activeSection={activeSection}
         onSectionChange={(section) => {
@@ -129,12 +100,17 @@ export const Dashboard: React.FC = () => {
         onClose={handleSidebarClose}
         onOpen={handleSidebarOpen}
       />
-      <div className={`flex-1 relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'}`}>
+      
+      <div className={`flex-1 relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'}`}>
         {/* Hero Video Section - Full screen */}
         {activeSection === 'vehicles' && (
           <>
-            {/* Video Hero Section */}
-            <div className="relative h-screen w-full overflow-hidden">
+            {/* Video Container - bọc video với overflow hidden và negative margin để sát sidebar */}
+            <div className={`relative h-screen overflow-hidden transition-all duration-300 ease-in-out ${
+              isSidebarOpen 
+                ? '-ml-[280px] w-[calc(100%+280px)]' 
+                : '-ml-16 w-[calc(100%+64px)]'
+            }`}>
               {/* Video Background */}
               <video
                 id="hero-video"
@@ -150,16 +126,15 @@ export const Dashboard: React.FC = () => {
               
               {/* Fallback image */}
               <div 
-                className="absolute top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                className="absolute top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat -z-10"
                 style={{ 
-                  backgroundImage: `url('https://vinfastauto.com/sites/default/files/2023-01/VF8%20Hero%20Desktop.jpg')`,
-                  zIndex: -1
+                  backgroundImage: `url('https://vinfastauto.com/sites/default/files/2023-01/VF8%20Hero%20Desktop.jpg')`
                 }}
               />
 
               {/* Transparent Header Overlay */}
               <div className="absolute top-0 left-0 right-0 z-50">
-                <div className="bg-gradient-to-b from-black/50 via-black/20 to-transparent h-32" />
+                <div className="bg-gradient-to-b from-black/30 via-transparent to-transparent h-24 pointer-events-none" />
                 <div className="absolute top-0 left-0 right-0">
                   <Header 
                     onMenuClick={() => {}} // Giữ lại để không gây lỗi, nhưng không có tác dụng
@@ -170,7 +145,9 @@ export const Dashboard: React.FC = () => {
               </div>
 
               {/* Content Overlay */}
-              <div className="absolute inset-0 flex flex-col justify-end p-8 lg:p-16 z-20">
+              <div className={`absolute inset-0 flex flex-col justify-end p-8 lg:p-16 z-20 ${
+                isSidebarOpen ? 'ml-[280px]' : 'ml-16'
+              }`}>
                 <div className="max-w-4xl">
                   <h1 className="text-5xl lg:text-7xl font-light text-white mb-4 leading-tight">
                     VinFast VF9
@@ -200,18 +177,19 @@ export const Dashboard: React.FC = () => {
                 </button>
               </div>
 
-              {/* Scroll indicator */}
-              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-white/70 z-30">
+              {/* Scroll indicator - điều chỉnh để hiển thị giữa vùng video (không tính sidebar) */}
+              <div className={`absolute bottom-8 flex flex-col items-center text-white/70 z-30 ${
+                isSidebarOpen 
+                  ? 'left-[calc(50%+140px)] transform -translate-x-1/2' 
+                  : 'left-[calc(50%+32px)] transform -translate-x-1/2'
+              }`}>
                 <span className="text-sm mb-2 uppercase tracking-wider">Scroll to explore</span>
                 <div className="w-px h-16 bg-gradient-to-b from-white/70 to-transparent animate-pulse" />
               </div>
             </div>
 
-            {/* Safety System and Interior Section (từ VehicleCatalog) */}
-
-
             {/* Vehicle Catalog Section - sử dụng thành phần có sẵn */}
-            <div className="relative z-10">
+            <div className="relative z-20 bg-white">
               <VehicleCatalog />
             </div>
           </>
