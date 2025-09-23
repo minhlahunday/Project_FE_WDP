@@ -17,6 +17,7 @@ import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit'
 import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
 import { AdminProductManagement } from './components/admin/AdminProductManagement';
 import { AdminDealerManagement } from './components/admin/AdminDealerManagement';
+import { AdminStaffManagement } from './components/admin/AdminStaffManagement';
 import Inventory from './components/admin/Inventory';
 import { ProductManagement } from './components/admin/ProductManagement';
 import { Reports } from './components/admin/Reports';
@@ -59,6 +60,7 @@ function AppContent() {
       {/* Admin routes */}
       <Route path="/admin/product-management" element={<AdminProductManagement />} />
       <Route path="/admin/dealer-management" element={<AdminDealerManagement />} />
+      <Route path="/admin/admin-staff-management" element={<AdminStaffManagement />} />
       
       {/* Section routes */}
       <Route path="/sections/inventory" element={<Inventory />} />

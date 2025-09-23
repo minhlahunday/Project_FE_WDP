@@ -43,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   const adminMenuItems = [
     { id: 'product-management', label: 'Quản lý sản phẩm', icon: Package, route: '/admin/product-management' },
     { id: 'dealer-management', label: 'Quản lý đại lý', icon: Building2, route: '/admin/dealer-management' },
+    { id: 'admin-staff-management', label: 'Quản lý nhân viên', icon: UserCog, route: '/admin/admin-staff-management' },
   ];
 
   // Menu EVM Staff
@@ -96,6 +97,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
         break;
       case 'staff-management':
         navigate('/portal/staff-management');
+        break;
+      case 'admin-staff-management':
+        navigate('/admin/admin-staff-management');
         break;
       case 'product-management':
         navigate('/admin/product-management');
