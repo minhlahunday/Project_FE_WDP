@@ -15,13 +15,10 @@ import { CompareMotorbikes } from './components/pages/motorbike/CompareMotorbike
 import { MotorbikeModelSelector } from './components/pages/motorbike/MotorbikeModelSelector';
 import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit';
 import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
-import { AdminProductManagement } from './components/pages/admin/AdminProductManagement';
+
 import { AdminDealerManagement } from './components/pages/admin/AdminDealerManagement';
 import { AdminStaffManagement } from './components/pages/admin/AdminStaffManagement';
-import Inventory from './components/pages/admin/Inventory';
-import { ProductManagement } from './components/pages/admin/ProductManagement';
-import { Reports } from './components/pages/admin/Reports';
-import { Forecasting } from './components/pages/admin/Forecasting';
+
 import { CarDeposit } from './components/pages/car/CarDeposit';
 import { StaffManagement } from './components/pages/staff/StaffManagement';
 
@@ -58,15 +55,12 @@ function AppContent() {
       <Route path="/portal/staff-management" element={<StaffManagement />} />
       
       {/* Admin routes */}
-      <Route path="/admin/product-management" element={<AdminProductManagement />} />
+      
       <Route path="/admin/dealer-management" element={<AdminDealerManagement />} />
       <Route path="/admin/admin-staff-management" element={<AdminStaffManagement />} />
       
       {/* Section routes */}
-      <Route path="/sections/inventory" element={<Inventory />} />
-      <Route path="/sections/product-management" element={<ProductManagement />} />
-      <Route path="/sections/reports" element={<Reports />} />
-      <Route path="/sections/forecasting" element={<Forecasting />} />
+  
       <Route path="/sections/sales" element={<Dashboard />} />
       <Route path="/sections/customers" element={<Dashboard />} />
       <Route path="/sections/orders" element={<Dashboard />} />

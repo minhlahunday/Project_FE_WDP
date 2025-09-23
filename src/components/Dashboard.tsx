@@ -5,13 +5,11 @@ import { Sidebar } from './common/Sidebar';
 import { VehicleCatalog } from './sections/VehicleCatalog';
 import { SalesManagement } from './sections/SalesManagement';
 import { CustomerManagement } from './sections/CustomerManagement';
-import { Reports } from './pages/admin/Reports';
-import { ProductManagement } from './pages/admin/ProductManagement';
+
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
-import { Forecasting } from './pages/admin/Forecasting';
-import Inventory from './pages/admin/Inventory';
-import { AdminProductManagement } from './pages/admin/AdminProductManagement';
-import { AdminDealerManagement } from './pages/admin/AdminDealerManagement';
+
+
+
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -95,20 +93,6 @@ export const Dashboard: React.FC = () => {
       switch (activeSection) {
         case 'vehicles':
         return <VehicleCatalog />;
-        case 'product-management':
-          return <AdminProductManagement />;
-        case 'inventory':
-          return <Inventory />;
-        case 'dealer-management':
-          return <AdminDealerManagement />;
-        case 'pricing':
-          return <ProductManagement />;
-        case 'analytics':
-          return <Reports />;
-        case 'forecasting':
-          return <Forecasting />;
-        default:
-          return <AdminProductManagement />;
       }
     }
 
@@ -128,8 +112,6 @@ export const Dashboard: React.FC = () => {
         return <SalesManagement />;
       case 'feedback':
         return <CustomerManagement />;
-      case 'reports':
-        return <Reports />;
       default:
         return <VehicleCatalog />;
     }
