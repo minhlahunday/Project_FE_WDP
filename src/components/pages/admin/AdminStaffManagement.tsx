@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Eye, UserCheck, UserX, Filter, X } from 'lucide-react';
-import { Sidebar } from '../common/Sidebar';
-import { Header } from '../common/Header';
-import { authService, RegisterRequest } from '../../services/authService';
+import { Sidebar } from '../../common/Sidebar';
+import { Header } from '../../common/Header';
+import { authService, RegisterRequest } from '../../../services/authService';
 
 interface Staff {
   id: string;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Eye, Trash2, Package, DollarSign, Palette, Settings, Bike } from 'lucide-react';
-import { mockVehicles, mockPromotions, mockMotorbikes } from '../../data/mockData';
+import { mockVehicles, mockPromotions, mockMotorbikes } from '../../../data/mockData';
 import { AdminLayout } from './AdminLayout';
 
 export const ProductManagement: React.FC = () => {

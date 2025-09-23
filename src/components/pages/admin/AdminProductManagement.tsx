@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Car, Bike, Package, Plus, Edit, Trash2, Eye } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { mockVehicles, mockMotorbikes } from '../../data/mockData';
+import { useAuth } from '../../../contexts/AuthContext';
+import { mockVehicles, mockMotorbikes } from '../../../data/mockData';
 import { AdminLayout } from './AdminLayout';
 
 export const AdminProductManagement: React.FC = () => {

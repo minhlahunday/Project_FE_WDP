@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Users, MapPin, Phone, Mail, Plus, Edit, Trash2, Eye, Star, TrendingUp } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { AdminLayout } from './AdminLayout';
 
 interface Dealer {

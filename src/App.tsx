@@ -15,13 +15,13 @@ import { CompareMotorbikes } from './components/pages/motorbike/CompareMotorbike
 import { MotorbikeModelSelector } from './components/pages/motorbike/MotorbikeModelSelector';
 import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit';
 import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
-import { AdminProductManagement } from './components/admin/AdminProductManagement';
-import { AdminDealerManagement } from './components/admin/AdminDealerManagement';
-import { AdminStaffManagement } from './components/admin/AdminStaffManagement';
-import Inventory from './components/admin/Inventory';
-import { ProductManagement } from './components/admin/ProductManagement';
-import { Reports } from './components/admin/Reports';
-import { Forecasting } from './components/admin/Forecasting';
+import { AdminProductManagement } from './components/pages/admin/AdminProductManagement';
+import { AdminDealerManagement } from './components/pages/admin/AdminDealerManagement';
+import { AdminStaffManagement } from './components/pages/admin/AdminStaffManagement';
+import Inventory from './components/pages/admin/Inventory';
+import { ProductManagement } from './components/pages/admin/ProductManagement';
+import { Reports } from './components/pages/admin/Reports';
+import { Forecasting } from './components/pages/admin/Forecasting';
 import { CarDeposit } from './components/pages/car/CarDeposit';
 import { StaffManagement } from './components/pages/staff/StaffManagement';
 

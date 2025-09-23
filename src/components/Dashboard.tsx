@@ -5,13 +5,13 @@ import { Sidebar } from './common/Sidebar';
 import { VehicleCatalog } from './sections/VehicleCatalog';
 import { SalesManagement } from './sections/SalesManagement';
 import { CustomerManagement } from './sections/CustomerManagement';
-import { Reports } from './admin/Reports';
-import { ProductManagement } from './admin/ProductManagement';
+import { Reports } from './pages/admin/Reports';
+import { ProductManagement } from './pages/admin/ProductManagement';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
-import { Forecasting } from './admin/Forecasting';
-import Inventory from './admin/Inventory';
-import { AdminProductManagement } from './admin/AdminProductManagement';
-import { AdminDealerManagement } from './admin/AdminDealerManagement';
+import { Forecasting } from './pages/admin/Forecasting';
+import Inventory from './pages/admin/Inventory';
+import { AdminProductManagement } from './pages/admin/AdminProductManagement';
+import { AdminDealerManagement } from './pages/admin/AdminDealerManagement';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart3, TrendingUp, Users, DollarSign, Download, FileText } from 'lucide-react';
-import { mockCustomers } from '../../data/mockData';
+import { mockCustomers } from '../../../data/mockData';
 import { AdminLayout } from './AdminLayout';
 
 // Báo cáo Doanh số
