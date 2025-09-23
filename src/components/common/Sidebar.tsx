@@ -39,20 +39,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
     { id: 'reports', label: 'Báo cáo', icon: BarChart3, route: '/portal/reports' },
   ];
 
-  const evmMenuItems = [
+  // Menu Admin
+  const adminMenuItems = [
     { id: 'product-management', label: 'Quản lý sản phẩm', icon: Package, route: '/admin/product-management' },
-    { id: 'inventory', label: 'Quản lý tồn kho', icon: Car, route: '/admin/inventory' },
     { id: 'dealer-management', label: 'Quản lý đại lý', icon: Building2, route: '/admin/dealer-management' },
-    { id: 'pricing', label: 'Giá & Khuyến mãi', icon: CreditCard, route: '/admin/pricing' },
-    { id: 'analytics', label: 'Báo cáo & Phân tích', icon: BarChart3, route: '/admin/reports' },
-    { id: 'forecasting', label: 'Dự báo nhu cầu', icon: BarChart3, route: '/admin/forecasting' },
   ];
 
-  // Xác định menu items dựa trên vai trò
+  // Menu EVM Staff
+  const evmMenuItems = [
+    { id: 'product-management', label: 'Quản lý sản phẩm', icon: Package, route: '/admin/product-management' },
+    { id: 'inventory', label: 'Quản lý tồn kho', icon: Car, route: '/sections/inventory' },
+    { id: 'dealer-management', label: 'Quản lý đại lý', icon: Building2, route: '/admin/dealer-management' },
+    { id: 'pricing', label: 'Giá & Khuyến mãi', icon: CreditCard, route: '/sections/pricing' },
+    { id: 'analytics', label: 'Báo cáo & Phân tích', icon: BarChart3, route: '/sections/reports' },
+    { id: 'forecasting', label: 'Dự báo nhu cầu', icon: BarChart3, route: '/sections/forecasting' },
+  ];
+
   const getMenuItems = () => {
     console.log('Current user role:', user?.role);
     
-    if (user?.role === 'admin' || user?.role === 'evm_staff') {
+    if (user?.role === 'admin') {
+      return adminMenuItems;
+    } else if (user?.role === 'evm_staff') {
       return evmMenuItems;
     } else {
       return dealerMenuItems;
@@ -96,16 +104,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
         navigate('/admin/dealer-management');
         break;
       case 'inventory':
-        navigate('/admin/inventory');
+        navigate('/sections/inventory');
         break;
       case 'pricing':
-        navigate('/admin/pricing');
+        navigate('/sections/pricing');
         break;
       case 'analytics':
-        navigate('/admin/reports');
+        navigate('/sections/reports');
         break;
       case 'forecasting':
-        navigate('/admin/forecasting');
+        navigate('/sections/forecasting');
         break;
       default:
         console.warn('No route defined for section:', sectionId);
@@ -142,8 +150,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
             }`}>
               <h1 className="text-lg font-bold whitespace-nowrap">VinFast EVM</h1>
               <p className="text-xs text-gray-400 whitespace-nowrap">
-                {user?.role === 'admin' || user?.role === 'evm_staff' 
+                {user?.role === 'admin' 
                   ? 'Admin Panel'
+                  : user?.role === 'evm_staff'
+                  ? 'EVM Management'
                   : 'Dealer Management'
                 }
               </p>
@@ -158,8 +168,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
             isOpen ? 'opacity-100' : 'opacity-0 lg:opacity-0'
           }`}>
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              {user?.role === 'admin' || user?.role === 'evm_staff' 
+              {user?.role === 'admin' 
                 ? 'Admin Menu'
+                : user?.role === 'evm_staff'
+                ? 'EVM Menu'
                 : 'Portal Menu'
               }
             </h2>

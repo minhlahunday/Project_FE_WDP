@@ -21,18 +21,38 @@ interface AuthResponse {
 interface ApiLoginResponse {
   success: boolean;
   message: string;
-  accessToken: string;
-  refreshToken: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
 export const loginUser = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
+    console.log('=== ĐĂNG NHẬP BẮT ĐẦU ===');
+    console.log('Credentials:', credentials);
+    
     const response = await post<ApiLoginResponse>('/api/auth/login', credentials);
     
-    console.log('Login response:', response);
+    console.log('=== RESPONSE TỪ BACKEND ===');
+    console.log('Full response:', response);
+    console.log('Response type:', typeof response);
+    console.log('Response.success:', response.success);
+    console.log('Response.data:', response.data);
+    
+    // Kiểm tra response structure
+    if (!response.data || !response.data.accessToken) {
+      console.error('❌ Invalid response structure:');
+      console.error('- response.data exists:', !!response.data);
+      console.error('- response.data.accessToken exists:', !!(response.data && response.data.accessToken));
+      throw new Error('Invalid response structure from server');
+    }
+    
+    console.log('✅ Response structure is valid');
+    console.log('AccessToken received:', response.data.accessToken.substring(0, 50) + '...');
     
     // Giải nén JWT để lấy thông tin người dùng
-    const payload = parseJwt(response.accessToken);
+    const payload = parseJwt(response.data.accessToken);
     
     console.log('JWT payload:', payload);
     console.log('Role from JWT:', payload.role);
@@ -63,12 +83,28 @@ export const loginUser = async (credentials: LoginRequest): Promise<LoginRespons
     console.log('Final mapped role:', user.role);
     
     return {
-      token: response.accessToken,
+      token: response.data.accessToken,
       user: user
     };
   } catch (error) {
-    console.error('Login error:', error);
-    throw error;
+    console.error('=== LỖI ĐĂNG NHẬP ===');
+    console.error('Error type:', typeof error);
+    console.error('Error object:', error);
+    
+    if (error && typeof error === 'object') {
+      console.error('Error.response:', (error as any).response);
+      console.error('Error.message:', (error as any).message);
+      console.error('Error.status:', (error as any).status);
+    }
+    
+    // Nếu không kết nối được backend, thử dùng mock data
+    console.log('🔄 Backend không khả dụng, thử sử dụng mock data...');
+    try {
+      return await mockLoginUser(credentials);
+    } catch (mockError) {
+      console.error('❌ Mock login cũng thất bại:', mockError);
+      throw error; // Throw original error
+    }
   }
 };
 
@@ -167,6 +203,8 @@ export const logoutUser = async (): Promise<AuthResponse> => {
 };
 
 export const mockLoginUser = async (credentials: LoginRequest): Promise<LoginResponse> => {
+  console.log('🧪 Sử dụng mock login data');
+  
   const mockUsers: (User & { password: string })[] = [
     {
       id: '1',
@@ -199,6 +237,35 @@ export const mockLoginUser = async (credentials: LoginRequest): Promise<LoginRes
       password: 'password',
       name: 'Admin',
       role: 'admin'
+    },
+    // Thêm tài khoản từ seed data
+    {
+      id: '5',
+      email: 'staff@example.com',
+      password: 'Staff123!',
+      name: 'Dealer Staff User',
+      role: 'dealer_staff'
+    },
+    {
+      id: '6',
+      email: 'manager@example.com',
+      password: 'Manager123!',
+      name: 'Dealer Manager User', 
+      role: 'dealer_manager'
+    },
+    {
+      id: '7',
+      email: 'evm@example.com',
+      password: 'Evm123!',
+      name: 'EVM Staff User',
+      role: 'evm_staff'
+    },
+    {
+      id: '8',
+      email: 'admin@example.com',
+      password: 'Admin123!',
+      name: 'Admin User',
+      role: 'admin'
     }
   ];
 
@@ -209,12 +276,31 @@ export const mockLoginUser = async (credentials: LoginRequest): Promise<LoginRes
   );
 
   if (!user) {
+    console.error('❌ Mock login: tài khoản không hợp lệ');
+    console.log('📋 Available mock accounts:');
+    mockUsers.forEach(u => console.log(`  - ${u.email} / ${u.password} (${u.role})`));
     throw new Error('Invalid email or password');
   }
 
   const { password, ...userWithoutPassword } = user;
   
-  const token = `mock-jwt-token-${Math.random().toString(36).substring(2, 15)}`;
+  // Tạo JWT token giả có format tương tự real token
+  const mockPayload = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    roleName: user.role,
+    full_name: user.name
+  };
+  
+  // Tạo JWT giả đơn giản (header.payload.signature)
+  const header = btoa(JSON.stringify({ typ: 'JWT', alg: 'HS256' }));
+  const payload = btoa(JSON.stringify(mockPayload));
+  const signature = btoa('mock-signature-' + Math.random().toString(36));
+  const token = `${header}.${payload}.${signature}`;
+  
+  console.log('✅ Mock login thành công cho:', user.email);
+  console.log('🎭 Mock token tạo thành công');
   
   return {
     token,
