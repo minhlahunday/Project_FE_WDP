@@ -19,26 +19,33 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Use the Header component */}
-      <Header 
-        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-        isSidebarOpen={isSidebarOpen}
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar 
+        activeSection={currentSection}
+        onSectionChange={handleSectionChange}
+        isOpen={isSidebarOpen}
+        onOpen={() => setIsSidebarOpen(true)}
+        onClose={() => setIsSidebarOpen(false)}
       />
       
-      <div className="flex-grow flex pt-[73px]">
-        <Sidebar 
-          activeSection={currentSection}
-          onSectionChange={handleSectionChange}
-          isOpen={isSidebarOpen}
-          onOpen={() => setIsSidebarOpen(true)}
-          onClose={() => setIsSidebarOpen(false)}
-        />
-        
-        <main className="flex-grow lg:ml-16 transition-all duration-300 ease-in-out">
-          <div className="p-6">
-            {children}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+      }`}>
+        {/* Header */}
+        <div className="fixed top-0 right-0 left-0 z-30 lg:left-16">
+          <div className={`transition-all duration-300 ${
+            isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+          }`}>
+            <Header 
+              onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+              isSidebarOpen={isSidebarOpen}
+            />
           </div>
+        </div>
+        
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto mt-[73px]">
+          {children}
         </main>
       </div>
     </div>

@@ -1,0 +1,62 @@
+/* Custom Ant Design styling for sidebar */
+.ant-layout-sider {
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+}
+
+.ant-layout-sider .ant-layout-sider-children {
+  background: transparent !important;
+}
+
+.ant-menu-dark {
+  background: transparent !important;
+}
+
+.ant-menu-dark .ant-menu-item {
+  background: transparent !important;
+  margin: 4px 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.ant-menu-dark .ant-menu-item:hover {
+  background: rgba(55, 65, 81, 0.8) !important;
+  color: white !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background: #16a34a !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected::after {
+  display: none !important;
+}
+
+.ant-input-affix-wrapper {
+  background: #374151 !important;
+  border-color: #4B5563 !important;
+}
+
+.ant-input-affix-wrapper input {
+  background: transparent !important;
+  color: white !important;
+}
+
+.ant-input-affix-wrapper input::placeholder {
+  color: #9CA3AF !important;
+}
+
+.ant-input-affix-wrapper:hover {
+  border-color: #6B7280 !important;
+}
+
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-typography {
+  margin: 0 !important;
+}

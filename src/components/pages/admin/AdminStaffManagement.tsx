@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Eye, UserCheck, UserX, Filter, X } from 'lucide-react';
-import { Sidebar } from '../../common/Sidebar';
-import { Header } from '../../common/Header';
+import { Search, Plus, Trash2, UserCheck, UserX, Filter, X } from 'lucide-react';
+import { AdminLayout } from './AdminLayout';
 import { authService, RegisterRequest } from '../../../services/authService';
 
 interface Staff {
@@ -19,17 +18,11 @@ interface Staff {
 }
 
 export const AdminStaffManagement: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('admin-staff-management');
   const [staffList, setStaffList] = useState<Staff[]>([]);
 
   const [filteredStaff, setFilteredStaff] = useState<Staff[]>(staffList);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [newStaff, setNewStaff] = useState({
     fullName: '',
     email: '',
@@ -65,25 +58,8 @@ export const AdminStaffManagement: React.FC = () => {
       );
     }
 
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(staff => staff.status === statusFilter);
-    }
-
-    // Filter by department
-    if (departmentFilter !== 'all') {
-      filtered = filtered.filter(staff => staff.department === departmentFilter);
-    }
-
     setFilteredStaff(filtered);
-  }, [staffList, searchTerm, statusFilter, departmentFilter]);
-
-  const formatSalary = (salary: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(salary);
-  };
+  }, [staffList, searchTerm]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -177,11 +153,6 @@ export const AdminStaffManagement: React.FC = () => {
     }));
   };
 
-  const handleEditStaff = (staff: Staff) => {
-    setSelectedStaff(staff);
-    setShowEditModal(true);
-  };
-
   const handleDeleteStaff = (staffId: string) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
       setStaffList(staffList.filter(staff => staff.id !== staffId));
@@ -196,67 +167,40 @@ export const AdminStaffManagement: React.FC = () => {
     ));
   };
 
-  const departments = ['all', 'Bán hàng', 'Tư vấn', 'Kỹ thuật', 'Hành chính'];
-
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onOpen={() => setSidebarOpen(true)}
-      />
-      
-      {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${
-        sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
-      }`}>
+    <AdminLayout activeSection="admin-staff-management">
+      <div className="p-6">
         {/* Header */}
-        <div className="fixed top-0 right-0 left-0 z-30 lg:left-16">
-          <div className={`transition-all duration-300 ${
-            sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
-          }`}>
-            <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý nhân viên</h1>
+          <p className="text-gray-600">Quản lý thông tin nhân viên trong đại lý</p>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm nhân viên..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Add Staff Button */}
+            <button
+              onClick={handleAddStaff}
+              className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Thêm nhân viên</span>
+            </button>
           </div>
         </div>
-        
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto mt-[73px]">
-          <div className="p-6">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">Quản lý nhân viên</h1>
-              <p className="text-gray-600">Quản lý thông tin nhân viên trong đại lý</p>
-            </div>
-
-            {/* Search and Filters */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm nhân viên..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-
-                {/* Add Staff Button */}
-                <button
-                  onClick={handleAddStaff}
-                  className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
-                >
-                  <Plus className="h-5 w-5" />
-                  <span>Thêm nhân viên</span>
-                </button>
-              </div>
-            </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -355,12 +299,6 @@ export const AdminStaffManagement: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => handleEditStaff(staff)}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </button>
-                            <button
                               onClick={() => handleToggleStatus(staff.id)}
                               className={staff.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}
                             >
@@ -387,8 +325,6 @@ export const AdminStaffManagement: React.FC = () => {
               )}
             </div>
           </div>
-        </main>
-      </div>
 
       {/* Add Staff Modal */}
       {showAddModal && (
@@ -564,6 +500,6 @@ export const AdminStaffManagement: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 };

@@ -131,18 +131,19 @@ export const AdminDealerManagement: React.FC = () => {
 
   return (
     <AdminLayout activeSection="dealer-management">
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Quản lý đại lý</h1>
-              <p className="text-gray-600 mt-1">Quản lý hệ thống đại lý VinFast toàn quốc</p>
+      <div className="p-6">
+        <div className="bg-white shadow-sm border-b border-gray-200 -mx-6 -mt-6 mb-6">
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Quản lý đại lý</h1>
+                <p className="text-gray-600 mt-1">Quản lý hệ thống đại lý VinFast toàn quốc</p>
+              </div>
+              <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+                <Plus className="h-5 w-5" />
+                <span>Thêm đại lý</span>
+              </button>
             </div>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors">
-              <Plus className="h-5 w-5" />
-              <span>Thêm đại lý</span>
-            </button>
-          </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -307,6 +308,7 @@ export const AdminDealerManagement: React.FC = () => {
             <p className="text-gray-600">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
           </div>
         )}
+      </div>
       </div>
     </AdminLayout>
   );
