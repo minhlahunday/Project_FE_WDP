@@ -47,25 +47,26 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormSubmitted(true);
-    
+
     if (!email || !password) {
       return;
     }
-    
+
     try {
+      // login trả về true/false, token đã được lưu ở AuthContext
       const success = await login(email, password);
-      
+
       if (success) {
         setAlertMessage('Đăng nhập thành công! Đang chuyển hướng...');
         setAlertType('success');
         setShowAlert(true);
-        
+
         if (rememberMe) {
           localStorage.setItem('rememberedEmail', email);
         } else {
           localStorage.removeItem('rememberedEmail');
         }
-        
+
         setTimeout(() => {
           if (user?.role === 'admin' || user?.role === 'evm_staff') {
             navigate('/admin/product-management');
@@ -273,7 +274,7 @@ export function LoginPage() {
                     }}
                     className="text-xs bg-gray-800 text-gray-300 px-3 py-2 rounded border border-gray-600 hover:bg-gray-700"
                   >
-                    Staff
+                    Staff Dealer
                   </button>
                   <button
                     type="button"
@@ -283,7 +284,7 @@ export function LoginPage() {
                     }}
                     className="text-xs bg-gray-800 text-gray-300 px-3 py-2 rounded border border-gray-600 hover:bg-gray-700"
                   >
-                    EVM
+                    EVM 
                   </button>
                   <button
                     type="button"

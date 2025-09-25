@@ -22,15 +22,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       try {
         const savedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('authToken');
-        
-        if (savedUser && token) {
+        const accessToken = localStorage.getItem('accessToken');
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (savedUser && accessToken && refreshToken) {
           setUser(JSON.parse(savedUser));
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
       } finally {
         setIsLoading(false);
       }
@@ -42,13 +43,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setAuthError(null);
-    
     try {
-  const response = await loginUser({ email, password });
-  setUser(response.user);
-  localStorage.setItem('user', JSON.stringify(response.user));
-  localStorage.setItem('authToken', response.token);
-  return true;
+      const response = await loginUser({ email, password });
+      setUser(response.user);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      if (response.accessToken) {
+        localStorage.setItem('accessToken', response.accessToken);
+      }
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
+      return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
       setAuthError(errorMessage);
@@ -61,7 +66,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    // Nếu muốn xóa luôn email đã nhớ (tùy chọn)
+    // localStorage.removeItem('rememberedEmail');
     setAuthError(null);
   };
 

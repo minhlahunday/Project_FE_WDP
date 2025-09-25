@@ -27,7 +27,7 @@ interface ApiLoginResponse {
   };
 }
 
-export const loginUser = async (credentials: LoginRequest): Promise<LoginResponse> => {
+export const loginUser = async (credentials: LoginRequest): Promise<{ accessToken: string; refreshToken: string; user: User }> => {
   try {
     console.log('=== ĐĂNG NHẬP BẮT ĐẦU ===');
     console.log('Credentials:', credentials);
@@ -83,7 +83,8 @@ export const loginUser = async (credentials: LoginRequest): Promise<LoginRespons
     console.log('Final mapped role:', user.role);
     
     return {
-      token: response.data.accessToken,
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken || '', // fallback nếu backend không trả về
       user: user
     };
   } catch (error) {
@@ -202,7 +203,7 @@ export const logoutUser = async (): Promise<AuthResponse> => {
   return post<AuthResponse>('/api/auth/logout');
 };
 
-export const mockLoginUser = async (credentials: LoginRequest): Promise<LoginResponse> => {
+export const mockLoginUser = async (credentials: LoginRequest): Promise<{ accessToken: string; refreshToken: string; user: User }> => {
   console.log('🧪 Sử dụng mock login data');
   
   const mockUsers: (User & { password: string })[] = [
@@ -297,13 +298,15 @@ export const mockLoginUser = async (credentials: LoginRequest): Promise<LoginRes
   const header = btoa(JSON.stringify({ typ: 'JWT', alg: 'HS256' }));
   const payload = btoa(JSON.stringify(mockPayload));
   const signature = btoa('mock-signature-' + Math.random().toString(36));
-  const token = `${header}.${payload}.${signature}`;
+  const accessToken = `${header}.${payload}.${signature}`;
+  const refreshToken = btoa('mock-refresh-' + Math.random().toString(36));
   
   console.log('✅ Mock login thành công cho:', user.email);
   console.log('🎭 Mock token tạo thành công');
   
   return {
-    token,
+    accessToken,
+    refreshToken,
     user: userWithoutPassword
   };
 };

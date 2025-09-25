@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Car, 
   ShoppingCart, 
@@ -31,6 +31,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange, isOpen, onClose, onOpen }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const dealerMenuItems = [
     { 
@@ -158,15 +159,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
 
   const menuItems = getMenuItems();
 
+  // Tự động đồng bộ activeSection với route hiện tại
+  useEffect(() => {
+    const currentMenu = menuItems.find(item => item.route === location.pathname);
+    if (currentMenu && currentMenu.key !== activeSection) {
+      onSectionChange(currentMenu.key);
+    }
+  }, [location.pathname, menuItems, activeSection, onSectionChange]);
+
   const handleMenuItemClick = ({ key }: { key: string }) => {
-    onSectionChange(key);
-    
     const menuItem = menuItems.find(item => item.key === key);
-    if (menuItem?.route) {
+    if (menuItem?.route && menuItem.route !== location.pathname) {
       navigate(menuItem.route);
     }
-    
-    // Không tự động đóng sidebar - chỉ đóng khi click toggle hoặc overlay
+    onSectionChange(key);
   };
 
   return (
