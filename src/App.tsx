@@ -16,11 +16,13 @@ import { MotorbikeModelSelector } from './components/pages/motorbike/MotorbikeMo
 import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit';
 import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
 
-import { AdminDealerManagement } from './components/pages/admin/AdminDealerManagement';
 import { AdminStaffManagement } from './components/pages/admin/AdminStaffManagement';
 
 import { CarDeposit } from './components/pages/car/CarDeposit';
 import { StaffManagement } from './components/pages/DealerManager/StaffManagement';
+import ProductManagement from './components/pages/EVM/ProductManagement';
+import { CustomerManagement } from './components/pages/EVM/CustomerManagement';
+import { AdminDealerManagement } from './components/pages/EVM/DealerManagement';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -56,7 +58,6 @@ function AppContent() {
       
       {/* Admin routes */}
       
-      <Route path="/admin/dealer-management" element={<AdminDealerManagement />} />
       <Route path="/admin/admin-staff-management" element={<AdminStaffManagement />} />
       
       {/* Section routes */}
@@ -68,7 +69,13 @@ function AppContent() {
       <Route path="/sections/feedback" element={<Dashboard />} />
       <Route path="/sections/pricing" element={<Dashboard />} />
       <Route path="/car-deposit" element={<CarDeposit />} />
+
+      {/* EVM routes */}
+      <Route path="/evm/dealer-management" element={<AdminDealerManagement />} />
+      <Route path="/evm/product-management" element={<ProductManagement />} />
+      <Route path="/evm/customer-management" element={<CustomerManagement />} />
       
+
       {/* Default route */}
       <Route path="*" element={<Dashboard />} />
     </Routes>

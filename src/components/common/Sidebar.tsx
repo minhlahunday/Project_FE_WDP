@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       key: 'product-management', 
       label: 'Quản lý sản phẩm', 
       icon: <Package className="h-4 w-4" />, 
-      route: '/admin/product-management' 
+      route: '/evm/product-management' 
     },
     { 
       key: 'inventory', 
@@ -125,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       key: 'dealer-management', 
       label: 'Quản lý đại lý', 
       icon: <Building2 className="h-4 w-4" />, 
-      route: '/admin/dealer-management' 
+      route: '/evm/dealer-management' 
     },
     { 
       key: 'pricing', 
@@ -134,10 +134,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       route: '/sections/pricing' 
     },
     { 
-      key: 'analytics', 
-      label: 'Báo cáo & Phân tích', 
+      key: 'customer-management', 
+      label: 'Quản lý khách hàng', 
       icon: <BarChart3 className="h-4 w-4" />, 
-      route: '/sections/reports' 
+      route: '/evm/customer-management' 
     },
     { 
       key: 'forecasting', 
