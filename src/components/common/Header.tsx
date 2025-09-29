@@ -36,13 +36,12 @@ export const Header: React.FC<HeaderProps> = ({  isTransparent = false, isSideba
 
   return (
     <header className={`
-      fixed top-0 z-40
+      fixed top-0 left-0 right-0 z-40
       transition-all duration-300 ease-in-out
       ${isTransparent 
         ? 'bg-transparent backdrop-blur-sm border-b border-white/10' 
         : 'bg-white border-b border-gray-200'
       }
-      right-0 
       ${isSidebarOpen ? 'lg:left-[280px]' : 'lg:left-16'}
     `}>
       <div className="h-[73px] px-6 flex items-center justify-between">

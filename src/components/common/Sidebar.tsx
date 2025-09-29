@@ -193,11 +193,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
         width={280}
         collapsedWidth={64}
         theme="dark"
-        className={`transition-all duration-300 ease-in-out shadow-2xl ${
+        className={`fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out shadow-2xl z-50 ${
           isOpen 
             ? 'translate-x-0' 
             : '-translate-x-full lg:translate-x-0'
-        } lg:sticky lg:top-0 fixed lg:static z-50 lg:z-auto`}
+        }`}
         style={{
           background: 'linear-gradient(180deg, #1f2937 0%, #111827 100%)',
           height: '100vh',

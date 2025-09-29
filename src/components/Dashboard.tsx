@@ -89,7 +89,7 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className={`flex min-h-screen ${activeSection === 'vehicles' ? '' : getBackgroundColor()}`}>
+    <div className={`min-h-screen ${activeSection === 'vehicles' ? '' : getBackgroundColor()}`}>
       <Sidebar
         activeSection={activeSection}
         onSectionChange={(section) => {
@@ -101,7 +101,7 @@ export const Dashboard: React.FC = () => {
         onOpen={handleSidebarOpen}
       />
       
-      <div className={`flex-1 relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'}`}>
+      <div className={`relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'}`}>
         {/* Hero Video Section - Full screen */}
         {activeSection === 'vehicles' && (
           <>
