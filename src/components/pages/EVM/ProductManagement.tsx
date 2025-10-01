@@ -13,7 +13,6 @@ import {
   Space, 
   Typography, 
   Image,
-  Popconfirm,
   message,
   Badge,
   Avatar,
@@ -25,10 +24,12 @@ import {
   PlusOutlined, 
   CarOutlined, 
   ThunderboltOutlined, 
-  AppstoreOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined
+  AppstoreOutlined, 
+  EditOutlined, 
+  DeleteOutlined, 
+  EyeOutlined,
+  WarningOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -101,16 +102,26 @@ const ProductManagement: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [activeCategory, setActiveCategory] = useState<'car' | 'motorbike' | ''>('');
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductDetail, setShowProductDetail] = useState(false);
   const [showEditProduct, setShowEditProduct] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  // Helper function để tạo FormData đơn giản chỉ với status
+  const createStatusFormData = (status: string) => {
+    const formData = new FormData();
+    formData.append('status', status);
+    return formData;
+  };
+
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const res = await get<any>("/api/vehicles");
-      // Chuẩn hóa lấy từ res.data.data hoặc res.data nếu là mảng
       if (res.data && Array.isArray(res.data.data)) {
         setProducts(res.data.data);
         setError(null);
@@ -135,14 +146,20 @@ const ProductManagement: React.FC = () => {
   const motorbikes = products.filter((product) => product.category === 'motorbike');
 
   const filteredCars = cars.filter(
-    (product) =>
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.model?.toLowerCase().includes(search.toLowerCase())
+    (product) => {
+      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.model?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }
   );
   const filteredMotorbikes = motorbikes.filter(
-    (product) =>
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.model?.toLowerCase().includes(search.toLowerCase())
+    (product) => {
+      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.model?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }
   );
 
   // Handle view product details
@@ -159,22 +176,60 @@ const ProductManagement: React.FC = () => {
     }
   };
 
-  // Handle edit product
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
     setShowEditProduct(true);
   };
 
-  // Handle delete product
-  const handleDeleteProduct = async (productId: string) => {
+  // Handle delete product - show confirmation modal
+  const handleDeleteProduct = (product: Product) => {
+    setProductToDelete(product);
+    setShowDeleteModal(true);
+  };
+
+  // Confirm delete product - use DELETE endpoint for soft delete
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
+    
     try {
       setLoading(true);
       const { del } = await import("../../../services/httpClient");
-      await del(`/api/vehicles/${productId}`);
-      message.success('Đã xóa sản phẩm thành công');
+      
+      // Sử dụng DELETE endpoint để soft delete (set inactive)
+      await del(`/api/vehicles/${productToDelete._id}`);
+      message.success('Đã ngừng kinh doanh sản phẩm thành công');
+      setShowDeleteModal(false);
+      setProductToDelete(null);
       fetchProducts(); // Refresh the list
     } catch (err) {
-      message.error('Không thể xóa sản phẩm');
+      console.error('Error deleting product:', err);
+      message.error('Không thể ngừng kinh doanh sản phẩm');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setProductToDelete(null);
+  };
+
+  // Reactivate product - use PUT with simple FormData
+  const handleReactivateProduct = async (product: Product) => {
+    try {
+      setLoading(true);
+      const { put } = await import("../../../services/httpClient");
+      
+      // Tạo FormData đơn giản chỉ với status
+      const formData = createStatusFormData('active');
+      
+      await put(`/api/vehicles/${product._id}`, formData);
+      message.success('Đã kích hoạt lại sản phẩm thành công');
+      fetchProducts(); // Refresh the list
+    } catch (err) {
+      console.error('Error reactivating product:', err);
+      message.error('Không thể kích hoạt lại sản phẩm');
     } finally {
       setLoading(false);
     }
@@ -204,6 +259,11 @@ const ProductManagement: React.FC = () => {
               <Text type="secondary" style={{ fontSize: 16 }}>
                 Tổng cộng: {products.length} sản phẩm 
                 ({cars.length} ô tô, {motorbikes.length} xe máy điện)
+                {statusFilter !== 'all' && (
+                  <span style={{ color: statusFilter === 'active' ? '#52c41a' : '#ff4d4f' }}>
+                    {' '}• {statusFilter === 'active' ? 'Đang bán' : 'Ngừng kinh doanh'}
+                  </span>
+                )}
               </Text>
             </Col>
             <Col>
@@ -278,7 +338,7 @@ const ProductManagement: React.FC = () => {
               onClick={() => setActiveCategory('car')}
                 style={{ borderRadius: 8 }}
               >
-                Ô tô ({cars.length})
+                Ô tô ({filteredCars.length})
               </Button>
               <Button
                 type={activeCategory === 'motorbike' ? 'primary' : 'default'}
@@ -286,7 +346,7 @@ const ProductManagement: React.FC = () => {
               onClick={() => setActiveCategory('motorbike')}
                 style={{ borderRadius: 8 }}
               >
-                Xe máy ({motorbikes.length})
+                Xe máy ({filteredMotorbikes.length})
               </Button>
               <Button
                 type={activeCategory === '' ? 'primary' : 'default'}
@@ -294,9 +354,38 @@ const ProductManagement: React.FC = () => {
               onClick={() => setActiveCategory('')}
                 style={{ borderRadius: 8 }}
               >
-                Tất cả ({products.length})
+                Tất cả ({filteredCars.length + filteredMotorbikes.length})
               </Button>
             </Space>
+            <div style={{ marginTop: 12 }}>
+              <Space wrap>
+                <Text strong style={{ marginRight: 8 }}>Trạng thái:</Text>
+                <Button
+                  type={statusFilter === 'all' ? 'primary' : 'default'}
+                  size="small"
+                  onClick={() => setStatusFilter('all')}
+                  style={{ borderRadius: 6 }}
+            >
+              Tất cả
+                </Button>
+                <Button
+                  type={statusFilter === 'active' ? 'primary' : 'default'}
+                  size="small"
+                  onClick={() => setStatusFilter('active')}
+                  style={{ borderRadius: 6 }}
+                >
+                  Đang bán
+                </Button>
+                <Button
+                  type={statusFilter === 'inactive' ? 'primary' : 'default'}
+                  size="small"
+                  onClick={() => setStatusFilter('inactive')}
+                  style={{ borderRadius: 6 }}
+                >
+                  Ngừng kinh doanh
+                </Button>
+              </Space>
+          </div>
           </Col>
           <Col>
             <Search
@@ -321,9 +410,30 @@ const ProductManagement: React.FC = () => {
                 <Col xs={24} sm={12} lg={8} xl={6} key={product._id}>
                   <Card
                     hoverable
-                    style={{ borderRadius: 12, overflow: 'hidden' }}
+                    style={{ 
+                      borderRadius: 12, 
+                      overflow: 'hidden',
+                      border: product.status === 'inactive' ? '2px solid #ff4d4f' : undefined,
+                      opacity: product.status === 'inactive' ? 0.8 : 1
+                    }}
                     cover={
                       <div style={{ height: 200, position: 'relative' }}>
+                        {product.status === 'inactive' && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 8,
+                            left: 8,
+                            zIndex: 2,
+                            background: '#ff4d4f',
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                          }}>
+                            NGỪNG KINH DOANH
+                          </div>
+                        )}
                         {product.images && Array.isArray(product.images) && product.images.length > 0 ? (
                           <Badge 
                             count={product.images.length > 1 ? `+${product.images.length - 1}` : 0}
@@ -382,16 +492,25 @@ const ProductManagement: React.FC = () => {
                           onClick={() => handleEditProduct(product)}
                         />
                       </Tooltip>,
-                      <Popconfirm
-                        title="Bạn có chắc chắn muốn xóa sản phẩm này?"
-                        onConfirm={() => handleDeleteProduct(product._id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                      >
-                        <Tooltip title="Xóa">
-                          <Button type="text" danger icon={<DeleteOutlined />} />
+                      product.status === 'active' ? (
+                        <Tooltip title="Ngừng kinh doanh">
+                          <Button 
+                            type="text" 
+                            danger 
+                            icon={<DeleteOutlined />} 
+                            onClick={() => handleDeleteProduct(product)}
+                          />
                         </Tooltip>
-                      </Popconfirm>
+                      ) : (
+                        <Tooltip title="Kích hoạt lại">
+                          <Button 
+                            type="text" 
+                            style={{ color: '#52c41a' }}
+                            icon={<CheckCircleOutlined />} 
+                            onClick={() => handleReactivateProduct(product)}
+                          />
+                        </Tooltip>
+                      )
                     ]}
                   >
                     <Card.Meta
@@ -473,9 +592,30 @@ const ProductManagement: React.FC = () => {
                 <Col xs={24} sm={12} lg={8} xl={6} key={product._id}>
                   <Card
                     hoverable
-                    style={{ borderRadius: 12, overflow: 'hidden' }}
+                    style={{ 
+                      borderRadius: 12, 
+                      overflow: 'hidden',
+                      border: product.status === 'inactive' ? '2px solid #ff4d4f' : undefined,
+                      opacity: product.status === 'inactive' ? 0.8 : 1
+                    }}
                     cover={
                       <div style={{ height: 200, position: 'relative' }}>
+                        {product.status === 'inactive' && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 8,
+                            left: 8,
+                            zIndex: 2,
+                            background: '#ff4d4f',
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                          }}>
+                            NGỪNG KINH DOANH
+                          </div>
+                        )}
                         {product.images && Array.isArray(product.images) && product.images.length > 0 ? (
                           <Badge 
                             count={product.images.length > 1 ? `+${product.images.length - 1}` : 0}
@@ -534,16 +674,25 @@ const ProductManagement: React.FC = () => {
                           onClick={() => handleEditProduct(product)}
                         />
                       </Tooltip>,
-                      <Popconfirm
-                        title="Bạn có chắc chắn muốn xóa sản phẩm này?"
-                        onConfirm={() => handleDeleteProduct(product._id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                      >
-                        <Tooltip title="Xóa">
-                          <Button type="text" danger icon={<DeleteOutlined />} />
+                      product.status === 'active' ? (
+                        <Tooltip title="Ngừng kinh doanh">
+                          <Button 
+                            type="text" 
+                            danger 
+                            icon={<DeleteOutlined />} 
+                            onClick={() => handleDeleteProduct(product)}
+                          />
                         </Tooltip>
-                      </Popconfirm>
+                      ) : (
+                        <Tooltip title="Kích hoạt lại">
+                          <Button 
+                            type="text" 
+                            style={{ color: '#52c41a' }}
+                            icon={<CheckCircleOutlined />} 
+                            onClick={() => handleReactivateProduct(product)}
+                          />
+                        </Tooltip>
+                      )
                     ]}
                   >
                     <Card.Meta
@@ -878,6 +1027,69 @@ const ProductManagement: React.FC = () => {
               onProductCreated={fetchProducts}
               editProduct={selectedProduct}
             />
+          )}
+        </Modal>
+
+        {/* Modal xác nhận ngừng kinh doanh */}
+        <Modal
+          title={
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <DeleteOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
+              Ngừng kinh doanh sản phẩm
+            </div>
+          }
+          open={showDeleteModal}
+          onCancel={cancelDelete}
+          onOk={confirmDeleteProduct}
+          okText="Ngừng kinh doanh"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true }}
+          confirmLoading={loading}
+        >
+          {productToDelete && (
+            <div>
+              <div style={{ marginBottom: 16 }}>
+                <Text strong>Bạn có chắc chắn muốn ngừng kinh doanh sản phẩm này?</Text>
+              </div>
+              <div style={{ 
+                padding: 16, 
+                backgroundColor: '#f5f5f5', 
+                borderRadius: 8,
+                marginBottom: 16 
+              }}>
+                <div style={{ marginBottom: 8 }}>
+                  <Text strong>Tên sản phẩm: </Text>
+                  <Text>{productToDelete.name}</Text>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <Text strong>Model: </Text>
+                  <Text>{productToDelete.model}</Text>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <Text strong>SKU: </Text>
+                  <Text>{productToDelete.sku}</Text>
+                </div>
+                <div>
+                  <Text strong>Giá: </Text>
+                  <Text strong style={{ color: '#f5222d' }}>
+                    {productToDelete.price?.toLocaleString()}₫
+                  </Text>
+                </div>
+              </div>
+              <div style={{ 
+                padding: 12, 
+                backgroundColor: '#fff7e6', 
+                border: '1px solid #ffd591',
+                borderRadius: 6 
+              }}>
+                <Text type="warning">
+                  <WarningOutlined style={{ marginRight: 4 }} />
+                  Lưu ý: Sản phẩm sẽ được chuyển sang trạng thái "Không hoạt động" 
+                  và không hiển thị trong danh sách sản phẩm đang bán. 
+                  Bạn có thể kích hoạt lại sản phẩm bất cứ lúc nào.
+                </Text>
+              </div>
+            </div>
           )}
         </Modal>
       </div>
