@@ -1,62 +1,188 @@
-/* Custom Ant Design styling for sidebar */
-.ant-layout-sider {
-  background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+/* Custom Ant Design styles for modern, youthful look */
+
+/* Global overrides */
+.ant-layout {
+  background: #f8fafc !important;
 }
 
-.ant-layout-sider .ant-layout-sider-children {
-  background: transparent !important;
+.ant-card {
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid #f0f0f0 !important;
+  transition: all 0.3s ease !important;
 }
 
-.ant-menu-dark {
-  background: transparent !important;
+.ant-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-2px) !important;
 }
 
-.ant-menu-dark .ant-menu-item {
-  background: transparent !important;
-  margin: 4px 8px !important;
-  border-radius: 8px !important;
+.ant-card-cover {
+  border-radius: 12px 12px 0 0 !important;
+  overflow: hidden !important;
+}
+
+.ant-card-actions {
+  border-top: 1px solid #f0f0f0 !important;
+  background: #fafafa !important;
+}
+
+.ant-card-actions > li {
+  margin: 8px 0 !important;
+}
+
+.ant-card-actions > li > span {
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
   transition: all 0.2s ease !important;
 }
 
-.ant-menu-dark .ant-menu-item:hover {
-  background: rgba(55, 65, 81, 0.8) !important;
-  color: white !important;
+.ant-card-actions > li > span:hover {
+  background: #e6f7ff !important;
+  color: #1890ff !important;
 }
 
-.ant-menu-dark .ant-menu-item-selected {
-  background: #16a34a !important;
-  color: white !important;
-  font-weight: 600 !important;
+/* Button styles */
+.ant-btn {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
 }
 
-.ant-menu-dark .ant-menu-item-selected::after {
-  display: none !important;
+.ant-btn-primary {
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3) !important;
 }
 
-.ant-input-affix-wrapper {
-  background: #374151 !important;
-  border-color: #4B5563 !important;
+.ant-btn-primary:hover {
+  background: linear-gradient(135deg, #40a9ff 0%, #69c0ff 100%) !important;
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.4) !important;
+  transform: translateY(-1px) !important;
 }
 
-.ant-input-affix-wrapper input {
-  background: transparent !important;
-  color: white !important;
+/* Search input */
+.ant-input-search {
+  border-radius: 8px !important;
 }
 
-.ant-input-affix-wrapper input::placeholder {
-  color: #9CA3AF !important;
+.ant-input-search .ant-input {
+  border-radius: 8px 0 0 8px !important;
 }
 
-.ant-input-affix-wrapper:hover {
-  border-color: #6B7280 !important;
+.ant-input-search .ant-input-search-button {
+  border-radius: 0 8px 8px 0 !important;
 }
 
-.ant-input-affix-wrapper:focus,
-.ant-input-affix-wrapper-focused {
-  border-color: #10b981 !important;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+/* Tags */
+.ant-tag {
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  padding: 2px 8px !important;
+  margin: 2px !important;
+  border: none !important;
 }
 
+/* Typography */
 .ant-typography {
-  margin: 0 !important;
+  color: #262626 !important;
+}
+
+.ant-typography.ant-typography-secondary {
+  color: #8c8c8c !important;
+}
+
+/* Image component */
+.ant-image {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.ant-image-mask {
+  border-radius: 8px !important;
+}
+
+/* Badge */
+.ant-badge-count {
+  border-radius: 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  line-height: 16px !important;
+}
+
+/* Avatar */
+.ant-avatar {
+  border-radius: 8px !important;
+}
+
+/* Popconfirm */
+.ant-popover {
+  border-radius: 8px !important;
+}
+
+.ant-popover-inner {
+  border-radius: 8px !important;
+}
+
+/* Tooltip */
+.ant-tooltip-inner {
+  border-radius: 6px !important;
+  font-size: 12px !important;
+}
+
+/* Responsive grid improvements */
+@media (max-width: 768px) {
+  .ant-card {
+    margin-bottom: 16px !important;
+  }
+  
+  .ant-card-cover {
+    height: 180px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .ant-card-cover {
+    height: 160px !important;
+  }
+  
+  .ant-card-actions {
+    padding: 8px 16px !important;
+  }
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ant-card {
+  animation: fadeInUp 0.3s ease-out !important;
+}
+
+/* Loading state */
+.ant-skeleton {
+  border-radius: 12px !important;
+}
+
+.ant-skeleton-content .ant-skeleton-title {
+  border-radius: 6px !important;
+}
+
+.ant-skeleton-content .ant-skeleton-paragraph > li {
+  border-radius: 6px !important;
 }

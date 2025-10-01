@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AdminLayout } from '../admin/AdminLayout';
-import { get, post, put, del } from '../../../services/httpClient';
+import { get, post, put, del, patch } from '../../../services/httpClient';
 import ReactModal from 'react-modal';
+import { ShareAltOutlined } from '@ant-design/icons';
 
 interface Dealer {
   _id: string;
@@ -13,6 +14,7 @@ interface Dealer {
   phone: string;
   email: string;
   legalInfo: string;
+  isActive: boolean;
   operationalInfo: string;
   createdAt: string;
   updatedAt: string;
@@ -151,16 +153,17 @@ export const AdminDealerManagement: React.FC = () => {
   // Handle delete action
   const handleDelete = async (dealerId: string) => {
     try {
-      const res = await del<{ success: boolean; message: string }>(`/api/dealerships/${dealerId}`);
+      // Sử dụng endpoint PATCH thay vì DELETE
+      const res = await patch<{ success: boolean; message: string }>(`/api/dealerships/${dealerId}/deactivate`, {});
       if (res.success) {
-        setSuccess('Đại lý đã được xóa thành công!');
+        setSuccess('Đại lý đã được đánh dấu ngừng hợp tác thành công!');
         setError(null);
         fetchDealers();
       } else {
         throw new Error(res.message);
       }
     } catch (err) {
-      setError('Không thể xóa đại lý. Vui lòng thử lại sau.');
+      setError('Không thể đánh dấu ngừng hợp tác đại lý. Vui lòng thử lại sau.');
       setSuccess(null);
     }
   };
@@ -245,89 +248,6 @@ export const AdminDealerManagement: React.FC = () => {
             {showForm ? 'Đóng form' : 'Thêm đại lý mới'}
           </button>
         </div>
-        {showForm && (
-          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md mb-6">
-            <h2 className="text-2xl font-bold mb-4">{isEditing ? 'Cập nhật thông tin đại lý' : 'Thêm đại lý mới'}</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Tên đại lý"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="code"
-                value={formData.code}
-                onChange={handleChange}
-                placeholder="Mã đại lý"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Địa chỉ"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Số điện thoại"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <textarea
-                name="legalInfo"
-                value={formData.legalInfo}
-                onChange={handleChange}
-                placeholder="Thông tin pháp lý"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <textarea
-                name="operationalInfo"
-                value={formData.operationalInfo}
-                onChange={handleChange}
-                placeholder="Thông tin vận hành"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-            </div>
-            <div className="flex justify-end mt-4">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 mr-2"
-              >
-                {isEditing ? 'Cập nhật' : 'Thêm mới'}
-              </button>
-              <button
-                type="button"
-                onClick={cancelEditing}
-                className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
-              >
-                Hủy
-              </button>
-            </div>
-          </form>
-        )}
         {/* Modal for viewing dealer details */}
         <ReactModal
           isOpen={!!viewingDealer}
@@ -368,9 +288,14 @@ export const AdminDealerManagement: React.FC = () => {
                   <p className="text-gray-900">{viewingDealer.operationalInfo}</p>
                 </div>
                 <div>
+                  <span className="font-semibold text-gray-700">Trạng Thái:</span>
+                  <p className="text-gray-900">{viewingDealer.isActive ? 'Kích hoạt' : 'Vô hiệu hóa'}</p>
+                </div>
+                <div>
                   <span className="font-semibold text-gray-700">Ngày tạo:</span>
                   <p className="text-gray-900">{new Date(viewingDealer.createdAt).toLocaleDateString()}</p>
                 </div>
+
                 <div>
                   <span className="font-semibold text-gray-700">Ngày cập nhật:</span>
                   <p className="text-gray-900">{new Date(viewingDealer.updatedAt).toLocaleDateString()}</p>
@@ -484,8 +409,8 @@ export const AdminDealerManagement: React.FC = () => {
           contentLabel="Delete Dealer Confirmation"
         >
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Xác nhận xóa đại lý</h2>
-            <p className="text-gray-700 mb-6">Bạn có chắc chắn muốn xóa đại lý này không?</p>
+            <h2 className="text-3xl font-bold mb-6 text-gray-800">Xác nhận xóa đại lý</h2>
+            <p className="text-gray-700 mb-6">Bạn có chắc chắn muốn xóa đại lý này không? Hành động này không thể hoàn tác.</p>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleConfirmDelete}
@@ -510,6 +435,7 @@ export const AdminDealerManagement: React.FC = () => {
                   <tr>
                     <th className="text-left p-6 font-semibold text-gray-900">Thông tin đại lý</th>
                     <th className="text-left p-6 font-semibold text-gray-900">Liên hệ</th>
+                    <th className="text-left p-6 font-semibold text-gray-900">Trạng Thái</th>
                     <th className="text-left p-6 font-semibold text-gray-900">Ngày tạo</th>
                     <th className="text-left p-6 font-semibold text-gray-900">Hành động</th>
                   </tr>
@@ -537,6 +463,12 @@ export const AdminDealerManagement: React.FC = () => {
                             <Mail className="h-3 w-3" />
                             <span>{dealer.email}</span>
                           </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="text-sm text-gray-500 flex items-center space-x-1">
+                          <ShareAltOutlined className="h-3 w-3" />
+                          <span>{dealer.isActive ? 'Hợp tác' : ' Ngừng hợp tác'}</span>
                         </div>
                       </td>
                       <td className="p-6">
