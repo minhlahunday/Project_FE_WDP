@@ -4,7 +4,7 @@ import { loginUser } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, handleRedirect: (user:User) => void) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
   authError: string | null;
@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, handleRedirect: (user:User) => void): Promise<boolean> => {
     setIsLoading(true);
     setAuthError(null);
     try {
@@ -53,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.refreshToken) {
         localStorage.setItem('refreshToken', response.refreshToken);
       }
+      handleRedirect(response.user);
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
