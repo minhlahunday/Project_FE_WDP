@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { organizationService, Manufacturer, Dealership } from "../../../../services/organizationService";
+import {
+  organizationService,
+  Manufacturer,
+  Dealership,
+} from "../../../../services/organizationService";
+import { useStaffManagement } from "../../../../hooks/useStaffManagement";
 
 interface OrganizationSectionProps {
   roleName: string;
@@ -18,6 +23,7 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
   onManufacturerChange,
   disabled = false,
 }) => {
+  const { roles } = useStaffManagement();
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
   const [loadingManufacturers, setLoadingManufacturers] = useState(false);
@@ -31,10 +37,10 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
       if (result.success) {
         setManufacturers(result.data?.data?.data || []);
       } else {
-        console.error('Error fetching manufacturers:', result.message);
+        console.error("Error fetching manufacturers:", result.message);
       }
     } catch (error) {
-      console.error('Error fetching manufacturers:', error);
+      console.error("Error fetching manufacturers:", error);
     } finally {
       setLoadingManufacturers(false);
     }
@@ -48,10 +54,10 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
       if (result.success) {
         setDealerships(result.data?.data?.data || []);
       } else {
-        console.error('Error fetching dealerships:', result.message);
+        console.error("Error fetching dealerships:", result.message);
       }
     } catch (error) {
-      console.error('Error fetching dealerships:', error);
+      console.error("Error fetching dealerships:", error);
     } finally {
       setLoadingDealerships(false);
     }
@@ -61,29 +67,34 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
     fetchManufacturers();
     fetchDealerships();
   }, []);
-  console.log('🏢 OrganizationSection rendered with:',dealerships, manufacturers);
+
   // Determine which fields should be visible based on role
   const shouldShowDealership = () => {
-    return roleName === "Dealer Staff" || roleName === "Dealer Manager";
+    const name = (roles || []).find((role) => role._id === roleName)?.name;
+    return name === "Dealer Staff" || name === "Dealer Manager";
   };
 
   const shouldShowManufacturer = () => {
-    return roleName === "EVM Staff";
+    return (
+      (roles || []).find((role) => role._id === roleName)?.name === "EVM Staff"
+    );
   };
-
   return (
     <div className="bg-gray-50 rounded-xl p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-        <span className="bg-purple-100 text-purple-600 rounded-full p-2 mr-3">🏢</span>
+        <span className="bg-purple-100 text-purple-600 rounded-full p-2 mr-3">
+          🏢
+        </span>
         Phân quyền & Tổ chức
       </h3>
-      
+
       <div className="space-y-6">
         {/* Role selection hint */}
         {!roleName && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              💡 Vui lòng chọn vai trò trước để hiển thị các trường tổ chức phù hợp
+              💡 Vui lòng chọn vai trò trước để hiển thị các trường tổ chức phù
+              hợp
             </p>
           </div>
         )}
@@ -106,13 +117,15 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
               </option>
               {dealerships.map((dealership) => (
                 <option key={dealership._id} value={dealership._id}>
-                  {dealership.name} 
+                  {dealership.name}
                   {dealership.location && ` - ${dealership.location}`}
                 </option>
               ))}
             </select>
             {loadingDealerships && (
-              <p className="text-xs text-gray-500">Đang tải danh sách đại lý...</p>
+              <p className="text-xs text-gray-500">
+                Đang tải danh sách đại lý...
+              </p>
             )}
           </div>
         )}
@@ -131,7 +144,9 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
               required
             >
               <option value="">
-                {loadingManufacturers ? "Đang tải..." : "-- Chọn nhà sản xuất --"}
+                {loadingManufacturers
+                  ? "Đang tải..."
+                  : "-- Chọn nhà sản xuất --"}
               </option>
               {manufacturers.map((manufacturer) => (
                 <option key={manufacturer._id} value={manufacturer._id}>
@@ -140,7 +155,9 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
               ))}
             </select>
             {loadingManufacturers && (
-              <p className="text-xs text-gray-500">Đang tải danh sách nhà sản xuất...</p>
+              <p className="text-xs text-gray-500">
+                Đang tải danh sách nhà sản xuất...
+              </p>
             )}
           </div>
         )}

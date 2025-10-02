@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authService, RegisterRequest } from '../services/authService';
+import { organizationService, Role } from '../services/organizationService';
+import { userService, User as ApiUser } from '../services/userService';
 
 interface Staff {
   id: string;
@@ -42,11 +44,75 @@ export const useStaffManagement = () => {
     address: "",
   });
   const [loading, setLoading] = useState(false);
+  const [loadingStaff, setLoadingStaff] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+
+  // Fetch roles from API
+  const fetchRoles = async () => {
+    setLoadingRoles(true);
+    try {
+      const result = await organizationService.getRoles();
+      if (result.success) {
+        setRoles(result.data?.data?.data || []);
+      }
+    } catch (error) {
+      // Handle error silently
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+
+  // Helper function to convert API user to Staff format
+  const convertApiUserToStaff = (apiUser: ApiUser): Staff => ({
+    id: apiUser._id,
+    fullName: apiUser.full_name,
+    email: apiUser.email,
+    phone: apiUser.phone || '',
+    position: apiUser.role_id?.name || 'Unknown',
+    department: getDepartmentFromRole(apiUser.role_id?.name || ''),
+    startDate: new Date(apiUser.createdAt).toISOString().split('T')[0],
+    status: 'active', // Default to active since API doesn't specify status
+    avatar: apiUser.avatar,
+    salary: 0, // API doesn't provide salary info
+    address: '', // API doesn't provide address in this response
+  });
+
+  // Fetch staff from API
+  const fetchStaff = async () => {
+    setLoadingStaff(true);
+    try {
+      const result = await userService.getUsers();
+      if (result.success && result.data.data) {
+        // Convert API users to Staff format
+        const staffData: Staff[] = result.data.data.map(convertApiUserToStaff);
+        setStaffList(staffData);
+      }
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      setError('Không thể tải danh sách nhân viên');
+    } finally {
+      setLoadingStaff(false);
+    }
+  };
+
+  // Load roles and staff when component mounts
+  useEffect(() => {
+    fetchRoles();
+    fetchStaff();
+  }, []);
 
   // Available roles for Admin
   const getAvailableRoles = () => {
+    if (roles.length > 0) {
+      return roles.map(role => ({
+        value: role._id,
+        label: role.name
+      }));
+    }
+    // Fallback roles if API fails
     return [
       { value: "Dealer Staff", label: "Dealer Staff" },
       { value: "Dealer Manager", label: "Dealer Manager" },
@@ -56,11 +122,32 @@ export const useStaffManagement = () => {
 
   // Helper function to get department from role
   const getDepartmentFromRole = (roleName: string): string => {
+    if (!roleName) return "Khác";
+    
+    const normalizedRole = roleName.toLowerCase();
+    
+    // Map common role patterns to departments
+    if (normalizedRole.includes('dealer') && normalizedRole.includes('staff')) {
+      return "Đại lý";
+    }
+    if (normalizedRole.includes('dealer') && normalizedRole.includes('manager')) {
+      return "Quản lý đại lý";
+    }
+    if (normalizedRole.includes('evm') || normalizedRole.includes('manufacturer')) {
+      return "EVM";
+    }
+    if (normalizedRole.includes('admin')) {
+      return "Quản trị";
+    }
+    
+    // Fallback for exact matches
     const departmentMapping = {
       "Dealer Staff": "Đại lý",
       "Dealer Manager": "Quản lý đại lý",
-      "EVM Staff": "EVM"
+      "EVM Staff": "EVM",
+      "Admin": "Quản trị"
     };
+    
     return departmentMapping[roleName as keyof typeof departmentMapping] || "Khác";
   };
 
@@ -137,11 +224,6 @@ export const useStaffManagement = () => {
         manufacturer_id: newStaff.manufacturerId || undefined,
       };
 
-      console.log('📋 Sending register data:', {
-        ...registerData,
-        password: '***hidden***'
-      });
-
       const result = await authService.registerStaff(registerData);
 
       if (result.success) {
@@ -161,7 +243,7 @@ export const useStaffManagement = () => {
 
         setStaffList([...staffList, staffToAdd]);
         setSuccess("Đăng ký nhân viên thành công! Tài khoản đã được tạo.");
-
+        
         setTimeout(() => {
           setShowAddModal(false);
           setSuccess(null);
@@ -206,8 +288,11 @@ export const useStaffManagement = () => {
     showAddModal,
     newStaff,
     loading,
+    loadingStaff,
     error,
     success,
+    roles,
+    loadingRoles,
     
     // Actions
     setSearchTerm,
@@ -218,5 +303,6 @@ export const useStaffManagement = () => {
     handleDeleteStaff,
     handleToggleStatus,
     getAvailableRoles,
+    fetchStaff,
   };
 };

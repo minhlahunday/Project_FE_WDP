@@ -16,6 +16,7 @@ interface AddStaffModalProps {
     address: string;
   };
   loading: boolean;
+  loadingRoles?: boolean;
   error: string | null;
   success: string | null;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
@@ -28,6 +29,7 @@ export const AddStaffModal: React.FC<AddStaffModalProps> = ({
   onClose,
   newStaff,
   loading,
+  loadingRoles = false,
   error,
   success,
   onInputChange,
@@ -215,16 +217,23 @@ export const AddStaffModal: React.FC<AddStaffModalProps> = ({
                   required
                   value={newStaff.roleName}
                   onChange={onInputChange}
-                  disabled={loading}
+                  disabled={loading || loadingRoles}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-500 disabled:bg-gray-100 transition-all duration-200"
                 >
-                  <option value="">-- Chọn vai trò --</option>
+                  <option value="">
+                    {loadingRoles ? "Đang tải vai trò..." : "-- Chọn vai trò --"}
+                  </option>
                   {availableRoles.map((role) => (
                     <option key={role.value} value={role.value}>
                       {role.label}
                     </option>
                   ))}
                 </select>
+                {loadingRoles && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Đang tải danh sách vai trò từ server...
+                  </p>
+                )}
               </div>
             </div>
 
