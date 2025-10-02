@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { authService, RegisterRequest } from '../services/authService';
+import { organizationService, Role } from '../services/organizationService';
 
 interface Staff {
   id: string;
@@ -44,9 +45,38 @@ export const useStaffManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+
+  // Fetch roles from API
+  const fetchRoles = async () => {
+    setLoadingRoles(true);
+    try {
+      const result = await organizationService.getRoles();
+      if (result.success) {
+        setRoles(result.data?.data?.data || []);
+      }
+    } catch (error) {
+      // Handle error silently
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+
+  // Load roles when component mounts
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   // Available roles for Admin
   const getAvailableRoles = () => {
+    if (roles.length > 0) {
+      return roles.map(role => ({
+        value: role._id,
+        label: role.name
+      }));
+    }
+    // Fallback roles if API fails
     return [
       { value: "Dealer Staff", label: "Dealer Staff" },
       { value: "Dealer Manager", label: "Dealer Manager" },
@@ -208,6 +238,8 @@ export const useStaffManagement = () => {
     loading,
     error,
     success,
+    roles,
+    loadingRoles,
     
     // Actions
     setSearchTerm,

@@ -21,6 +21,13 @@ export interface Dealership {
   updated_at?: string;
 }
 
+export interface Role {
+  _id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   data: {
@@ -62,6 +69,23 @@ class OrganizationService {
         success: false,
         data: { data: { data: [] } },
         message: error.message || "Lỗi khi tải danh sách đại lý",
+      };
+    }
+  }
+
+  // Get all roles
+  async getRoles(): Promise<ApiResponse<Role[]>> {
+    try {
+      const response = await httpClient.get("/api/roles");
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: { data: { data: [] } },
+        message: error.message || "Lỗi khi tải danh sách vai trò",
       };
     }
   }

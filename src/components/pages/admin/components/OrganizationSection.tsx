@@ -70,7 +70,7 @@ export const OrganizationSection: React.FC<OrganizationSectionProps> = ({
   const shouldShowManufacturer = () => {
     return roleName === "EVM Staff";
   };
-
+console.log("roleName", roleName);
   return (
     <div className="bg-gray-50 rounded-xl p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">

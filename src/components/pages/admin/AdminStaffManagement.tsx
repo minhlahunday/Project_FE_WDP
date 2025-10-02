@@ -17,6 +17,7 @@ export const AdminStaffManagement: React.FC = () => {
     showAddModal,
     newStaff,
     loading,
+    loadingRoles,
     error,
     success,
     setSearchTerm,
@@ -59,6 +60,7 @@ export const AdminStaffManagement: React.FC = () => {
         onClose={() => setShowAddModal(false)}
         newStaff={newStaff}
         loading={loading}
+        loadingRoles={loadingRoles}
         error={error}
         success={success}
         onInputChange={handleInputChange}
