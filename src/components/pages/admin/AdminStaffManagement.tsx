@@ -46,7 +46,7 @@ export const AdminStaffManagement: React.FC = () => {
         />
 
         {/* Stats Cards */}
-        <StaffStats staffList={staffList} />
+        {/* <StaffStats staffList={staffList} /> */}
 
         {/* Staff Table */}
         {loadingStaff ? (
