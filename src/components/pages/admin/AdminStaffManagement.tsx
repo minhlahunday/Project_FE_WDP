@@ -17,6 +17,7 @@ export const AdminStaffManagement: React.FC = () => {
     showAddModal,
     newStaff,
     loading,
+    loadingStaff,
     loadingRoles,
     error,
     success,
@@ -28,6 +29,7 @@ export const AdminStaffManagement: React.FC = () => {
     handleDeleteStaff,
     handleToggleStatus,
     getAvailableRoles,
+    fetchStaff,
   } = useStaffManagement();
 
   return (
@@ -47,11 +49,20 @@ export const AdminStaffManagement: React.FC = () => {
         <StaffStats staffList={staffList} />
 
         {/* Staff Table */}
-        <StaffTable
-          filteredStaff={filteredStaff}
-          onToggleStatus={handleToggleStatus}
-          onDeleteStaff={handleDeleteStaff}
-        />
+        {loadingStaff ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="text-gray-500">Đang tải danh sách nhân viên...</p>
+            </div>
+          </div>
+        ) : (
+          <StaffTable
+            filteredStaff={filteredStaff}
+            onToggleStatus={handleToggleStatus}
+            onDeleteStaff={handleDeleteStaff}
+          />
+        )}
       </div>
 
       {/* Add Staff Modal */}
