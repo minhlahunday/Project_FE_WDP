@@ -129,9 +129,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
     },
     { 
       key: 'pricing', 
-      label: 'Giá & Khuyến mãi', 
+      label: 'Khuyến mãi', 
       icon: <CreditCard className="h-4 w-4" />, 
-      route: '/sections/pricing' 
+      route: '/evm/promotion-management' 
     },
     { 
       key: 'customer-management', 

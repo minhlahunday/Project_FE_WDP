@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../admin/AdminLayout";
-import { get, put } from "../../../services/httpClient";
+import { get, put, post } from "../../../services/httpClient";
 import "../../../styles/antd-custom.css";
 import { 
   Card, 
@@ -20,7 +20,8 @@ import {
   Select,
   Tooltip,
   Tabs,
-  Radio
+  Radio,
+  Transfer
 } from 'antd';
 import { 
   CarOutlined, 
@@ -29,7 +30,9 @@ import {
   InboxOutlined,
   WarningOutlined,
   CheckCircleOutlined,
-  ThunderboltOutlined
+  ThunderboltOutlined,
+  ShareAltOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -56,6 +59,16 @@ interface Product {
   updatedAt: string;
 }
 
+interface Dealer {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  code?: string;
+  isActive?: boolean;
+}
+
 
 const InventoryManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -65,9 +78,38 @@ const InventoryManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDistributeModal, setShowDistributeModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [dealers, setDealers] = useState<Dealer[]>([]);
+  const [targetKeys, setTargetKeys] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [dealerLoading, setDealerLoading] = useState(false);
   const [updateForm] = Form.useForm();
   const [statusForm] = Form.useForm();
+  const [distributeForm] = Form.useForm();
+
+  // Helper function để lấy manufacturer stock
+  const getManufacturerStock = (product: Product) => {
+    const manufacturerStock = product.stocks?.find(stock => stock.owner_type === 'manufacturer');
+    return manufacturerStock?.quantity || 0;
+  };
+
+  // Helper function để lấy dealer stock total
+  const getDealerStock = (product: Product) => {
+    return product.stocks?.filter(stock => stock.owner_type === 'dealer')
+      .reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+  };
+
+  const getStockStatus = (product: Product) => {
+    const manufacturerQuantity = getManufacturerStock(product);
+    if (manufacturerQuantity === 0) {
+      return { status: 'error', text: 'Hết hàng', color: 'red' };
+    } else if (manufacturerQuantity < 10) {
+      return { status: 'warning', text: 'Sắp hết', color: 'orange' };
+    } else {
+      return { status: 'success', text: 'Còn hàng', color: 'green' };
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -91,12 +133,35 @@ const InventoryManagement: React.FC = () => {
       console.log('Products loaded:', productsData.length);
       setProducts(productsData);
       
-      // Log statistics
+      // Log statistics với chi tiết từng sản phẩm
       const totalStock = productsData.reduce((sum: number, product: any) => {
-        return sum + (product.stocks?.reduce((stockSum: number, stock: any) => stockSum + stock.quantity, 0) || 0);
+        const manufacturerStock = product.stocks?.find((s: any) => s.owner_type === 'manufacturer')?.quantity || 0;
+        const dealerStock = product.stocks?.filter((s: any) => s.owner_type === 'dealer')
+          .reduce((dSum: number, s: any) => dSum + s.quantity, 0) || 0;
+        const totalProductStock = manufacturerStock + dealerStock;
+        
+        console.log(`Product: ${product.name} (${product.sku})`);
+        console.log(`  - Manufacturer: ${manufacturerStock}, Dealer: ${dealerStock}, Total: ${totalProductStock}`);
+        return sum + manufacturerStock; // Chỉ tính manufacturer stock cho tổng
       }, 0);
       console.log('Total products:', productsData.length);
-      console.log('Total stock:', totalStock);
+      console.log('Total manufacturer stock:', totalStock);
+      
+      // Tìm và log sản phẩm vf9 cụ thể
+      const vf9Product = productsData.find((p: any) => p.sku === 'VF9-0626-1925' || p.name.toLowerCase().includes('vf9'));
+      if (vf9Product) {
+        console.log('=== VF9 PRODUCT DETAILS ===');
+        console.log('Product:', vf9Product);
+        console.log('Stocks array:', vf9Product.stocks);
+        
+        const manufacturerStock = vf9Product.stocks?.find((s: any) => s.owner_type === 'manufacturer')?.quantity || 0;
+        const dealerStock = vf9Product.stocks?.filter((s: any) => s.owner_type === 'dealer')
+          .reduce((sum: number, s: any) => sum + s.quantity, 0) || 0;
+          
+        console.log('VF9 Manufacturer Stock:', manufacturerStock);
+        console.log('VF9 Dealer Stock:', dealerStock);
+        console.log('VF9 Total Stock:', manufacturerStock + dealerStock);
+      }
       
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -108,7 +173,43 @@ const InventoryManagement: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchDealers();
   }, []);
+
+  const fetchDealers = async () => {
+    try {
+      setDealerLoading(true);
+      console.log('Fetching dealers from API...');
+      
+      const res = await get<{ success: boolean; data: { data: Dealer[] } }>('/api/dealerships');
+      console.log('Dealers API Response:', res);
+      
+      if (res.success && Array.isArray(res.data.data)) {
+        const dealerData = res.data.data;
+        console.log(`Fetched ${dealerData.length} dealers from API`);
+        
+        const mappedDealers = dealerData.map((dealer: any) => ({
+          _id: dealer._id,
+          name: dealer.name,
+          code: dealer.code,
+          email: dealer.email,
+          phone: dealer.phone,
+          address: dealer.address,
+          isActive: dealer.isActive
+        }));
+        
+        setDealers(mappedDealers);
+      } else {
+        console.log('API returned no dealers');
+        setDealers([]);
+      }
+    } catch (error: any) {
+      console.error('Error fetching dealers:', error);
+      setDealers([]);
+    } finally {
+      setDealerLoading(false);
+    }
+  };
 
   // Function để test API và hiển thị thông tin debug
   const testApiCall = async () => {
@@ -159,101 +260,155 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
-  // Filter products by category
-  const carProducts = products.filter(product => product.category === 'car');
-  const motorbikeProducts = products.filter(product => product.category === 'motorbike');
+  // Function để test stock update API
+  const testStockUpdate = async () => {
+    try {
+      console.log('=== TESTING STOCK UPDATE API ===');
+      if (products.length === 0) {
+        console.log('No products available for testing');
+        return;
+      }
 
-  // Filter products
-  const filteredProducts = products.filter((product) => {
+      const testProduct = products[0];
+      const currentStock = getManufacturerStock(testProduct);
+      const newStock = Math.max(0, currentStock - 1); // Giảm 1 để test
+      
+      console.log('Testing stock update with product:', testProduct._id, testProduct.name);
+      console.log('Current stock:', currentStock, 'New stock:', newStock);
+      
+      const stockData = {
+        stocks: [{
+          owner_type: "manufacturer",
+          owner_id: typeof testProduct.manufacturer_id === 'string' 
+            ? testProduct.manufacturer_id 
+            : testProduct.manufacturer_id?._id || '',
+          quantity: newStock
+        }]
+      };
+
+      console.log('Stock update data:', stockData);
+      const response = await put(`/api/vehicles/${testProduct._id}`, stockData);
+      console.log('Stock update response:', response);
+      
+      message.success(`Test stock update thành công! Từ ${currentStock} → ${newStock}`);
+      fetchProducts(); // Refresh để xem kết quả
+    } catch (err: any) {
+      console.error('Stock update test error:', err);
+      console.error('Error details:', err.response?.data);
+      message.error(`Test stock update thất bại: ${err.response?.data?.message || err.message}`);
+    }
+  };
+
+  // Filter products by category - with safety checks
+  const carProducts = products?.filter(product => product?.category === 'car') || [];
+  const motorbikeProducts = products?.filter(product => product?.category === 'motorbike') || [];
+
+  // Filter products - with safety checks
+  const filteredProducts = (products || []).filter((product) => {
+    if (!product) return false;
+    
     const matchesSearch = 
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
+      product.name?.toLowerCase().includes(search.toLowerCase()) ||
       product.model?.toLowerCase().includes(search.toLowerCase()) ||
-      product.sku.toLowerCase().includes(search.toLowerCase());
+      product.sku?.toLowerCase().includes(search.toLowerCase());
     
     const matchesStatus = !statusFilter || product.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
 
-  // Filter cars
-  const filteredCars = carProducts.filter((product) => {
+  // Filter cars - with safety checks
+  const filteredCars = (carProducts || []).filter((product) => {
+    if (!product) return false;
+    
     const matchesSearch = 
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
+      product.name?.toLowerCase().includes(search.toLowerCase()) ||
       product.model?.toLowerCase().includes(search.toLowerCase()) ||
-      product.sku.toLowerCase().includes(search.toLowerCase());
+      product.sku?.toLowerCase().includes(search.toLowerCase());
     
     const matchesStatus = !statusFilter || product.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
 
-  // Filter motorbikes
-  const filteredMotorbikes = motorbikeProducts.filter((product) => {
+  // Filter motorbikes - with safety checks
+  const filteredMotorbikes = (motorbikeProducts || []).filter((product) => {
+    if (!product) return false;
+    
     const matchesSearch = 
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
+      product.name?.toLowerCase().includes(search.toLowerCase()) ||
       product.model?.toLowerCase().includes(search.toLowerCase()) ||
-      product.sku.toLowerCase().includes(search.toLowerCase());
+      product.sku?.toLowerCase().includes(search.toLowerCase());
     
     const matchesStatus = !statusFilter || product.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate statistics for all products
-  const totalProducts = products.length; // Tổng sản phẩm (không filter)
-  const filteredProductsCount = filteredProducts.length; // Sản phẩm sau filter
+  // Calculate statistics for all products - with safety checks
+  const totalProducts = (products || []).length; // Tổng sản phẩm (không filter)
+  const filteredProductsCount = (filteredProducts || []).length; // Sản phẩm sau filter
   
-  // Tổng stock của tất cả sản phẩm (không filter)
-  const totalStock = products.reduce((sum, product) => {
-    return sum + (product.stocks?.reduce((stockSum, stock) => stockSum + stock.quantity, 0) || 0);
+  // Tổng stock manufacturer của tất cả sản phẩm (không filter)
+  const totalStock = (products || []).reduce((sum, product) => {
+    if (!product) return sum;
+    return sum + getManufacturerStock(product);
   }, 0);
   
-  // Tổng stock của sản phẩm sau filter
-  const filteredTotalStock = filteredProducts.reduce((sum, product) => {
-    return sum + (product.stocks?.reduce((stockSum, stock) => stockSum + stock.quantity, 0) || 0);
+  // Tổng stock manufacturer của sản phẩm sau filter
+  const filteredTotalStock = (filteredProducts || []).reduce((sum, product) => {
+    if (!product) return sum;
+    return sum + getManufacturerStock(product);
   }, 0);
   
-  // Sản phẩm sắp hết hàng (tổng stock < 10)
-  const lowStockProducts = products.filter(product => {
-    const totalQuantity = product.stocks?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
-    return totalQuantity < 10;
+  // Sản phẩm sắp hết hàng (manufacturer stock < 10)
+  const lowStockProducts = (products || []).filter(product => {
+    if (!product) return false;
+    const manufacturerQuantity = getManufacturerStock(product);
+    return manufacturerQuantity < 10;
   }).length;
 
-  // Calculate statistics for cars
+  // Calculate statistics for cars - with safety checks
   const carStats = {
-    total: carProducts.length,
-    filtered: filteredCars.length,
-    totalStock: carProducts.reduce((sum, product) => {
-      return sum + (product.stocks?.reduce((stockSum, stock) => stockSum + stock.quantity, 0) || 0);
+    total: (carProducts || []).length,
+    filtered: (filteredCars || []).length,
+    totalStock: (carProducts || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getManufacturerStock(product);
     }, 0),
-    filteredStock: filteredCars.reduce((sum, product) => {
-      return sum + (product.stocks?.reduce((stockSum, stock) => stockSum + stock.quantity, 0) || 0);
+    filteredStock: (filteredCars || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getManufacturerStock(product);
     }, 0),
-    lowStock: carProducts.filter(product => {
-      const totalQuantity = product.stocks?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
-      return totalQuantity < 10;
+    lowStock: (carProducts || []).filter(product => {
+      if (!product) return false;
+      const manufacturerQuantity = getManufacturerStock(product);
+      return manufacturerQuantity < 10;
     }).length
   };
 
-  // Calculate statistics for motorbikes
+  // Calculate statistics for motorbikes - with safety checks
   const motorbikeStats = {
-    total: motorbikeProducts.length,
-    filtered: filteredMotorbikes.length,
-    totalStock: motorbikeProducts.reduce((sum, product) => {
-      return sum + (product.stocks?.reduce((stockSum, stock) => stockSum + stock.quantity, 0) || 0);
+    total: (motorbikeProducts || []).length,
+    filtered: (filteredMotorbikes || []).length,
+    totalStock: (motorbikeProducts || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getManufacturerStock(product);
     }, 0),
-    filteredStock: filteredMotorbikes.reduce((sum, product) => {
-      return sum + (product.stocks?.reduce((stockSum, stock) => stockSum + stock.quantity, 0) || 0);
+    filteredStock: (filteredMotorbikes || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getManufacturerStock(product);
     }, 0),
-    lowStock: motorbikeProducts.filter(product => {
-      const totalQuantity = product.stocks?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
-      return totalQuantity < 10;
+    lowStock: (motorbikeProducts || []).filter(product => {
+      if (!product) return false;
+      const manufacturerQuantity = getManufacturerStock(product);
+      return manufacturerQuantity < 10;
     }).length
   };
 
   const handleUpdateInventory = (product: Product) => {
     setSelectedProduct(product);
-    const currentStock = product.stocks?.[0]?.quantity || 0;
+    const currentStock = getManufacturerStock(product);
     updateForm.setFieldsValue({
       quantity: currentStock
     });
@@ -341,14 +496,117 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
-  const getStockStatus = (product: Product) => {
-    const totalQuantity = product.stocks?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
-    if (totalQuantity === 0) {
-      return { status: 'error', text: 'Hết hàng', color: 'red' };
-    } else if (totalQuantity < 10) {
-      return { status: 'warning', text: 'Sắp hết', color: 'orange' };
-    } else {
-      return { status: 'success', text: 'Còn hàng', color: 'green' };
+  const handleDistributeVehicle = (product: Product) => {
+    console.log('Opening distribute modal for product:', product);
+    setSelectedProduct(product);
+    setTargetKeys([]);
+    setSelectedKeys([]);
+    distributeForm.resetFields();
+    setShowDistributeModal(true);
+    
+    // Refresh dealers nếu chưa có
+    if (dealers.length === 0) {
+      fetchDealers();
+    }
+  };
+
+  const handleSubmitDistribute = async () => {
+    try {
+      if (!selectedProduct || targetKeys.length === 0) {
+        message.warning('Vui lòng chọn ít nhất một đại lý');
+        return;
+      }
+
+      const values = await distributeForm.validateFields();
+      console.log('Distribute form values:', values);
+
+      const currentStock = getManufacturerStock(selectedProduct);
+      const distributeQuantity = values.quantity || 1;
+
+      // Kiểm tra tồn kho manufacturer
+      if (distributeQuantity > currentStock) {
+        message.error(`Số lượng phân phối (${distributeQuantity}) không được vượt quá tồn kho của nhà sản xuất (${currentStock})`);
+        return;
+      }
+
+      // Extract dealerId from targetKey (format: "dealer-{dealerId}-{index}")
+      const selectedKey = targetKeys[0];
+      const dealerId = selectedKey ? selectedKey.split('-')[1] : null;
+      
+      if (!dealerId) {
+        message.error('Không thể xác định đại lý được chọn');
+        return;
+      }
+
+      const distributionData = {
+        vehicle_id: selectedProduct._id,
+        dealership_id: dealerId, // Sử dụng dealerId đã extract
+        quantity: distributeQuantity,
+        notes: values.notes || "Initial stock allocation for new dealership"
+      };
+
+      console.log('Distributing vehicle:', distributionData);
+      
+      // Gọi API phân phối
+      const response = await post('/api/vehicles/distribute', distributionData);
+      console.log('Distribution response:', response);
+      
+      if (response.success) {
+        // Cập nhật tồn kho sau khi phân phối thành công
+        const newStockQuantity = currentStock - distributeQuantity;
+        
+        const stockUpdateData = {
+          stocks: [{
+            owner_type: "manufacturer",
+            owner_id: typeof selectedProduct.manufacturer_id === 'string' 
+              ? selectedProduct.manufacturer_id 
+              : selectedProduct.manufacturer_id?._id || '',
+            quantity: newStockQuantity
+          }]
+        };
+
+        console.log('Updating stock after distribution:', stockUpdateData);
+        
+        try {
+          const stockResponse = await put(`/api/vehicles/${selectedProduct._id}`, stockUpdateData);
+          console.log('Stock update response:', stockResponse);
+          console.log('Stock updated successfully - New quantity:', newStockQuantity);
+          message.success(`Đã phân phối ${distributeQuantity} xe "${selectedProduct.name}" cho đại lý! Tồn kho còn lại: ${newStockQuantity}`);
+        } catch (stockError: any) {
+          console.error('Error updating stock:', stockError);
+          console.error('Stock error details:', stockError.response?.data);
+          message.warning('Phân phối thành công nhưng có lỗi khi cập nhật tồn kho. Vui lòng kiểm tra lại.');
+          
+          // Log chi tiết lỗi để debug
+          message.error(`Chi tiết lỗi: ${stockError.response?.data?.message || stockError.message}`);
+        }
+
+        setShowDistributeModal(false);
+        setSelectedProduct(null);
+        setTargetKeys([]);
+        setSelectedKeys([]);
+        distributeForm.resetFields();
+        
+        // Đợi một chút trước khi refresh để đảm bảo backend đã cập nhật
+        setTimeout(() => {
+          console.log('Refreshing products after distribution...');
+          fetchProducts(); // Refresh danh sách xe
+        }, 500);
+      } else {
+        message.error(response.message || 'Có lỗi xảy ra khi phân phối xe');
+      }
+    } catch (error: any) {
+      console.error('Error distributing vehicle:', error);
+      
+      if (error.response?.status === 400) {
+        message.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+      } else if (error.response?.status === 403) {
+        message.error('Bạn không có quyền phân phối xe.');
+      } else if (error.response?.status === 404) {
+        message.error('Không tìm thấy xe hoặc đại lý.');
+      } else {
+        message.error(error.response?.data?.message || 'Có lỗi xảy ra khi phân phối xe');
+      }
     }
   };
 
@@ -434,16 +692,22 @@ const InventoryManagement: React.FC = () => {
       key: 'stock',
       width: 120,
       render: (record: Product) => {
-        const totalQuantity = record.stocks?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+        const manufacturerQuantity = getManufacturerStock(record);
+        const dealerQuantity = getDealerStock(record);
         const stockStatus = getStockStatus(record);
         return (
           <div>
             <div style={{ fontWeight: 'bold', fontSize: 16 }}>
-              {totalQuantity}
+              {manufacturerQuantity}
             </div>
             <Tag color={stockStatus.color}>
               {stockStatus.text}
             </Tag>
+            {dealerQuantity > 0 && (
+              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                Đã phân phối: {dealerQuantity}
+              </div>
+            )}
           </div>
         );
       }
@@ -462,7 +726,7 @@ const InventoryManagement: React.FC = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      width: 180,
+      width: 220,
       render: (record: Product) => (
         <Space>
           <Tooltip title="Cập nhật tồn kho">
@@ -471,6 +735,19 @@ const InventoryManagement: React.FC = () => {
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleUpdateInventory(record)}
+            />
+          </Tooltip>
+          <Tooltip title="Phân phối cho đại lý">
+            <Button
+              type="default"
+              size="small"
+              icon={<ShareAltOutlined />}
+              onClick={() => handleDistributeVehicle(record)}
+              disabled={record.status !== 'active'}
+              style={{
+                color: '#1890ff',
+                borderColor: '#1890ff'
+              }}
             />
           </Tooltip>
           <Tooltip title="Cập nhật trạng thái">
@@ -564,37 +841,6 @@ const InventoryManagement: React.FC = () => {
             <Option value="inactive">Không hoạt động</Option>
           </Select>
         </Col>
-        <Col xs={24} sm={12} md={3}>
-          <Button
-            type="primary"
-            icon={<CheckCircleOutlined />}
-            onClick={fetchProducts}
-            loading={loading}
-            style={{ width: '100%' }}
-          >
-            Làm mới
-          </Button>
-        </Col>
-        <Col xs={24} sm={12} md={3}>
-          <Button
-            type="default"
-            icon={<AppstoreOutlined />}
-            onClick={testApiCall}
-            style={{ width: '100%' }}
-          >
-            Test API
-          </Button>
-        </Col>
-        <Col xs={24} sm={12} md={3}>
-          <Button
-            type="default"
-            icon={<CheckCircleOutlined />}
-            onClick={testStatusUpdate}
-            style={{ width: '100%' }}
-          >
-            Test Status
-          </Button>
-        </Col>
       </Row>
     </Card>
   );
@@ -615,6 +861,34 @@ const InventoryManagement: React.FC = () => {
       scroll={{ x: 1200 }}
     />
   );
+
+  // Debug render
+  console.log('InventoryManagement render - products:', products?.length || 0);
+  console.log('InventoryManagement render - error:', error);
+  console.log('InventoryManagement render - loading:', loading);
+
+  // Early return if critical error
+  if (error && !products.length) {
+    return (
+      <AdminLayout activeSection="inventory-management">
+        <div className="p-6">
+          <div style={{ 
+            background: '#fff2f0', 
+            border: '1px solid #ffccc7', 
+            borderRadius: 8, 
+            padding: 16, 
+            marginBottom: 16,
+            color: '#ff4d4f',
+            textAlign: 'center'
+          }}>
+            <h3>Có lỗi xảy ra</h3>
+            <p>{error}</p>
+            <Button onClick={() => window.location.reload()}>Tải lại trang</Button>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout activeSection="inventory-management">
@@ -857,6 +1131,224 @@ const InventoryManagement: React.FC = () => {
                 <Text type="success">
                   <CheckCircleOutlined style={{ marginRight: 4 }} />
                   Lưu ý: Thay đổi trạng thái sẽ ảnh hưởng đến việc hiển thị sản phẩm trong hệ thống.
+                </Text>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Distribute Vehicle Modal */}
+        <Modal
+          title={
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <ShareAltOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+              Phân phối xe cho đại lý
+            </div>
+          }
+          open={showDistributeModal}
+          onCancel={() => {
+            setShowDistributeModal(false);
+            setSelectedProduct(null);
+            setTargetKeys([]);
+            setSelectedKeys([]);
+            distributeForm.resetFields();
+          }}
+          onOk={handleSubmitDistribute}
+          width={800}
+          okText="Phân phối xe"
+          cancelText="Hủy"
+          confirmLoading={loading}
+          okButtonProps={{
+            disabled: targetKeys.length === 0
+          }}
+        >
+          {selectedProduct && (
+            <div>
+              {/* Product Info */}
+              <div style={{ 
+                marginBottom: '24px', 
+                padding: '16px', 
+                backgroundColor: '#f8f9fa', 
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <div>
+                      <Text strong style={{ color: '#495057' }}>Xe:</Text>
+                      <br />
+                      <Text style={{ fontSize: '16px', fontWeight: 500, color: '#1890ff' }}>
+                        {selectedProduct.name}
+                      </Text>
+                      <br />
+                      <Text type="secondary">{selectedProduct.model} - {selectedProduct.sku}</Text>
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div>
+                      <Text strong style={{ color: '#495057' }}>Tồn kho nhà sản xuất:</Text>
+                      <br />
+                      <Text style={{ fontSize: '16px', fontWeight: 500, color: '#52c41a' }}>
+                        {getManufacturerStock(selectedProduct)} xe
+                      </Text>
+                      <br />
+                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                        Đã phân phối: {getDealerStock(selectedProduct)} xe
+                      </Text>
+                      <br />
+                      <Text type="secondary">
+                        Giá: {selectedProduct.price?.toLocaleString()}₫
+                      </Text>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* Form */}
+              <Form form={distributeForm} layout="vertical">
+                <Form.Item
+                  name="quantity"
+                  label={`Số lượng xe phân phối (Tồn kho NSX: ${getManufacturerStock(selectedProduct)} xe)`}
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập số lượng xe' },
+                    { type: 'number', min: 1, message: 'Số lượng phải >= 1' },
+                    { 
+                      type: 'number', 
+                      max: getManufacturerStock(selectedProduct), 
+                      message: `Số lượng không được vượt quá tồn kho nhà sản xuất (${getManufacturerStock(selectedProduct)} xe)` 
+                    }
+                  ]}
+                  initialValue={1}
+                >
+                  <InputNumber
+                    min={1}
+                    max={getManufacturerStock(selectedProduct)}
+                    style={{ width: '100%' }}
+                    placeholder="Nhập số lượng xe muốn phân phối"
+                    addonAfter="xe"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="notes"
+                  label="Ghi chú (tùy chọn)"
+                >
+                  <Input.TextArea
+                    rows={3}
+                    placeholder="Nhập ghi chú về việc phân phối xe này..."
+                  />
+                </Form.Item>
+              </Form>
+              
+              {/* Transfer Component */}
+              {dealerLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <ReloadOutlined spin style={{ fontSize: '24px', color: '#1890ff' }} />
+                  <div style={{ marginTop: '12px' }}>
+                    <Text>Đang tải danh sách đại lý...</Text>
+                  </div>
+                </div>
+              ) : dealers.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ 
+                    fontSize: '48px', 
+                    color: '#d9d9d9', 
+                    marginBottom: '16px'
+                  }}>
+                    🏢
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '16px', display: 'block', marginBottom: '8px' }}>
+                    Chưa có đại lý nào trong hệ thống
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '24px' }}>
+                    Vui lòng thêm đại lý mới để có thể phân phối xe
+                  </Text>
+                  <Button 
+                    type="primary" 
+                    onClick={fetchDealers}
+                    icon={<ReloadOutlined />}
+                    loading={dealerLoading}
+                  >
+                    Tải lại danh sách
+                  </Button>
+                </div>
+              ) : (
+                <div>
+                  <Text strong style={{ fontSize: '16px', marginBottom: '16px', display: 'block' }}>
+                    Chọn đại lý nhận xe:
+                  </Text>
+                  <Transfer
+                    dataSource={dealers.map((dealer, index) => ({
+                      key: `dealer-${dealer._id}-${index}`,
+                      title: dealer.name,
+                      description: `${dealer.code || 'N/A'} - ${dealer.email || 'N/A'} - ${dealer.phone || 'N/A'}`,
+                      disabled: !dealer.isActive,
+                      dealerId: dealer._id // Thêm dealerId để tracking
+                    }))}
+                    titles={[
+                      `Danh sách đại lý (${dealers.length})`, 
+                      `Đại lý được chọn (${targetKeys.length})`
+                    ]}
+                    targetKeys={targetKeys}
+                    selectedKeys={selectedKeys}
+                    onChange={(keys) => setTargetKeys(keys.slice(0, 1) as string[])} // Chỉ cho phép chọn 1 đại lý
+                    onSelectChange={(sourceSelectedKeys, targetSelectedKeys) => {
+                      setSelectedKeys([...sourceSelectedKeys, ...targetSelectedKeys] as string[]);
+                    }}
+                    render={item => (
+                      <div style={{ padding: '4px 0' }}>
+                        <div style={{ fontWeight: 500, color: item.disabled ? '#bfbfbf' : '#262626' }}>
+                          {item.title}
+                          {item.disabled && <Text type="secondary"> (Không hoạt động)</Text>}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                          {item.description}
+                        </div>
+                      </div>
+                    )}
+                    listStyle={{
+                      width: 300,
+                      height: 300,
+                    }}
+                    showSearch
+                    filterOption={(inputValue, option) =>
+                      option.title.toLowerCase().includes(inputValue.toLowerCase()) ||
+                      option.description.toLowerCase().includes(inputValue.toLowerCase())
+                    }
+                    locale={{
+                      itemUnit: 'đại lý',
+                      itemsUnit: 'đại lý'
+                    }}
+                    oneWay={false}
+                    showSelectAll={false}
+                  />
+                </div>
+              )}
+              
+              {targetKeys.length > 0 && (
+                <div style={{ 
+                  marginTop: '16px', 
+                  padding: '12px', 
+                  backgroundColor: '#e6f4ff', 
+                  borderRadius: '6px',
+                  border: '1px solid #91caff'
+                }}>
+                  <Text style={{ color: '#0958d9' }}>
+                    ✓ Đã chọn đại lý để phân phối xe
+                  </Text>
+                </div>
+              )}
+
+              {/* Warning about stock reduction */}
+              <div style={{ 
+                marginTop: '16px', 
+                padding: '12px', 
+                backgroundColor: '#fff7e6', 
+                borderRadius: '6px',
+                border: '1px solid #ffd591'
+              }}>
+                <Text style={{ color: '#d46b08' }}>
+                  ⚠️ <strong>Lưu ý:</strong> Sau khi phân phối, tồn kho của nhà sản xuất sẽ giảm tương ứng với số lượng xe đã phân phối.
                 </Text>
               </div>
             </div>

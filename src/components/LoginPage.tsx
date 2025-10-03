@@ -33,8 +33,10 @@ export function LoginPage() {
   }, [location.state]);
 
   const handleRedirect = (user: any) => {
-    if (user?.role === "admin" || user?.role === "evm_staff") {
+    if (user?.role === "admin" ) {
       navigate("/admin/admin-staff-management");
+    } else if (user?.role === "evm") {
+      navigate("/");
     } else if (user?.role === "dealer_staff") {
       navigate("/portal/car");
     } else {

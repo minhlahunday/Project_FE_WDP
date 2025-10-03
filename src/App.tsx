@@ -23,6 +23,7 @@ import ProductManagement from './components/pages/EVM/ProductManagement';
 import { CustomerManagement } from './components/pages/EVM/CustomerManagement';
 import { AdminDealerManagement } from './components/pages/EVM/DealerManagement';
 import InventoryManagement from './components/pages/EVM/InventoryManagement';
+import PromotionManagement from './components/pages/EVM/PromotionManagement';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -92,6 +93,7 @@ function AppContent() {
       <Route path="/evm/product-management" element={<ProductManagement />} />
       <Route path="/evm/customer-management" element={<CustomerManagement />} />
       <Route path="/evm/inventory-management" element={<InventoryManagement />} />
+      <Route path="/evm/promotion-management" element={<PromotionManagement />} />
       
 
       {/* Default route */}
