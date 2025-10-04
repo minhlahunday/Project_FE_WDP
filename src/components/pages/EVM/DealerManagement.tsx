@@ -2,32 +2,82 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AdminLayout } from '../admin/AdminLayout';
-import { get, post, put, del, patch } from '../../../services/httpClient';
+import { get, post, put, patch } from '../../../services/httpClient';
 import ReactModal from 'react-modal';
 import { ShareAltOutlined } from '@ant-design/icons';
 
-interface Dealer {
-  _id: string;
-  name: string;
-  code: string;
-  address: string;
+interface AddressObject {
+  street: string;
+  district: string;
+  city: string;
+  province: string;
+  full_address: string;
+}
+
+interface ContactObject {
   phone: string;
   email: string;
-  legalInfo: string;
+  hotline: string;
+}
+
+interface ContractObject {
+  contract_number: string;
+  signed_date: string;
+  expiry_date: string;
+  territory: string;
+  exclusive_territory: boolean;
+  business_license: string;
+  legal_representative: string;
+}
+
+interface CapabilitiesObject {
+  dealer_level: string;
+  product_distribution: string;
+  services: {
+    vehicle_sales: boolean;
+    test_drive: boolean;
+    spare_parts_sales: boolean;
+  };
+  showroom_area: number;
+  display_capacity: number;
+  total_staff: number;
+  sales_staff: number;
+  support_staff: number;
+}
+
+interface Dealer {
+  _id: string;
+  code: string;
+  company_name: string;
+  business_license: string;
+  tax_code: string;
+  legal_representative: string;
+  manufacturer_id: string;
+  dealer_level: string;
+  product_distribution: string;
+  status: string;
   isActive: boolean;
-  operationalInfo: string;
+  created_by: string;
+  notes: string;
+  address: AddressObject;
+  contact: ContactObject;
+  contract: ContractObject;
+  capabilities: CapabilitiesObject;
   createdAt: string;
   updatedAt: string;
+  __v: number;
 }
 
 interface DealerForm {
-  name: string;
+  company_name: string;
   code: string;
   address: string;
   phone: string;
   email: string;
-  legalInfo: string;
-  operationalInfo: string;
+  business_license: string;
+  legal_representative: string;
+  dealer_level: string;
+  product_distribution: string;
 }
 
 export const AdminDealerManagement: React.FC = () => {
@@ -35,15 +85,26 @@ export const AdminDealerManagement: React.FC = () => {
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [formData, setFormData] = useState<DealerForm>({
-    name: '',
+
+  // Helper function to format address
+  const formatAddress = (address: string | AddressObject): string => {
+    if (typeof address === 'string') return address;
+    return address.full_address || `${address.street}, ${address.district}, ${address.city}, ${address.province}`;
+  };
+
+  const resetFormData = (): DealerForm => ({
+    company_name: '',
     code: '',
     address: '',
     phone: '',
     email: '',
-    legalInfo: '',
-    operationalInfo: '',
+    business_license: '',
+    legal_representative: '',
+    dealer_level: '',
+    product_distribution: '',
   });
+
+  const [formData, setFormData] = useState<DealerForm>(resetFormData());
   const [showForm, setShowForm] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -55,7 +116,9 @@ export const AdminDealerManagement: React.FC = () => {
   const fetchDealers = async () => {
     try {
       const res = await get<{ success: boolean; data: { data: Dealer[] } }>('/api/dealerships');
+      console.log('API Response:', res); // Debug log
       if (res.success && Array.isArray(res.data.data)) {
+        console.log('First dealer:', res.data.data[0]); // Debug log
         setDealers(res.data.data);
         setError(null);
       } else {
@@ -111,13 +174,15 @@ export const AdminDealerManagement: React.FC = () => {
   // Handle edit action
   const handleEdit = (dealer: Dealer) => {
     setFormData({
-      name: dealer.name,
+      company_name: dealer.company_name,
       code: dealer.code,
-      address: dealer.address,
-      phone: dealer.phone,
-      email: dealer.email,
-      legalInfo: dealer.legalInfo,
-      operationalInfo: dealer.operationalInfo,
+      address: formatAddress(dealer.address),
+      phone: dealer.contact?.phone || '',
+      email: dealer.contact?.email || '',
+      business_license: dealer.business_license || dealer.contract?.business_license || '',
+      legal_representative: dealer.legal_representative || dealer.contract?.legal_representative || '',
+      dealer_level: dealer.dealer_level || dealer.capabilities?.dealer_level || '',
+      product_distribution: dealer.product_distribution || dealer.capabilities?.product_distribution || '',
     });
     setSelectedDealer(dealer);
     setIsEditing(true);
@@ -126,6 +191,7 @@ export const AdminDealerManagement: React.FC = () => {
 
   // Handle view details action
   const handleViewDetails = (dealer: Dealer) => {
+    console.log('Viewing dealer:', dealer); // Debug log
     setViewingDealer(dealer);
   };
 
@@ -139,21 +205,11 @@ export const AdminDealerManagement: React.FC = () => {
     setIsEditing(false);
     setSelectedDealer(null);
     setShowForm(false);
-    setFormData({
-      name: '',
-      code: '',
-      address: '',
-      phone: '',
-      email: '',
-      legalInfo: '',
-      operationalInfo: '',
-    });
+    setFormData(resetFormData());
   };
 
-  // Handle delete action
   const handleDelete = async (dealerId: string) => {
     try {
-      // Sử dụng endpoint PATCH thay vì DELETE
       const res = await patch<{ success: boolean; message: string }>(`/api/dealerships/${dealerId}/deactivate`, {});
       if (res.success) {
         setSuccess('Đại lý đã được đánh dấu ngừng hợp tác thành công!');
@@ -233,15 +289,7 @@ export const AdminDealerManagement: React.FC = () => {
             onClick={() => {
               setShowForm(!showForm);
               setIsEditing(false);
-              setFormData({
-                name: '',
-                code: '',
-                address: '',
-                phone: '',
-                email: '',
-                legalInfo: '',
-                operationalInfo: '',
-              });
+              setFormData(resetFormData());
             }}
             className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600"
           >
@@ -261,7 +309,7 @@ export const AdminDealerManagement: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="font-semibold text-gray-700">Tên đại lý:</span>
-                  <p className="text-gray-900">{viewingDealer.name}</p>
+                  <p className="text-gray-900">{viewingDealer.company_name}</p>
                 </div>
                 <div>
                   <span className="font-semibold text-gray-700">Mã đại lý:</span>
@@ -269,23 +317,31 @@ export const AdminDealerManagement: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-semibold text-gray-700">Địa chỉ:</span>
-                  <p className="text-gray-900">{viewingDealer.address}</p>
+                  <p className="text-gray-900">{formatAddress(viewingDealer.address)}</p>
                 </div>
                 <div>
                   <span className="font-semibold text-gray-700">Số điện thoại:</span>
-                  <p className="text-gray-900">{viewingDealer.phone}</p>
+                  <p className="text-gray-900">{viewingDealer.contact?.phone}</p>
                 </div>
                 <div>
                   <span className="font-semibold text-gray-700">Email:</span>
-                  <p className="text-gray-900">{viewingDealer.email}</p>
+                  <p className="text-gray-900">{viewingDealer.contact?.email}</p>
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Thông tin pháp lý:</span>
-                  <p className="text-gray-900">{viewingDealer.legalInfo}</p>
+                  <span className="font-semibold text-gray-700">Đại diện pháp lý:</span>
+                  <p className="text-gray-900">{viewingDealer.legal_representative || viewingDealer.contract?.legal_representative || 'Chưa cập nhật'}</p>
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Thông tin vận hành:</span>
-                  <p className="text-gray-900">{viewingDealer.operationalInfo}</p>
+                  <span className="font-semibold text-gray-700">Giấy phép kinh doanh:</span>
+                  <p className="text-gray-900">{viewingDealer.business_license || viewingDealer.contract?.business_license || 'Chưa cập nhật'}</p>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Cấp độ đại lý:</span>
+                  <p className="text-gray-900">{viewingDealer.dealer_level || viewingDealer.capabilities?.dealer_level || 'Chưa cập nhật'}</p>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Phân phối sản phẩm:</span>
+                  <p className="text-gray-900">{viewingDealer.product_distribution || viewingDealer.capabilities?.product_distribution || 'Chưa cập nhật'}</p>
                 </div>
                 <div>
                   <span className="font-semibold text-gray-700">Trạng Thái:</span>
@@ -324,8 +380,8 @@ export const AdminDealerManagement: React.FC = () => {
             <div className="grid grid-cols-1 gap-4">
               <input
                 type="text"
-                name="name"
-                value={formData.name}
+                name="company_name"
+                value={formData.company_name}
                 onChange={handleChange}
                 placeholder="Tên đại lý"
                 className="border p-2 rounded-lg w-full"
@@ -367,17 +423,35 @@ export const AdminDealerManagement: React.FC = () => {
                 className="border p-2 rounded-lg w-full"
                 required
               />
+              <input
+                type="text"
+                name="business_license"
+                value={formData.business_license}
+                onChange={handleChange}
+                placeholder="Giấy phép kinh doanh"
+                className="border p-2 rounded-lg w-full"
+                required
+              />
+              <input
+                type="text"
+                name="dealer_level"
+                value={formData.dealer_level}
+                onChange={handleChange}
+                placeholder="Cấp độ đại lý"
+                className="border p-2 rounded-lg w-full"
+                required
+              />
               <textarea
-                name="legalInfo"
-                value={formData.legalInfo}
+                name="legal_representative"
+                value={formData.legal_representative}
                 onChange={handleChange}
                 placeholder="Thông tin pháp lý"
                 className="border p-2 rounded-lg w-full"
                 required
               />
               <textarea
-                name="operationalInfo"
-                value={formData.operationalInfo}
+                name="product_distribution"
+                value={formData.product_distribution}
                 onChange={handleChange}
                 placeholder="Thông tin vận hành"
                 className="border p-2 rounded-lg w-full"
@@ -445,11 +519,11 @@ export const AdminDealerManagement: React.FC = () => {
                     <tr key={dealer._id} className="hover:bg-gray-50">
                       <td className="p-6">
                         <div>
-                          <div className="font-medium text-gray-900">{dealer.name}</div>
+                          <div className="font-medium text-gray-900">{dealer.company_name}</div>
                           <div className="text-sm text-gray-500">{dealer.code}</div>
                           <div className="text-sm text-gray-500 flex items-center space-x-1 mt-1">
                             <MapPin className="h-3 w-3" />
-                            <span>{dealer.address}</span>
+                            <span>{formatAddress(dealer.address)}</span>
                           </div>
                         </div>
                       </td>
@@ -457,11 +531,11 @@ export const AdminDealerManagement: React.FC = () => {
                         <div className="space-y-1">
                           <div className="text-sm text-gray-900 flex items-center space-x-1">
                             <Phone className="h-3 w-3" />
-                            <span>{dealer.phone}</span>
+                            <span>{dealer.contact?.phone}</span>
                           </div>
                           <div className="text-sm text-gray-500 flex items-center space-x-1">
                             <Mail className="h-3 w-3" />
-                            <span>{dealer.email}</span>
+                            <span>{dealer.contact?.email}</span>
                           </div>
                         </div>
                       </td>

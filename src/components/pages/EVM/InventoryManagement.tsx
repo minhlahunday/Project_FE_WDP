@@ -61,7 +61,8 @@ interface Product {
 
 interface Dealer {
   _id: string;
-  name: string;
+  company_name: string;
+  name?: string; // Fallback compatibility
   email?: string;
   phone?: string;
   address?: string;
@@ -190,11 +191,12 @@ const InventoryManagement: React.FC = () => {
         
         const mappedDealers = dealerData.map((dealer: any) => ({
           _id: dealer._id,
-          name: dealer.name,
+          company_name: dealer.company_name || dealer.name, // Use company_name with fallback
+          name: dealer.name, // Keep for compatibility
           code: dealer.code,
-          email: dealer.email,
-          phone: dealer.phone,
-          address: dealer.address,
+          email: dealer.contact?.email || dealer.email,
+          phone: dealer.contact?.phone || dealer.phone,
+          address: typeof dealer.address === 'string' ? dealer.address : dealer.address?.full_address,
           isActive: dealer.isActive
         }));
         
@@ -211,93 +213,7 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
-  // Function để test API và hiển thị thông tin debug
-  const testApiCall = async () => {
-    try {
-      console.log('=== TESTING API CALL ===');
-      const res = await get<any>("/api/vehicles");
-      console.log('Full API Response:', res);
-      console.log('Response data:', res.data);
-      console.log('Response data.data:', res.data?.data);
-      console.log('Response data length:', res.data?.data?.length);
-      
-      if (res.data?.data && Array.isArray(res.data.data)) {
-        console.log('First product:', res.data.data[0]);
-        console.log('Product stocks:', res.data.data[0]?.stocks);
-      }
-    } catch (err) {
-      console.error('API Test Error:', err);
-    }
-  };
 
-  // Function để test status update API
-  const testStatusUpdate = async () => {
-    try {
-      console.log('=== TESTING STATUS UPDATE API ===');
-      if (products.length === 0) {
-        console.log('No products available for testing');
-        return;
-      }
-
-      const testProduct = products[0];
-      console.log('Testing with product:', testProduct._id, testProduct.name);
-      
-      const formData = new FormData();
-      formData.append('status', 'active');
-      
-      console.log('FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-
-      const response = await put(`/api/vehicles/${testProduct._id}`, formData);
-      console.log('Status update response:', response);
-      message.success('Test status update thành công');
-    } catch (err: any) {
-      console.error('Status update test error:', err);
-      console.error('Error details:', err.response?.data);
-      message.error(`Test status update thất bại: ${err.response?.data?.message || err.message}`);
-    }
-  };
-
-  // Function để test stock update API
-  const testStockUpdate = async () => {
-    try {
-      console.log('=== TESTING STOCK UPDATE API ===');
-      if (products.length === 0) {
-        console.log('No products available for testing');
-        return;
-      }
-
-      const testProduct = products[0];
-      const currentStock = getManufacturerStock(testProduct);
-      const newStock = Math.max(0, currentStock - 1); // Giảm 1 để test
-      
-      console.log('Testing stock update with product:', testProduct._id, testProduct.name);
-      console.log('Current stock:', currentStock, 'New stock:', newStock);
-      
-      const stockData = {
-        stocks: [{
-          owner_type: "manufacturer",
-          owner_id: typeof testProduct.manufacturer_id === 'string' 
-            ? testProduct.manufacturer_id 
-            : testProduct.manufacturer_id?._id || '',
-          quantity: newStock
-        }]
-      };
-
-      console.log('Stock update data:', stockData);
-      const response = await put(`/api/vehicles/${testProduct._id}`, stockData);
-      console.log('Stock update response:', response);
-      
-      message.success(`Test stock update thành công! Từ ${currentStock} → ${newStock}`);
-      fetchProducts(); // Refresh để xem kết quả
-    } catch (err: any) {
-      console.error('Stock update test error:', err);
-      console.error('Error details:', err.response?.data);
-      message.error(`Test stock update thất bại: ${err.response?.data?.message || err.message}`);
-    }
-  };
 
   // Filter products by category - with safety checks
   const carProducts = products?.filter(product => product?.category === 'car') || [];
@@ -1280,7 +1196,7 @@ const InventoryManagement: React.FC = () => {
                   <Transfer
                     dataSource={dealers.map((dealer, index) => ({
                       key: `dealer-${dealer._id}-${index}`,
-                      title: dealer.name,
+                      title: dealer.company_name || dealer.name || 'Tên không xác định',
                       description: `${dealer.code || 'N/A'} - ${dealer.email || 'N/A'} - ${dealer.phone || 'N/A'}`,
                       disabled: !dealer.isActive,
                       dealerId: dealer._id // Thêm dealerId để tracking
@@ -1312,8 +1228,8 @@ const InventoryManagement: React.FC = () => {
                     }}
                     showSearch
                     filterOption={(inputValue, option) =>
-                      option.title.toLowerCase().includes(inputValue.toLowerCase()) ||
-                      option.description.toLowerCase().includes(inputValue.toLowerCase())
+                      (option.title || '').toLowerCase().includes(inputValue.toLowerCase()) ||
+                      (option.description || '').toLowerCase().includes(inputValue.toLowerCase())
                     }
                     locale={{
                       itemUnit: 'đại lý',
