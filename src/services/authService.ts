@@ -389,6 +389,7 @@ export interface UpdateUserRequest {
   email?: string;
   phone?: string;
   address?: string;
+  password?: string;
   role_id?: string;
   dealership_id?: string;
   manufacturer_id?: string;
@@ -414,6 +415,26 @@ export const authService = {
   },
 
   // User Management API Methods
+  async getRoles(): Promise<{ success: boolean; data?: unknown[]; message?: string }> {
+    try {
+      console.log('🚀 Getting roles from API...');
+      const response = await get<unknown>('/api/roles');
+      console.log('✅ Roles response:', response);
+      
+      return {
+        success: true,
+        data: response as unknown[],
+        message: 'Lấy danh sách roles thành công'
+      };
+    } catch (error: unknown) {
+      console.error('❌ Error getting roles:', error);
+      return {
+        success: false,
+        message: (error as Error).message || 'Có lỗi xảy ra khi lấy danh sách roles'
+      };
+    }
+  },
+
   async getAllUsers(filters: UserFilters = {}): Promise<UserResponse> {
     try {
       const queryParams = new URLSearchParams();
@@ -443,6 +464,8 @@ export const authService = {
 
   async createUser(data: CreateUserRequest): Promise<SingleUserResponse> {
     try {
+      console.log('🚀 Creating user with data:', data);
+      
       const formData = new FormData();
       formData.append('full_name', data.full_name);
       formData.append('email', data.email);
@@ -455,86 +478,187 @@ export const authService = {
       if (data.manufacturer_id) formData.append('manufacturer_id', data.manufacturer_id);
       if (data.avatar) formData.append('avatar', data.avatar);
 
-      const response = await post<any>('/api/users', formData, {
+      console.log('📋 FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+
+      const response = await post<unknown>('/api/users', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       
+      console.log('✅ Create user response:', response);
+      
       return {
         success: true,
         message: 'Tạo người dùng thành công',
-        data: response
+        data: response as User
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('❌ Error creating user:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          statusText: errorObj.statusText,
+          data: errorObj.data,
+          response: errorObj.response
+        });
+        
+        // Nếu có response từ backend, log chi tiết
+        if (errorObj.response) {
+          console.error('❌ Backend response:', errorObj.response);
+        }
+      }
+      
       return {
         success: false,
-        message: error.message || 'Có lỗi xảy ra khi tạo người dùng'
+        message: (error as Error).message || 'Có lỗi xảy ra khi tạo người dùng'
       };
     }
   },
 
   async getUserById(id: string): Promise<SingleUserResponse> {
     try {
-      const response = await get<any>(`/api/users/${id}`);
+      console.log('🚀 Getting user by ID:', id);
+      const response = await get<unknown>(`/api/users/${id}?t=${Date.now()}`);
+      
+      console.log('✅ Get user by ID response:', response);
+      console.log('🔍 Response structure:', {
+        hasSuccess: !!(response as Record<string, unknown>).success,
+        hasMessage: !!(response as Record<string, unknown>).message,
+        hasData: !!(response as Record<string, unknown>).data,
+        responseKeys: Object.keys(response as Record<string, unknown>)
+      });
+      
+      const responseData = response as Record<string, unknown>;
       
       return {
         success: true,
         message: 'Lấy thông tin người dùng thành công',
-        data: response
+        data: responseData.data as User
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('❌ Error getting user by ID:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          statusText: errorObj.statusText,
+          data: errorObj.data,
+          response: errorObj.response
+        });
+        
+        // Nếu có response từ backend, log chi tiết
+        if (errorObj.response) {
+          console.error('❌ Backend response:', errorObj.response);
+        }
+      }
+      
       return {
         success: false,
-        message: error.message || 'Có lỗi xảy ra khi lấy thông tin người dùng'
+        message: (error as Error).message || 'Có lỗi xảy ra khi lấy thông tin người dùng'
       };
     }
   },
 
   async updateUser(id: string, data: UpdateUserRequest): Promise<SingleUserResponse> {
     try {
+      console.log('🚀 Updating user with ID:', id);
+      console.log('🚀 Update data:', data);
+      
       const formData = new FormData();
       
       if (data.full_name) formData.append('full_name', data.full_name);
       if (data.email) formData.append('email', data.email);
       if (data.phone) formData.append('phone', data.phone);
       if (data.address) formData.append('address', data.address);
+      if (data.password) formData.append('password', data.password);
       if (data.role_id) formData.append('role_id', data.role_id);
       if (data.dealership_id) formData.append('dealership_id', data.dealership_id);
       if (data.manufacturer_id) formData.append('manufacturer_id', data.manufacturer_id);
       if (data.avatar) formData.append('avatar', data.avatar);
 
-      const response = await put<any>(`/api/users/${id}`, formData, {
+      console.log('📋 FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+
+      const response = await put<unknown>(`/api/users/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       
+      console.log('✅ Update user response:', response);
+      
       return {
         success: true,
         message: 'Cập nhật người dùng thành công',
-        data: response
+        data: response as User
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('❌ Error updating user:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          statusText: errorObj.statusText,
+          data: errorObj.data,
+          response: errorObj.response
+        });
+        
+        // Nếu có response từ backend, log chi tiết
+        if (errorObj.response) {
+          console.error('❌ Backend response:', errorObj.response);
+        }
+      }
+      
       return {
         success: false,
-        message: error.message || 'Có lỗi xảy ra khi cập nhật người dùng'
+        message: (error as Error).message || 'Có lỗi xảy ra khi cập nhật người dùng'
       };
     }
   },
 
   async deleteUser(id: string): Promise<{ success: boolean; message: string }> {
     try {
-      await del(`/api/users/${id}`);
+      console.log('🚀 Deleting user with ID:', id);
+      const response = await del(`/api/users/${id}`);
+      
+      console.log('✅ Delete user response:', response);
       
       return {
         success: true,
         message: 'Xóa người dùng thành công'
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('❌ Error deleting user:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          data: errorObj.data
+        });
+      }
+      
       return {
         success: false,
-        message: error.message || 'Có lỗi xảy ra khi xóa người dùng'
+        message: (error as Error).message || 'Có lỗi xảy ra khi xóa người dùng'
       };
     }
   },

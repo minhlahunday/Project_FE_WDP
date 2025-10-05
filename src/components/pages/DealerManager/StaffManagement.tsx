@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Edit2, Trash2, UserCheck, UserX, Filter, X } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, UserCheck, UserX, Filter, X, Eye } from 'lucide-react';
 import { Sidebar } from '../../common/Sidebar';
 import { Header } from '../../common/Header';
-import { authService, CreateUserRequest, UserFilters } from '../../../services/authService';
+import { authService, CreateUserRequest, UpdateUserRequest, UserFilters } from '../../../services/authService';
 
 interface Staff {
   id: string;
@@ -16,6 +16,14 @@ interface Staff {
   avatar?: string;
   salary: number;
   address: string;
+  // Thêm các field mới từ API
+  roleId?: string;
+  roleName?: string;
+  dealershipId?: string;
+  dealershipName?: string;
+  manufacturerId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const StaffManagement: React.FC = () => {
@@ -28,6 +36,10 @@ export const StaffManagement: React.FC = () => {
   const [statusFilter] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
   const [departmentFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [detailStaff, setDetailStaff] = useState<Staff | null>(null);
   const [newStaff, setNewStaff] = useState({
     fullName: '',
     email: '',
@@ -49,53 +61,151 @@ export const StaffManagement: React.FC = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [pageSize] = useState(10);
 
+  // Roles state
+  const [availableRoles, setAvailableRoles] = useState<{ value: string; label: string }[]>([]);
+
+  // Load roles from API
+  const loadRoles = useCallback(async () => {
+    try {
+      console.log('🚀 Loading roles from API...');
+      const response = await authService.getRoles();
+      
+      if (response.success && response.data) {
+        console.log('✅ Roles loaded successfully:', response.data);
+        console.log('🔍 Roles response structure:', {
+          hasData: !!response.data,
+          dataType: typeof response.data,
+          dataKeys: response.data ? Object.keys(response.data) : [],
+          isArray: Array.isArray(response.data),
+          dataProperty: (response.data as unknown as Record<string, unknown>).data,
+          dataPropertyType: typeof (response.data as unknown as Record<string, unknown>).data,
+          dataPropertyIsArray: Array.isArray((response.data as unknown as Record<string, unknown>).data)
+        });
+        
+        // Check if response.data is an array or object
+        let rolesArray: Record<string, unknown>[];
+        if (Array.isArray(response.data)) {
+          rolesArray = response.data as Record<string, unknown>[];
+        } else {
+          // If it's an object, try to get the data property
+          const responseData = response.data as Record<string, unknown>;
+          if (responseData.data && Array.isArray(responseData.data)) {
+            rolesArray = responseData.data as Record<string, unknown>[];
+          } else {
+            console.log('❌ Roles data is not an array:', response.data);
+            console.log('🔍 Trying to handle as single role object...');
+            
+            // Maybe it's a single role object, try to convert to array
+            if (responseData._id && responseData.name) {
+              rolesArray = [responseData];
+            } else {
+              throw new Error('Roles data format is not supported');
+            }
+          }
+        }
+        
+        // Transform roles data
+        const roles = rolesArray.map((role: Record<string, unknown>) => ({
+          value: role._id as string,
+          label: role.name as string
+        }));
+        
+        console.log('📋 Transformed roles:', roles);
+        setAvailableRoles(roles);
+      } else {
+        console.log('❌ Failed to load roles:', response.message);
+        // Fallback to hardcoded role if API fails
+        setAvailableRoles([
+          { value: '68d0e8a499679399fff98688', label: 'Dealer Staff' }
+        ]);
+      }
+    } catch (err: unknown) {
+      console.error('❌ Error loading roles:', err);
+      // Fallback to hardcoded role if API fails
+      setAvailableRoles([
+        { value: '68d0e8a499679399fff98688', label: 'Dealer Staff' }
+      ]);
+    }
+  }, []);
+
   // Hàm trả về các vai trò có thể tạo dựa trên quyền user hiện tại
   const getAvailableRoles = () => {
-    // Tất cả role chỉ có thể tạo Dealer Staff
-    // Sử dụng ObjectId thực tế cho Dealer Staff role
-    return [
-      { value: '68d0cd25c26ebc625acf7a48', label: 'Dealer Staff' } // ObjectId cho Dealer Staff role
-    ];
+    return availableRoles;
   };
 
   // Load users from API
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
+      console.log('🔍 Loading users - Backend sẽ tự động filter theo dealership của Manager hiện tại');
+
       const filters: UserFilters = {
         page: currentPage,
         limit: pageSize,
         search: searchTerm || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         role: departmentFilter !== 'all' ? departmentFilter : undefined
+        // Không cần truyền dealership_id vì backend tự động filter theo Manager hiện tại
       };
 
+      console.log('🔍 Loading users with filters:', filters);
       const response = await authService.getAllUsers(filters);
       
       if (response.success && response.data) {
-        // Transform API data to match our Staff interface
-        const transformedStaff = response.data.users.map((user: any) => ({
-          id: user.id || user._id,
-          fullName: user.full_name || user.fullName || user.name,
-          email: user.email,
-          phone: user.phone || '',
-          position: user.role_name || user.role || '',
-          department: user.department || '',
-          startDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          status: user.status || 'active',
-          avatar: user.avatar,
-          salary: user.salary || 0,
-          address: user.address || ''
-        }));
+        console.log('✅ Users loaded successfully:', response.data);
+        console.log('📊 Response structure:', {
+          hasData: !!response.data,
+          dataType: typeof response.data,
+          dataKeys: response.data ? Object.keys(response.data) : [],
+          hasDataArray: !!(response.data as Record<string, unknown>).data,
+          dataArrayLength: (response.data as Record<string, unknown>).data ? ((response.data as Record<string, unknown>).data as unknown[]).length : 0,
+          dataArrayType: (response.data as Record<string, unknown>).data ? typeof (response.data as Record<string, unknown>).data : 'undefined'
+        });
         
-        setStaffList(transformedStaff);
-        setTotalPages(response.data.totalPages || 1);
-        setTotalUsers(response.data.total || 0);
+        // Transform API data to match our Staff interface
+        const responseData = response.data as Record<string, unknown>;
+        const paginationData = responseData.data as Record<string, unknown>;
+        const usersArray = paginationData.data as unknown[];
+        
+        console.log('🔍 Pagination data:', paginationData);
+        console.log('🔍 Users array:', usersArray);
+        console.log('🔍 Users array type:', typeof usersArray);
+        console.log('🔍 Is users array:', Array.isArray(usersArray));
+        
+        if (!Array.isArray(usersArray)) {
+          console.error('❌ Users data is not an array:', usersArray);
+          setError('Dữ liệu users từ API không đúng định dạng');
+          return;
+        }
+        
+        const staffData = usersArray.map((user: unknown) => {
+          const userData = user as Record<string, unknown>;
+          return {
+            id: userData._id as string,
+            fullName: userData.full_name as string,
+            email: userData.email as string,
+            phone: (userData.phone as string) || '',
+            position: (userData.role_id as Record<string, unknown>)?.name as string || '',
+            department: 'Dealer Staff', // Tất cả đều là Dealer Staff
+            startDate: userData.createdAt ? new Date(userData.createdAt as string).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            status: 'active' as 'active' | 'inactive' | 'pending', // Mặc định là active
+            avatar: userData.avatar as string,
+            salary: 0, // Không có thông tin salary từ API
+            address: (userData.address as string) || ''
+          };
+        });
+        
+        console.log('📋 Transformed staff data:', staffData);
+        setStaffList(staffData);
+        setTotalPages(paginationData.totalPages as number || 1);
+        setTotalUsers(paginationData.totalRecords as number || 0);
       } else {
+        console.log('❌ API response failed:', response);
         setError(response.message || 'Không thể tải danh sách nhân viên');
       }
-    } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi tải danh sách nhân viên');
+    } catch (err: unknown) {
+      console.error('❌ Error loading users:', err);
+      setError((err as Error).message || 'Có lỗi xảy ra khi tải danh sách nhân viên');
     } finally {
       setLoading(false);
     }
@@ -105,6 +215,11 @@ export const StaffManagement: React.FC = () => {
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
+
+  // Load roles on component mount
+  useEffect(() => {
+    loadRoles();
+  }, [loadRoles]);
 
   // Update filtered staff when staffList changes
   useEffect(() => {
@@ -142,6 +257,86 @@ export const StaffManagement: React.FC = () => {
     setShowAddModal(true);
   };
 
+  const handleEditStaff = (staff: Staff) => {
+    setEditingStaff(staff);
+    setNewStaff({
+      fullName: staff.fullName,
+      email: staff.email,
+      phone: staff.phone,
+      address: staff.address,
+      password: '', // Không hiển thị password cũ
+      roleId: '', // Dealer Manager không thể thay đổi role
+      dealershipId: '', // Dealer Manager không thể thay đổi dealership
+      manufacturerId: '', // Dealer Manager không thể thay đổi manufacturer
+      avatar: null
+    });
+    setError(null);
+    setSuccess(null);
+    setShowEditModal(true);
+  };
+
+  const handleViewStaffDetail = async (staff: Staff) => {
+    try {
+      console.log('🔍 Loading staff detail for ID:', staff.id);
+      setDetailStaff(staff);
+      setShowDetailModal(true);
+      
+      // Gọi API để lấy thông tin chi tiết từ backend
+      const result = await authService.getUserById(staff.id);
+      
+      if (result.success && result.data) {
+        console.log('✅ Staff detail loaded:', result.data);
+        console.log('🔍 API response structure:', {
+          hasData: !!result.data,
+          dataType: typeof result.data,
+          dataKeys: result.data ? Object.keys(result.data) : [],
+          hasNestedData: !!(result.data as unknown as Record<string, unknown>).data,
+          nestedDataKeys: (result.data as unknown as Record<string, unknown>).data ? Object.keys((result.data as unknown as Record<string, unknown>).data as Record<string, unknown>) : []
+        });
+        
+        // API response có cấu trúc: { success: true, message: "...", data: { _id, full_name, ... } }
+        // Cần truy cập result.data thay vì result.data.data
+        const apiStaff = result.data as unknown as Record<string, unknown>;
+        
+        console.log('🔍 API staff data:', apiStaff);
+        console.log('🔍 API staff keys:', apiStaff ? Object.keys(apiStaff) : []);
+        const roleData = apiStaff.role_id as Record<string, unknown>;
+        const dealershipData = apiStaff.dealership_id as Record<string, unknown>;
+        
+        const updatedStaff = {
+          id: apiStaff._id as string,
+          fullName: apiStaff.full_name as string,
+          email: apiStaff.email as string,
+          phone: (apiStaff.phone as string) || '',
+          position: roleData?.name as string || '',
+          department: 'Dealer Staff',
+          startDate: apiStaff.createdAt ? new Date(apiStaff.createdAt as string).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: 'active' as 'active' | 'inactive' | 'pending',
+          avatar: apiStaff.avatar as string,
+          salary: 0,
+          address: (apiStaff.address as string) || '',
+          // Thêm thông tin mới từ API
+          roleId: roleData?._id as string || '',
+          roleName: roleData?.name as string || '',
+          dealershipId: dealershipData?._id as string || '',
+          dealershipName: dealershipData?.company_name as string || '',
+          manufacturerId: apiStaff.manufacturer_id as string || '',
+          createdAt: apiStaff.createdAt as string || '',
+          updatedAt: apiStaff.updatedAt as string || ''
+        };
+        
+        console.log('📋 Updated staff data:', updatedStaff);
+        setDetailStaff(updatedStaff);
+      } else {
+        console.log('❌ Failed to load staff detail:', result.message);
+        setError(result.message || 'Không thể tải thông tin chi tiết');
+      }
+    } catch (error) {
+      console.error('❌ Error loading staff detail:', error);
+      setError('Có lỗi xảy ra khi tải thông tin chi tiết');
+    }
+  };
+
   const handleSaveNewStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -157,11 +352,16 @@ export const StaffManagement: React.FC = () => {
         address: newStaff.address || undefined,
         password: newStaff.password,
         role_id: newStaff.roleId,
-        dealership_id: newStaff.dealershipId || undefined,
+        // Không cần truyền dealership_id vì backend sẽ tự động set theo Manager hiện tại
         manufacturer_id: newStaff.manufacturerId || undefined,
         avatar: newStaff.avatar || undefined
       };
 
+      console.log('🔍 Creating user with data:', createData);
+      console.log('📋 Note: dealership_id không được truyền - Backend sẽ tự động set theo Manager hiện tại');
+      console.log('🔍 Role ID being sent:', createData.role_id);
+      console.log('🔍 Available roles:', getAvailableRoles());
+      
       // Gọi API tạo user
       const result = await authService.createUser(createData);
 
@@ -192,8 +392,70 @@ export const StaffManagement: React.FC = () => {
       } else {
         setError(result.message);
       }
-    } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi tạo nhân viên');
+    } catch (err: unknown) {
+      console.error('❌ Error creating user:', err);
+      setError((err as Error).message || 'Có lỗi xảy ra khi tạo nhân viên');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveEditStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStaff) return;
+    
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Chuẩn bị dữ liệu cho API update
+      const updateData: UpdateUserRequest = {
+        full_name: newStaff.fullName,
+        email: newStaff.email,
+        phone: newStaff.phone,
+        address: newStaff.address || undefined,
+        password: newStaff.password || undefined, // Chỉ update nếu có password mới
+        // Không truyền role_id, dealership_id, manufacturer_id vì Dealer Manager không có quyền
+      };
+
+      console.log('🔍 Updating user with data:', updateData);
+      console.log('📋 Note: role_id, dealership_id, manufacturer_id không được truyền - Dealer Manager không có quyền');
+      
+      // Gọi API update user
+      const result = await authService.updateUser(editingStaff.id, updateData);
+
+      if (result.success) {
+        setSuccess('Cập nhật nhân viên thành công!');
+        
+        // Reload users list
+        await loadUsers();
+        
+        // Reset form
+        setNewStaff({
+          fullName: '',
+          email: '',
+          phone: '',
+          address: '',
+          password: '',
+          roleId: '',
+          dealershipId: '',
+          manufacturerId: '',
+          avatar: null
+        });
+        
+        // Đóng modal sau 2 giây
+        setTimeout(() => {
+          setShowEditModal(false);
+          setEditingStaff(null);
+          setSuccess(null);
+        }, 2000);
+      } else {
+        setError(result.message);
+      }
+    } catch (err: unknown) {
+      console.error('❌ Error updating user:', err);
+      setError((err as Error).message || 'Có lỗi xảy ra khi cập nhật nhân viên');
     } finally {
       setLoading(false);
     }
@@ -228,8 +490,8 @@ export const StaffManagement: React.FC = () => {
         } else {
           setError(result.message);
         }
-      } catch (err: any) {
-        setError(err.message || 'Có lỗi xảy ra khi xóa nhân viên');
+      } catch (err: unknown) {
+        setError((err as Error).message || 'Có lỗi xảy ra khi xóa nhân viên');
       } finally {
         setLoading(false);
       }
@@ -243,6 +505,7 @@ export const StaffManagement: React.FC = () => {
         : staff
     ));
   };
+
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -274,7 +537,10 @@ export const StaffManagement: React.FC = () => {
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900">Quản lý nhân viên</h1>
-              <p className="text-gray-600">Quản lý thông tin nhân viên trong đại lý</p>
+              <p className="text-gray-600">
+                Quản lý thông tin nhân viên trong đại lý hiện tại
+              </p>
+              
             </div>
 
             {/* Search and Filters */}
@@ -301,6 +567,7 @@ export const StaffManagement: React.FC = () => {
                   <Plus className="h-5 w-5" />
                   <span>Thêm nhân viên</span>
                 </button>
+
               </div>
             </div>
 
@@ -385,7 +652,7 @@ export const StaffManagement: React.FC = () => {
                           <div className="flex items-center">
                             <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                               <span className="text-sm font-medium text-gray-700">
-                                {staff.fullName.charAt(0)}
+                                {staff.fullName?.charAt(0) || '?'}
                               </span>
                             </div>
                             <div className="ml-4">
@@ -401,20 +668,30 @@ export const StaffManagement: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => {/* TODO: Implement edit functionality */}}
+                              onClick={() => handleViewStaffDetail(staff)}
+                              className="text-green-600 hover:text-green-900"
+                              title="Xem chi tiết"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleEditStaff(staff)}
                               className="text-blue-600 hover:text-blue-900"
+                              title="Chỉnh sửa"
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleToggleStatus(staff.id)}
                               className={staff.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}
+                              title={staff.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
                             >
                               {staff.status === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                             </button>
                             <button
                               onClick={() => handleDeleteStaff(staff.id)}
                               className="text-red-600 hover:text-red-900"
+                              title="Xóa nhân viên"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -624,13 +901,12 @@ export const StaffManagement: React.FC = () => {
                 <input
                   type="text"
                   name="dealershipId"
-                  value={newStaff.dealershipId}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                  placeholder="Nhập ID đại lý (tùy chọn)"
+                  value="Tự động từ Manager hiện tại"
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500"
+                  placeholder="Backend tự động set"
                 />
-                <p className="text-xs text-gray-500 mt-1">Chỉ Admin mới có thể sử dụng trường này</p>
+                <p className="text-xs text-gray-500 mt-1">Backend tự động lấy từ Manager hiện tại</p>
               </div>
 
               <div>
@@ -689,6 +965,330 @@ export const StaffManagement: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Staff Modal */}
+      {showEditModal && editingStaff && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Chỉnh sửa nhân viên</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingStaff(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+                disabled={loading}
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Hiển thị thông báo lỗi */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+
+            {/* Hiển thị thông báo thành công */}
+            {success && (
+              <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                {success}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEditStaff} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Họ và tên *
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  value={newStaff.fullName}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập họ và tên"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={newStaff.email}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số điện thoại *
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  value={newStaff.phone}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập số điện thoại"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Địa chỉ
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={newStaff.address}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập địa chỉ (tùy chọn)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mật khẩu mới
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={newStaff.password}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập mật khẩu mới (để trống nếu không muốn đổi)"
+                  minLength={6}
+                />
+                <p className="text-xs text-gray-500 mt-1">Để trống nếu không muốn thay đổi mật khẩu</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Avatar
+                </label>
+                <input
+                  type="file"
+                  name="avatar"
+                  accept="image/*"
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                />
+                <p className="text-xs text-gray-500 mt-1">Chọn ảnh đại diện mới (tùy chọn)</p>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingStaff(null);
+                  }}
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 flex items-center justify-center"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    'Cập nhật nhân viên'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Staff Detail Modal */}
+      {showDetailModal && detailStaff && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Thông tin chi tiết nhân viên</h2>
+              <button
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setDetailStaff(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Hiển thị thông báo lỗi */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {/* Debug info */}
+              {(() => { console.log('🔍 Detail staff in modal:', detailStaff); return null; })()}
+              
+              {/* Avatar và thông tin cơ bản */}
+              <div className="flex items-center space-x-4">
+                <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
+                  {detailStaff.avatar ? (
+                    <img 
+                      src={detailStaff.avatar} 
+                      alt={detailStaff.fullName}
+                      className="h-20 w-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-medium text-gray-700">
+                      {detailStaff.fullName?.charAt(0) || '?'}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">{detailStaff?.fullName || 'Đang tải...'}</h3>
+                  <p className="text-gray-600">{detailStaff?.position || 'Đang tải...'}</p>
+                  <div className="mt-1">
+                    {getStatusBadge(detailStaff?.status || 'active')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Thông tin chi tiết */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Thông tin liên hệ</h4>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-sm text-gray-600">Email:</span>
+                      <p className="font-medium">{detailStaff?.email || 'Đang tải...'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Số điện thoại:</span>
+                      <p className="font-medium">{detailStaff?.phone || 'Đang tải...'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Địa chỉ:</span>
+                      <p className="font-medium">{detailStaff?.address || 'Chưa cập nhật'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Thông tin công việc</h4>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-sm text-gray-600">Phòng ban:</span>
+                      <p className="font-medium">{detailStaff?.department || 'Đang tải...'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Vị trí:</span>
+                      <p className="font-medium">{detailStaff?.position || 'Đang tải...'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Ngày bắt đầu:</span>
+                      <p className="font-medium">{detailStaff?.startDate || 'Đang tải...'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Trạng thái:</span>
+                      <div className="mt-1">
+                        {getStatusBadge(detailStaff?.status || 'active')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Thông tin bổ sung từ API */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Thông tin hệ thống</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-sm text-gray-600">ID Vai trò:</span>
+                      <p className="font-medium text-xs">{detailStaff?.roleId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Tên vai trò:</span>
+                      <p className="font-medium">{detailStaff?.roleName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">ID Đại lý:</span>
+                      <p className="font-medium text-xs">{detailStaff?.dealershipId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Tên đại lý:</span>
+                      <p className="font-medium">{detailStaff?.dealershipName || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-sm text-gray-600">ID Nhà sản xuất:</span>
+                      <p className="font-medium text-xs">{detailStaff?.manufacturerId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Ngày tạo:</span>
+                      <p className="font-medium">{detailStaff?.createdAt ? new Date(detailStaff.createdAt).toLocaleString('vi-VN') : 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Ngày cập nhật:</span>
+                      <p className="font-medium">{detailStaff?.updatedAt ? new Date(detailStaff.updatedAt).toLocaleString('vi-VN') : 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex space-x-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setDetailStaff(null);
+                    handleEditStaff(detailStaff);
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center justify-center"
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Chỉnh sửa
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setDetailStaff(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
