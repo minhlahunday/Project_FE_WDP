@@ -22,6 +22,7 @@ import { StaffManagement } from './components/pages/DealerManager/StaffManagemen
 import ProductManagement from './components/pages/EVM/ProductManagement';
 import { CustomerManagement } from './components/pages/EVM/CustomerManagement';
 import { AdminDealerManagement } from './components/pages/EVM/DealerManagement';
+import { AddDealer } from './components/pages/EVM/AddDealer';
 import InventoryManagement from './components/pages/EVM/InventoryManagement';
 import PromotionManagement from './components/pages/EVM/PromotionManagement';
 
@@ -89,6 +90,14 @@ function AppContent() {
       <Route
         path="/evm/dealer-management"
         element={<AdminDealerManagement />}
+      />
+      <Route
+        path="/admin/dealer-management"
+        element={<AdminDealerManagement />}
+      />
+      <Route
+        path="/admin/dealer-management/add"
+        element={<AddDealer />}
       />
       <Route path="/evm/product-management" element={<ProductManagement />} />
       <Route path="/evm/customer-management" element={<CustomerManagement />} />

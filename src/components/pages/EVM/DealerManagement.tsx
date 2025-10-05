@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AdminLayout } from '../admin/AdminLayout';
-import { get, post, put, patch } from '../../../services/httpClient';
+import { get, patch } from '../../../services/httpClient';
 import ReactModal from 'react-modal';
-import { ShareAltOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 interface AddressObject {
   street: string;
@@ -68,20 +68,10 @@ interface Dealer {
   __v: number;
 }
 
-interface DealerForm {
-  company_name: string;
-  code: string;
-  address: string;
-  phone: string;
-  email: string;
-  business_license: string;
-  legal_representative: string;
-  dealer_level: string;
-  product_distribution: string;
-}
 
 export const AdminDealerManagement: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -92,30 +82,26 @@ export const AdminDealerManagement: React.FC = () => {
     return address.full_address || `${address.street}, ${address.district}, ${address.city}, ${address.province}`;
   };
 
-  const resetFormData = (): DealerForm => ({
-    company_name: '',
-    code: '',
-    address: '',
-    phone: '',
-    email: '',
-    business_license: '',
-    legal_representative: '',
-    dealer_level: '',
-    product_distribution: '',
-  });
-
-  const [formData, setFormData] = useState<DealerForm>(resetFormData());
-  const [showForm, setShowForm] = useState(false);
-  const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [viewingDealer, setViewingDealer] = useState<Dealer | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteDealerId, setDeleteDealerId] = useState<string | null>(null);
+  const [actionType, setActionType] = useState<'deactivate' | 'activate' | null>(null);
+  const [reason, setReason] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Fetch dealers from API
   const fetchDealers = async () => {
     try {
-      const res = await get<{ success: boolean; data: { data: Dealer[] } }>('/api/dealerships');
+      // Build query parameters based on status filter
+      let queryParams = '';
+      if (statusFilter === 'active') {
+        queryParams = '?isActive=true';
+      } else if (statusFilter === 'inactive') {
+        queryParams = '?isActive=false';
+      }
+      // For 'all', don't add any filter to get all dealers
+      
+      const res = await get<{ success: boolean; data: { data: Dealer[] } }>(`/api/dealerships${queryParams}`);
       console.log('API Response:', res); // Debug log
       if (res.success && Array.isArray(res.data.data)) {
         console.log('First dealer:', res.data.data[0]); // Debug log
@@ -129,64 +115,10 @@ export const AdminDealerManagement: React.FC = () => {
     }
   };
 
-  // Handle form submission for creating or updating a dealer
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (isEditing && selectedDealer) {
-        const res = await put<{ success: boolean; message: string }>(
-          `/api/dealerships/${selectedDealer._id}`,
-          formData
-        );
-        if (res.success) {
-          setSuccess('Thông tin đại lý đã được cập nhật thành công!');
-          setError(null);
-          setShowForm(false);
-          setIsEditing(false);
-          setSelectedDealer(null);
-          fetchDealers();
-        } else {
-          throw new Error(res.message);
-        }
-      } else {
-        const res = await post<{ success: boolean; message: string }>('/api/dealerships', formData);
-        if (res.success) {
-          setSuccess('Đại lý đã được đăng ký thành công!');
-          setError(null);
-          setShowForm(false);
-          fetchDealers();
-        } else {
-          throw new Error(res.message);
-        }
-      }
-    } catch (err) {
-      setError('Không thể xử lý yêu cầu. Vui lòng thử lại sau.');
-      setSuccess(null);
-    }
-  };
 
-  // Handle form input change
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Handle edit action
+  // Handle edit action - navigate to edit page
   const handleEdit = (dealer: Dealer) => {
-    setFormData({
-      company_name: dealer.company_name,
-      code: dealer.code,
-      address: formatAddress(dealer.address),
-      phone: dealer.contact?.phone || '',
-      email: dealer.contact?.email || '',
-      business_license: dealer.business_license || dealer.contract?.business_license || '',
-      legal_representative: dealer.legal_representative || dealer.contract?.legal_representative || '',
-      dealer_level: dealer.dealer_level || dealer.capabilities?.dealer_level || '',
-      product_distribution: dealer.product_distribution || dealer.capabilities?.product_distribution || '',
-    });
-    setSelectedDealer(dealer);
-    setIsEditing(true);
-    setShowForm(true);
+    navigate(`/admin/dealer-management/edit/${dealer._id}`);
   };
 
   // Handle view details action
@@ -200,17 +132,12 @@ export const AdminDealerManagement: React.FC = () => {
     setViewingDealer(null);
   };
 
-  // Cancel editing
-  const cancelEditing = () => {
-    setIsEditing(false);
-    setSelectedDealer(null);
-    setShowForm(false);
-    setFormData(resetFormData());
-  };
 
-  const handleDelete = async (dealerId: string) => {
+  const handleDeactivate = async (dealerId: string, reason?: string) => {
     try {
-      const res = await patch<{ success: boolean; message: string }>(`/api/dealerships/${dealerId}/deactivate`, {});
+      const res = await patch<{ success: boolean; message: string }>(`/api/dealerships/${dealerId}/deactivate`, {
+        reason: reason || 'Ngừng hợp tác theo yêu cầu'
+      });
       if (res.success) {
         setSuccess('Đại lý đã được đánh dấu ngừng hợp tác thành công!');
         setError(null);
@@ -224,24 +151,50 @@ export const AdminDealerManagement: React.FC = () => {
     }
   };
 
-  // Confirm delete action
-  const confirmDelete = (dealerId: string) => {
-    setDeleteDealerId(dealerId);
-    setShowDeleteModal(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (deleteDealerId) {
-      await handleDelete(deleteDealerId);
-      setShowDeleteModal(false);
-      setDeleteDealerId(null);
+  const handleActivate = async (dealerId: string, reason?: string) => {
+    try {
+      const res = await patch<{ success: boolean; message: string }>(`/api/dealerships/${dealerId}/activate`, {
+        reason: reason || 'Kích hoạt lại theo yêu cầu'
+      });
+      if (res.success) {
+        setSuccess('Đại lý đã được kích hoạt lại thành công!');
+        setError(null);
+        fetchDealers();
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (err) {
+      setError('Không thể kích hoạt lại đại lý. Vui lòng thử lại sau.');
+      setSuccess(null);
     }
   };
 
-  // Fetch dealers on component mount
+  // Confirm action (deactivate/activate)
+  const confirmAction = (dealerId: string, type: 'deactivate' | 'activate') => {
+    setDeleteDealerId(dealerId);
+    setActionType(type);
+    setReason('');
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (deleteDealerId && actionType) {
+      if (actionType === 'deactivate') {
+        await handleDeactivate(deleteDealerId, reason);
+      } else if (actionType === 'activate') {
+        await handleActivate(deleteDealerId, reason);
+      }
+      setShowDeleteModal(false);
+      setDeleteDealerId(null);
+      setActionType(null);
+      setReason('');
+    }
+  };
+
+  // Fetch dealers on component mount and when filter changes
   useEffect(() => {
     fetchDealers();
-  }, []);
+  }, [statusFilter]);
 
   // Updated modal styles for better UI/UX
   const customStyles = {
@@ -284,16 +237,24 @@ export const AdminDealerManagement: React.FC = () => {
             {success}
           </div>
         )}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center space-x-4">
+            <label className="text-sm font-medium text-gray-700">Lọc theo trạng thái:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">Tất cả ({dealers.length})</option>
+              <option value="active">Đang hợp tác ({dealers.filter(d => d.isActive).length})</option>
+              <option value="inactive">Ngừng hợp tác ({dealers.filter(d => !d.isActive).length})</option>
+            </select>
+          </div>
           <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setIsEditing(false);
-              setFormData(resetFormData());
-            }}
+            onClick={() => navigate('/admin/dealer-management/add')}
             className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600"
           >
-            {showForm ? 'Đóng form' : 'Thêm đại lý mới'}
+            Thêm đại lý mới
           </button>
         </div>
         {/* Modal for viewing dealer details */}
@@ -366,131 +327,46 @@ export const AdminDealerManagement: React.FC = () => {
             </div>
           )}
         </ReactModal>
-        {/* Modal for editing dealer */}
-        <ReactModal
-          isOpen={showForm}
-          onRequestClose={cancelEditing}
-          style={customStyles}
-          contentLabel="Edit Dealer"
-        >
-          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
-              {isEditing ? 'Cập nhật thông tin đại lý' : 'Thêm đại lý mới'}
-            </h2>
-            <div className="grid grid-cols-1 gap-4">
-              <input
-                type="text"
-                name="company_name"
-                value={formData.company_name}
-                onChange={handleChange}
-                placeholder="Tên đại lý"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="code"
-                value={formData.code}
-                onChange={handleChange}
-                placeholder="Mã đại lý"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Địa chỉ"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Số điện thoại"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="business_license"
-                value={formData.business_license}
-                onChange={handleChange}
-                placeholder="Giấy phép kinh doanh"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <input
-                type="text"
-                name="dealer_level"
-                value={formData.dealer_level}
-                onChange={handleChange}
-                placeholder="Cấp độ đại lý"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <textarea
-                name="legal_representative"
-                value={formData.legal_representative}
-                onChange={handleChange}
-                placeholder="Thông tin pháp lý"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-              <textarea
-                name="product_distribution"
-                value={formData.product_distribution}
-                onChange={handleChange}
-                placeholder="Thông tin vận hành"
-                className="border p-2 rounded-lg w-full"
-                required
-              />
-            </div>
-            <div className="flex justify-end mt-4">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 mr-2"
-              >
-                {isEditing ? 'Cập nhật' : 'Thêm mới'}
-              </button>
-              <button
-                type="button"
-                onClick={cancelEditing}
-                className="bg-red-500 text-white p-3 rounded-lg hover:bg-red-600"
-              >
-                Hủy
-              </button>
-            </div>
-          </form>
-        </ReactModal>
-        {/* Modal for delete confirmation */}
+        {/* Modal for action confirmation */}
         <ReactModal
           isOpen={showDeleteModal}
           onRequestClose={() => setShowDeleteModal(false)}
           style={customStyles}
-          contentLabel="Delete Dealer Confirmation"
+          contentLabel="Action Confirmation"
         >
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-6 text-gray-800">Xác nhận xóa đại lý</h2>
-            <p className="text-gray-700 mb-6">Bạn có chắc chắn muốn xóa đại lý này không? Hành động này không thể hoàn tác.</p>
+            <h2 className="text-3xl font-bold mb-6 text-gray-800">
+              {actionType === 'deactivate' ? 'Xác nhận ngừng hợp tác' : 'Xác nhận kích hoạt lại'}
+            </h2>
+            <p className="text-gray-700 mb-4">
+              {actionType === 'deactivate' 
+                ? 'Bạn có chắc chắn muốn ngừng hợp tác với đại lý này không?' 
+                : 'Bạn có chắc chắn muốn kích hoạt lại đại lý này không?'}
+            </p>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lý do {actionType === 'deactivate' ? 'ngừng hợp tác' : 'kích hoạt lại'}:
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={`Nhập lý do ${actionType === 'deactivate' ? 'ngừng hợp tác' : 'kích hoạt lại'}...`}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={3}
+              />
+            </div>
+            
             <div className="flex justify-center space-x-4">
               <button
-                onClick={handleConfirmDelete}
-                className="bg-red-500 text-white p-3 rounded-lg hover:bg-red-600"
+                onClick={handleConfirmAction}
+                className={`p-3 rounded-lg text-white ${
+                  actionType === 'deactivate' 
+                    ? 'bg-red-500 hover:bg-red-600' 
+                    : 'bg-green-500 hover:bg-green-600'
+                }`}
               >
-                Xóa
+                {actionType === 'deactivate' ? 'Ngừng hợp tác' : 'Kích hoạt lại'}
               </button>
               <button
                 onClick={() => setShowDeleteModal(false)}
@@ -539,34 +415,51 @@ export const AdminDealerManagement: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td>
-                        <div className="text-sm text-gray-500 flex items-center space-x-1">
-                          <ShareAltOutlined className="h-3 w-3" />
-                          <span>{dealer.isActive ? 'Hợp tác' : ' Ngừng hợp tác'}</span>
+                      <td className="p-6">
+                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          dealer.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          <div className={`w-2 h-2 rounded-full mr-2 ${
+                            dealer.isActive ? 'bg-green-500' : 'bg-red-500'
+                          }`}></div>
+                          {dealer.isActive ? 'Đang hợp tác' : 'Ngừng hợp tác'}
                         </div>
                       </td>
                       <td className="p-6">
                         <div className="text-sm text-gray-500">{new Date(dealer.createdAt).toLocaleDateString()}</div>
                       </td>
                       <td className="p-6">
-                        <button
-                          onClick={() => handleViewDetails(dealer)}
-                          className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 mr-2"
-                        >
-                          Xem chi tiết
-                        </button>
-                        <button
-                          onClick={() => handleEdit(dealer)}
-                          className="bg-yellow-500 text-white p-2 rounded-lg hover:bg-yellow-600 mr-2"
-                        >
-                          Chỉnh sửa
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(dealer._id)}
-                          className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
-                        >
-                          Xóa
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleViewDetails(dealer)}
+                            className="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 text-sm"
+                          >
+                            Xem chi tiết
+                          </button>
+                          <button
+                            onClick={() => handleEdit(dealer)}
+                            className="bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600 text-sm"
+                          >
+                            Chỉnh sửa
+                          </button>
+                          {dealer.isActive ? (
+                            <button
+                              onClick={() => confirmAction(dealer._id, 'deactivate')}
+                              className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 text-sm"
+                            >
+                              Ngừng hợp tác
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => confirmAction(dealer._id, 'activate')}
+                              className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 text-sm"
+                            >
+                              Kích hoạt lại
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
