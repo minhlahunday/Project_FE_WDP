@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Eye, UserCheck, UserX, Filter, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Plus, Edit2, Trash2, UserCheck, UserX, Filter, X } from 'lucide-react';
 import { Sidebar } from '../../common/Sidebar';
 import { Header } from '../../common/Header';
-import { authService, RegisterRequest } from '../../../services/authService';
+import { authService, CreateUserRequest, UserFilters } from '../../../services/authService';
 
 interface Staff {
   id: string;
@@ -25,72 +25,91 @@ export const StaffManagement: React.FC = () => {
 
   const [filteredStaff, setFilteredStaff] = useState<Staff[]>(staffList);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [statusFilter] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
+  const [departmentFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [newStaff, setNewStaff] = useState({
     fullName: '',
     email: '',
     phone: '',
+    address: '',
     password: '',
-    roleName: '',
+    roleId: '',
     dealershipId: '',
-    manufacturerId: ''
+    manufacturerId: '',
+    avatar: null as File | null
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  // Thêm hàm lấy vai trò user hiện tại
-  const getCurrentUserRole = () => {
-    // Lấy role từ localStorage hoặc sessionStorage, tùy cách bạn lưu
-    const userRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
-    return userRole;
-  };
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [pageSize] = useState(10);
 
   // Hàm trả về các vai trò có thể tạo dựa trên quyền user hiện tại
   const getAvailableRoles = () => {
-    const currentRole = getCurrentUserRole();
-    
     // Tất cả role chỉ có thể tạo Dealer Staff
+    // Sử dụng ObjectId thực tế cho Dealer Staff role
     return [
-      { value: 'Dealer Staff', label: 'Dealer Staff' }
+      { value: '68d0cd25c26ebc625acf7a48', label: 'Dealer Staff' } // ObjectId cho Dealer Staff role
     ];
   };
 
+  // Load users from API
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const filters: UserFilters = {
+        page: currentPage,
+        limit: pageSize,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        role: departmentFilter !== 'all' ? departmentFilter : undefined
+      };
+
+      const response = await authService.getAllUsers(filters);
+      
+      if (response.success && response.data) {
+        // Transform API data to match our Staff interface
+        const transformedStaff = response.data.users.map((user: any) => ({
+          id: user.id || user._id,
+          fullName: user.full_name || user.fullName || user.name,
+          email: user.email,
+          phone: user.phone || '',
+          position: user.role_name || user.role || '',
+          department: user.department || '',
+          startDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: user.status || 'active',
+          avatar: user.avatar,
+          salary: user.salary || 0,
+          address: user.address || ''
+        }));
+        
+        setStaffList(transformedStaff);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalUsers(response.data.total || 0);
+      } else {
+        setError(response.message || 'Không thể tải danh sách nhân viên');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra khi tải danh sách nhân viên');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, searchTerm, statusFilter, departmentFilter]);
+
+  // Load users on component mount and when filters change
   useEffect(() => {
-    let filtered = staffList;
+    loadUsers();
+  }, [loadUsers]);
 
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(staff =>
-        staff.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.phone.includes(searchTerm)
-      );
-    }
-
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(staff => staff.status === statusFilter);
-    }
-
-    // Filter by department
-    if (departmentFilter !== 'all') {
-      filtered = filtered.filter(staff => staff.department === departmentFilter);
-    }
-
-    setFilteredStaff(filtered);
-  }, [staffList, searchTerm, statusFilter, departmentFilter]);
-
-  const formatSalary = (salary: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(salary);
-  };
+  // Update filtered staff when staffList changes
+  useEffect(() => {
+    setFilteredStaff(staffList);
+  }, [staffList]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -111,10 +130,12 @@ export const StaffManagement: React.FC = () => {
       fullName: '',
       email: '',
       phone: '',
+      address: '',
       password: '',
-      roleName: '',
+      roleId: '',
       dealershipId: '',
-      manufacturerId: ''
+      manufacturerId: '',
+      avatar: null
     });
     setError(null);
     setSuccess(null);
@@ -129,37 +150,39 @@ export const StaffManagement: React.FC = () => {
 
     try {
       // Chuẩn bị dữ liệu cho API
-      const registerData: RegisterRequest = {
+      const createData: CreateUserRequest = {
         full_name: newStaff.fullName,
         email: newStaff.email,
         phone: newStaff.phone,
+        address: newStaff.address || undefined,
         password: newStaff.password,
-        role_name: newStaff.roleName,
-        dealership_id: newStaff.dealershipId,
-        manufacturer_id: newStaff.manufacturerId
+        role_id: newStaff.roleId,
+        dealership_id: newStaff.dealershipId || undefined,
+        manufacturer_id: newStaff.manufacturerId || undefined,
+        avatar: newStaff.avatar || undefined
       };
 
-      // Gọi API đăng ký
-      const result = await authService.registerStaff(registerData);
+      // Gọi API tạo user
+      const result = await authService.createUser(createData);
 
       if (result.success) {
-        // Thêm nhân viên vào danh sách local
-        const newId = (staffList.length + 1).toString();
-        const staffToAdd: Staff = {
-          id: newId,
-          fullName: newStaff.fullName,
-          email: newStaff.email,
-          phone: newStaff.phone,
-          position: newStaff.roleName,
-          department: '', // Có thể map từ role_name
-          address: '',
-          salary: 0,
-          startDate: new Date().toISOString().split('T')[0],
-          status: 'active'
-        };
+        setSuccess('Tạo nhân viên thành công!');
         
-        setStaffList([...staffList, staffToAdd]);
-        setSuccess('Đăng ký nhân viên thành công!');
+        // Reload users list
+        await loadUsers();
+        
+        // Reset form
+        setNewStaff({
+          fullName: '',
+          email: '',
+          phone: '',
+          address: '',
+          password: '',
+          roleId: '',
+          dealershipId: '',
+          manufacturerId: '',
+          avatar: null
+        });
         
         // Đóng modal sau 2 giây
         setTimeout(() => {
@@ -170,28 +193,46 @@ export const StaffManagement: React.FC = () => {
         setError(result.message);
       }
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi đăng ký nhân viên');
+      setError(err.message || 'Có lỗi xảy ra khi tạo nhân viên');
     } finally {
       setLoading(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setNewStaff(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type } = e.target;
+    
+    if (type === 'file') {
+      const file = (e.target as HTMLInputElement).files?.[0] || null;
+      setNewStaff(prev => ({
+        ...prev,
+        [name]: file
+      }));
+    } else {
+      setNewStaff(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
-  const handleEditStaff = (staff: Staff) => {
-    setSelectedStaff(staff);
-    setShowEditModal(true);
-  };
-
-  const handleDeleteStaff = (staffId: string) => {
+  const handleDeleteStaff = async (staffId: string) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
-      setStaffList(staffList.filter(staff => staff.id !== staffId));
+      setLoading(true);
+      try {
+        const result = await authService.deleteUser(staffId);
+        
+        if (result.success) {
+          setSuccess('Xóa nhân viên thành công!');
+          await loadUsers(); // Reload the list
+        } else {
+          setError(result.message);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Có lỗi xảy ra khi xóa nhân viên');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -202,8 +243,6 @@ export const StaffManagement: React.FC = () => {
         : staff
     ));
   };
-
-  const departments = ['all', 'Bán hàng', 'Tư vấn', 'Kỹ thuật', 'Hành chính'];
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -271,7 +310,7 @@ export const StaffManagement: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Tổng nhân viên</p>
-                    <p className="text-2xl font-bold text-gray-900">{staffList.length}</p>
+                    <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
                   </div>
                   <div className="bg-blue-100 p-3 rounded-full">
                     <UserCheck className="h-6 w-6 text-blue-600" />
@@ -362,7 +401,7 @@ export const StaffManagement: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => handleEditStaff(staff)}
+                              onClick={() => {/* TODO: Implement edit functionality */}}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               <Edit2 className="h-4 w-4" />
@@ -387,12 +426,62 @@ export const StaffManagement: React.FC = () => {
                 </table>
               </div>
 
-              {filteredStaff.length === 0 && (
+              {filteredStaff.length === 0 && !loading && (
                 <div className="text-center py-12">
                   <p className="text-gray-500">Không tìm thấy nhân viên nào.</p>
                 </div>
               )}
+              
+              {loading && (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Đang tải...</p>
+                </div>
+              )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-700">
+                  Hiển thị {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalUsers)} trong tổng số {totalUsers} nhân viên
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Trước
+                  </button>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const page = i + 1;
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1 border rounded text-sm ${
+                          currentPage === page
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
@@ -477,6 +566,21 @@ export const StaffManagement: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Địa chỉ
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={newStaff.address}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  placeholder="Nhập địa chỉ (tùy chọn)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Mật khẩu *
                 </label>
                 <input
@@ -497,9 +601,9 @@ export const StaffManagement: React.FC = () => {
                   Vai trò *
                 </label>
                 <select
-                  name="roleName"
+                  name="roleId"
                   required
-                  value={newStaff.roleName}
+                  value={newStaff.roleId}
                   onChange={handleInputChange}
                   disabled={loading}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
@@ -526,6 +630,7 @@ export const StaffManagement: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   placeholder="Nhập ID đại lý (tùy chọn)"
                 />
+                <p className="text-xs text-gray-500 mt-1">Chỉ Admin mới có thể sử dụng trường này</p>
               </div>
 
               <div>
@@ -541,6 +646,22 @@ export const StaffManagement: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   placeholder="Nhập ID nhà sản xuất (tùy chọn)"
                 />
+                <p className="text-xs text-gray-500 mt-1">Chỉ Admin mới có thể sử dụng trường này</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Avatar
+                </label>
+                <input
+                  type="file"
+                  name="avatar"
+                  accept="image/*"
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                />
+                <p className="text-xs text-gray-500 mt-1">Chọn ảnh đại diện (tùy chọn)</p>
               </div>
 
               <div className="flex space-x-3 pt-4">

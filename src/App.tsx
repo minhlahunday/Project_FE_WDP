@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
@@ -23,6 +22,8 @@ import { StaffManagement } from './components/pages/DealerManager/StaffManagemen
 import ProductManagement from './components/pages/EVM/ProductManagement';
 import { CustomerManagement } from './components/pages/EVM/CustomerManagement';
 import { AdminDealerManagement } from './components/pages/EVM/DealerManagement';
+import { DealerInfo } from './components/pages/DealerManager/DealerInfo';
+
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -55,6 +56,8 @@ function AppContent() {
       <Route path="/portal/motorbike-schedule" element={<MotorbikeSchedule />} />
       <Route path="/portal/deposit" element={<CarDeposit />} />
       <Route path="/portal/staff-management" element={<StaffManagement />} />
+      <Route path="/portal/dealer-info" element={<DealerInfo />} />
+     
       
       {/* Admin routes */}
       

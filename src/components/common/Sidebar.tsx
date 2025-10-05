@@ -11,7 +11,8 @@ import {
   FileText,
   CreditCard,
   MessageSquare,
-  UserCog
+  UserCog,
+  Info
 } from 'lucide-react';
 import { Layout, Menu, Input, Avatar, Button, Typography, Space } from 'antd';
 import { SearchOutlined, UserOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   const location = useLocation();
 
   const dealerMenuItems = [
+    
     { 
       key: 'vehicles', 
       label: 'Danh mục xe', 
@@ -87,6 +89,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       label: 'Báo cáo', 
       icon: <BarChart3 className="h-4 w-4" />, 
       route: '/portal/reports' 
+    },
+    { 
+      key: 'dealer-info', 
+      label: 'Thông tin đại lý', 
+      icon: <Info className="h-4 w-4" />, 
+      route: '/portal/dealer-info' 
     },
   ];
 
