@@ -5,6 +5,7 @@ export interface User {
   role: 'dealer_staff' | 'dealer_manager' | 'evm_staff' | 'admin';
   dealerId?: string;
   dealerName?: string;
+  dealership_id?: string;
 }
 
 export interface Vehicle {

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Check } from 'lucide-react';
-import { mockMotorbikes } from '../../../data/mockData';
+import { Check, Eye, ShoppingCart } from 'lucide-react';
+// import { mockMotorbikes } from '../../../data/mockData';
 import { Vehicle } from '../../../types/index';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
+import { authService } from '../../../services/authService';
 
 export const MotorbikeModelSelector: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ export const MotorbikeModelSelector: React.FC = () => {
   const [selectingIndex, setSelectingIndex] = useState<number>(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('motorbikes');
+  const [motorbikes, setMotorbikes] = useState<unknown[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -23,7 +27,34 @@ export const MotorbikeModelSelector: React.FC = () => {
     if (location.state?.selectingIndex !== undefined) {
       setSelectingIndex(location.state.selectingIndex);
     }
+    
+    loadMotorbikes();
   }, [location.state]);
+
+  const loadMotorbikes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🚀 Loading motorbikes for model selector...');
+      const response = await authService.getVehicles({ category: 'motorbike' });
+      
+      if (response.success && (response as Record<string, unknown>).data) {
+        const responseData = (response as Record<string, unknown>).data as Record<string, unknown>;
+        console.log('✅ Motorbikes loaded successfully for selector:', responseData.data);
+        const motorbikesData = responseData.data as unknown[];
+        setMotorbikes(motorbikesData);
+      } else {
+        console.error('❌ Failed to load motorbikes:', response.message);
+        setError(response.message || 'Không thể tải danh sách xe máy');
+      }
+    } catch (err) {
+      console.error('❌ Error loading motorbikes:', err);
+      setError('Lỗi khi tải danh sách xe máy');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -32,9 +63,10 @@ export const MotorbikeModelSelector: React.FC = () => {
     }).format(price);
   };
 
-  const handleModelSelect = (vehicle: Vehicle) => {
+  const handleModelSelect = (vehicle: unknown) => {
+    const v = vehicle as Record<string, unknown>;
     const newModels = [...selectedModels];
-    newModels[selectingIndex] = vehicle;
+    newModels[selectingIndex] = v as unknown as Vehicle;
     
     navigate('/portal/compare-motorbikes', {
       state: { models: newModels }
@@ -44,6 +76,36 @@ export const MotorbikeModelSelector: React.FC = () => {
   const isSelected = (vehicleId: string) => {
     return selectedModels.some(model => model?.id === vehicleId);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải danh sách xe máy...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && motorbikes.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Không thể tải danh sách xe máy</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => navigate('/portal/motorbike-product')}
+            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800"
+          >
+            Quay lại danh sách xe máy
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -91,68 +153,95 @@ export const MotorbikeModelSelector: React.FC = () => {
 
           {/* Model Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {mockMotorbikes.map((vehicle) => (
-              <div
-                key={vehicle.id}
-                className={`group bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 ${
-                  isSelected(vehicle.id) ? 'ring-4 ring-green-500' : ''
-                }`}
-              >
-                {/* Vehicle Image */}
-                <div className="relative overflow-hidden">
-                  <img
-                    src={vehicle.images[0]}
-                    alt={vehicle.model}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  {isSelected(vehicle.id) && (
-                    <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full p-2">
-                      <Check className="h-5 w-5" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Vehicle Info */}
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{vehicle.model}</h3>
-                  <p className="text-sm text-gray-600 mb-4">{vehicle.version} - {vehicle.color}</p>
-                  <p className="text-2xl font-bold text-green-600 mb-6">{formatPrice(vehicle.price)}</p>
-
-                  {/* Key Specs */}
-                  <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-                    <div>
-                      <span className="text-gray-500">Tầm hoạt động</span>
-                      <div className="font-semibold text-blue-600">{vehicle.range} km</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Tốc độ tối đa</span>
-                      <div className="font-semibold text-yellow-600">{vehicle.maxSpeed} km/h</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Thời gian sạc</span>
-                      <div className="font-semibold text-red-600">{vehicle.chargingTime}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Tồn kho</span>
-                      <div className="font-semibold text-gray-600">{vehicle.stock} xe</div>
-                    </div>
+            {motorbikes.map((vehicle) => {
+              const v = vehicle as Record<string, unknown>;
+              return (
+                <div
+                  key={v._id as string || v.id as string}
+                  className={`group bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+                    isSelected(v._id as string || v.id as string) ? 'ring-4 ring-green-500' : ''
+                  }`}
+                >
+                  {/* Vehicle Image */}
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={((v.images as string[]) || [])[0] || '/placeholder-motorbike.jpg'}
+                      alt={v.model as string}
+                      className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    {isSelected(v._id as string || v.id as string) && (
+                      <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full p-2">
+                        <Check className="h-5 w-5" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Action Button */}
-                  <button
-                    onClick={() => handleModelSelect(vehicle)}
-                    disabled={isSelected(vehicle.id)}
-                    className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${
-                      isSelected(vehicle.id)
-                        ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                        : 'bg-black hover:bg-gray-800 text-white hover:shadow-lg'
-                    }`}
-                  >
-                    {isSelected(vehicle.id) ? 'Đã chọn' : 'Chọn xe máy này'}
-                  </button>
+                  {/* Vehicle Info */}
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{v.name as string}</h3>
+                    <p className="text-sm text-gray-600 mb-4">{(v.version as string) || '2025'} - {((v.color_options as string[]) || ['Black'])[0]}</p>
+                    <p className="text-2xl font-bold text-green-600 mb-6">{formatPrice(v.price as number)}</p>
+
+                    {/* Key Specs */}
+                    <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                      <div>
+                        <span className="text-gray-500">Tầm hoạt động</span>
+                        <div className="font-semibold text-blue-600">{v.range_km as number} km</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Tốc độ tối đa</span>
+                        <div className="font-semibold text-yellow-600">{v.top_speed as number} km/h</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Thời gian sạc</span>
+                        <div className="font-semibold text-red-600">{v.charging_fast as number}h</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Tồn kho</span>
+                        <div className="font-semibold text-gray-600">{v.stock as number || 0} xe</div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2 mb-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/portal/motorbike-detail/${v._id as string || v.id as string}`);
+                        }}
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span>Chi tiết</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/portal/motorbike-deposit?vehicleId=${v._id as string || v.id as string}`);
+                        }}
+                        className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        <span>Đặt cọc</span>
+                      </button>
+                    </div>
+
+                    {/* Select Button */}
+                    <button
+                      onClick={() => handleModelSelect(vehicle)}
+                      disabled={isSelected(v._id as string || v.id as string)}
+                      className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${
+                        isSelected(v._id as string || v.id as string)
+                          ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                          : 'bg-black hover:bg-gray-800 text-white hover:shadow-lg'
+                      }`}
+                    >
+                      {isSelected(v._id as string || v.id as string) ? 'Đã chọn' : 'Chọn xe máy này'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Info Section */}
