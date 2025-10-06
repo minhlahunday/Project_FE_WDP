@@ -667,14 +667,33 @@ export const authService = {
   async getDealerById(dealerId: string): Promise<{ success: boolean; message: string; data?: any }> {
     try {
       console.log('🚀 Calling API dealerships with ID:', dealerId);
+      console.log('🚀 API URL: GET /api/dealerships/' + dealerId);
+      
       const response = await get<any>(`/api/dealerships/${dealerId}`);
       
       console.log('✅ API dealerships response:', response);
-      return {
-        success: true,
-        message: 'Lấy thông tin đại lý thành công',
-        data: response
-      };
+      console.log('🔍 Response structure:', {
+        hasSuccess: !!response.success,
+        hasMessage: !!response.message,
+        hasData: !!response.data,
+        responseKeys: Object.keys(response)
+      });
+      
+      // API response có cấu trúc: { success: true, message: "...", data: { contract, address, contact } }
+      if (response.success && response.data) {
+        console.log('✅ API call successful, returning data:', response.data);
+        return {
+          success: true,
+          message: response.message || 'Lấy thông tin đại lý thành công',
+          data: response.data
+        };
+      } else {
+        console.log('❌ API response indicates failure:', response);
+        return {
+          success: false,
+          message: response.message || 'Không thể tải thông tin đại lý'
+        };
+      }
     } catch (error: any) {
       console.error('❌ Lỗi khi gọi API dealerships:', error);
       console.error('❌ Error details:', error.response?.data || error.message);
