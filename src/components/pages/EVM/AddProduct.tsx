@@ -65,12 +65,20 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [manufacturers, setManufacturers] = useState<any[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
+  const [primaryImageIndex, setPrimaryImageIndex] = useState<number>(0); // Track ảnh chính
 
   const resetForm = () => {
+    // Cleanup object URLs to prevent memory leaks
+    imageFiles.forEach(file => {
+      const url = URL.createObjectURL(file);
+      URL.revokeObjectURL(url);
+    });
+    
     setForm(defaultForm);
     setImageFiles([]);
     setError(null);
     setFieldErrors({});
+    setPrimaryImageIndex(0);
   };
 
   const handleClose = () => {
@@ -92,8 +100,11 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
   useEffect(() => {
     if (editProduct) {
       console.log('Populating form with editProduct:', editProduct);
+      console.log('Edit product images:', editProduct.images);
       // Reset imageFiles when editing to avoid conflicts
       setImageFiles([]);
+      // Reset primary image index to 0 (first image)
+      setPrimaryImageIndex(editProduct.primaryImageIndex || 0);
       setForm({
         // Basic fields
         name: editProduct.name || '',
@@ -290,7 +301,12 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
 
   const handleImageFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setImageFiles(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      setImageFiles(files);
+      // Reset primary image index to 0 when new images are selected
+      setPrimaryImageIndex(0);
+      console.log('Selected files:', files.map(f => f.name));
+      console.log('Primary image index reset to 0 for new images');
     }
   };
 
@@ -602,6 +618,7 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
       let response;
       const url = isEditMode ? `/api/vehicles/${editProduct._id}` : "/api/vehicles";
       
+      // Use FormData only when there are image files to upload
       if (imageFiles.length > 0) {
         console.log(`Sending with images using FormData (${isEditMode ? 'edit' : 'create'})`);
         const formData = new FormData();
@@ -635,20 +652,8 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
             } else if (typeof value === 'object' && !Array.isArray(value)) {
               formData.append(key, JSON.stringify(value));
             } else if (key === 'images' && Array.isArray(value)) {
-              // Special handling for images - when editing, we need to preserve existing images
-              // and add new ones. The backend will handle merging them.
-              if (isEditMode) {
-                // In edit mode, append existing image URLs
-                value.forEach((imageUrl, index) => {
-                  if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
-                    formData.append(`existing_images[${index}]`, imageUrl);
-                  }
-                });
-                console.log('Appending existing images for edit mode:', value);
-              } else {
-                // In create mode, skip existing images array when uploading new images
-                console.log('Skipping existing images array when creating new product');
-              }
+              // Skip images field when uploading new images - let new images replace completely
+              console.log('Skipping existing images array - new images will replace them');
             } else if (Array.isArray(value)) {
               // For regular arrays, append each item separately
               value.forEach((item, index) => {
@@ -661,11 +666,22 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         });
         
         // Append image files
-        console.log('Appending image files:', imageFiles);
-        imageFiles.forEach((file, index) => {
-          console.log(`Appending image ${index}:`, file.name, file.type, file.size);
-          formData.append('images', file);
-        });
+        console.log('Appending image files:', imageFiles.length);
+        
+        // Handle image upload
+        if (imageFiles.length > 0) {
+          console.log('Appending new image files:', imageFiles.length);
+          imageFiles.forEach((file, index) => {
+            console.log(`Appending image ${index}:`, file.name, file.type, file.size);
+            formData.append('images', file);
+          });
+          // Reset primary image index for new images (first image will be primary)
+          formData.append('primaryImageIndex', '0');
+        } else if (isEditMode && editProduct && form.images && form.images.length > 0) {
+          // If editing and no new images, send the selected primary image index
+          formData.append('primaryImageIndex', primaryImageIndex.toString());
+          console.log('Setting primary image index:', primaryImageIndex);
+        }
 
         // Debug: Log all FormData entries
         console.log('FormData entries:');
@@ -689,6 +705,13 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         }
       } else {
         console.log(`Sending JSON without images (${isEditMode ? 'edit' : 'create'})`);
+        
+        // If editing and need to update primary image index
+        if (isEditMode && editProduct && form.images && form.images.length > 0) {
+          cleanForm.primaryImageIndex = primaryImageIndex;
+          console.log('Including primary image index in JSON:', primaryImageIndex);
+        }
+        
         console.log('Clean form data for JSON request:', cleanForm);
         console.log('Dimensions object:', cleanForm.dimensions);
         if (isEditMode) {
@@ -701,9 +724,15 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
       
       console.log(`Product ${isEditMode ? 'updated' : 'created'} successfully:`, response);
       
+      // Log the updated images to verify they're saved
+      if (response.data?.images) {
+        console.log('Updated images in response:', response.data.images);
+      }
+      
       // Refresh product list if callback provided
       if (onProductCreated) {
-        onProductCreated();
+        console.log('Calling onProductCreated to refresh product list...');
+        await onProductCreated();
       }
       
       // Close modal and reset form on success
@@ -925,12 +954,93 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         <label className="font-semibold">Màu sắc</label>
         <input name="color_options" value={form.color_options.join(', ')} onChange={e => handleArrayChange('color_options', e.target.value)} placeholder="Màu sắc (cách nhau dấu phẩy)" className="border rounded px-3 py-2" />
         <label className="font-semibold">Ảnh sản phẩm (Tùy chọn)</label>
-    <input type="file" multiple accept="image/*" onChange={handleImageFilesChange} className="border rounded px-3 py-2" />
-        <div className="text-xs text-gray-500 mb-2">Chọn ảnh để upload lên Cloudinary. Có thể bỏ trống.</div>
-        {imageFiles.length > 0 && (
-          <div className="text-sm text-green-600 mb-2">
-            Đã chọn {imageFiles.length} ảnh: {imageFiles.map(f => f.name).join(', ')}
+        
+        {/* Show existing images when editing - only show if no new images selected */}
+        {editProduct && form.images && form.images.length > 0 && imageFiles.length === 0 && (
+          <div className="mb-4">
+            <div className="text-sm text-gray-600 mb-2">
+              Ảnh hiện tại: 
+              <span className="text-xs text-blue-600 ml-2">
+                Click vào ảnh để đặt làm ảnh đại diện
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {form.images.map((imageUrl: string, index: number) => (
+                <div key={index} className="relative">
+                  <img
+                    src={imageUrl}
+                    alt={`Current ${index + 1}`}
+                    className={`w-20 h-20 object-cover rounded border-2 cursor-pointer transition-all ${
+                      index === primaryImageIndex 
+                        ? 'border-blue-500 ring-2 ring-blue-200' 
+                        : 'border-gray-300 hover:border-blue-300'
+                    }`}
+                    onClick={() => setPrimaryImageIndex(index)}
+                  />
+                  {index === primaryImageIndex && (
+                    <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                      ★
+                    </div>
+                  )}
+                  <div className="text-xs text-center mt-1 text-gray-500">
+                    {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="text-xs text-blue-600">
+              {form.images.length} ảnh hiện tại. Ảnh đại diện: #{primaryImageIndex + 1}
+            </div>
+            <div className="text-xs text-orange-600 mt-1">
+              Chọn ảnh mới bên dưới để thay thế toàn bộ ảnh hiện tại.
+            </div>
           </div>
+        )}
+        
+        {/* Warning when new images are selected in edit mode */}
+        {editProduct && imageFiles.length > 0 && (
+          <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="text-sm text-orange-800">
+              <strong>⚠️ Thay thế ảnh:</strong> Bạn đã chọn {imageFiles.length} ảnh mới. 
+              Các ảnh này sẽ thay thế hoàn toàn {form.images.length} ảnh hiện tại khi lưu.
+            </div>
+          </div>
+        )}
+        
+        <input type="file" multiple accept="image/*" onChange={handleImageFilesChange} className="border rounded px-3 py-2" />
+        <div className="text-xs text-gray-500 mb-2">
+          {editProduct 
+            ? "Chọn ảnh mới để thay thế ảnh hiện tại. Bỏ trống để giữ ảnh cũ." 
+            : "Chọn ảnh để upload lên Cloudinary. Có thể bỏ trống."
+          }
+        </div>
+        {imageFiles.length > 0 && (
+          <>
+            <div className="text-sm text-green-600 mb-2">
+              Đã chọn {imageFiles.length} ảnh: {imageFiles.map(f => f.name).join(', ')}
+            </div>
+            {/* Preview ảnh mới đã chọn */}
+            <div className="mb-4">
+              <div className="text-sm text-gray-600 mb-2">Preview ảnh mới:</div>
+              <div className="flex flex-wrap gap-2">
+                {imageFiles.map((file, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Preview ${index + 1}`}
+                      className="w-20 h-20 object-cover rounded border-2 border-green-400"
+                    />
+                    <div className="text-xs text-center mt-1 text-green-600">
+                      Mới #{index + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-xs text-green-600 mt-2">
+                Những ảnh này sẽ thay thế toàn bộ ảnh hiện tại khi lưu.
+              </div>
+            </div>
+          </>
         )}
         <label className="font-semibold">Mô tả sản phẩm</label>
         <textarea name="description" value={form.description} onChange={handleFormChange} placeholder="Mô tả sản phẩm" className="border rounded px-3 py-2" />
