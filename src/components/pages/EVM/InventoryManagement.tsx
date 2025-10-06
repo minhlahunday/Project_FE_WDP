@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../admin/AdminLayout";
 import { get, put, post } from "../../../services/httpClient";
+import { authService } from "../../../services/authService";
 import "../../../styles/antd-custom.css";
 import { 
   Card, 
@@ -116,18 +117,34 @@ const InventoryManagement: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching products from /api/vehicles...');
-      const res = await get<any>("/api/vehicles");
-      console.log('API Response:', res);
+      console.log('🚀 InventoryManagement: Fetching vehicles using authService...');
+      
+      // Sử dụng cùng API như ProductManagement để đảm bảo consistency
+      // Fetch tất cả xe bằng cách tăng limit lên cao
+      const response = await authService.getVehicles({ 
+        page: 1, 
+        limit: 100  // Tăng limit để lấy tất cả xe
+      });
+      console.log('📡 InventoryManagement: authService response:', response);
       
       // Xử lý response data
       let productsData = [];
-      if (res.data && Array.isArray(res.data.data)) {
-        productsData = res.data.data;
-      } else if (res.data && Array.isArray(res.data)) {
-        productsData = res.data;
+      if (response.success && response.data) {
+        const responseData = response.data as Record<string, unknown>;
+        console.log('📊 InventoryManagement: responseData:', responseData);
+        
+        if (responseData.data && Array.isArray(responseData.data)) {
+          productsData = responseData.data;
+          console.log('✅ InventoryManagement: Using responseData.data, count:', responseData.data.length);
+        } else if (Array.isArray(responseData)) {
+          productsData = responseData;
+          console.log('✅ InventoryManagement: Using responseData directly, count:', responseData.length);
+        } else {
+          console.warn('❌ InventoryManagement: Unexpected API response format:', responseData);
+          productsData = [];
+        }
       } else {
-        console.warn('Unexpected API response format:', res.data);
+        console.error('❌ InventoryManagement: API call failed:', response.message);
         productsData = [];
       }
       

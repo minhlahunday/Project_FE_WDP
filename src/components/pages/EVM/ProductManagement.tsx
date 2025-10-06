@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../admin/AdminLayout";
 import { get } from "../../../services/httpClient";
+import { authService } from "../../../services/authService";
 import AddProduct from "./AddProduct";
 import "../../../styles/antd-custom.css";
 import { 
@@ -124,17 +125,39 @@ const ProductManagement: React.FC = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await get<any>("/api/vehicles");
-      if (res.data && Array.isArray(res.data.data)) {
-        setProducts(res.data.data);
-        setError(null);
-      } else if (res.data && Array.isArray(res.data)) {
-        setProducts(res.data);
-        setError(null);
+      console.log('🚀 ProductManagement: Fetching vehicles using authService...');
+      
+      // Sử dụng cùng API như Motorbike.tsx để đảm bảo consistency
+      // Fetch tất cả xe bằng cách tăng limit lên cao
+      const response = await authService.getVehicles({ 
+        page: 1, 
+        limit: 100  // Tăng limit để lấy tất cả xe
+      });
+      console.log('📡 ProductManagement: authService response:', response);
+      
+      if (response.success && response.data) {
+        const responseData = response.data as Record<string, unknown>;
+        console.log('📊 ProductManagement: responseData:', responseData);
+        console.log('📋 ProductManagement: responseData.data:', responseData.data);
+        
+        if (responseData.data && Array.isArray(responseData.data)) {
+          console.log('✅ ProductManagement: Using responseData.data, count:', responseData.data.length);
+          console.log('📝 ProductManagement: All products data:', responseData.data);
+          setProducts(responseData.data as Product[]);
+          setError(null);
+        } else if (Array.isArray(responseData)) {
+          console.log('✅ ProductManagement: Using responseData directly, count:', responseData.length);
+          console.log('📝 ProductManagement: All products data:', responseData);
+          setProducts(responseData as Product[]);
+          setError(null);
+        } else {
+          throw new Error("Invalid data format from authService");
+        }
       } else {
-        throw new Error("Invalid data format from API");
+        throw new Error(response.message || "Failed to fetch vehicles");
       }
     } catch (err) {
+      console.error('❌ ProductManagement: Error fetching products:', err);
       setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
@@ -147,6 +170,12 @@ const ProductManagement: React.FC = () => {
 
   const cars = products.filter((product) => product.category === 'car');
   const motorbikes = products.filter((product) => product.category === 'motorbike');
+  
+  // Debug: Log all data
+  console.log('Total products:', products.length);
+  console.log('All products:', products);
+  console.log('Motorbikes found:', motorbikes.length);
+  console.log('Motorbikes:', motorbikes);
 
   const filteredCars = cars.filter(
     (product) => {
@@ -164,6 +193,12 @@ const ProductManagement: React.FC = () => {
       return matchesSearch && matchesStatus;
     }
   );
+  
+  // Debug: Log filtered results
+  console.log('Filtered motorbikes:', filteredMotorbikes.length);
+  console.log('Filtered motorbikes data:', filteredMotorbikes);
+  console.log('Current search term:', search);
+  console.log('Current status filter:', statusFilter);
 
   const handleViewProduct = async (productId: string) => {
     try {
