@@ -116,10 +116,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       route: '/evm/product-management' 
     },
     { 
-      key: 'inventory', 
+      key: 'inventory-management', 
       label: 'Quản lý tồn kho', 
-      icon: <Car className="h-4 w-4" />, 
-      route: '/sections/inventory' 
+      icon: <Package className="h-4 w-4" />, 
+      route: '/evm/inventory-management' 
     },
     { 
       key: 'dealer-management', 
@@ -129,9 +129,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
     },
     { 
       key: 'pricing', 
-      label: 'Giá & Khuyến mãi', 
+      label: 'Khuyến mãi', 
       icon: <CreditCard className="h-4 w-4" />, 
-      route: '/sections/pricing' 
+      route: '/evm/promotion-management' 
     },
     { 
       key: 'customer-management', 
