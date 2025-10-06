@@ -1,5 +1,10 @@
-import { post } from './httpClient';
+import { post, get, put, del } from './httpClient';
 import { User } from '../types/index';
+
+interface LoginResponse {
+  token: string;
+  user: User;
+}
 
 interface LoginRequest {
   email: string;
@@ -9,7 +14,7 @@ interface LoginRequest {
 interface AuthResponse {
   success: boolean;
   message?: string;
-  data?: any;
+  data?: unknown;
 }
 
 // API response từ backend
@@ -31,6 +36,11 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ accessToke
     }
     
     const payload = parseJwt(response.data.accessToken);
+    
+    console.log('JWT payload:', payload);
+    console.log('Role from JWT:', payload.role);
+    console.log('RoleName from JWT:', payload.roleName);
+    
     let userRole = mapRoleName(payload.role || payload.roleName);
     
     if (userRole === 'dealer_staff' && credentials.email) {
@@ -43,11 +53,14 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ accessToke
       }
     }
     
+    console.log('Final determined role:', userRole);
+    
     const user: User = {
       id: payload.id || payload._id || '',
       email: payload.email || credentials.email,
       name: payload.full_name || payload.name || 'Người dùng', 
       role: userRole,
+      dealership_id: dealershipId,
     };
     
     return {
@@ -171,14 +184,18 @@ export const mockLoginUser = async (credentials: LoginRequest): Promise<{ access
       email: 'staff@example.com',
       password: 'Staff123!',
       name: 'Dealer Staff User',
-      role: 'dealer_staff'
+      role: 'dealer_staff',
+      dealerId: 'dealer1',
+      dealerName: 'Đại lý VinFast Hà Nội'
     },
     {
       id: '6',
       email: 'manager@example.com',
       password: 'Manager123!',
       name: 'Dealer Manager User', 
-      role: 'dealer_manager'
+      role: 'dealer_manager',
+      dealerId: 'dealer1',
+      dealerName: 'Đại lý VinFast Hà Nội'
     },
     {
       id: '7',
@@ -245,23 +262,7 @@ export interface RegisterResponse {
   success: boolean;
   message: string;
   data?: any;
-  errors?: any;
 }
-
-// Validation helper functions
-const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const validatePhone = (phone: string): boolean => {
-  const phoneRegex = /^[0-9]{10,11}$/;
-  return phoneRegex.test(phone.replace(/[^0-9]/g, ''));
-};
-
-const validatePassword = (password: string): boolean => {
-  return password.length >= 6;
-};
 
 export const authService = {
   async registerStaff(data: RegisterRequest): Promise<RegisterResponse> {
@@ -326,6 +327,396 @@ export const authService = {
         success: false,
         message: errorMessage,
         errors: error.response?.data?.errors || []
+      };
+    }
+  },
+
+  // User Management API Methods
+  async getRoles(): Promise<{ success: boolean; data?: unknown[]; message?: string }> {
+    try {
+      console.log('🚀 Getting roles from API...');
+      const response = await get<unknown>('/api/roles');
+      console.log('✅ Roles response:', response);
+      
+      return {
+        success: true,
+        data: response as unknown[],
+        message: 'Lấy danh sách roles thành công'
+      };
+    } catch (error: unknown) {
+      console.error('❌ Error getting roles:', error);
+      return {
+        success: false,
+        message: (error as Error).message || 'Có lỗi xảy ra khi lấy danh sách roles'
+      };
+    }
+  },
+
+  async getAllUsers(filters: UserFilters = {}): Promise<UserResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (filters.page) queryParams.append('page', filters.page.toString());
+      if (filters.limit) queryParams.append('limit', filters.limit.toString());
+      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.role) queryParams.append('role', filters.role);
+      if (filters.status) queryParams.append('status', filters.status);
+      if (filters.dealership_id) queryParams.append('dealership_id', filters.dealership_id);
+
+      const url = `/api/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await get<any>(url);
+      
+      return {
+        success: true,
+        message: 'Lấy danh sách người dùng thành công',
+        data: response
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || 'Có lỗi xảy ra khi lấy danh sách người dùng'
+      };
+    }
+  },
+
+  async createUser(data: CreateUserRequest): Promise<SingleUserResponse> {
+    try {
+      console.log('🚀 Creating user with data:', data);
+      
+      const formData = new FormData();
+      formData.append('full_name', data.full_name);
+      formData.append('email', data.email);
+      formData.append('phone', data.phone);
+      formData.append('password', data.password);
+      formData.append('role_id', data.role_id);
+      
+      if (data.address) formData.append('address', data.address);
+      if (data.dealership_id) formData.append('dealership_id', data.dealership_id);
+      if (data.manufacturer_id) formData.append('manufacturer_id', data.manufacturer_id);
+      if (data.avatar) formData.append('avatar', data.avatar);
+
+      console.log('📋 FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+
+      const response = await post<unknown>('/api/users', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('✅ Create user response:', response);
+      
+      return {
+        success: true,
+        message: 'Tạo người dùng thành công',
+        data: response as User
+      };
+    } catch (error: unknown) {
+      console.error('❌ Error creating user:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          statusText: errorObj.statusText,
+          data: errorObj.data,
+          response: errorObj.response
+        });
+        
+        // Nếu có response từ backend, log chi tiết
+        if (errorObj.response) {
+          console.error('❌ Backend response:', errorObj.response);
+        }
+      }
+      
+      return {
+        success: false,
+        message: (error as Error).message || 'Có lỗi xảy ra khi tạo người dùng'
+      };
+    }
+  },
+
+  async getUserById(id: string): Promise<SingleUserResponse> {
+    try {
+      console.log('🚀 Getting user by ID:', id);
+      const response = await get<unknown>(`/api/users/${id}?t=${Date.now()}`);
+      
+      console.log('✅ Get user by ID response:', response);
+      console.log('🔍 Response structure:', {
+        hasSuccess: !!(response as Record<string, unknown>).success,
+        hasMessage: !!(response as Record<string, unknown>).message,
+        hasData: !!(response as Record<string, unknown>).data,
+        responseKeys: Object.keys(response as Record<string, unknown>)
+      });
+      
+      const responseData = response as Record<string, unknown>;
+      
+      return {
+        success: true,
+        message: 'Lấy thông tin người dùng thành công',
+        data: responseData.data as User
+      };
+    } catch (error: unknown) {
+      console.error('❌ Error getting user by ID:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          statusText: errorObj.statusText,
+          data: errorObj.data,
+          response: errorObj.response
+        });
+        
+        // Nếu có response từ backend, log chi tiết
+        if (errorObj.response) {
+          console.error('❌ Backend response:', errorObj.response);
+        }
+      }
+      
+      return {
+        success: false,
+        message: (error as Error).message || 'Có lỗi xảy ra khi lấy thông tin người dùng'
+      };
+    }
+  },
+
+  async updateUser(id: string, data: UpdateUserRequest): Promise<SingleUserResponse> {
+    try {
+      console.log('🚀 Updating user with ID:', id);
+      console.log('🚀 Update data:', data);
+      
+      const formData = new FormData();
+      
+      if (data.full_name) formData.append('full_name', data.full_name);
+      if (data.email) formData.append('email', data.email);
+      if (data.phone) formData.append('phone', data.phone);
+      if (data.address) formData.append('address', data.address);
+      if (data.password) formData.append('password', data.password);
+      if (data.role_id) formData.append('role_id', data.role_id);
+      if (data.dealership_id) formData.append('dealership_id', data.dealership_id);
+      if (data.manufacturer_id) formData.append('manufacturer_id', data.manufacturer_id);
+      if (data.avatar) formData.append('avatar', data.avatar);
+
+      console.log('📋 FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+
+      const response = await put<unknown>(`/api/users/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('✅ Update user response:', response);
+      
+      return {
+        success: true,
+        message: 'Cập nhật người dùng thành công',
+        data: response as User
+      };
+    } catch (error: unknown) {
+      console.error('❌ Error updating user:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          statusText: errorObj.statusText,
+          data: errorObj.data,
+          response: errorObj.response
+        });
+        
+        // Nếu có response từ backend, log chi tiết
+        if (errorObj.response) {
+          console.error('❌ Backend response:', errorObj.response);
+        }
+      }
+      
+      return {
+        success: false,
+        message: (error as Error).message || 'Có lỗi xảy ra khi cập nhật người dùng'
+      };
+    }
+  },
+
+  async deleteUser(id: string): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log('🚀 Deleting user with ID:', id);
+      const response = await del(`/api/users/${id}`);
+      
+      console.log('✅ Delete user response:', response);
+      
+      return {
+        success: true,
+        message: 'Xóa người dùng thành công'
+      };
+    } catch (error: unknown) {
+      console.error('❌ Error deleting user:', error);
+      
+      // Log chi tiết lỗi từ backend
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>;
+        console.error('❌ Error details:', {
+          message: errorObj.message,
+          status: errorObj.status,
+          data: errorObj.data
+        });
+      }
+      
+      return {
+        success: false,
+        message: (error as Error).message || 'Có lỗi xảy ra khi xóa người dùng'
+      };
+    }
+  },
+
+  // Dealer Information API Methods
+  async getDealerById(dealerId: string): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      console.log('🚀 Calling API dealerships with ID:', dealerId);
+      console.log('🚀 API URL: GET /api/dealerships/' + dealerId);
+      
+      const response = await get<any>(`/api/dealerships/${dealerId}`);
+      
+      console.log('✅ API dealerships response:', response);
+      console.log('🔍 Response structure:', {
+        hasSuccess: !!response.success,
+        hasMessage: !!response.message,
+        hasData: !!response.data,
+        responseKeys: Object.keys(response)
+      });
+      
+      // API response có cấu trúc: { success: true, message: "...", data: { contract, address, contact } }
+      if (response.success && response.data) {
+        console.log('✅ API call successful, returning data:', response.data);
+        return {
+          success: true,
+          message: response.message || 'Lấy thông tin đại lý thành công',
+          data: response.data
+        };
+      } else {
+        console.log('❌ API response indicates failure:', response);
+        return {
+          success: false,
+          message: response.message || 'Không thể tải thông tin đại lý'
+        };
+      }
+    } catch (error: any) {
+      console.error('❌ Lỗi khi gọi API dealerships:', error);
+      console.error('❌ Error details:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.message || 'Không thể tải thông tin đại lý'
+      };
+    }
+  },
+
+  // Lấy thông tin user hiện tại để có dealership_id
+  async getCurrentUser(): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      // Sử dụng endpoint khác để lấy thông tin user hiện tại
+      const response = await get<any>('/api/users/profile');
+      
+      return {
+        success: true,
+        message: 'Lấy thông tin user thành công',
+        data: response
+      };
+    } catch (error: any) {
+      console.error('❌ Lỗi khi gọi API users/profile:', error);
+      return {
+        success: false,
+        message: error.message || 'Không thể tải thông tin user'
+      };
+    }
+  },
+
+  // Vehicle Management API Methods
+  async getVehicles(filters: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+    sort?: string;
+  } = {}): Promise<{ success: boolean; message: string; data?: unknown }> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (filters.page) queryParams.append('page', filters.page.toString());
+      if (filters.limit) queryParams.append('limit', filters.limit.toString());
+      if (filters.category) queryParams.append('category', filters.category);
+      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.sort) queryParams.append('sort', filters.sort);
+
+      const url = `/api/vehicles${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      console.log('🚀 Calling API vehicles:', url);
+      
+      const response = await get<unknown>(url);
+      
+      console.log('✅ API vehicles response:', response);
+      return {
+        success: true,
+        message: 'Lấy danh sách xe thành công',
+        data: response
+      };
+    } catch (error: any) {
+      console.error('❌ Lỗi khi gọi API vehicles:', error);
+      return {
+        success: false,
+        message: error.message || 'Không thể tải danh sách xe'
+      };
+    }
+  },
+
+  async getVehicleById(vehicleId: string): Promise<{ success: boolean; message: string; data?: unknown }> {
+    try {
+      const url = `/api/vehicles/${vehicleId}`;
+      console.log('🚀 Calling API vehicle by ID:', url);
+      
+      const response = await get<unknown>(url);
+      
+      console.log('✅ API vehicle by ID response:', response);
+      
+      // Kiểm tra cấu trúc response
+      if (response && typeof response === 'object') {
+        const responseObj = response as Record<string, unknown>;
+        
+        // Nếu response có data field
+        if (responseObj.data) {
+          return {
+            success: true,
+            message: 'Lấy thông tin xe thành công',
+            data: responseObj.data
+          };
+        }
+        
+        // Nếu response trực tiếp là data
+        return {
+          success: true,
+          message: 'Lấy thông tin xe thành công',
+          data: response
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'Dữ liệu không hợp lệ'
+      };
+    } catch (error: any) {
+      console.error('❌ Lỗi khi gọi API vehicle by ID:', error);
+      return {
+        success: false,
+        message: error.message || 'Không thể tải thông tin xe'
       };
     }
   }
