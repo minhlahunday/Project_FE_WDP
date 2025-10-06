@@ -1,10 +1,10 @@
 import { post, get, put, del } from './httpClient';
 import { User } from '../types/index';
 
-interface LoginResponse {
-  token: string;
-  user: User;
-}
+// interface LoginResponse {
+//   token: string;
+//   user: User;
+// }
 
 interface LoginRequest {
   email: string;
@@ -40,6 +40,8 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ accessToke
     console.log('JWT payload:', payload);
     console.log('Role from JWT:', payload.role);
     console.log('RoleName from JWT:', payload.roleName);
+    console.log('Dealership ID from JWT:', payload.dealership_id);
+    console.log('All JWT payload keys:', Object.keys(payload));
     
     let userRole = mapRoleName(payload.role || payload.roleName);
     
@@ -54,6 +56,16 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ accessToke
     }
     
     console.log('Final determined role:', userRole);
+    
+    // Tìm dealership_id với nhiều tên có thể có
+    const dealershipId = payload.dealership_id || 
+                        payload.dealershipId || 
+                        payload.dealership || 
+                        payload.dealer_id ||
+                        payload.dealerId ||
+                        undefined;
+    
+    console.log('Found dealership ID:', dealershipId);
     
     const user: User = {
       id: payload.id || payload._id || '',
@@ -262,6 +274,59 @@ export interface RegisterResponse {
   success: boolean;
   message: string;
   data?: any;
+  errors?: any;
+}
+
+// User Management Interfaces
+export interface UserFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  status?: 'active' | 'inactive' | 'pending';
+  dealership_id?: string;
+}
+
+export interface UserResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    users: User[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface SingleUserResponse {
+  success: boolean;
+  message: string;
+  data?: User;
+}
+
+export interface CreateUserRequest {
+  full_name: string;
+  email: string;
+  phone: string;
+  address?: string;
+  password: string;
+  role_id: string; // ObjectId của role
+  dealership_id?: string; // Admin only
+  manufacturer_id?: string; // Admin only
+  avatar?: File;
+}
+
+export interface UpdateUserRequest {
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  password?: string;
+  role_id?: string;
+  dealership_id?: string;
+  manufacturer_id?: string;
+  avatar?: File;
 }
 
 export const authService = {
