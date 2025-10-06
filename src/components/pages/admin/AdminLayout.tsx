@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from '../../common/Sidebar';
 import { Header } from '../../common/Header';
+import { Footer } from '../../common/Footer';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar 
         activeSection={currentSection}
         onSectionChange={handleSectionChange}
@@ -37,9 +38,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           />
         </div>
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto mt-[73px]">
+        <main className="flex-1 mt-[73px] pb-4 px-4 sm:px-6 lg:px-8">
           {children}
         </main>
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );

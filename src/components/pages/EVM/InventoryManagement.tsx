@@ -808,7 +808,7 @@ const InventoryManagement: React.FC = () => {
 
   return (
     <AdminLayout activeSection="inventory-management">
-      <div className="p-6">
+      <div>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <Title level={2} style={{ margin: 0, color: '#1890ff' }}>

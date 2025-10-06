@@ -251,12 +251,16 @@ const ProductManagement: React.FC = () => {
 
   return (
     <AdminLayout activeSection="product-management">
-      <div style={{ minHeight: '100vh', background: '#f5f7fa' }}>
+      <div style={{ background: '#f5f7fa' }}>
         {/* Modern Page Header */}
         <div style={{ 
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '32px 40px',
-          marginBottom: 24
+          padding: '32px 0',
+          marginLeft: '-24px',
+          marginRight: '-24px',
+          marginBottom: 24,
+          paddingLeft: '60px',
+          paddingRight: '40px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
             <HomeOutlined style={{ color: 'rgba(255,255,255,0.8)', marginRight: 8 }} />
@@ -267,7 +271,7 @@ const ProductManagement: React.FC = () => {
           
           <Row justify="space-between" align="middle">
             <Col>
-              <Title level={2} style={{ margin: 0, color: '#fff', marginBottom: 8 }}>
+              <Title level={2} style={{ margin: 0, color: '#fff', marginBottom: 8, marginLeft: 16 }}>
                 Quản lý sản phẩm
               </Title>
               <Space size="large">
@@ -314,7 +318,7 @@ const ProductManagement: React.FC = () => {
           </Row>
         </div>
 
-        <div style={{ padding: '0 40px 40px' }}>
+        <div style={{ paddingBottom: '60px' }}>
           {showAddProduct && (
             <Card 
               style={{ 
@@ -470,7 +474,7 @@ const ProductManagement: React.FC = () => {
               </div>
               
               {filteredCars.length === 0 ? (
-                <Card style={{ textAlign: 'center', padding: 40, borderRadius: 12 }}>
+                <Card style={{ textAlign: 'center', padding: 80, borderRadius: 12, paddingLeft: 80 }}>
                   <CarOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
                   <Text type="secondary">Không tìm thấy sản phẩm ô tô nào</Text>
                 </Card>
@@ -485,7 +489,7 @@ const ProductManagement: React.FC = () => {
                           overflow: 'hidden',
                           border: product.status === 'inactive' ? '2px solid #ff7875' : '1px solid #f0f0f0',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                          transition: 'all 0.3s ease'
+                          transition: 'all 0.3s ease',
                         }}
                         styles={{ body: { padding: 16 } }}
                         cover={
@@ -512,11 +516,14 @@ const ProductManagement: React.FC = () => {
                                 <Image
                                   alt={product.name}
                                   src={product.images[0]}
+                                  width="100%"
+                                  height={200}
                                   style={{ 
-                                    width: '100%', 
-                                    height: 200, 
                                     objectFit: 'cover',
-                                    display: 'block'
+                                    objectPosition: 'center',
+                                    display: 'block',
+                                    width: '100%',
+                                    height: '200px'
                                   }}
                                   fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
                                   preview={{
@@ -686,7 +693,7 @@ const ProductManagement: React.FC = () => {
                         }}
                         styles={{ body: { padding: 16 } }}
                         cover={
-                          <div style={{ height: 200, position: 'relative', background: '#fafafa' }}>
+                          <div style={{ height: 200, position: 'relative', background: '#f5f5f5' }}>
                             {product.status === 'inactive' && (
                               <div style={{
                                 position: 'absolute',
@@ -709,11 +716,15 @@ const ProductManagement: React.FC = () => {
                                 <Image
                                   alt={product.name}
                                   src={product.images[0]}
+                                  width="100%"
+                                  height={200}
                                   style={{ 
-                                    width: '100%', 
-                                    height: 200, 
-                                    objectFit: 'cover',
-                                    display: 'block'
+                                    objectFit: 'contain',
+                                    objectPosition: 'center',
+                                    display: 'block',
+                                    width: '100%',
+                                    height: '200px',
+                                    backgroundColor: '#f5f5f5'
                                   }}
                                   fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
                                   preview={{
@@ -739,7 +750,7 @@ const ProductManagement: React.FC = () => {
                                 display: 'flex', 
                                 alignItems: 'center', 
                                 justifyContent: 'center',
-                                backgroundColor: '#fafafa'
+                                backgroundColor: '#f5f5f5'
                               }}>
                                 <div style={{ textAlign: 'center' }}>
                                   <Avatar size={64} icon={<ThunderboltOutlined />} style={{ backgroundColor: '#e6e6e6' }} />
@@ -887,7 +898,9 @@ const ProductManagement: React.FC = () => {
                           style={{ 
                             width: '100%', 
                             borderRadius: 12,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                            objectFit: selectedProduct.category === 'motorbike' ? 'contain' : 'cover',
+                            backgroundColor: selectedProduct.category === 'motorbike' ? '#f5f5f5' : 'transparent'
                           }}
                         />
                         {selectedProduct.images.length > 1 && (
@@ -904,8 +917,9 @@ const ProductManagement: React.FC = () => {
                                   height={70}
                                   style={{ 
                                     borderRadius: 8,
-                                    objectFit: 'cover',
-                                    border: '1px solid #f0f0f0'
+                                    objectFit: selectedProduct.category === 'motorbike' ? 'contain' : 'cover',
+                                    border: '1px solid #f0f0f0',
+                                    backgroundColor: selectedProduct.category === 'motorbike' ? '#f5f5f5' : 'transparent'
                                   }}
                                 />
                               ))}
@@ -923,7 +937,11 @@ const ProductManagement: React.FC = () => {
                         borderRadius: 12
                       }}>
                         <div style={{ textAlign: 'center' }}>
-                          <Avatar size={80} icon={<CarOutlined />} style={{ backgroundColor: '#e6e6e6' }} />
+                          <Avatar 
+                            size={80} 
+                            icon={selectedProduct.category === 'motorbike' ? <ThunderboltOutlined /> : <CarOutlined />} 
+                            style={{ backgroundColor: '#e6e6e6' }} 
+                          />
                           <div style={{ marginTop: 16, color: '#bfbfbf' }}>Chưa có hình ảnh</div>
                         </div>
                       </div>

@@ -504,7 +504,7 @@ export const AddDealer: React.FC = () => {
 
   return (
     <AdminLayout activeSection="dealer-management">
-      <div className="p-6">
+      <div>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Thêm đại lý mới</h1>
           <button

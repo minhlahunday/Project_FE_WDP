@@ -167,7 +167,7 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         images: editProduct.images || [],
         description: editProduct.description || '',
         promotions: Array.isArray(editProduct.promotions) 
-          ? editProduct.promotions 
+          ? editProduct.promotions.map((p: any) => typeof p === 'object' && p._id ? p._id : p)
           : []
       });
     } else {
@@ -303,10 +303,15 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setImageFiles(files);
-      // Reset primary image index to 0 when new images are selected
-      setPrimaryImageIndex(0);
+      // Only reset primary image index if current index is out of bounds for new images
+      // This preserves user's choice when adding new images
+      if (primaryImageIndex >= files.length) {
+        setPrimaryImageIndex(0);
+        console.log('Primary image index reset to 0 due to out of bounds');
+      } else {
+        console.log('Primary image index preserved:', primaryImageIndex);
+      }
       console.log('Selected files:', files.map(f => f.name));
-      console.log('Primary image index reset to 0 for new images');
     }
   };
 
@@ -675,8 +680,10 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
             console.log(`Appending image ${index}:`, file.name, file.type, file.size);
             formData.append('images', file);
           });
-          // Reset primary image index for new images (first image will be primary)
-          formData.append('primaryImageIndex', '0');
+          // Use the user-selected primary image index, ensure it's within bounds
+          const validPrimaryIndex = Math.min(primaryImageIndex, imageFiles.length - 1);
+          formData.append('primaryImageIndex', validPrimaryIndex.toString());
+          console.log('Setting primary image index for new images:', validPrimaryIndex);
         } else if (isEditMode && editProduct && form.images && form.images.length > 0) {
           // If editing and no new images, send the selected primary image index
           formData.append('primaryImageIndex', primaryImageIndex.toString());
@@ -1019,6 +1026,9 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
             <div className="text-sm text-green-600 mb-2">
               Đã chọn {imageFiles.length} ảnh: {imageFiles.map(f => f.name).join(', ')}
             </div>
+            <div className="text-sm text-blue-600 mb-2 bg-blue-50 p-2 rounded border">
+              <strong>🌟 Ảnh chính:</strong> Ảnh số #{primaryImageIndex + 1} được chọn làm ảnh đại diện chính
+            </div>
             {/* Preview ảnh mới đã chọn */}
             <div className="mb-4">
               <div className="text-sm text-gray-600 mb-2">Preview ảnh mới:</div>
@@ -1028,15 +1038,28 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
                     <img
                       src={URL.createObjectURL(file)}
                       alt={`Preview ${index + 1}`}
-                      className="w-20 h-20 object-cover rounded border-2 border-green-400"
+                      className={`w-20 h-20 object-cover rounded border-2 cursor-pointer transition-all ${
+                        primaryImageIndex === index 
+                          ? 'border-blue-500 ring-2 ring-blue-300' 
+                          : 'border-green-400 hover:border-blue-300'
+                      }`}
+                      onClick={() => {
+                        setPrimaryImageIndex(index);
+                        console.log('Selected primary image index:', index);
+                      }}
                     />
-                    <div className="text-xs text-center mt-1 text-green-600">
-                      Mới #{index + 1}
+                    <div className={`text-xs text-center mt-1 ${
+                      primaryImageIndex === index ? 'text-blue-600 font-semibold' : 'text-green-600'
+                    }`}>
+                      {primaryImageIndex === index ? '🌟 Chính' : `Mới #${index + 1}`}
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="text-xs text-green-600 mt-2">
+              <div className="text-xs text-blue-600 mt-2">
+                💡 Click vào ảnh để chọn làm ảnh chính. Ảnh hiện tại được chọn: <strong>#{primaryImageIndex + 1}</strong>
+              </div>
+              <div className="text-xs text-green-600 mt-1">
                 Những ảnh này sẽ thay thế toàn bộ ảnh hiện tại khi lưu.
               </div>
             </div>
