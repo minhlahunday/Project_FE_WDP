@@ -272,7 +272,6 @@ const PromotionManagement: React.FC = () => {
         }));
         
         setDealers(mappedDealers);
-        toast.success(`Đã tải ${mappedDealers.length} đại lý từ hệ thống!`);
       } else {
         // If API returns no data, show message but don't use fallback
         console.log('API returned no dealers');

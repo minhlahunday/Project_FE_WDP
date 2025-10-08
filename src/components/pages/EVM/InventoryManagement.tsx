@@ -753,28 +753,27 @@ const InventoryManagement: React.FC = () => {
   // Component để render filters
   const renderFilters = () => (
     <Card style={{ marginBottom: 16 }}>
-      <Row gutter={[16, 16]} align="middle">
-        <Col xs={24} sm={8} md={6}>
+      <div className="flex flex-wrap gap-4 items-center">
+        <div className="w-full sm:w-1/2 md:w-1/3">
           <Search
             placeholder="Tìm kiếm sản phẩm..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             allowClear
           />
-        </Col>
-        <Col xs={24} sm={8} md={6}>
-          <Select
-            placeholder="Trạng thái"
+        </div>
+        <div className="w-full sm:w-1/2 md:w-1/3">
+          <select
+            className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-700"
             value={statusFilter}
-            onChange={setStatusFilter}
-            allowClear
-            style={{ width: '100%' }}
+            onChange={e => setStatusFilter(e.target.value)}
           >
-            <Option value="active">Hoạt động</Option>
-            <Option value="inactive">Không hoạt động</Option>
-          </Select>
-        </Col>
-      </Row>
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Không hoạt động</option>
+          </select>
+        </div>
+      </div>
     </Card>
   );
 
