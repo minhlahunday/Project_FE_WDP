@@ -34,7 +34,7 @@ export const AdminStaffManagement: React.FC = () => {
 
   return (
     <AdminLayout activeSection="admin-staff-management">
-      <div className="p-6">
+      <div>
         {/* Header */}
         <PageHeader />
 

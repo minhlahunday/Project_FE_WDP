@@ -272,7 +272,6 @@ const PromotionManagement: React.FC = () => {
         }));
         
         setDealers(mappedDealers);
-        toast.success(`Đã tải ${mappedDealers.length} đại lý từ hệ thống!`);
       } else {
         // If API returns no data, show message but don't use fallback
         console.log('API returned no dealers');
@@ -784,7 +783,7 @@ const PromotionManagement: React.FC = () => {
 
   return (
     <AdminLayout activeSection="promotion-management">
-      <div style={{ padding: '24px', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      <div style={{ backgroundColor: '#f5f5f5' }}>
         {/* Header */}
         <div style={{ marginBottom: '24px' }}>
           <Title level={2}>

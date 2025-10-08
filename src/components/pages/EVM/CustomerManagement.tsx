@@ -15,7 +15,7 @@ const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
 	return (
 		<AdminLayout activeSection="customer-management">
-			<div className="p-6">
+			<div>
 				<h1 className="text-3xl font-bold mb-6 text-gray-900">Danh sách khách hàng toàn hệ thống</h1>
 				<div className="mb-6 max-w-md">
 					<input
