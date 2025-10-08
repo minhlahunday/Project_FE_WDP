@@ -5,7 +5,7 @@ import { Customer } from '../../../types';
 
 export const CustomerManagement: React.FC = () => {
 	const [searchTerm, setSearchTerm] = useState('');
-const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+	const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 	// Lọc khách hàng theo tên, email, số điện thoại
 	const filteredCustomers = mockCustomers.filter(customer =>
 		customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,41 +57,41 @@ const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 								>✕</button>
 							</div>
 							{/* Hiển thị lịch sử đơn hàng và lái thử */}
-											<div className="mb-4">
-												<h3 className="font-semibold mb-2">Đơn hàng</h3>
-												{selectedCustomer.orders && selectedCustomer.orders.length > 0 ? (
-													<ul className="list-disc pl-5">
-														{selectedCustomer.orders.map((order, idx) => {
-															const dealer = mockDealers.find(d => d.id === order.dealerId);
-															const vehicle = mockVehicles.find(v => v.id === order.vehicleId);
-															return (
-																<li key={idx} className="mb-1 text-gray-700">
-																	Đại lý: {dealer?.name || 'N/A'} | Xe: {vehicle?.model || 'N/A'} | Ngày: {order.createdAt || 'N/A'}
-																</li>
-															);
-														})}
-													</ul>
-												) : (
-													<div className="text-gray-500">Chưa có đơn hàng nào</div>
-												)}
-											</div>
-											<div>
-												<h3 className="font-semibold mb-2">Lịch sử lái thử</h3>
-												{selectedCustomer.testDrives && selectedCustomer.testDrives.length > 0 ? (
-													<ul className="list-disc pl-5">
-														{selectedCustomer.testDrives.map((drive, idx) => {
-															const vehicle = mockVehicles.find(v => v.id === drive.vehicleId);
-															return (
-																<li key={idx} className="mb-1 text-gray-700">
-																	Xe: {vehicle?.model || 'N/A'} | Ngày: {drive.date || 'N/A'}
-																</li>
-															);
-														})}
-													</ul>
-												) : (
-													<div className="text-gray-500">Chưa có lịch lái thử nào</div>
-												)}
-											</div>
+							<div className="mb-4">
+								<h3 className="font-semibold mb-2">Đơn hàng</h3>
+								{selectedCustomer.orders && selectedCustomer.orders.length > 0 ? (
+									<ul className="list-disc pl-5">
+										{selectedCustomer.orders.map((order, idx) => {
+											const dealer = mockDealers.find(d => d.id === order.dealerId);
+											const vehicle = mockVehicles.find(v => v.id === order.vehicleId);
+											return (
+												<li key={idx} className="mb-1 text-gray-700">
+													Đại lý: {dealer?.name || 'N/A'} | Xe: {vehicle?.model || 'N/A'} | Ngày: {order.createdAt || 'N/A'}
+												</li>
+											);
+										})}
+									</ul>
+								) : (
+									<div className="text-gray-500">Chưa có đơn hàng nào</div>
+								)}
+							</div>
+							<div>
+								<h3 className="font-semibold mb-2">Lịch sử lái thử</h3>
+								{selectedCustomer.testDrives && selectedCustomer.testDrives.length > 0 ? (
+									<ul className="list-disc pl-5">
+										{selectedCustomer.testDrives.map((drive, idx) => {
+											const vehicle = mockVehicles.find(v => v.id === drive.vehicleId);
+											return (
+												<li key={idx} className="mb-1 text-gray-700">
+													Xe: {vehicle?.model || 'N/A'} | Ngày: {drive.date || 'N/A'}
+												</li>
+											);
+										})}
+									</ul>
+								) : (
+									<div className="text-gray-500">Chưa có lịch lái thử nào</div>
+								)}
+							</div>
 						</div>
 					</div>
 				)}
