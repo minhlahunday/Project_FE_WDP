@@ -98,7 +98,7 @@ export const CustomerManagement: React.FC = () => {
   const loadCustomerPayments = async (customerId: string) => {
     try {
       const payments = await customerService.getCustomerPayments(customerId);
-      setSelectedCustomerPayments(payments || []);
+      setSelectedCustomerPayments(payments?.data || []);
     } catch (err) {
       console.error("Error loading customer payments:", err);
       setSelectedCustomerPayments([]);
