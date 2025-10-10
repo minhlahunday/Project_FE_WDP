@@ -26,7 +26,7 @@ import { AddDealer } from "./components/pages/EVM/AddDealer";
 import InventoryManagement from "./components/pages/EVM/InventoryManagement";
 import PromotionManagement from "./components/pages/EVM/PromotionManagement";
 import { DealerInfo } from "./components/pages/DealerManager/DealerInfo";
-import { PromotionManagementDealer } from "./components/pages/Dealerstaff";
+import { PromotionsDashboard } from "./components/PromotionsDashboard";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -70,10 +70,7 @@ function AppContent() {
       />
       <Route path="/portal/deposit" element={<CarDeposit />} />
       <Route path="/portal/staff-management" element={<StaffManagement />} />
-      <Route
-        path="/portal/promotions"
-        element={<PromotionManagementDealer />}
-      />
+      <Route path="/portal/promotions" element={<PromotionsDashboard />} />
       <Route path="/portal/dealer-info" element={<DealerInfo />} />
 
       {/* Admin routes */}
