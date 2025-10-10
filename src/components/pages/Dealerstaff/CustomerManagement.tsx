@@ -38,6 +38,8 @@ export const CustomerManagement: React.FC = () => {
     any[]
   >([]);
   const [showPaymentsModal, setShowPaymentsModal] = useState(false);
+  const [selectedCustomerForPayments, setSelectedCustomerForPayments] =
+    useState<Customer | null>(null);
   const [scheduleForm, setScheduleForm] = useState({
     vehicleId: "",
     vehicleType: "car",
@@ -378,7 +380,7 @@ export const CustomerManagement: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
-                        setSelectedCustomer(customer);
+                        setSelectedCustomerForPayments(customer);
                         loadCustomerPayments(customer.id);
                         setShowPaymentsModal(true);
                       }}
@@ -700,7 +702,7 @@ export const CustomerManagement: React.FC = () => {
       )}
 
       {/* Customer Detail Modal */}
-      {selectedCustomer && !showEditModal && (
+      {selectedCustomer && !showEditModal && !showPaymentsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -919,18 +921,19 @@ export const CustomerManagement: React.FC = () => {
       )}
 
       {/* Customer Payments Modal */}
-      {showPaymentsModal && selectedCustomer && (
+      {showPaymentsModal && selectedCustomerForPayments && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                  Lịch sử thanh toán - {selectedCustomer.name}
+                  Lịch sử thanh toán - {selectedCustomerForPayments.name}
                 </h2>
                 <button
                   onClick={() => {
                     setShowPaymentsModal(false);
                     setSelectedCustomerPayments([]);
+                    setSelectedCustomerForPayments(null);
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
