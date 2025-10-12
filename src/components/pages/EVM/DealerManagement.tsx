@@ -5,6 +5,7 @@ import { AdminLayout } from '../admin/AdminLayout';
 import { get, patch } from '../../../services/httpClient';
 import ReactModal from 'react-modal';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 interface AddressObject {
   street: string;
@@ -72,8 +73,6 @@ export const AdminDealerManagement: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dealers, setDealers] = useState<Dealer[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // New UI states
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -110,12 +109,20 @@ export const AdminDealerManagement: React.FC = () => {
       const res = await get<{ success: boolean; data: { data: Dealer[] } }>(`/api/dealerships${queryParams}`);
       if (res.success && Array.isArray(res.data.data)) {
         setDealers(res.data.data);
-        setError(null);
       } else {
         throw new Error('Invalid data format from API');
       }
     } catch (err) {
-      setError('Không thể tải danh sách đại lý. Vui lòng thử lại sau.');
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Không thể tải danh sách đại lý. Vui lòng thử lại sau.',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
     } finally {
       setIsLoading(false);
     }
@@ -139,15 +146,31 @@ export const AdminDealerManagement: React.FC = () => {
         reason: reason || 'Ngừng hợp tác theo yêu cầu'
       });
       if (res.success) {
-        setSuccess('Đại lý đã được đánh dấu ngừng hợp tác thành công!');
-        setError(null);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Đại lý đã được đánh dấu ngừng hợp tác thành công!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
         fetchDealers();
       } else {
         throw new Error(res.message);
       }
     } catch (err) {
-      setError('Không thể đánh dấu ngừng hợp tác đại lý. Vui lòng thử lại sau.');
-      setSuccess(null);
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Không thể đánh dấu ngừng hợp tác đại lý. Vui lòng thử lại sau.',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
     }
   };
 
@@ -157,15 +180,31 @@ export const AdminDealerManagement: React.FC = () => {
         reason: reason || 'Kích hoạt lại theo yêu cầu'
       });
       if (res.success) {
-        setSuccess('Đại lý đã được kích hoạt lại thành công!');
-        setError(null);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Đại lý đã được kích hoạt lại thành công!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
         fetchDealers();
       } else {
         throw new Error(res.message);
       }
     } catch (err) {
-      setError('Không thể kích hoạt lại đại lý. Vui lòng thử lại sau.');
-      setSuccess(null);
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Không thể kích hoạt lại đại lý. Vui lòng thử lại sau.',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
     }
   };
 
@@ -324,22 +363,6 @@ export const AdminDealerManagement: React.FC = () => {
         </div>
 
         <div className="p-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-4 flex items-start">
-              <svg className="h-5 w-5 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg mb-4 flex items-start">
-              <svg className="h-5 w-5 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>{success}</span>
-            </div>
-          )}
 
           {/* Toolbar */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
