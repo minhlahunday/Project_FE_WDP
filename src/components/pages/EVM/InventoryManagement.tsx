@@ -18,8 +18,6 @@ import {
   InputNumber,
   message,
   Statistic,
-  Select,
-  Tooltip,
   Tabs,
   Radio,
   Transfer
@@ -38,7 +36,6 @@ import {
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-const { Option } = Select;
 
 interface Product {
   _id: string;
@@ -53,6 +50,7 @@ interface Product {
     owner_type: string;
     owner_id: string;
     quantity: number;
+    color?: string;
     _id: string;
   }>;
   images: string[];
@@ -81,6 +79,7 @@ const InventoryManagement: React.FC = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showDistributeModal, setShowDistributeModal] = useState(false);
+  const [showDistributionHistoryModal, setShowDistributionHistoryModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [targetKeys, setTargetKeys] = useState<string[]>([]);
@@ -90,16 +89,66 @@ const InventoryManagement: React.FC = () => {
   const [statusForm] = Form.useForm();
   const [distributeForm] = Form.useForm();
 
+  // Helper function để tạo color dot
+  const getColorDot = (color: string) => {
+    const colorMap: { [key: string]: string } = {
+      'đỏ': '#ff4d4f',
+      'xanh': '#1890ff',
+      'vàng': '#faad14',
+      'trắng': '#ffffff',
+      'đen': '#000000',
+      'xanh lá': '#52c41a',
+      'tím': '#722ed1',
+      'cam': '#fa8c16',
+      'hồng': '#eb2f96',
+      'xám': '#8c8c8c'
+    };
+    
+    const normalizedColor = color?.toLowerCase()?.trim();
+    return colorMap[normalizedColor] || '#d9d9d9';
+  };
+
   // Helper function để lấy manufacturer stock
   const getManufacturerStock = (product: Product) => {
-    const manufacturerStock = product.stocks?.find(stock => stock.owner_type === 'manufacturer');
-    return manufacturerStock?.quantity || 0;
+    if (!product.stocks || !Array.isArray(product.stocks)) {
+      console.log('🔍 Product has no stocks array:', product.name, product.stocks);
+      return 0;
+    }
+    
+    const manufacturerStocks = product.stocks.filter(stock => stock.owner_type === 'manufacturer');
+    const totalManufacturerStock = manufacturerStocks.reduce((sum, stock) => sum + (stock.quantity || 0), 0);
+    
+    console.log('🔍 Manufacturer stocks for', product.name, ':', manufacturerStocks, 'Total:', totalManufacturerStock);
+    return totalManufacturerStock;
   };
 
   // Helper function để lấy dealer stock total
   const getDealerStock = (product: Product) => {
-    return product.stocks?.filter(stock => stock.owner_type === 'dealer')
-      .reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+    if (!product.stocks || !Array.isArray(product.stocks)) {
+      return 0;
+    }
+    
+    const dealerStocks = product.stocks.filter(stock => stock.owner_type === 'dealer');
+    const totalDealerStock = dealerStocks.reduce((sum, stock) => sum + (stock.quantity || 0), 0);
+    
+    console.log('🔍 Dealer stocks for', product.name, ':', dealerStocks, 'Total:', totalDealerStock);
+    return totalDealerStock;
+  };
+
+  // Helper function để lấy stock của dealership cụ thể
+  const getStockByDealershipId = (product: Product, dealershipId: string) => {
+    if (!product.stocks || !Array.isArray(product.stocks)) {
+      return 0;
+    }
+    
+    const dealershipStocks = product.stocks.filter(
+      stock => stock.owner_type === 'dealer' && stock.owner_id === dealershipId
+    );
+    
+    const totalStock = dealershipStocks.reduce((sum, stock) => sum + (stock.quantity || 0), 0);
+    
+    console.log(`🔍 Stock for dealership ${dealershipId} in ${product.name}:`, dealershipStocks, 'Total:', totalStock);
+    return totalStock;
   };
 
   const getStockStatus = (product: Product) => {
@@ -180,6 +229,30 @@ const InventoryManagement: React.FC = () => {
         console.log('VF9 Dealer Stock:', dealerStock);
         console.log('VF9 Total Stock:', manufacturerStock + dealerStock);
       }
+
+      // Tìm stock của dealership ID cụ thể
+      const targetDealershipId = '68e0f49d303c18f5d438aee9';
+      console.log('=== SEARCHING FOR DEALERSHIP STOCK ===');
+      console.log('Target Dealership ID:', targetDealershipId);
+      
+      let totalStockForDealership = 0;
+      productsData.forEach((product: any) => {
+        if (product.stocks && Array.isArray(product.stocks)) {
+          const dealershipStocks = product.stocks.filter(
+            (stock: any) => stock.owner_type === 'dealer' && stock.owner_id === targetDealershipId
+          );
+          
+          if (dealershipStocks.length > 0) {
+            const productStock = dealershipStocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0);
+            totalStockForDealership += productStock;
+            
+            console.log(`✅ Found stock in ${product.name} (${product.sku}):`, dealershipStocks);
+            console.log(`   Total for this product: ${productStock} xe`);
+          }
+        }
+      });
+      
+      console.log(`🎯 TOTAL STOCK FOR DEALERSHIP ${targetDealershipId}: ${totalStockForDealership} xe`);
       
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -288,10 +361,22 @@ const InventoryManagement: React.FC = () => {
     return sum + getManufacturerStock(product);
   }, 0);
   
+  // Tổng stock dealer của tất cả sản phẩm (không filter)
+  const totalDealerStock = (products || []).reduce((sum, product) => {
+    if (!product) return sum;
+    return sum + getDealerStock(product);
+  }, 0);
+  
   // Tổng stock manufacturer của sản phẩm sau filter
   const filteredTotalStock = (filteredProducts || []).reduce((sum, product) => {
     if (!product) return sum;
     return sum + getManufacturerStock(product);
+  }, 0);
+  
+  // Tổng stock dealer của sản phẩm sau filter
+  const filteredTotalDealerStock = (filteredProducts || []).reduce((sum, product) => {
+    if (!product) return sum;
+    return sum + getDealerStock(product);
   }, 0);
   
   // Sản phẩm sắp hết hàng (manufacturer stock < 10)
@@ -309,9 +394,17 @@ const InventoryManagement: React.FC = () => {
       if (!product) return sum;
       return sum + getManufacturerStock(product);
     }, 0),
+    totalDealerStock: (carProducts || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getDealerStock(product);
+    }, 0),
     filteredStock: (filteredCars || []).reduce((sum, product) => {
       if (!product) return sum;
       return sum + getManufacturerStock(product);
+    }, 0),
+    filteredDealerStock: (filteredCars || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getDealerStock(product);
     }, 0),
     lowStock: (carProducts || []).filter(product => {
       if (!product) return false;
@@ -328,9 +421,17 @@ const InventoryManagement: React.FC = () => {
       if (!product) return sum;
       return sum + getManufacturerStock(product);
     }, 0),
+    totalDealerStock: (motorbikeProducts || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getDealerStock(product);
+    }, 0),
     filteredStock: (filteredMotorbikes || []).reduce((sum, product) => {
       if (!product) return sum;
       return sum + getManufacturerStock(product);
+    }, 0),
+    filteredDealerStock: (filteredMotorbikes || []).reduce((sum, product) => {
+      if (!product) return sum;
+      return sum + getDealerStock(product);
     }, 0),
     lowStock: (motorbikeProducts || []).filter(product => {
       if (!product) return false;
@@ -341,10 +442,20 @@ const InventoryManagement: React.FC = () => {
 
   const handleUpdateInventory = (product: Product) => {
     setSelectedProduct(product);
-    const currentStock = getManufacturerStock(product);
-    updateForm.setFieldsValue({
-      quantity: currentStock
+    
+    // Tạo form values từ stocks hiện tại
+    const manufacturerStocks = product.stocks?.filter(stock => 
+      stock.owner_type === 'manufacturer' && stock.color && stock.color.trim() !== ''
+    ) || [];
+    const formValues: { [key: string]: number } = {};
+    
+    manufacturerStocks.forEach(stock => {
+      if (stock.color && stock.color.trim() !== '') {
+        formValues[`quantity_${stock.color}`] = stock.quantity || 0;
+      }
     });
+    
+    updateForm.setFieldsValue(formValues);
     setShowUpdateModal(true);
   };
 
@@ -353,22 +464,40 @@ const InventoryManagement: React.FC = () => {
       const values = await updateForm.validateFields();
       if (!selectedProduct) return;
 
-      const stockData = {
-        stocks: [{
-          owner_type: "manufacturer",
-          owner_id: typeof selectedProduct.manufacturer_id === 'string' 
-            ? selectedProduct.manufacturer_id 
-            : selectedProduct.manufacturer_id?._id || '',
-          quantity: values.quantity
-        }]
-      };
+      // Tạo stocks_by_color từ form values
+      const stocksByColor: Array<{color: string, quantity: number}> = [];
+      
+      Object.keys(values).forEach(key => {
+        if (key.startsWith('quantity_')) {
+          const color = key.replace('quantity_', '');
+          const quantity = values[key];
+          if (quantity !== undefined && quantity !== null) {
+            stocksByColor.push({
+              color: color,
+              quantity: Number(quantity)
+            });
+          }
+        }
+      });
 
-      await put(`/api/vehicles/${selectedProduct._id}`, stockData);
-      message.success('Cập nhật tồn kho thành công');
+      if (stocksByColor.length === 0) {
+        message.error('Vui lòng nhập ít nhất một màu sắc.');
+        return;
+      }
+
+      // Tạo FormData để gửi stocks_by_color
+      const formData = new FormData();
+      formData.append('stocks_by_color', JSON.stringify(stocksByColor));
+
+      console.log('🔍 Updating stocks_by_color:', stocksByColor);
+
+      await put(`/api/vehicles/${selectedProduct._id}`, formData);
+      message.success('Cập nhật tồn kho theo màu sắc thành công');
       setShowUpdateModal(false);
       fetchProducts();
-    } catch (err) {
-      message.error('Không thể cập nhật tồn kho');
+    } catch (err: any) {
+      console.error('Error updating inventory:', err);
+      message.error(`Không thể cập nhật tồn kho: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -443,6 +572,12 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
+  const handleViewDistributionHistory = (product: Product) => {
+    console.log('Opening distribution history modal for product:', product);
+    setSelectedProduct(product);
+    setShowDistributionHistoryModal(true);
+  };
+
   const handleSubmitDistribute = async () => {
     try {
       if (!selectedProduct || targetKeys.length === 0) {
@@ -450,89 +585,124 @@ const InventoryManagement: React.FC = () => {
         return;
       }
 
-      const values = await distributeForm.validateFields();
+      let values;
+      try {
+        values = await distributeForm.validateFields();
       console.log('Distribute form values:', values);
-
-      const currentStock = getManufacturerStock(selectedProduct);
-      const distributeQuantity = values.quantity || 1;
-
-      // Kiểm tra tồn kho manufacturer
-      if (distributeQuantity > currentStock) {
-        message.error(`Số lượng phân phối (${distributeQuantity}) không được vượt quá tồn kho của nhà sản xuất (${currentStock})`);
+      } catch (errorInfo) {
+        console.error('Form validation failed:', errorInfo);
+        message.error('Vui lòng kiểm tra lại thông tin đã nhập');
         return;
       }
 
-      // Extract dealerId from targetKey (format: "dealer-{dealerId}-{index}")
-      const selectedKey = targetKeys[0];
-      const dealerId = selectedKey ? selectedKey.split('-')[1] : null;
+      // Extract dealerIds from targetKeys (format: "dealer-{dealerId}-{index}")
+      const dealerIds = targetKeys.map(key => {
+        const match = key.match(/^dealer-(.+)-(\d+)$/);
+        return match ? match[1] : null;
+      }).filter(id => id !== null);
       
-      if (!dealerId) {
+      if (dealerIds.length === 0) {
         message.error('Không thể xác định đại lý được chọn');
         return;
       }
 
-      const distributionData = {
-        vehicle_id: selectedProduct._id,
-        dealership_id: dealerId, // Sử dụng dealerId đã extract
-        quantity: distributeQuantity,
-        notes: values.notes || "Initial stock allocation for new dealership"
-      };
+      const distributeQuantity = parseInt(values.quantity) || 1;
+      const selectedColor = values.color;
 
-      console.log('Distributing vehicle:', distributionData);
-      
-      // Gọi API phân phối
-      const response = await post('/api/vehicles/distribute', distributionData);
-      console.log('Distribution response:', response);
-      
-      if (response.success) {
-        // Cập nhật tồn kho sau khi phân phối thành công
-        const newStockQuantity = currentStock - distributeQuantity;
-        
-        const stockUpdateData = {
-          stocks: [{
-            owner_type: "manufacturer",
-            owner_id: typeof selectedProduct.manufacturer_id === 'string' 
-              ? selectedProduct.manufacturer_id 
-              : selectedProduct.manufacturer_id?._id || '',
-            quantity: newStockQuantity
-          }]
-        };
+      // Kiểm tra tồn kho manufacturer theo màu cụ thể
+      const manufacturerStocks = selectedProduct.stocks?.filter(stock => 
+        stock.owner_type === 'manufacturer' && 
+        stock.color && 
+        stock.color.trim() !== ''
+      ) || [];
 
-        console.log('Updating stock after distribution:', stockUpdateData);
-        
-        try {
-          const stockResponse = await put(`/api/vehicles/${selectedProduct._id}`, stockUpdateData);
-          console.log('Stock update response:', stockResponse);
-          console.log('Stock updated successfully - New quantity:', newStockQuantity);
-          message.success(`Đã phân phối ${distributeQuantity} xe "${selectedProduct.name}" cho đại lý! Tồn kho còn lại: ${newStockQuantity}`);
-        } catch (stockError: any) {
-          console.error('Error updating stock:', stockError);
-          console.error('Stock error details:', stockError.response?.data);
-          message.warning('Phân phối thành công nhưng có lỗi khi cập nhật tồn kho. Vui lòng kiểm tra lại.');
-          
-          // Log chi tiết lỗi để debug
-          message.error(`Chi tiết lỗi: ${stockError.response?.data?.message || stockError.message}`);
+      if (manufacturerStocks.length === 0) {
+        message.error('Không có tồn kho theo màu sắc cho xe này');
+        return;
+      }
+
+      // Tính tổng số lượng cần phân phối cho tất cả đại lý
+      const totalQuantityNeeded = distributeQuantity * dealerIds.length;
+      
+      // Nếu có chọn màu cụ thể, kiểm tra tồn kho màu đó
+      if (selectedColor) {
+        const colorStock = manufacturerStocks.find(stock => stock.color === selectedColor);
+        if (!colorStock) {
+          message.error(`Không có tồn kho cho màu "${selectedColor}"`);
+          return;
         }
+        if (colorStock.quantity < totalQuantityNeeded) {
+          message.error(`Không đủ tồn kho cho màu "${selectedColor}". Có sẵn: ${colorStock.quantity}, Yêu cầu: ${totalQuantityNeeded} (${dealerIds.length} đại lý × ${distributeQuantity} xe)`);
+          return;
+        }
+      } else {
+        // Nếu không chọn màu, kiểm tra tổng tồn kho
+        const totalStock = manufacturerStocks.reduce((sum, stock) => sum + stock.quantity, 0);
+        if (totalStock < totalQuantityNeeded) {
+          message.error(`Không đủ tổng tồn kho. Có sẵn: ${totalStock}, Yêu cầu: ${totalQuantityNeeded} (${dealerIds.length} đại lý × ${distributeQuantity} xe)`);
+          return;
+        }
+      }
 
+      // Phân phối cho từng đại lý
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+
+      for (const dealerId of dealerIds) {
+        try {
+          const distributionData = {
+            vehicle_id: selectedProduct._id,
+            dealership_id: dealerId,
+            quantity: distributeQuantity,
+            color: selectedColor || null,
+            notes: values.notes || `Phân phối cho ${dealerIds.length} đại lý`
+          };
+
+          console.log('Distributing vehicle to dealer:', dealerId, distributionData);
+          
+          const response = await post('/api/vehicles/distribute', distributionData);
+          console.log('Distribution response for dealer', dealerId, ':', response);
+          
+          if (response.success) {
+            successCount++;
+          } else {
+            errorCount++;
+            errors.push(`Đại lý ${dealerId}: ${response.message || 'Lỗi không xác định'}`);
+          }
+        } catch (error: any) {
+          errorCount++;
+          errors.push(`Đại lý ${dealerId}: ${error?.response?.data?.message || error?.message || 'Lỗi không xác định'}`);
+        }
+      }
+
+      // Hiển thị kết quả
+      if (successCount > 0) {
+        const colorText = selectedColor ? ` màu "${selectedColor}"` : '';
+        message.success(`Đã phân phối ${distributeQuantity} xe "${selectedProduct.name}"${colorText} cho ${successCount}/${dealerIds.length} đại lý thành công!`);
+      }
+      
+      if (errorCount > 0) {
+        message.error(`Có ${errorCount} đại lý gặp lỗi: ${errors.join(', ')}`);
+      }
+
+      if (successCount > 0) {
         setShowDistributeModal(false);
         setSelectedProduct(null);
         setTargetKeys([]);
         setSelectedKeys([]);
         distributeForm.resetFields();
         
-        // Đợi một chút trước khi refresh để đảm bảo backend đã cập nhật
-        setTimeout(() => {
-          console.log('Refreshing products after distribution...');
-          fetchProducts(); // Refresh danh sách xe
-        }, 500);
-      } else {
-        message.error(response.message || 'Có lỗi xảy ra khi phân phối xe');
+        // Refresh products để lấy data mới từ backend
+        console.log('🔄 Refreshing products after distribution...');
+        await fetchProducts();
       }
     } catch (error: any) {
       console.error('Error distributing vehicle:', error);
       
       if (error.response?.status === 400) {
-        message.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+        const errorMessage = error.response?.data?.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
+        message.error(errorMessage);
       } else if (error.response?.status === 403) {
         message.error('Bạn không có quyền phân phối xe.');
       } else if (error.response?.status === 404) {
@@ -623,24 +793,46 @@ const InventoryManagement: React.FC = () => {
     {
       title: 'Tồn kho',
       key: 'stock',
-      width: 120,
+      width: 200,
       render: (record: Product) => {
         const manufacturerQuantity = getManufacturerStock(record);
         const dealerQuantity = getDealerStock(record);
         const stockStatus = getStockStatus(record);
+        
+        // Get manufacturer stocks by color
+        const manufacturerStocks = record.stocks?.filter(stock => stock.owner_type === 'manufacturer') || [];
+        
         return (
           <div>
-            <div style={{ fontWeight: 'bold', fontSize: 16 }}>
-              {manufacturerQuantity}
+            <div style={{ fontWeight: 'bold', fontSize: 14, color: '#1890ff', marginBottom: 4 }}>
+              {manufacturerQuantity} xe
             </div>
-            <Tag color={stockStatus.color}>
+            <Tag color={stockStatus.color} style={{ marginBottom: 4 }}>
               {stockStatus.text}
             </Tag>
-            {dealerQuantity > 0 && (
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                Đã phân phối: {dealerQuantity}
+            
+            {/* Hiển thị tồn kho theo màu sắc */}
+            {manufacturerStocks.filter(stock => stock.color && stock.color.trim() !== '').length > 0 && (
+              <div style={{ fontSize: 10, color: '#666', marginBottom: 2 }}>
+                {manufacturerStocks
+                  .filter(stock => stock.color && stock.color.trim() !== '')
+                  .map((stock, index) => (
+                    <span key={index} style={{ marginRight: 8, display: 'inline-block' }}>
+                      <span style={{ 
+                        display: 'inline-block', 
+                        width: 6, 
+                        height: 6, 
+                        backgroundColor: getColorDot(stock.color || ''),
+                        borderRadius: '50%',
+                        marginRight: 2,
+                        border: '1px solid #d9d9d9'
+                      }}></span>
+                      {stock.color}: {stock.quantity}
+                    </span>
+                  ))}
               </div>
             )}
+            
           </div>
         );
       }
@@ -662,15 +854,19 @@ const InventoryManagement: React.FC = () => {
       width: 220,
       render: (record: Product) => (
         <Space>
-          <Tooltip title="Cập nhật tồn kho">
+          <div className="relative group">
             <Button
               type="primary"
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleUpdateInventory(record)}
             />
-          </Tooltip>
-          <Tooltip title="Phân phối cho đại lý">
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Cập nhật tồn kho
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
+          <div className="relative group">
             <Button
               type="default"
               size="small"
@@ -682,8 +878,28 @@ const InventoryManagement: React.FC = () => {
                 borderColor: '#1890ff'
               }}
             />
-          </Tooltip>
-          <Tooltip title="Cập nhật trạng thái">
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Phân phối cho đại lý
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
+          <div className="relative group">
+            <Button
+              type="default"
+              size="small"
+              icon={<InboxOutlined />}
+              onClick={() => handleViewDistributionHistory(record)}
+              style={{
+                color: '#722ed1',
+                borderColor: '#722ed1'
+              }}
+            />
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Xem lịch sử phân phối
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
+          <div className="relative group">
             <Button
               type={record.status === 'active' ? 'default' : 'primary'}
               size="small"
@@ -694,7 +910,11 @@ const InventoryManagement: React.FC = () => {
                 borderColor: record.status === 'active' ? '#ff4d4f' : '#52c41a'
               }}
             />
-          </Tooltip>
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              {record.status === 'active' ? 'Ngừng kinh doanh' : 'Kích hoạt lại'}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
         </Space>
       )
     }
@@ -703,7 +923,7 @@ const InventoryManagement: React.FC = () => {
   // Component để render statistics
   const renderStatistics = (stats: any, title: string, icon: React.ReactNode, color: string) => (
     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-      <Col xs={24} sm={6}>
+      <Col xs={24} sm={4}>
         <Card>
           <Statistic
             title={`${title} - Tổng sản phẩm`}
@@ -714,10 +934,10 @@ const InventoryManagement: React.FC = () => {
           />
         </Card>
       </Col>
-      <Col xs={24} sm={6}>
+      <Col xs={24} sm={4}>
         <Card>
           <Statistic
-            title={`${title} - Tổng tồn kho`}
+            title={`${title} - Tồn kho NSX`}
             value={stats.totalStock}
             prefix={<InboxOutlined />}
             valueStyle={{ color: '#52c41a' }}
@@ -725,7 +945,18 @@ const InventoryManagement: React.FC = () => {
           />
         </Card>
       </Col>
-      <Col xs={24} sm={6}>
+      <Col xs={24} sm={4}>
+        <Card>
+          <Statistic
+            title={`${title} - Tồn kho Đại lý`}
+            value={stats.totalDealerStock}
+            prefix={<ShareAltOutlined />}
+            valueStyle={{ color: '#1890ff' }}
+            suffix={stats.filteredDealerStock !== stats.totalDealerStock ? `(${stats.filteredDealerStock} hiển thị)` : ''}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={4}>
         <Card>
           <Statistic
             title={`${title} - Sắp hết hàng`}
@@ -736,7 +967,7 @@ const InventoryManagement: React.FC = () => {
           />
         </Card>
       </Col>
-      <Col xs={24} sm={6}>
+      <Col xs={24} sm={4}>
         <Card>
           <Statistic
             title={`${title} - Trung bình tồn kho`}
@@ -744,6 +975,17 @@ const InventoryManagement: React.FC = () => {
             prefix={<AppstoreOutlined />}
             valueStyle={{ color: '#722ed1' }}
             suffix="sản phẩm/loại"
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={4}>
+        <Card>
+          <Statistic
+            title={`${title} - Tổng tồn kho`}
+            value={stats.totalStock + stats.totalDealerStock}
+            prefix={<CarOutlined />}
+            valueStyle={{ color: '#f5222d' }}
+            suffix="xe"
           />
         </Card>
       </Col>
@@ -764,7 +1006,7 @@ const InventoryManagement: React.FC = () => {
         </div>
         <div className="w-full sm:w-1/2 md:w-1/3">
           <select
-            className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-700"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 transition-colors duration-200"
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
           >
@@ -852,7 +1094,7 @@ const InventoryManagement: React.FC = () => {
                 <div>
                   {/* Statistics cho tất cả */}
                   <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                    <Col xs={24} sm={6}>
+                    <Col xs={24} sm={4}>
                       <Card>
                         <Statistic
                           title="Tổng sản phẩm"
@@ -863,10 +1105,10 @@ const InventoryManagement: React.FC = () => {
                         />
                       </Card>
                     </Col>
-                    <Col xs={24} sm={6}>
+                    <Col xs={24} sm={4}>
                       <Card>
                         <Statistic
-                          title="Tổng tồn kho"
+                          title="Tồn kho NSX"
                           value={totalStock}
                           prefix={<InboxOutlined />}
                           valueStyle={{ color: '#52c41a' }}
@@ -874,7 +1116,18 @@ const InventoryManagement: React.FC = () => {
                         />
                       </Card>
                     </Col>
-                    <Col xs={24} sm={6}>
+                    <Col xs={24} sm={4}>
+                      <Card>
+                        <Statistic
+                          title="Tồn kho Đại lý"
+                          value={totalDealerStock}
+                          prefix={<ShareAltOutlined />}
+                          valueStyle={{ color: '#1890ff' }}
+                          suffix={filteredTotalDealerStock !== totalDealerStock ? `(${filteredTotalDealerStock} hiển thị)` : ''}
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={4}>
                       <Card>
                         <Statistic
                           title="Sắp hết hàng"
@@ -885,7 +1138,7 @@ const InventoryManagement: React.FC = () => {
                         />
                       </Card>
                     </Col>
-                    <Col xs={24} sm={6}>
+                    <Col xs={24} sm={4}>
                       <Card>
                         <Statistic
                           title="Trung bình tồn kho"
@@ -893,6 +1146,17 @@ const InventoryManagement: React.FC = () => {
                           prefix={<CarOutlined />}
                           valueStyle={{ color: '#722ed1' }}
                           suffix="sản phẩm/loại"
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={4}>
+                      <Card>
+                        <Statistic
+                          title="Tổng tồn kho"
+                          value={totalStock + totalDealerStock}
+                          prefix={<CarOutlined />}
+                          valueStyle={{ color: '#f5222d' }}
+                          suffix="xe"
                         />
                       </Card>
                     </Col>
@@ -956,7 +1220,7 @@ const InventoryManagement: React.FC = () => {
           title={
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <EditOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-              Cập nhật tồn kho
+              Cập nhật tồn kho theo màu sắc
             </div>
           }
           open={showUpdateModal}
@@ -964,6 +1228,7 @@ const InventoryManagement: React.FC = () => {
           onOk={handleSubmitUpdate}
           okText="Cập nhật"
           cancelText="Hủy"
+          width={600}
         >
           {selectedProduct && (
             <div>
@@ -975,10 +1240,122 @@ const InventoryManagement: React.FC = () => {
                 <Text strong>SKU: </Text>
                 <Text>{selectedProduct.sku}</Text>
               </div>
+              
+              {/* Hiển thị tồn kho hiện tại theo màu sắc */}
+              <div style={{ marginBottom: 16, padding: 8, backgroundColor: '#f8f9fa', borderRadius: 4 }}>
+                <Text strong style={{ marginBottom: 6, display: 'block', fontSize: 13 }}>Tồn kho hiện tại:</Text>
+                {(() => {
+                  const manufacturerStocks = selectedProduct.stocks?.filter(stock => 
+                    stock.owner_type === 'manufacturer' && stock.color && stock.color.trim() !== ''
+                  ) || [];
+                  if (manufacturerStocks.length === 0) {
+                    return <Text type="secondary" style={{ fontSize: 12 }}>Chưa có tồn kho theo màu sắc</Text>;
+                  }
+                  return (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {manufacturerStocks.map((stock, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', fontSize: 12 }}>
+                          <span style={{ 
+                            display: 'inline-block', 
+                            width: 8, 
+                            height: 8, 
+                            backgroundColor: getColorDot(stock.color || ''),
+                            borderRadius: '50%',
+                            marginRight: 4,
+                            border: '1px solid #d9d9d9'
+                          }}></span>
+                          <Text style={{ fontSize: 12 }}>{stock.color}: {stock.quantity}</Text>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+              
               <Form form={updateForm} layout="vertical">
+                <div style={{ marginBottom: 16 }}>
+                  {/* <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text strong style={{ fontSize: 14 }}>Cập nhật số lượng:</Text>
+                    <Button 
+                      type="dashed" 
+                      size="small"
+                      onClick={() => {
+                        // Thêm màu sắc mới
+                        const newColor = prompt('Nhập tên màu sắc mới:');
+                        if (newColor && newColor.trim()) {
+                          const currentValues = updateForm.getFieldsValue();
+                          updateForm.setFieldsValue({
+                            ...currentValues,
+                            [`quantity_${newColor.trim()}`]: 0
+                          });
+                        }
+                      }}
+                    >
+                      + Thêm màu
+                    </Button>
+                  </div> */}
+                  
+                  {(() => {
+                    const manufacturerStocks = selectedProduct.stocks?.filter(stock => stock.owner_type === 'manufacturer') || [];
+                    const existingColors = manufacturerStocks
+                      .map(stock => stock.color)
+                      .filter(color => color && color.trim() !== '');
+                    
+                    // Lấy màu sắc từ form values (bao gồm cả màu mới thêm)
+                    const formValues = updateForm.getFieldsValue();
+                    const formColors = Object.keys(formValues)
+                      .filter(key => key.startsWith('quantity_'))
+                      .map(key => key.replace('quantity_', ''));
+                    
+                    const uniqueColors = [...new Set([...existingColors, ...formColors])];
+                    
+                    // if (uniqueColors.length === 0) {
+                    //   return (
+                    //     <div style={{ padding: 16, backgroundColor: '#f8f9fa', borderRadius: 6, textAlign: 'center' }}>
+                    //       <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                    //         Chưa có màu sắc nào. Vui lòng thêm màu sắc trước.
+                    //       </Text>
+                    //       <Button 
+                    //         type="primary" 
+                    //         size="small"
+                    //         onClick={() => {
+                    //           // Thêm màu sắc mặc định
+                    //           const defaultColors = ['Đỏ', 'Xanh', 'Vàng', 'Trắng', 'Đen'];
+                    //           const formValues: { [key: string]: number } = {};
+                    //           defaultColors.forEach(color => {
+                    //             formValues[`quantity_${color}`] = 0;
+                    //           });
+                    //           updateForm.setFieldsValue(formValues);
+                    //         }}
+                    //       >
+                    //         Thêm màu sắc mặc định
+                    //       </Button>
+                    //     </div>
+                    //   );
+                    // }
+                    
+                    return uniqueColors.map((color, index) => (
+                      <div key={index} style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        marginBottom: 8,
+                        padding: 6,
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: 4
+                      }}>
+                        <span style={{ 
+                          display: 'inline-block', 
+                          width: 12, 
+                          height: 12, 
+                          backgroundColor: getColorDot(color || ''),
+                          borderRadius: '50%',
+                          marginRight: 8,
+                          border: '1px solid #d9d9d9'
+                        }}></span>
+                        <Text style={{ minWidth: 60, marginRight: 8, fontSize: 13 }}>{color}:</Text>
                 <Form.Item
-                  label="Số lượng tồn kho"
-                  name="quantity"
+                          name={`quantity_${color}`}
+                          style={{ margin: 0, flex: 1 }}
                   rules={[
                     { required: true, message: 'Vui lòng nhập số lượng' },
                     { type: 'number', min: 0, message: 'Số lượng phải >= 0' }
@@ -988,9 +1365,15 @@ const InventoryManagement: React.FC = () => {
                     min={0}
                     max={10000}
                     style={{ width: '100%' }}
-                    placeholder="Nhập số lượng tồn kho"
+                            placeholder="Số lượng"
+                            addonAfter="xe"
+                            size="small"
                   />
                 </Form.Item>
+                      </div>
+                    ));
+                  })()}
+                </div>
               </Form>
             </div>
           )}
@@ -1131,6 +1514,42 @@ const InventoryManagement: React.FC = () => {
                       <Text type="secondary">
                         Giá: {selectedProduct.price?.toLocaleString()}₫
                       </Text>
+                      
+                      {/* Chi tiết tồn kho theo màu */}
+                      {(() => {
+                        const manufacturerStocks = selectedProduct.stocks?.filter(stock => 
+                          stock.owner_type === 'manufacturer' && 
+                          stock.color && 
+                          stock.color.trim() !== ''
+                        ) || [];
+
+                        if (manufacturerStocks.length > 0) {
+                          return (
+                            <div style={{ marginTop: 8 }}>
+                              <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginBottom: 4 }}>
+                                Chi tiết theo màu:
+                              </Text>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                {manufacturerStocks.map((stock, index) => (
+                                  <div key={index} style={{ display: 'flex', alignItems: 'center', fontSize: 10 }}>
+                                    <span style={{
+                                      display: 'inline-block',
+                                      width: 8,
+                                      height: 8,
+                                      backgroundColor: getColorDot(stock.color || ''),
+                                      borderRadius: '50%',
+                                      marginRight: 4,
+                                      border: '1px solid #d9d9d9'
+                                    }}></span>
+                                    <Text style={{ fontSize: 10 }}>{stock.color}: {stock.quantity}</Text>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </Col>
                 </Row>
@@ -1138,36 +1557,80 @@ const InventoryManagement: React.FC = () => {
 
               {/* Form */}
               <Form form={distributeForm} layout="vertical">
+                {/* Color Selection */}
+                <Form.Item
+                  name="color"
+                  label="Màu sắc (tùy chọn - để trống sẽ phân phối từ tổng tồn kho)"
+                >
+                  <select 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 transition-colors duration-200"
+                  >
+                    <option value="">Chọn màu sắc cụ thể (tùy chọn)</option>
+                    {(() => {
+                      const manufacturerStocks = selectedProduct.stocks?.filter(stock => 
+                        stock.owner_type === 'manufacturer' && 
+                        stock.color && 
+                        stock.color.trim() !== ''
+                      ) || [];
+
+                      if (manufacturerStocks.length > 0) {
+                        return manufacturerStocks.map((stock, index) => (
+                          <option key={index} value={stock.color}>
+                            {stock.color} ({stock.quantity} xe)
+                          </option>
+                        ));
+                      } else {
+                        return (
+                          <option value="" disabled>
+                            Không có tồn kho theo màu sắc
+                          </option>
+                        );
+                      }
+                    })()}
+                  </select>
+                </Form.Item>
+
                 <Form.Item
                   name="quantity"
-                  label={`Số lượng xe phân phối (Tồn kho NSX: ${getManufacturerStock(selectedProduct)} xe)`}
+                  label={`Số lượng xe phân phối`}
                   rules={[
                     { required: true, message: 'Vui lòng nhập số lượng xe' },
-                    { type: 'number', min: 1, message: 'Số lượng phải >= 1' },
                     { 
-                      type: 'number', 
-                      max: getManufacturerStock(selectedProduct), 
-                      message: `Số lượng không được vượt quá tồn kho nhà sản xuất (${getManufacturerStock(selectedProduct)} xe)` 
+                      validator: (_, value) => {
+                        const num = parseInt(value);
+                        if (!value || isNaN(num)) {
+                          return Promise.reject('Vui lòng nhập số hợp lệ');
+                        }
+                        if (num < 1) {
+                          return Promise.reject('Số lượng phải >= 1');
+                        }
+                        return Promise.resolve();
+                      }
                     }
                   ]}
-                  initialValue={1}
+                  initialValue="1"
                 >
-                  <InputNumber
-                    min={1}
-                    max={getManufacturerStock(selectedProduct)}
-                    style={{ width: '100%' }}
-                    placeholder="Nhập số lượng xe muốn phân phối"
-                    addonAfter="xe"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Nhập số lượng xe muốn phân phối"
+                      className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 transition-colors duration-200"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                      xe
+                    </span>
+                  </div>
                 </Form.Item>
 
                 <Form.Item
                   name="notes"
                   label="Ghi chú (tùy chọn)"
                 >
-                  <Input.TextArea
+                  <textarea
                     rows={3}
                     placeholder="Nhập ghi chú về việc phân phối xe này..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 transition-colors duration-200 resize-none"
                   />
                 </Form.Item>
               </Form>
@@ -1209,6 +1672,34 @@ const InventoryManagement: React.FC = () => {
                   <Text strong style={{ fontSize: '16px', marginBottom: '16px', display: 'block' }}>
                     Chọn đại lý nhận xe:
                   </Text>
+                  
+                  {/* Quick selection buttons */}
+                  <div className="mb-4 flex gap-2 justify-center">
+                    <Button 
+                      size="small" 
+                      type="dashed"
+                      onClick={() => {
+                        const allActiveDealerKeys = dealers
+                          .filter(dealer => dealer.isActive)
+                          .map((dealer, index) => `dealer-${dealer._id}-${index}`);
+                        setTargetKeys(allActiveDealerKeys);
+                      }}
+                      disabled={dealers.filter(d => d.isActive).length === 0}
+                      className="text-blue-600 border-blue-300 hover:border-blue-500"
+                    >
+                      Chọn tất cả đại lý hoạt động
+                    </Button>
+                    <Button 
+                      size="small" 
+                      type="dashed"
+                      onClick={() => setTargetKeys([])}
+                      disabled={targetKeys.length === 0}
+                      className="text-gray-600 border-gray-300 hover:border-gray-500"
+                    >
+                      Bỏ chọn tất cả
+                    </Button>
+                  </div>
+                  
                   <Transfer
                     dataSource={dealers.map((dealer, index) => ({
                       key: `dealer-${dealer._id}-${index}`,
@@ -1223,7 +1714,7 @@ const InventoryManagement: React.FC = () => {
                     ]}
                     targetKeys={targetKeys}
                     selectedKeys={selectedKeys}
-                    onChange={(keys) => setTargetKeys(keys.slice(0, 1) as string[])} // Chỉ cho phép chọn 1 đại lý
+                    onChange={(keys) => setTargetKeys(keys as string[])} // Cho phép chọn nhiều đại lý
                     onSelectChange={(sourceSelectedKeys, targetSelectedKeys) => {
                       setSelectedKeys([...sourceSelectedKeys, ...targetSelectedKeys] as string[]);
                     }}
@@ -1252,36 +1743,190 @@ const InventoryManagement: React.FC = () => {
                       itemsUnit: 'đại lý'
                     }}
                     oneWay={false}
-                    showSelectAll={false}
+                    showSelectAll={true}
                   />
                 </div>
               )}
               
               {targetKeys.length > 0 && (
-                <div style={{ 
-                  marginTop: '16px', 
-                  padding: '12px', 
-                  backgroundColor: '#e6f4ff', 
-                  borderRadius: '6px',
-                  border: '1px solid #91caff'
-                }}>
-                  <Text style={{ color: '#0958d9' }}>
-                    ✓ Đã chọn đại lý để phân phối xe
-                  </Text>
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Text className="text-blue-700 font-medium">
+                        ✓ Đã chọn {targetKeys.length} đại lý để phân phối xe
+                      </Text>
+                      <div className="mt-2 text-sm text-blue-600">
+                        {targetKeys.length === dealers.filter(d => d.isActive).length 
+                          ? 'Đã chọn tất cả đại lý hoạt động' 
+                          : `${targetKeys.length}/${dealers.filter(d => d.isActive).length} đại lý hoạt động`
+                        }
+                      </div>
+                    </div>
+                    <Button 
+                      size="small" 
+                      type="text"
+                      onClick={() => setTargetKeys([])}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      Bỏ chọn tất cả
+                    </Button>
+                  </div>
                 </div>
               )}
 
               {/* Warning about stock reduction */}
-              <div style={{ 
-                marginTop: '16px', 
-                padding: '12px', 
-                backgroundColor: '#fff7e6', 
-                borderRadius: '6px',
-                border: '1px solid #ffd591'
-              }}>
-                <Text style={{ color: '#d46b08' }}>
+              <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <Text className="text-yellow-700">
                   ⚠️ <strong>Lưu ý:</strong> Sau khi phân phối, tồn kho của nhà sản xuất sẽ giảm tương ứng với số lượng xe đã phân phối.
                 </Text>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Distribution History Modal */}
+        <Modal
+          title={
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <InboxOutlined style={{ marginRight: 8, color: '#722ed1' }} />
+              Lịch sử phân phối xe
+            </div>
+          }
+          open={showDistributionHistoryModal}
+          onCancel={() => {
+            setShowDistributionHistoryModal(false);
+            setSelectedProduct(null);
+          }}
+          footer={[
+            <Button key="close" onClick={() => setShowDistributionHistoryModal(false)}>
+              Đóng
+            </Button>
+          ]}
+          width={800}
+        >
+          {selectedProduct && (
+            <div>
+              {/* Product Info */}
+              <div style={{ 
+                marginBottom: '24px', 
+                padding: '16px', 
+                backgroundColor: '#f8f9fa', 
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <div>
+                      <Text strong style={{ color: '#495057' }}>Xe:</Text>
+                      <br />
+                      <Text style={{ fontSize: '16px', fontWeight: 500, color: '#1890ff' }}>
+                        {selectedProduct.name}
+                      </Text>
+                      <br />
+                      <Text type="secondary">{selectedProduct.model} - {selectedProduct.sku}</Text>
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div>
+                      <Text strong style={{ color: '#495057' }}>Tổng đã phân phối:</Text>
+                      <br />
+                      <Text style={{ fontSize: '16px', fontWeight: 500, color: '#52c41a' }}>
+                        {getDealerStock(selectedProduct)} xe
+                      </Text>
+                      <br />
+                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                        Còn lại tại NSX: {getManufacturerStock(selectedProduct)} xe
+                      </Text>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* Distribution History */}
+              <div>
+                <Text strong style={{ fontSize: '16px', marginBottom: '16px', display: 'block' }}>
+                  Chi tiết phân phối cho đại lý:
+                </Text>
+                
+                {(() => {
+                  const dealerStocks = selectedProduct.stocks?.filter(stock => stock.owner_type === 'dealer') || [];
+                  
+                  if (dealerStocks.length === 0) {
+                    return (
+                      <div style={{ 
+                        textAlign: 'center', 
+                        padding: '40px',
+                        color: '#999'
+                      }}>
+                        <InboxOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
+                        <div>Chưa có lịch sử phân phối nào</div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      {dealerStocks.map((stock, index) => (
+                        <div 
+                          key={index}
+                          style={{
+                            padding: '12px',
+                            marginBottom: '8px',
+                            border: '1px solid #e8e8e8',
+                            borderRadius: '6px',
+                            backgroundColor: '#fafafa'
+                          }}
+                        >
+                          <Row gutter={16} align="middle">
+                            <Col span={8}>
+                              <div>
+                                <Text strong style={{ color: '#1890ff' }}>
+                                  {(typeof stock.owner_id === 'object' && stock.owner_id && 'name' in stock.owner_id ? (stock.owner_id as any).name : `Đại lý ID: ${stock.owner_id}`)}
+                                </Text>
+                                <br />
+                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                  ID: {stock.owner_id}
+                                </Text>
+                              </div>
+                            </Col>
+                            <Col span={4}>
+                              <div style={{ textAlign: 'center' }}>
+                                <Text strong style={{ fontSize: '18px', color: '#52c41a' }}>
+                                  {stock.quantity}
+                                </Text>
+                                <br />
+                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                  xe
+                                </Text>
+                              </div>
+                            </Col>
+                            <Col span={6}>
+                              {stock.color && (
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    width: 12,
+                                    height: 12,
+                                    backgroundColor: getColorDot(stock.color),
+                                    borderRadius: '50%',
+                                    marginRight: 8,
+                                    border: '1px solid #d9d9d9'
+                                  }}></span>
+                                  <Text style={{ fontSize: '14px' }}>{stock.color}</Text>
+                                </div>
+                              )}
+                            </Col>
+                            <Col span={6}>
+                              <Text type="secondary" style={{ fontSize: '12px' }}>
+                                Phân phối: {new Date(selectedProduct.updatedAt).toLocaleDateString('vi-VN')}
+                              </Text>
+                            </Col>
+                          </Row>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

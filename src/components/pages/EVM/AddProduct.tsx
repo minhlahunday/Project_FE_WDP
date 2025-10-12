@@ -6,7 +6,6 @@ const defaultForm = {
   name: '',
   model: '',
   category: '',
-  manufacturer_id: '',
   sku: '',
   version: '',
   release_status: 'available',
@@ -37,6 +36,7 @@ const defaultForm = {
   software_version: '',
   ota_update: true,
   stock: 0, // FE nhập số lượng, khi gửi sẽ build thành stocks mảng object
+  stocks_by_color: '', // JSON string: '[{"color":"Yellow","quantity":10},{"color":"Red","quantity":5}]'
   warranty_years: 0,
   battery_warranty_years: 0,
   color_options: [],
@@ -49,6 +49,53 @@ const batteryTypes = ["LFP", "NMC", "Li-ion", "other"];
 const chargingPortTypes = ["CCS2", "Type2", "CHAdeMO", "Tesla", "Other"];
 const drivetrains = ["FWD", "RWD", "AWD"];
 const trunkTypes = ["manual", "electric", "auto"]; // khớp enum backend
+
+// Validation rules for different categories
+const getValidationRules = (category: string) => {
+  if (category === 'motorbike') {
+    return {
+      battery_capacity: { min: 0.1, max: 10, step: 0.1 },
+      range_km: { min: 10, max: 200 },
+      wltp_range_km: { min: 10, max: 200 },
+      charging_fast: { min: 0, max: 10 },
+      charging_slow: { min: 0, max: 10 },
+      motor_power: { min: 0.1, max: 10, step: 0.1 },
+      top_speed: { min: 20, max: 120 },
+      acceleration: { min: 1, max: 10 },
+      weight: { min: 50, max: 300 },
+      payload: { min: 50, max: 300 },
+      seating_capacity: { min: 1, max: 3 },
+      dimensions: {
+        length: { min: 1500, max: 2500 },
+        width: { min: 600, max: 1000 },
+        height: { min: 800, max: 1500 },
+        wheelbase: { min: 1000, max: 2000 },
+        ground_clearance: { min: 100, max: 300 }
+      }
+    };
+  } else {
+    return {
+      battery_capacity: { min: 10, max: 200, step: 1 },
+      range_km: { min: 100, max: 1000 },
+      wltp_range_km: { min: 100, max: 1000 },
+      charging_fast: { min: 0, max: 100 },
+      charging_slow: { min: 0, max: 20 },
+      motor_power: { min: 50, max: 1000, step: 1 },
+      top_speed: { min: 100, max: 300 },
+      acceleration: { min: 1, max: 20 },
+      weight: { min: 1000, max: 5000 },
+      payload: { min: 200, max: 1000 },
+      seating_capacity: { min: 2, max: 9 },
+      dimensions: {
+        length: { min: 3000, max: 6000 },
+        width: { min: 1500, max: 2500 },
+        height: { min: 1200, max: 2500 },
+        wheelbase: { min: 2000, max: 4000 },
+        ground_clearance: { min: 100, max: 300 }
+      }
+    };
+  }
+};
 
 interface AddProductProps {
   isOpen: boolean;
@@ -63,7 +110,6 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
-  const [manufacturers, setManufacturers] = useState<any[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [primaryImageIndex, setPrimaryImageIndex] = useState<number>(0); // Track ảnh chính
 
@@ -88,12 +134,55 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
 
   useEffect(() => {
     // Lấy danh sách manufacturer và promotions từ API
-    get("/api/manufacturers").then((res) => {
-      setManufacturers(res.data?.data || []);
-    });
-    get("/api/promotions").then((res) => {
-      setPromotions(res.data?.data || []);
-    });
+    const fetchData = async () => {
+      try {
+        // Check authentication first
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+          console.error('❌ No access token found');
+          setError('Bạn cần đăng nhập để sử dụng tính năng này. Vui lòng đăng nhập lại.');
+          return;
+        }
+        
+        console.log('🚀 Fetching manufacturers and promotions...');
+        console.log('🔑 Access token exists:', !!accessToken);
+        
+        // Check user info
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        console.log('👤 Current user:', user);
+        console.log('🏭 User manufacturer_id:', user.manufacturer_id);
+        console.log('🏭 User manufacturerName:', user.manufacturerName);
+        
+        // Note: Backend will automatically use user.manufacturer_id, no need to fetch manufacturers list
+        
+        // Fetch promotions
+        const promotionsResponse = await get("/api/promotions");
+        if (promotionsResponse.data?.data) {
+          setPromotions(promotionsResponse.data.data);
+          console.log('✅ Promotions loaded:', promotionsResponse.data.data.length);
+        } else {
+          console.error('❌ Failed to load promotions');
+        }
+      } catch (error: any) {
+        console.error('❌ Error fetching data:', error);
+        
+        // Check if it's an authentication error
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          // Clear tokens and redirect to login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          setError('Không thể tải dữ liệu. Vui lòng kiểm tra kết nối và thử lại.');
+        }
+      }
+    };
+    
+    fetchData();
   }, []);
 
   // Populate form when editing
@@ -110,7 +199,6 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         name: editProduct.name || '',
         model: editProduct.model || '',
         category: editProduct.category || '',
-        manufacturer_id: editProduct.manufacturer_id?._id || editProduct.manufacturer_id || '',
         sku: editProduct.sku || '',
         version: editProduct.version || '',
         release_status: editProduct.release_status || 'available',
@@ -157,6 +245,12 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         stock: editProduct.stocks && editProduct.stocks.length > 0 
           ? editProduct.stocks[0].quantity 
           : editProduct.stock || 0,
+        stocks_by_color: editProduct.stocks && editProduct.stocks.length > 0 
+          ? JSON.stringify(editProduct.stocks.map((stock: any) => ({
+              color: stock.color || 'Unknown',
+              quantity: stock.quantity || 0
+            })))
+          : '',
         warranty_years: editProduct.warranty_years || 0,
         battery_warranty_years: editProduct.battery_warranty_years || 0,
         
@@ -178,6 +272,8 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
   // Real-time field validation
   const validateField = (name: string, value: any) => {
     const errors: {[key: string]: string} = {};
+    const category = form.category || 'car'; // Fallback to 'car' if category not set
+    const rules = getValidationRules(category);
 
     switch (name) {
       case 'sku':
@@ -196,31 +292,49 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         if (value && form.price && value < form.price) errors.on_road_price = "Giá lăn bánh phải lớn hơn hoặc bằng giá cơ bản";
         break;
       case 'battery_capacity':
-        if (value && (value < 1 || value > 200)) errors.battery_capacity = "Dung lượng pin phải từ 1-200 kWh";
+        if (value && (value < rules.battery_capacity.min || value > rules.battery_capacity.max)) {
+          errors.battery_capacity = `Dung lượng pin phải từ ${rules.battery_capacity.min}-${rules.battery_capacity.max} ${form.category === 'motorbike' ? 'kWh' : 'kWh'}`;
+        }
         break;
       case 'range_km':
-        if (value && (value < 50 || value > 1000)) errors.range_km = "Quãng đường phải từ 50-1000 km";
+        if (value && (value < rules.range_km.min || value > rules.range_km.max)) {
+          errors.range_km = `Quãng đường phải từ ${rules.range_km.min}-${rules.range_km.max} km`;
+        }
         break;
       case 'charging_fast':
-        if (value && (value < 5 || value > 120)) errors.charging_fast = "Thời gian sạc nhanh phải từ 5-120 phút";
+        if (value && (value < rules.charging_fast.min || value > rules.charging_fast.max)) {
+          errors.charging_fast = `Thời gian sạc nhanh phải từ ${rules.charging_fast.min}-${rules.charging_fast.max} phút`;
+        }
         break;
       case 'charging_slow':
-        if (value && (value < 1 || value > 24)) errors.charging_slow = "Thời gian sạc chậm phải từ 1-24 giờ";
+        if (value && (value < rules.charging_slow.min || value > rules.charging_slow.max)) {
+          errors.charging_slow = `Thời gian sạc chậm phải từ ${rules.charging_slow.min}-${rules.charging_slow.max} giờ`;
+        }
         break;
       case 'motor_power':
-        if (value && (value < 10 || value > 1000)) errors.motor_power = "Công suất motor phải từ 10-1000 kW";
+        if (value && (value < rules.motor_power.min || value > rules.motor_power.max)) {
+          errors.motor_power = `Công suất motor phải từ ${rules.motor_power.min}-${rules.motor_power.max} kW`;
+        }
         break;
       case 'top_speed':
-        if (value && (value < 50 || value > 300)) errors.top_speed = "Tốc độ tối đa phải từ 50-300 km/h";
+        if (value && (value < rules.top_speed.min || value > rules.top_speed.max)) {
+          errors.top_speed = `Tốc độ tối đa phải từ ${rules.top_speed.min}-${rules.top_speed.max} km/h`;
+        }
         break;
       case 'acceleration':
-        if (value && (value < 2 || value > 20)) errors.acceleration = "Thời gian tăng tốc 0-100km/h phải từ 2-20 giây";
+        if (value && (value < rules.acceleration.min || value > rules.acceleration.max)) {
+          errors.acceleration = `Thời gian tăng tốc 0-100km/h phải từ ${rules.acceleration.min}-${rules.acceleration.max} giây`;
+        }
         break;
       case 'weight':
-        if (value && (value < 500 || value > 5000)) errors.weight = "Trọng lượng phải từ 500-5000 kg";
+        if (value && (value < rules.weight.min || value > rules.weight.max)) {
+          errors.weight = `Trọng lượng phải từ ${rules.weight.min}-${rules.weight.max} kg`;
+        }
         break;
       case 'seating_capacity':
-        if (value && (value < 1 || value > 9)) errors.seating_capacity = "Số chỗ ngồi phải từ 1-9";
+        if (value && (value < rules.seating_capacity.min || value > rules.seating_capacity.max)) {
+          errors.seating_capacity = `Số chỗ ngồi phải từ ${rules.seating_capacity.min}-${rules.seating_capacity.max}`;
+        }
         break;
       case 'warranty_years':
         if (value && (value < 1 || value > 10)) errors.warranty_years = "Bảo hành phải từ 1-10 năm";
@@ -299,6 +413,76 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
     }));
   };
 
+  const getColorStocksArray = (stocksByColorJson: string) => {
+    try {
+      return stocksByColorJson ? JSON.parse(stocksByColorJson) : [];
+    } catch (error) {
+      console.error('Error parsing stocks_by_color JSON:', error);
+      return [];
+    }
+  };
+
+  const handleAddColorStock = () => {
+    setForm((prev: any) => {
+      const currentStocks = getColorStocksArray(prev.stocks_by_color);
+      const newStocks = [...currentStocks, { color: '', quantity: 0 }];
+      const newJson = JSON.stringify(newStocks);
+      
+      // Auto-update color_options based on new stocks
+      const colors = newStocks
+        .map((stock: any) => stock.color)
+        .filter((color: string) => color && color.trim() !== '');
+      
+      return {
+        ...prev,
+        stocks_by_color: newJson,
+        color_options: colors
+      };
+    });
+  };
+
+  const handleRemoveColorStock = (index: number) => {
+    setForm((prev: any) => {
+      const currentStocks = getColorStocksArray(prev.stocks_by_color);
+      const newStocks = currentStocks.filter((_: any, i: number) => i !== index);
+      const newJson = JSON.stringify(newStocks);
+      
+      // Auto-update color_options based on new stocks
+      const colors = newStocks
+        .map((stock: any) => stock.color)
+        .filter((color: string) => color && color.trim() !== '');
+      
+      return {
+        ...prev,
+        stocks_by_color: newJson,
+        color_options: colors
+      };
+    });
+  };
+
+  const handleColorStockChange = (index: number, field: 'color' | 'quantity', value: string | number) => {
+    setForm((prev: any) => {
+      const currentStocks = getColorStocksArray(prev.stocks_by_color);
+      const newStocks = [...currentStocks];
+      newStocks[index] = {
+        ...newStocks[index],
+        [field]: field === 'quantity' ? Number(value) : value
+      };
+      const newJson = JSON.stringify(newStocks);
+      
+      // Auto-update color_options based on colorStocks
+      const colors = newStocks
+        .map((stock: any) => stock.color)
+        .filter((color: string) => color && color.trim() !== '');
+      
+      return {
+        ...prev,
+        stocks_by_color: newJson,
+        color_options: colors
+      };
+    });
+  };
+
   const handleImageFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
@@ -319,6 +503,8 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
     const { name, value } = e.target;
     const numValue = Number(value);
     
+    console.log('🔍 Dimensions change:', { name, value, numValue });
+    
     // Validate dimensions
     const errors: {[key: string]: string} = {};
     if (name === 'length' && numValue && (numValue < 2000 || numValue > 6000)) {
@@ -336,13 +522,17 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
       ...errors
     }));
 
-    setForm((prev: any) => ({
-      ...prev,
-      dimensions: {
-        ...prev.dimensions,
-        [name]: numValue
-      }
-    }));
+    setForm((prev: any) => {
+      const newForm = {
+        ...prev,
+        dimensions: {
+          ...prev.dimensions,
+          [name]: numValue
+        }
+      };
+      console.log('🔍 Updated dimensions:', newForm.dimensions);
+      return newForm;
+    });
   };
 
   // Comprehensive validation function
@@ -354,7 +544,6 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
     if (!form.name?.trim()) errors.push("Tên sản phẩm là bắt buộc");
     if (!form.category) errors.push("Danh mục là bắt buộc");
     if (!form.price || form.price <= 0) errors.push("Giá sản phẩm phải lớn hơn 0");
-    if (!form.manufacturer_id) errors.push("Nhà sản xuất là bắt buộc");
 
     // SKU validation
     if (form.sku) {
@@ -381,59 +570,67 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
     }
 
     // Battery validation
-    if (form.battery_capacity && (form.battery_capacity < 1 || form.battery_capacity > 200)) {
-      errors.push("Dung lượng pin phải từ 1-200 kWh");
+    const category = form.category || 'car';
+    const rules = getValidationRules(category);
+    if (form.battery_capacity && (form.battery_capacity < rules.battery_capacity.min || form.battery_capacity > rules.battery_capacity.max)) {
+      errors.push(`Dung lượng pin phải từ ${rules.battery_capacity.min}-${rules.battery_capacity.max} kWh`);
     }
 
     // Range validation
-    if (form.range_km && (form.range_km < 50 || form.range_km > 1000)) {
-      errors.push("Quãng đường phải từ 50-1000 km");
+    if (form.range_km && (form.range_km < rules.range_km.min || form.range_km > rules.range_km.max)) {
+      errors.push(`Quãng đường phải từ ${rules.range_km.min}-${rules.range_km.max} km`);
     }
 
     // Charging validation
-    if (form.charging_fast && (form.charging_fast < 5 || form.charging_fast > 120)) {
-      errors.push("Thời gian sạc nhanh phải từ 5-120 phút");
+    if (form.charging_fast && (form.charging_fast < rules.charging_fast.min || form.charging_fast > rules.charging_fast.max)) {
+      errors.push(`Thời gian sạc nhanh phải từ ${rules.charging_fast.min}-${rules.charging_fast.max} phút`);
     }
-    if (form.charging_slow && (form.charging_slow < 1 || form.charging_slow > 24)) {
-      errors.push("Thời gian sạc chậm phải từ 1-24 giờ");
+    if (form.charging_slow && (form.charging_slow < rules.charging_slow.min || form.charging_slow > rules.charging_slow.max)) {
+      errors.push(`Thời gian sạc chậm phải từ ${rules.charging_slow.min}-${rules.charging_slow.max} giờ`);
     }
 
     // Motor power validation
-    if (form.motor_power && (form.motor_power < 10 || form.motor_power > 1000)) {
-      errors.push("Công suất motor phải từ 10-1000 kW");
+    if (form.motor_power && (form.motor_power < rules.motor_power.min || form.motor_power > rules.motor_power.max)) {
+      errors.push(`Công suất motor phải từ ${rules.motor_power.min}-${rules.motor_power.max} kW`);
     }
 
     // Speed validation
-    if (form.top_speed && (form.top_speed < 50 || form.top_speed > 300)) {
-      errors.push("Tốc độ tối đa phải từ 50-300 km/h");
+    if (form.top_speed && (form.top_speed < rules.top_speed.min || form.top_speed > rules.top_speed.max)) {
+      errors.push(`Tốc độ tối đa phải từ ${rules.top_speed.min}-${rules.top_speed.max} km/h`);
     }
 
     // Acceleration validation
-    if (form.acceleration && (form.acceleration < 2 || form.acceleration > 20)) {
-      errors.push("Thời gian tăng tốc 0-100km/h phải từ 2-20 giây");
+    if (form.acceleration && (form.acceleration < rules.acceleration.min || form.acceleration > rules.acceleration.max)) {
+      errors.push(`Thời gian tăng tốc 0-100km/h phải từ ${rules.acceleration.min}-${rules.acceleration.max} giây`);
     }
 
     // Dimensions validation
     if (form.dimensions) {
-      if (form.dimensions.length && (form.dimensions.length < 2000 || form.dimensions.length > 6000)) {
-        errors.push("Chiều dài phải từ 2000-6000 mm");
+      if (form.dimensions.length && (form.dimensions.length < rules.dimensions.length.min || form.dimensions.length > rules.dimensions.length.max)) {
+        errors.push(`Chiều dài phải từ ${rules.dimensions.length.min}-${rules.dimensions.length.max} mm`);
       }
-      if (form.dimensions.width && (form.dimensions.width < 1500 || form.dimensions.width > 2500)) {
-        errors.push("Chiều rộng phải từ 1500-2500 mm");
+      if (form.dimensions.width && (form.dimensions.width < rules.dimensions.width.min || form.dimensions.width > rules.dimensions.width.max)) {
+        errors.push(`Chiều rộng phải từ ${rules.dimensions.width.min}-${rules.dimensions.width.max} mm`);
       }
-      if (form.dimensions.height && (form.dimensions.height < 1000 || form.dimensions.height > 2500)) {
-        errors.push("Chiều cao phải từ 1000-2500 mm");
+      if (form.dimensions.height && (form.dimensions.height < rules.dimensions.height.min || form.dimensions.height > rules.dimensions.height.max)) {
+        errors.push(`Chiều cao phải từ ${rules.dimensions.height.min}-${rules.dimensions.height.max} mm`);
+      }
+      if (form.dimensions.wheelbase && (form.dimensions.wheelbase < rules.dimensions.wheelbase.min || form.dimensions.wheelbase > rules.dimensions.wheelbase.max)) {
+        errors.push(`Chiều dài cơ sở phải từ ${rules.dimensions.wheelbase.min}-${rules.dimensions.wheelbase.max} mm`);
+      }
+      if (form.dimensions.ground_clearance && (form.dimensions.ground_clearance < rules.dimensions.ground_clearance.min || form.dimensions.ground_clearance > rules.dimensions.ground_clearance.max)) {
+        errors.push(`Khoảng sáng gầm phải từ ${rules.dimensions.ground_clearance.min}-${rules.dimensions.ground_clearance.max} mm`);
       }
     }
 
     // Weight validation
-    if (form.weight && (form.weight < 500 || form.weight > 5000)) {
-      errors.push("Trọng lượng phải từ 500-5000 kg");
+    if (form.weight && (form.weight < rules.weight.min || form.weight > rules.weight.max)) {
+      errors.push(`Trọng lượng phải từ ${rules.weight.min}-${rules.weight.max} kg`);
     }
 
     // Seating capacity validation
-    if (form.seating_capacity && (form.seating_capacity < 1 || form.seating_capacity > 9)) {
-      errors.push("Số chỗ ngồi phải từ 1-9");
+    if (form.seating_capacity && (form.seating_capacity < rules.seating_capacity.min || form.seating_capacity > rules.seating_capacity.max)) {
+      errors.push(`Số chỗ ngồi phải từ ${rules.seating_capacity.min}-${rules.seating_capacity.max}`);
     }
 
     // Warranty validation
@@ -486,22 +683,16 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
 
       // Debug: Log form data before processing
       console.log('Form data before processing:', form);
+      console.log('🔍 Debug stocks_by_color:', form.stocks_by_color);
 
-      // Build stocks array as required by backend
+      // Keep stocks_by_color for backend processing
       const { stock, ...restForm } = form;
       console.log('restForm after destructuring:', restForm);
-      let stocks = [];
-      if (stock && form.manufacturer_id && Number(stock) > 0) {
-        stocks.push({
-          owner_type: "manufacturer",
-          owner_id: form.manufacturer_id,
-          quantity: Number(stock),
-        });
-      }
+      console.log('🔍 stocks_by_color to send:', form.stocks_by_color);
 
       // Clean form data - keep all fields for update, remove empty values for create
       const cleanForm: any = {};
-      const requiredFields = ['sku', 'name', 'category', 'price', 'manufacturer_id'];
+      const requiredFields = ['sku', 'name', 'category', 'price'];
       
       // For edit mode, preserve all fields; for create mode, only keep non-empty values
       const isEditMode = !!editProduct;
@@ -589,10 +780,7 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         }
       });
 
-      // Add stocks to form
-      if (stocks.length > 0) {
-        cleanForm.stocks = stocks;
-      }
+      // Note: Backend will process stocks_by_color and create stocks array automatically
 
       // Final validation: ensure all required fields are present
       const missingFields = requiredFields.filter(field => 
@@ -640,15 +828,6 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
                   formData.append(`${key}[${index}][description]`, item.description || '');
                 }
               });
-            } else if (key === 'stocks' && Array.isArray(value)) {
-              // Special handling for stocks array of objects
-              value.forEach((item, index) => {
-                if (typeof item === 'object') {
-                  formData.append(`${key}[${index}][owner_type]`, item.owner_type || 'manufacturer');
-                  formData.append(`${key}[${index}][owner_id]`, item.owner_id || '');
-                  formData.append(`${key}[${index}][quantity]`, String(item.quantity || 0));
-                }
-              });
             } else if (key === 'dimensions' && typeof value === 'object' && !Array.isArray(value)) {
               // Special handling for dimensions object
               Object.entries(value).forEach(([dimKey, dimValue]) => {
@@ -691,25 +870,30 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         }
 
         // Debug: Log all FormData entries
-        console.log('FormData entries:');
+        console.log('🔍 FormData entries:');
         for (let [key, value] of formData.entries()) {
           console.log(`${key}:`, value);
         }
+        console.log('🔍 Original form dimensions:', form.dimensions);
         
         if (isEditMode) {
           const { put } = await import("../../../services/httpClient");
+          console.log('🚀 Sending PUT request to:', url);
           response = await put(url, formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
           });
         } else {
+          console.log('🚀 Sending POST request to:', url);
           response = await post(url, formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
           });
         }
+        
+        console.log('✅ Response received:', response);
       } else {
         console.log(`Sending JSON without images (${isEditMode ? 'edit' : 'create'})`);
         
@@ -720,16 +904,24 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         }
         
         console.log('Clean form data for JSON request:', cleanForm);
-        console.log('Dimensions object:', cleanForm.dimensions);
+        console.log('🔍 Dimensions object:', cleanForm.dimensions);
+        console.log('🔍 Original form dimensions:', form.dimensions);
         if (isEditMode) {
           const { put } = await import("../../../services/httpClient");
+          console.log('🚀 Sending PUT JSON to:', url);
+          console.log('📦 JSON data:', cleanForm);
           response = await put(url, cleanForm);
         } else {
+          console.log('🚀 Sending POST JSON to:', url);
+          console.log('📦 JSON data:', cleanForm);
           response = await post(url, cleanForm);
         }
+        
+        console.log('✅ JSON Response received:', response);
       }
       
-      console.log(`Product ${isEditMode ? 'updated' : 'created'} successfully:`, response);
+      console.log(`✅ Product ${isEditMode ? 'updated' : 'created'} successfully:`, response);
+      console.log('🔍 Response data:', response.data);
       
       // Log the updated images to verify they're saved
       if (response.data?.images) {
@@ -745,7 +937,13 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
       // Close modal and reset form on success
       handleClose();
     } catch (err: any) {
-      console.error('Error creating product:', err);
+      console.error('❌ Error creating/updating product:', err);
+      console.error('❌ Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        statusText: err.response?.statusText
+      });
       
       // Handle specific error cases
       if (err.response?.data?.error && Array.isArray(err.response.data.error)) {
@@ -775,9 +973,30 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
-          <strong>Lỗi validation:</strong>
+          <strong>Lỗi:</strong>
         </div>
         <div className="mt-2">{error}</div>
+        {error.includes('đăng nhập') && (
+          <div className="mt-3">
+            <button 
+              onClick={() => window.location.href = '/login'}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Đăng nhập lại
+            </button>
+          </div>
+        )}
+        {error.includes('quyền Admin') && (
+          <div className="mt-3">
+            <div className="text-sm text-gray-600 mb-2">
+              <strong>Giải pháp:</strong>
+            </div>
+            <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+              <li>Liên hệ quản trị viên để được cấp quyền Admin</li>
+              <li>Hoặc sử dụng tài khoản Admin để truy cập tính năng này</li>
+            </ul>
+          </div>
+        )}
       </div>}
       <div className="grid grid-cols-1 gap-4 overflow-y-auto" style={{ maxHeight: '60vh' }}>
         <label className="font-semibold">Tên sản phẩm *</label>
@@ -791,13 +1010,29 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
           <option value="car">Ô tô</option>
           <option value="motorbike">Xe máy</option>
         </select>
-        <label className="font-semibold">Nhà sản xuất *</label>
-        <select name="manufacturer_id" value={form.manufacturer_id} onChange={handleFormChange} className="border rounded px-3 py-2" required>
-          <option value="">Chọn nhà sản xuất</option>
-          {manufacturers.map((m) => (
-            <option key={m._id} value={m._id}>{m.name}</option>
-          ))}
-        </select>
+        {/* <label className="font-semibold">Nhà sản xuất</label> */}
+        {/* <div className="border rounded px-3 py-2 bg-gray-50">
+          {(() => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.manufacturerName) {
+              return (
+                <div className="flex items-center">
+                  <span className="text-gray-700 font-medium">{user.manufacturerName}</span>
+                  <span className="ml-2 text-xs text-gray-500">(Tự động từ tài khoản của bạn)</span>
+                </div>
+              );
+            } else {
+              return (
+                <div className="text-gray-600">
+                  <span>Nhà sản xuất sẽ được tự động xác định từ tài khoản của bạn</span>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Backend sẽ tự động lấy thông tin nhà sản xuất từ profile user
+                  </div>
+                </div>
+              );
+            }
+          })()}
+        </div> */}
         <label className="font-semibold">SKU *</label>
         <div className="flex gap-2">
           <input name="sku" value={form.sku} onChange={handleFormChange} placeholder="VD: VF9-PREMIUM-2025" className={`border rounded px-3 py-2 flex-1 ${fieldErrors.sku ? 'border-red-500' : ''}`} required />
@@ -949,9 +1184,101 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
           <input name="ota_update" type="checkbox" checked={form.ota_update} onChange={handleFormChange} className="mr-2" />
           Có
         </label>
-        <label className="font-semibold">Số lượng tồn kho</label>
-  <input name="stock" type="number" value={form.stock} onChange={handleFormChange} placeholder="Số lượng tồn kho" className={`border rounded px-3 py-2 ${fieldErrors.stock ? 'border-red-500' : ''}`} />
+        <label className="font-semibold">Quản lý tồn kho theo màu sắc</label>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-xs text-gray-500 mb-2">
+            Debug - stocks_by_color: {form.stocks_by_color || 'empty'}
+          </div>
+        )}
+        <div className="border rounded p-4 bg-gray-50">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-gray-600">Thêm màu sắc và số lượng tồn kho</span>
+            <button
+              type="button"
+              onClick={handleAddColorStock}
+              className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              + Thêm màu
+            </button>
+          </div>
+          
+          {(() => {
+            const colorStocks = getColorStocksArray(form.stocks_by_color);
+            return colorStocks.length > 0 ? (
+              <div className="space-y-3">
+                {colorStocks.map((colorStock: any, index: number) => (
+                <div key={index} className="flex gap-2 items-center p-3 bg-white rounded border">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Tên màu (VD: Đỏ, Xanh, Trắng...)"
+                      value={colorStock.color}
+                      onChange={(e) => handleColorStockChange(index, 'color', e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                    />
+                  </div>
+                  <div className="w-24">
+                    <input
+                      type="number"
+                      placeholder="Số lượng"
+                      value={colorStock.quantity}
+                      onChange={(e) => handleColorStockChange(index, 'quantity', e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
+                      min="0"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveColorStock(index)}
+                    className="px-2 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <div className="text-xs text-blue-600 mt-2">
+                💡 Màu sắc sẽ tự động cập nhật vào "Màu sắc" bên dưới
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <div className="text-sm">Chưa có màu sắc nào</div>
+                <div className="text-xs mt-1">Nhấn "Thêm màu" để bắt đầu</div>
+              </div>
+            );
+          })()}
+        </div>
+        
+        <label className="font-semibold">Số lượng tồn kho (Tổng cộng)</label>
+        {(() => {
+          const colorStocks = getColorStocksArray(form.stocks_by_color);
+          const totalStock = colorStocks.length > 0 
+            ? colorStocks.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)
+            : form.stock;
+          
+          console.log('🔍 Debug Stock Calculation:');
+          console.log('- colorStocks:', colorStocks);
+          console.log('- totalStock:', totalStock);
+          console.log('- form.stock:', form.stock);
+          
+          return (
+            <input 
+              name="stock" 
+              type="number" 
+              value={totalStock} 
+              onChange={handleFormChange} 
+              placeholder="Số lượng tồn kho" 
+              className={`border rounded px-3 py-2 ${fieldErrors.stock ? 'border-red-500' : ''}`} 
+              readOnly={colorStocks.length > 0}
+            />
+          );
+        })()}
         {fieldErrors.stock && <div className="text-red-500 text-sm mt-1">{fieldErrors.stock}</div>}
+        {getColorStocksArray(form.stocks_by_color).length > 0 && (
+          <div className="text-xs text-green-600 mt-1">
+            💡 Số lượng này được tính tự động từ tổng các màu sắc
+          </div>
+        )}
         <label className="font-semibold">Bảo hành (năm)</label>
         <input name="warranty_years" type="number" value={form.warranty_years} onChange={handleFormChange} placeholder="Bảo hành (năm)" className={`border rounded px-3 py-2 ${fieldErrors.warranty_years ? 'border-red-500' : ''}`} />
         {fieldErrors.warranty_years && <div className="text-red-500 text-sm mt-1">{fieldErrors.warranty_years}</div>}
@@ -959,7 +1286,19 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         <input name="battery_warranty_years" type="number" value={form.battery_warranty_years} onChange={handleFormChange} placeholder="Bảo hành pin (năm)" className={`border rounded px-3 py-2 ${fieldErrors.battery_warranty_years ? 'border-red-500' : ''}`} />
         {fieldErrors.battery_warranty_years && <div className="text-red-500 text-sm mt-1">{fieldErrors.battery_warranty_years}</div>}
         <label className="font-semibold">Màu sắc</label>
-        <input name="color_options" value={form.color_options.join(', ')} onChange={e => handleArrayChange('color_options', e.target.value)} placeholder="Màu sắc (cách nhau dấu phẩy)" className="border rounded px-3 py-2" />
+        <input 
+          name="color_options" 
+          value={form.color_options.join(', ')} 
+          onChange={e => handleArrayChange('color_options', e.target.value)} 
+          placeholder="Màu sắc (cách nhau dấu phẩy)" 
+          className={`border rounded px-3 py-2 ${getColorStocksArray(form.stocks_by_color).length > 0 ? 'bg-gray-100' : ''}`}
+          readOnly={getColorStocksArray(form.stocks_by_color).length > 0}
+        />
+        {getColorStocksArray(form.stocks_by_color).length > 0 && (
+          <div className="text-xs text-blue-600 mt-1">
+            💡 Màu sắc được tự động cập nhật từ "Quản lý tồn kho theo màu sắc" ở trên
+          </div>
+        )}
         <label className="font-semibold">Ảnh sản phẩm (Tùy chọn)</label>
         
         {/* Show existing images when editing - only show if no new images selected */}

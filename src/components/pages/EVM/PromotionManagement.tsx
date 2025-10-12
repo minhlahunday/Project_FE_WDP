@@ -14,12 +14,9 @@ import {
   Row,
   Col,
   Statistic,
-  Tooltip,
   Transfer
 } from 'antd';
 import { AdminLayout } from '../admin/AdminLayout';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
 import {
   PlusOutlined,
@@ -39,36 +36,38 @@ import {
 } from '@ant-design/icons';
 import { get, post, put, del } from '../../../services/httpClient';
 import dayjs from 'dayjs';
+import { toast } from 'react-toastify';
 
 const { Title, Text } = Typography;
 
 interface Promotion {
   _id: string;
   name: string;
-  type: 'percent' | 'amount' | 'service' | 'gift';
+  type: 'service' | 'gift'; // Backend chỉ hỗ trợ 2 loại này
   value: number;
   start_date?: string;
   end_date?: string;
   is_active: boolean;
+  is_deleted: boolean;
+  dealerships: string[]; // Array of dealership IDs
   createdAt?: string;
   updatedAt?: string;
-  description?: string;
   __v?: number;
-  assigned_dealers?: Array<{
-    dealer_id: string;
-    dealer_name: string;
-    dealer_code: string;
-    assigned_date: string;
-    is_active: boolean;
-  }>;
 }
 
 interface Dealer {
   _id: string;
-  name: string;
+  company_name: string;
+  name?: string; // Fallback compatibility
   email?: string;
   phone?: string;
-  address?: string;
+  address?: string | {
+    street?: string;
+    district?: string;
+    city?: string;
+    province?: string;
+    full_address?: string;
+  };
   code?: string;
   isActive?: boolean;
 }
@@ -208,24 +207,33 @@ const PromotionManagement: React.FC = () => {
       const response = await get('/api/promotions');
       
       if (response && response.success) {
+        // Backend trả về data theo cấu trúc pagination
         let promotions = [];
         
         if (response.data && response.data.data && Array.isArray(response.data.data)) {
           promotions = response.data.data;
-        } else if (response.data && response.data.items && Array.isArray(response.data.items)) {
-          promotions = response.data.items;
         } else if (response.data && Array.isArray(response.data)) {
           promotions = response.data;
-        } else if (Array.isArray(response.items)) {
-          promotions = response.items;
         } else if (Array.isArray(response)) {
           promotions = response;
         }
         
-        setPromotions(promotions);
-        calculateStatistics(promotions);
+        // Lọc bỏ các promotion đã bị xóa
+        const activePromotions = promotions.filter((promo: Promotion) => !promo.is_deleted);
+        
+        setPromotions(activePromotions);
+        calculateStatistics(activePromotions);
       } else {
-        toast.error(response?.message || 'Không thể tải danh sách khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: response?.message || 'Không thể tải danh sách khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
         setPromotions([]);
         calculateStatistics([]);
       }
@@ -233,11 +241,38 @@ const PromotionManagement: React.FC = () => {
       console.error('Error fetching promotions:', error);
       
       if (error.response?.status === 401) {
-        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else if (error.response?.status === 403) {
-        toast.error('Bạn không có quyền truy cập chức năng này.');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Bạn không có quyền truy cập chức năng này.',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else {
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
       
       setPromotions([]);
@@ -263,7 +298,8 @@ const PromotionManagement: React.FC = () => {
         // Map the dealer data to match our interface
         const mappedDealers = dealerData.map((dealer: any) => ({
           _id: dealer._id,
-          name: dealer.name,
+          company_name: dealer.company_name || dealer.name || 'Tên không xác định',
+          name: dealer.name, // Keep for fallback compatibility
           code: dealer.code,
           email: dealer.email,
           phone: dealer.phone,
@@ -272,8 +308,9 @@ const PromotionManagement: React.FC = () => {
         }));
         
         setDealers(mappedDealers);
+        console.log('Mapped dealers:', mappedDealers);
       } else {
-        // If API returns no data, show message but don't use fallback
+        // If API returned no data, show message but don't use fallback
         console.log('API returned no dealers');
         setDealers([]);
         toast.info('Hệ thống chưa có đại lý nào. Vui lòng thêm đại lý mới.');
@@ -321,19 +358,55 @@ const PromotionManagement: React.FC = () => {
       const response = await post('/api/promotions', promotionData);
       
       if (response.success) {
-        toast.success('Tạo khuyến mãi thành công!');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Tạo khuyến mãi thành công!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
         setIsCreateModalVisible(false);
         createForm.resetFields();
         fetchPromotions();
       } else {
-        toast.error(response.message || 'Có lỗi xảy ra khi tạo khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: response.message || 'Có lỗi xảy ra khi tạo khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } catch (error: any) {
       console.error('Error creating promotion:', error);
       if (error.response?.status === 403) {
-        toast.error('Bạn không có quyền tạo khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Bạn không có quyền tạo khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else {
-        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } finally {
       setLoading(false);
@@ -357,22 +430,67 @@ const PromotionManagement: React.FC = () => {
       const response = await put(`/api/promotions/${selectedPromotion._id}`, promotionData);
       
       if (response.success) {
-        toast.success('Cập nhật khuyến mãi thành công!');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Cập nhật khuyến mãi thành công!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
         setIsEditModalVisible(false);
         editForm.resetFields();
         setSelectedPromotion(null);
         fetchPromotions();
       } else {
-        toast.error(response.message || 'Có lỗi xảy ra khi cập nhật khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: response.message || 'Có lỗi xảy ra khi cập nhật khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } catch (error: any) {
       console.error('Error updating promotion:', error);
       if (error.response?.status === 403) {
-        toast.error('Bạn không có quyền cập nhật khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Bạn không có quyền cập nhật khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else if (error.response?.status === 404) {
-        toast.error('Không tìm thấy khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Không tìm thấy khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else {
-        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } finally {
       setLoading(false);
@@ -385,19 +503,64 @@ const PromotionManagement: React.FC = () => {
       const response = await del(`/api/promotions/${id}`);
       
       if (response.success) {
-        toast.success('Xóa khuyến mãi thành công!');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Xóa khuyến mãi thành công!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
         fetchPromotions();
       } else {
-        toast.error(response.message || 'Có lỗi xảy ra khi xóa khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: response.message || 'Có lỗi xảy ra khi xóa khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } catch (error: any) {
       console.error('Error deleting promotion:', error);
       if (error.response?.status === 403) {
-        toast.error('Bạn không có quyền xóa khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Bạn không có quyền xóa khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else if (error.response?.status === 404) {
-        toast.error('Không tìm thấy khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Không tìm thấy khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else {
-        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xóa khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi xóa khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } finally {
       setDeletingIds(prev => {
@@ -488,8 +651,16 @@ const PromotionManagement: React.FC = () => {
     setSelectedPromotion(promotion);
     
     // Load đại lý đã được phân bổ trước đó vào targetKeys
-    const currentlyAssignedDealers = promotion.assigned_dealers?.map(d => d.dealer_id) || [];
-    setTargetKeys(currentlyAssignedDealers);
+    const currentlyAssignedDealers = promotion.dealerships || [];
+    console.log('Currently assigned dealers:', currentlyAssignedDealers);
+    
+    // Convert dealer IDs to Transfer component format
+    const targetKeysFormatted = currentlyAssignedDealers.map((dealerId, index) => 
+      `dealer-${dealerId}-${index}`
+    );
+    console.log('Formatted target keys:', targetKeysFormatted);
+    
+    setTargetKeys(targetKeysFormatted);
     setSelectedKeys([]);
     setIsDistributeModalVisible(true);
     
@@ -504,65 +675,114 @@ const PromotionManagement: React.FC = () => {
     fetchDealers();
   };
 
-  // Distribution handler
+  // Distribution handler - sử dụng API assign đúng theo backend
   const handleDistributePromotion = async () => {
     if (!selectedPromotion || targetKeys.length === 0) {
-      toast.warning('Vui lòng chọn ít nhất một đại lý');
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'warning',
+        title: 'Cảnh báo',
+        text: 'Vui lòng chọn ít nhất một đại lý',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
       return;
     }
 
     try {
       setLoading(true);
       
-      // Tạo danh sách đại lý được phân bổ với metadata
-      const assignedDealers = targetKeys.map(dealerId => {
-        const dealer = dealers.find(d => d._id === dealerId);
-        return {
-          dealer_id: dealerId,
-          dealer_name: dealer?.name || 'Unknown',
-          dealer_code: dealer?.code || 'N/A',
-          assigned_date: new Date().toISOString(),
-          is_active: true
-        };
+      // Extract dealer IDs from targetKeys (format: dealer-${dealer._id}-${index})
+      const dealerIds = targetKeys.map(key => {
+        // Extract dealer ID from key format: dealer-${dealer._id}-${index}
+        const match = key.match(/^dealer-(.+)-(\d+)$/);
+        return match ? match[1] : key; // Fallback to original key if format doesn't match
       });
-
-      // Cập nhật promotion với danh sách đại lý được phân bổ
-      const updateData = {
-        name: selectedPromotion.name,
-        type: selectedPromotion.type,
-        value: selectedPromotion.value,
-        is_active: selectedPromotion.is_active,
-        assigned_dealers: assignedDealers,
-        ...(selectedPromotion.start_date && { start_date: selectedPromotion.start_date }),
-        ...(selectedPromotion.end_date && { end_date: selectedPromotion.end_date })
-      };
-
-      console.log('Updating promotion with assigned dealers:', updateData);
       
-      // Gọi API cập nhật promotion
-      const response = await put(`/api/promotions/${selectedPromotion._id}`, updateData);
+      console.log('Sending dealer IDs to API:', dealerIds);
+      
+      // Sử dụng API assign theo backend
+      const response = await post(`/api/promotions/${selectedPromotion._id}/assign`, {
+        dealerships: dealerIds
+      });
       
       if (response.success) {
-        toast.success(`Đã phân bổ khuyến mãi "${selectedPromotion.name}" cho ${targetKeys.length} đại lý thành công!`);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Thành công',
+          text: `Đã phân bổ khuyến mãi "${selectedPromotion.name}" cho ${targetKeys.length} đại lý thành công!`,
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
         setIsDistributeModalVisible(false);
         setTargetKeys([]);
         setSelectedKeys([]);
         // Refresh danh sách promotion để hiển thị thông tin mới
         fetchPromotions();
       } else {
-        toast.error(response.message || 'Có lỗi xảy ra khi phân bổ khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: response.message || 'Có lỗi xảy ra khi phân bổ khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } catch (error: any) {
       console.error('Error distributing promotion:', error);
       
       if (error.response?.status === 400) {
-        toast.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else if (error.response?.status === 403) {
-        toast.error('Bạn không có quyền phân bổ khuyến mãi.');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Bạn không có quyền phân bổ khuyến mãi.',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else if (error.response?.status === 404) {
-        toast.error('Không tìm thấy khuyến mãi.');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: 'Không tìm thấy khuyến mãi.',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       } else {
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi phân bổ khuyến mãi');
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Lỗi',
+          text: error.response?.data?.message || 'Có lỗi xảy ra khi phân bổ khuyến mãi',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
     } finally {
       setLoading(false);
@@ -620,8 +840,6 @@ const PromotionManagement: React.FC = () => {
 
   const getPromotionTypeText = (type: string) => {
     switch (type) {
-      case 'percent': return 'Giảm theo %';
-      case 'amount': return 'Giảm tiền mặt';
       case 'service': return 'Dịch vụ';
       case 'gift': return 'Quà tặng';
       default: return type;
@@ -629,11 +847,7 @@ const PromotionManagement: React.FC = () => {
   };
 
   const getPromotionValue = (promotion: Promotion) => {
-    if (promotion.type === 'percent') {
-      return `${promotion.value}%`;
-    } else if (promotion.type === 'amount') {
-      return `${promotion.value.toLocaleString('vi-VN')} VNĐ`;
-    }
+    // Backend chỉ hỗ trợ service và gift, không có percent/amount
     return promotion.value.toString();
   };
 
@@ -662,7 +876,7 @@ const PromotionManagement: React.FC = () => {
         <div>
           <Text strong>{text}</Text>
           <br />
-          <Text type="secondary" style={{ fontSize: '12px' }}>
+          <Text type="secondary" className="text-xs">
             ID: {record._id.slice(-8)}
           </Text>
         </div>
@@ -683,7 +897,7 @@ const PromotionManagement: React.FC = () => {
       dataIndex: 'value',
       key: 'value',
       render: (_: number, record: Promotion) => (
-        <Text strong style={{ color: '#1890ff' }}>
+        <Text strong className="text-blue-600">
           {getPromotionValue(record)}
         </Text>
       ),
@@ -718,7 +932,7 @@ const PromotionManagement: React.FC = () => {
       title: 'Đại lý',
       key: 'dealers',
       render: (record: Promotion) => {
-        const dealerCount = record.assigned_dealers?.length || 0;
+        const dealerCount = record.dealerships?.length || 0;
         return (
           <div>
             {dealerCount > 0 ? (
@@ -737,37 +951,53 @@ const PromotionManagement: React.FC = () => {
       key: 'actions',
       render: (record: Promotion) => (
         <Space>
-          <Tooltip title="Xem chi tiết">
+          <div className="relative group">
             <Button
               type="text"
               icon={<EyeOutlined />}
               onClick={() => showViewModal(record)}
             />
-          </Tooltip>
-          <Tooltip title="Chỉnh sửa">
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Xem chi tiết
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
+          <div className="relative group">
             <Button
               type="text"
               icon={<EditOutlined />}
               onClick={() => showEditModal(record)}
             />
-          </Tooltip>
-          <Tooltip title={record.is_active ? 'Tạm dừng' : 'Kích hoạt'}>
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Chỉnh sửa
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
+          <div className="relative group">
             <Button
               type="text"
               icon={record.is_active ? <CloseCircleOutlined /> : <CheckCircleOutlined />}
               onClick={() => handleToggleStatus(record)}
-              style={{ color: record.is_active ? '#ff4d4f' : '#52c41a' }}
+              className={record.is_active ? 'text-red-500' : 'text-green-500'}
             />
-          </Tooltip>
-          <Tooltip title="Phân bổ cho đại lý">
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              {record.is_active ? 'Tạm dừng' : 'Kích hoạt'}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
+          <div className="relative group">
             <Button
               type="text"
               icon={<ShareAltOutlined />}
               onClick={() => showDistributeModal(record)}
               disabled={!record.is_active}
             />
-          </Tooltip>
-          <Tooltip title="Xóa khuyến mãi">
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Phân bổ cho đại lý
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
+          <div className="relative group">
             <Button
               type="text"
               icon={<DeleteOutlined />}
@@ -775,7 +1005,11 @@ const PromotionManagement: React.FC = () => {
               loading={deletingIds.has(record._id)}
               onClick={() => confirmDeletePromotion(record._id, record.name)}
             />
-          </Tooltip>
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Xóa khuyến mãi
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
         </Space>
       ),
     },
@@ -783,18 +1017,18 @@ const PromotionManagement: React.FC = () => {
 
   return (
     <AdminLayout activeSection="promotion-management">
-      <div style={{ backgroundColor: '#f5f5f5' }}>
+      <div className="bg-gray-50">
         {/* Header */}
-        <div style={{ marginBottom: '24px' }}>
+        <div className="mb-6">
           <Title level={2}>
-            <GiftOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+            <GiftOutlined className="mr-2 text-blue-600" />
             Quản lý khuyến mãi
           </Title>
           <Text type="secondary">Tạo, cập nhật và phân bổ khuyến mãi cho hệ thống</Text>
         </div>
 
       {/* Statistics */}
-      <Row gutter={16} style={{ marginBottom: '24px' }}>
+      <Row gutter={16} className="mb-6">
         <Col span={6}>
           <Card>
             <Statistic
@@ -838,7 +1072,7 @@ const PromotionManagement: React.FC = () => {
       </Row>
 
       {/* Filters */}
-      <Card style={{ marginBottom: '24px' }}>
+      <Card className="mb-6">
         <Row gutter={16} align="middle">
           <Col span={6}>
             <Input
@@ -851,15 +1085,7 @@ const PromotionManagement: React.FC = () => {
           </Col>
           <Col span={4}>
             <select
-              style={{
-                width: '100%',
-                height: '32px',
-                borderRadius: '4px',
-                border: '1px solid #d9d9d9',
-                padding: '0 8px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
+              className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -871,38 +1097,20 @@ const PromotionManagement: React.FC = () => {
           </Col>
           <Col span={4}>
             <select
-              style={{
-                width: '100%',
-                height: '32px',
-                borderRadius: '4px',
-                border: '1px solid #d9d9d9',
-                padding: '0 8px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
+              className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
             >
               <option value="all">Tất cả loại</option>
-              <option value="percent">Giảm theo %</option>
-              <option value="amount">Giảm tiền mặt</option>
               <option value="service">Dịch vụ</option>
               <option value="gift">Quà tặng</option>
             </select>
           </Col>
           <Col span={6}>
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <div className="flex gap-1 items-center">
               <input
                 type="date"
-                style={{
-                  flex: 1,
-                  height: '32px',
-                  borderRadius: '4px',
-                  border: '1px solid #d9d9d9',
-                  padding: '0 8px',
-                  fontSize: '14px',
-                  backgroundColor: '#fff'
-                }}
+                className="flex-1 h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Từ ngày"
                 value={dateRange && dateRange[0] ? dateRange[0].format('YYYY-MM-DD') : ''}
                 onChange={(e) => {
@@ -910,18 +1118,10 @@ const PromotionManagement: React.FC = () => {
                   setDateRange([newStartDate, dateRange && dateRange[1] ? dateRange[1] : null]);
                 }}
               />
-              <span style={{ color: '#999', fontSize: '12px' }}>đến</span>
+              <span className="text-gray-500 text-xs">đến</span>
               <input
                 type="date"
-                style={{
-                  flex: 1,
-                  height: '32px',
-                  borderRadius: '4px',
-                  border: '1px solid #d9d9d9',
-                  padding: '0 8px',
-                  fontSize: '14px',
-                  backgroundColor: '#fff'
-                }}
+                className="flex-1 h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Đến ngày"
                 value={dateRange && dateRange[1] ? dateRange[1].format('YYYY-MM-DD') : ''}
                 onChange={(e) => {
@@ -960,7 +1160,7 @@ const PromotionManagement: React.FC = () => {
           rowKey="_id"
           loading={loading}
           scroll={{ x: 'max-content' }}
-          style={{ overflow: 'visible' }}
+          className="overflow-visible"
           pagination={{
             total: getFilteredPromotions().length,
             pageSize: 10,
@@ -1004,20 +1204,10 @@ const PromotionManagement: React.FC = () => {
                 rules={[{ required: true, message: 'Vui lòng chọn loại khuyến mãi' }]}
               >
                 <select
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    borderRadius: '4px',
-                    border: '1px solid #d9d9d9',
-                    padding: '0 8px',
-                    fontSize: '14px',
-                    backgroundColor: '#fff'
-                  }}
+                  className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   onChange={(e) => createForm.setFieldsValue({ type: e.target.value })}
                 >
                   <option value="">Chọn loại khuyến mãi</option>
-                  <option value="percent">Giảm theo phần trăm (%)</option>
-                  <option value="amount">Giảm tiền mặt (VNĐ)</option>
                   <option value="service">Dịch vụ</option>
                   <option value="gift">Quà tặng</option>
                 </select>
@@ -1031,7 +1221,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <InputNumber
                   placeholder="Nhập giá trị"
-                  style={{ width: '100%' }}
+                  className="w-full"
                   min={0}
                 />
               </Form.Item>
@@ -1046,15 +1236,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <input
                   type="datetime-local"
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    borderRadius: '4px',
-                    border: '1px solid #d9d9d9',
-                    padding: '0 8px',
-                    fontSize: '14px',
-                    backgroundColor: '#fff'
-                  }}
+                  className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   onChange={(e) => {
                     createForm.setFieldsValue({ startDate: e.target.value });
                   }}
@@ -1068,15 +1250,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <input
                   type="datetime-local"
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    borderRadius: '4px',
-                    border: '1px solid #d9d9d9',
-                    padding: '0 8px',
-                    fontSize: '14px',
-                    backgroundColor: '#fff'
-                  }}
+                  className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   onChange={(e) => {
                     createForm.setFieldsValue({ endDate: e.target.value });
                   }}
@@ -1094,7 +1268,7 @@ const PromotionManagement: React.FC = () => {
             <Switch checkedChildren="Hoạt động" unCheckedChildren="Tạm dừng" />
           </Form.Item>
 
-          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+          <Form.Item className="mb-0 text-right">
             <Space>
               <Button onClick={() => {
                 setIsCreateModalVisible(false);
@@ -1143,21 +1317,11 @@ const PromotionManagement: React.FC = () => {
                 rules={[{ required: true, message: 'Vui lòng chọn loại khuyến mãi' }]}
               >
                 <select
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    borderRadius: '4px',
-                    border: '1px solid #d9d9d9',
-                    padding: '0 8px',
-                    fontSize: '14px',
-                    backgroundColor: '#fff'
-                  }}
+                  className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   defaultValue={selectedPromotion?.type || ''}
                   onChange={(e) => editForm.setFieldsValue({ type: e.target.value })}
                 >
                   <option value="">Chọn loại khuyến mãi</option>
-                  <option value="percent">Giảm theo phần trăm (%)</option>
-                  <option value="amount">Giảm tiền mặt (VNĐ)</option>
                   <option value="service">Dịch vụ</option>
                   <option value="gift">Quà tặng</option>
                 </select>
@@ -1171,7 +1335,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <InputNumber
                   placeholder="Nhập giá trị"
-                  style={{ width: '100%' }}
+                  className="w-full"
                   min={0}
                 />
               </Form.Item>
@@ -1186,15 +1350,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <input
                   type="datetime-local"
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    borderRadius: '4px',
-                    border: '1px solid #d9d9d9',
-                    padding: '0 8px',
-                    fontSize: '14px',
-                    backgroundColor: '#fff'
-                  }}
+                  className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   defaultValue={selectedPromotion?.start_date ? dayjs(selectedPromotion.start_date).format('YYYY-MM-DDTHH:mm') : ''}
                   onChange={(e) => {
                     editForm.setFieldsValue({ startDate: e.target.value });
@@ -1209,15 +1365,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <input
                   type="datetime-local"
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    borderRadius: '4px',
-                    border: '1px solid #d9d9d9',
-                    padding: '0 8px',
-                    fontSize: '14px',
-                    backgroundColor: '#fff'
-                  }}
+                  className="w-full h-8 rounded border border-gray-300 px-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   defaultValue={selectedPromotion?.end_date ? dayjs(selectedPromotion.end_date).format('YYYY-MM-DDTHH:mm') : ''}
                   onChange={(e) => {
                     editForm.setFieldsValue({ endDate: e.target.value });
@@ -1235,7 +1383,7 @@ const PromotionManagement: React.FC = () => {
             <Switch checkedChildren="Hoạt động" unCheckedChildren="Tạm dừng" />
           </Form.Item>
 
-          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+          <Form.Item className="mb-0 text-right">
             <Space>
               <Button onClick={() => {
                 setIsEditModalVisible(false);
@@ -1292,43 +1440,67 @@ const PromotionManagement: React.FC = () => {
             </Row>
 
             {/* Thông tin đại lý được phân bổ */}
-            {selectedPromotion.assigned_dealers && selectedPromotion.assigned_dealers.length > 0 && (
-              <Card size="small" title={`Đại lý được phân bổ (${selectedPromotion.assigned_dealers.length})`} style={{ marginTop: '16px' }}>
-                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {selectedPromotion.assigned_dealers.map((dealer) => (
-                    <div key={dealer.dealer_id} style={{ 
-                      padding: '8px 12px', 
-                      marginBottom: '8px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '4px',
-                      border: '1px solid #e9ecef'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <Text strong>{dealer.dealer_name}</Text>
-                          <Text type="secondary" style={{ marginLeft: '8px' }}>({dealer.dealer_code})</Text>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div>
-                            <Tag color={dealer.is_active ? 'green' : 'red'}>
-                              {dealer.is_active ? 'Hoạt động' : 'Tạm dừng'}
+            {selectedPromotion.dealerships && selectedPromotion.dealerships.length > 0 && (
+              <Card size="small" title={`Đại lý được phân bổ (${selectedPromotion.dealerships.length})`} className="mt-4">
+                <div className="max-h-48 overflow-y-auto">
+                  {selectedPromotion.dealerships.map((dealerId) => {
+                    const dealer = dealers.find(d => d._id === dealerId);
+                    return (
+                      <div key={dealerId} className="p-3 mb-3 bg-gray-50 rounded border border-gray-200">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="mb-2">
+                              <Text strong className="text-base">
+                                {dealer?.company_name || dealer?.name || 'Tên không xác định'}
+                              </Text>
+                              <Text type="secondary" className="ml-2">
+                                ({dealer?.code || 'N/A'})
+                              </Text>
+                            </div>
+                            <div className="space-y-1">
+                              {dealer?.email && (
+                                <div className="text-sm text-gray-600">
+                                  <Text type="secondary">Email: </Text>
+                                  <Text>{dealer.email}</Text>
+                                </div>
+                              )}
+                              {dealer?.phone && (
+                                <div className="text-sm text-gray-600">
+                                  <Text type="secondary">Điện thoại: </Text>
+                                  <Text>{dealer.phone}</Text>
+                                </div>
+                              )}
+                              {dealer?.address && (
+                                <div className="text-sm text-gray-600">
+                                  <Text type="secondary">Địa chỉ: </Text>
+                                  <Text>
+                                    {typeof dealer.address === 'string' 
+                                      ? dealer.address 
+                                      : dealer.address?.full_address || 
+                                        `${dealer.address?.street || ''}, ${dealer.address?.district || ''}, ${dealer.address?.city || ''}, ${dealer.address?.province || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',')
+                                    }
+                                  </Text>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <Tag color={dealer?.isActive ? 'green' : 'red'}>
+                              {dealer?.isActive ? 'Hoạt động' : 'Tạm dừng'}
                             </Tag>
                           </div>
-                          <Text type="secondary" style={{ fontSize: '12px' }}>
-                            {dayjs(dealer.assigned_date).format('DD/MM/YYYY HH:mm')}
-                          </Text>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             )}
 
-            {selectedPromotion.assigned_dealers?.length === 0 && (
-              <Card size="small" title="Đại lý được phân bổ" style={{ marginTop: '16px' }}>
-                <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-                  <UserOutlined style={{ fontSize: '24px', marginBottom: '8px' }} />
+            {(!selectedPromotion.dealerships || selectedPromotion.dealerships.length === 0) && (
+              <Card size="small" title="Đại lý được phân bổ" className="mt-4">
+                <div className="text-center p-5 text-gray-500">
+                  <UserOutlined className="text-2xl mb-2" />
                   <div>Chưa có đại lý nào được phân bổ khuyến mãi này</div>
                 </div>
               </Card>
@@ -1340,8 +1512,8 @@ const PromotionManagement: React.FC = () => {
       {/* Distribute Modal */}
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShareAltOutlined style={{ color: '#1890ff' }} />
+          <div className="flex items-center gap-2">
+            <ShareAltOutlined className="text-blue-600" />
             Phân bổ khuyến mãi cho đại lý
           </div>
         }
@@ -1364,39 +1536,33 @@ const PromotionManagement: React.FC = () => {
         {selectedPromotion && (
           <div>
             {/* Promotion Info */}
-            <div style={{ 
-              marginBottom: '24px', 
-              padding: '16px', 
-              backgroundColor: '#f8f9fa', 
-              borderRadius: '8px',
-              border: '1px solid #e9ecef'
-            }}>
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <Row gutter={16}>
                 <Col span={12}>
                   <div>
-                    <Text strong style={{ color: '#495057' }}>Tên khuyến mãi:</Text>
+                    <Text strong className="text-gray-700">Tên khuyến mãi:</Text>
                     <br />
-                    <Text style={{ fontSize: '16px', fontWeight: 500, color: '#1890ff' }}>
+                    <Text className="text-base font-medium text-blue-600">
                       {selectedPromotion.name}
                     </Text>
                   </div>
                 </Col>
                 <Col span={12}>
                   <div>
-                    <Text strong style={{ color: '#495057' }}>Giá trị:</Text>
+                    <Text strong className="text-gray-700">Giá trị:</Text>
                     <br />
-                    <Text style={{ fontSize: '16px', fontWeight: 500, color: '#52c41a' }}>
+                    <Text className="text-base font-medium text-green-600">
                       {getPromotionValue(selectedPromotion)}
                     </Text>
                   </div>
                 </Col>
               </Row>
-              <div style={{ marginTop: '12px' }}>
-                <Text strong style={{ color: '#495057' }}>Loại:</Text>
+              <div className="mt-3">
+                <Text strong className="text-gray-700">Loại:</Text>
                 <Tag 
                   icon={getPromotionTypeIcon(selectedPromotion.type)} 
                   color="blue" 
-                  style={{ marginLeft: '8px' }}
+                  className="ml-2"
                 >
                   {getPromotionTypeText(selectedPromotion.type)}
                 </Tag>
@@ -1405,22 +1571,18 @@ const PromotionManagement: React.FC = () => {
             
             {/* Transfer Component */}
             {dealerLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px' }}>
+              <div className="text-center p-10">
                 <Text>Đang tải danh sách đại lý...</Text>
               </div>
             ) : dealers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px' }}>
-                <div style={{ 
-                  fontSize: '48px', 
-                  color: '#d9d9d9', 
-                  marginBottom: '16px'
-                }}>
+              <div className="text-center p-10">
+                <div className="text-5xl text-gray-300 mb-4">
                   🏢
                 </div>
-                <Text type="secondary" style={{ fontSize: '16px', display: 'block', marginBottom: '8px' }}>
+                <Text type="secondary" className="text-base block mb-2">
                   Chưa có đại lý nào trong hệ thống
                 </Text>
-                <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '24px' }}>
+                <Text type="secondary" className="text-sm block mb-6">
                   Vui lòng thêm đại lý mới để có thể phân bổ khuyến mãi
                 </Text>
                 <Space>
@@ -1434,7 +1596,6 @@ const PromotionManagement: React.FC = () => {
                   </Button>
                   <Button 
                     onClick={() => {
-                      // Navigate to dealer management page
                       window.open('/admin/dealer-management', '_blank');
                     }}
                     icon={<ShareAltOutlined />}
@@ -1445,11 +1606,12 @@ const PromotionManagement: React.FC = () => {
               </div>
             ) : (
               <Transfer
-                dataSource={dealers.map(dealer => ({
-                  key: dealer._id,
-                  title: dealer.name,
+                dataSource={dealers.map((dealer, index) => ({
+                  key: `dealer-${dealer._id}-${index}`,
+                  title: dealer.company_name || dealer.name || 'Tên không xác định',
                   description: `${dealer.code || 'N/A'} - ${dealer.email || 'N/A'} - ${dealer.phone || 'N/A'}`,
-                  disabled: !dealer.isActive
+                  disabled: !dealer.isActive,
+                  dealerId: dealer._id // Thêm dealerId để tracking
                 }))}
                 titles={[
                   `Danh sách đại lý (${dealers.length})`, 
@@ -1478,25 +1640,21 @@ const PromotionManagement: React.FC = () => {
                 }}
                 showSearch
                 filterOption={(inputValue, option) =>
-                  option.title.toLowerCase().includes(inputValue.toLowerCase()) ||
-                  option.description.toLowerCase().includes(inputValue.toLowerCase())
+                  (option.title || '').toLowerCase().includes(inputValue.toLowerCase()) ||
+                  (option.description || '').toLowerCase().includes(inputValue.toLowerCase())
                 }
                 locale={{
                   itemUnit: 'đại lý',
                   itemsUnit: 'đại lý'
                 }}
+                oneWay={false}
+                showSelectAll={false}
               />
             )}
             
             {targetKeys.length > 0 && (
-              <div style={{ 
-                marginTop: '16px', 
-                padding: '12px', 
-                backgroundColor: '#e6f4ff', 
-                borderRadius: '6px',
-                border: '1px solid #91caff'
-              }}>
-                <Text style={{ color: '#0958d9' }}>
+              <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                <Text className="text-blue-700">
                   ✓ Đã chọn {targetKeys.length} đại lý để phân bổ khuyến mãi
                 </Text>
               </div>
@@ -1505,20 +1663,6 @@ const PromotionManagement: React.FC = () => {
         )}
       </Modal>
       
-      {/* Toast Container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        style={{ zIndex: 99999 }}
-      />
       </div>
     </AdminLayout>
   );

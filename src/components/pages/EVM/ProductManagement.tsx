@@ -17,7 +17,6 @@ import {
   message,
   Badge,
   Avatar,
-  Tooltip,
   Modal,
   Descriptions,
   Divider,
@@ -594,43 +593,6 @@ const ProductManagement: React.FC = () => {
                             )}
                           </div>
                         }
-                        actions={[
-                          <Tooltip title="Xem chi tiết" key="view">
-                            <Button 
-                              type="text" 
-                              icon={<EyeOutlined style={{ fontSize: 18 }} />} 
-                              onClick={() => handleViewProduct(product._id)}
-                              style={{ color: '#1890ff' }}
-                            />
-                          </Tooltip>,
-                          <Tooltip title="Chỉnh sửa" key="edit">
-                            <Button 
-                              type="text" 
-                              icon={<EditOutlined style={{ fontSize: 18 }} />} 
-                              onClick={() => handleEditProduct(product)}
-                              style={{ color: '#faad14' }}
-                            />
-                          </Tooltip>,
-                          product.status === 'active' ? (
-                            <Tooltip title="Ngừng kinh doanh" key="delete">
-                              <Button 
-                                type="text" 
-                                danger 
-                                icon={<DeleteOutlined style={{ fontSize: 18 }} />} 
-                                onClick={() => handleDeleteProduct(product)}
-                              />
-                            </Tooltip>
-                          ) : (
-                            <Tooltip title="Kích hoạt lại" key="activate">
-                              <Button 
-                                type="text" 
-                                style={{ color: '#52c41a' }}
-                                icon={<CheckCircleOutlined style={{ fontSize: 18 }} />} 
-                                onClick={() => handleReactivateProduct(product)}
-                              />
-                            </Tooltip>
-                          )
-                        ]}
                       >
                         <div style={{ minHeight: 180 }}>
                           <Title level={5} style={{ margin: 0, marginBottom: 4, color: '#262626', fontSize: 16 }}>
@@ -675,7 +637,7 @@ const ProductManagement: React.FC = () => {
                                 </Tag>
                                 <Tag color="orange" style={{ borderRadius: 4, margin: 0 }}>
                                   Kho: {product.stocks && product.stocks.length > 0 
-                                    ? product.stocks[0].quantity 
+                                    ? product.stocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
                                     : product.stock || 0}
                                 </Tag>
                               </Space>
@@ -683,7 +645,140 @@ const ProductManagement: React.FC = () => {
                                 {new Date(product.createdAt).toLocaleDateString('vi-VN')}
                               </Text>
                             </div>
+                            
+                            {/* Color-based stock breakdown */}
+                            {product.stocks && product.stocks.length > 0 && product.stocks.some((stock: any) => stock.color) && (
+                              <div style={{ marginTop: 8 }}>
+                                <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+                                  Tồn kho theo màu:
+                                </div>
+                                <Space wrap size={2}>
+                                  {product.stocks
+                                    .filter((stock: any) => stock.color && stock.quantity > 0)
+                                    .map((stock: any, index: number) => (
+                                      <Tag 
+                                        key={index} 
+                                        color="cyan" 
+                                        style={{ borderRadius: 4, fontSize: 10, margin: 0 }}
+                                      >
+                                        {stock.color}: {stock.quantity}
+                                      </Tag>
+                                    ))}
+                                </Space>
+                              </div>
+                            )}
                           </Space>
+                          
+                          {/* Action Buttons */}
+                          <div style={{ 
+                            display: 'flex', 
+                            gap: 10, 
+                            marginTop: 16,
+                            paddingTop: 16,
+                            borderTop: '1px solid #f0f0f0',
+                            justifyContent: 'center'
+                          }}>
+                            <div className="relative group">
+                              <Button 
+                                type="primary"
+                                icon={<EyeOutlined />}
+                                onClick={() => handleViewProduct(product._id)}
+                                style={{ 
+                                  backgroundColor: '#0050b3',
+                                  borderColor: '#0050b3',
+                                  color: '#fff',
+                                  width: 38,
+                                  height: 38,
+                                  borderRadius: 10,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxShadow: '0 2px 6px rgba(0, 80, 179, 0.4)',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              />
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                Xem chi tiết sản phẩm
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                              </div>
+                            </div>
+                            <div className="relative group">
+                              <Button 
+                                type="primary"
+                                icon={<EditOutlined />}
+                                onClick={() => handleEditProduct(product)}
+                                style={{ 
+                                  backgroundColor: '#d46b08',
+                                  borderColor: '#d46b08',
+                                  color: '#fff',
+                                  width: 38,
+                                  height: 38,
+                                  borderRadius: 10,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxShadow: '0 2px 6px rgba(212, 107, 8, 0.4)',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              />
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                Chỉnh sửa sản phẩm
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                              </div>
+                            </div>
+                            {product.status === 'active' ? (
+                              <div className="relative group">
+                                <Button 
+                                  type="primary"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => handleDeleteProduct(product)}
+                                  style={{ 
+                                    backgroundColor: '#cf1322',
+                                    borderColor: '#cf1322',
+                                    color: '#fff',
+                                    width: 38,
+                                    height: 38,
+                                    borderRadius: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 6px rgba(207, 19, 34, 0.4)',
+                                    transition: 'all 0.3s ease'
+                                  }}
+                                />
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                  Ngừng kinh doanh sản phẩm
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="relative group">
+                                <Button 
+                                  type="primary"
+                                  icon={<CheckCircleOutlined />}
+                                  onClick={() => handleReactivateProduct(product)}
+                                  style={{ 
+                                    backgroundColor: '#389e0d',
+                                    borderColor: '#389e0d',
+                                    color: '#fff',
+                                    width: 38,
+                                    height: 38,
+                                    borderRadius: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 6px rgba(56, 158, 13, 0.4)',
+                                    transition: 'all 0.3s ease'
+                                  }}
+                                />
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                  Kích hoạt lại sản phẩm
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </Card>
                     </Col>
@@ -795,43 +890,6 @@ const ProductManagement: React.FC = () => {
                             )}
                           </div>
                         }
-                        actions={[
-                          <Tooltip title="Xem chi tiết" key="view">
-                            <Button 
-                              type="text" 
-                              icon={<EyeOutlined style={{ fontSize: 18 }} />} 
-                              onClick={() => handleViewProduct(product._id)}
-                              style={{ color: '#1890ff' }}
-                            />
-                          </Tooltip>,
-                          <Tooltip title="Chỉnh sửa" key="edit">
-                            <Button 
-                              type="text" 
-                              icon={<EditOutlined style={{ fontSize: 18 }} />} 
-                              onClick={() => handleEditProduct(product)}
-                              style={{ color: '#faad14' }}
-                            />
-                          </Tooltip>,
-                          product.status === 'active' ? (
-                            <Tooltip title="Ngừng kinh doanh" key="delete">
-                              <Button 
-                                type="text" 
-                                danger 
-                                icon={<DeleteOutlined style={{ fontSize: 18 }} />} 
-                                onClick={() => handleDeleteProduct(product)}
-                              />
-                            </Tooltip>
-                          ) : (
-                            <Tooltip title="Kích hoạt lại" key="activate">
-                              <Button 
-                                type="text" 
-                                style={{ color: '#52c41a' }}
-                                icon={<CheckCircleOutlined style={{ fontSize: 18 }} />} 
-                                onClick={() => handleReactivateProduct(product)}
-                              />
-                            </Tooltip>
-                          )
-                        ]}
                       >
                         <div style={{ minHeight: 180 }}>
                           <Title level={5} style={{ margin: 0, marginBottom: 4, color: '#262626', fontSize: 16 }}>
@@ -876,7 +934,7 @@ const ProductManagement: React.FC = () => {
                                 </Tag>
                                 <Tag color="orange" style={{ borderRadius: 4, margin: 0 }}>
                                   Kho: {product.stocks && product.stocks.length > 0 
-                                    ? product.stocks[0].quantity 
+                                    ? product.stocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
                                     : product.stock || 0}
                                 </Tag>
                               </Space>
@@ -884,7 +942,140 @@ const ProductManagement: React.FC = () => {
                                 {new Date(product.createdAt).toLocaleDateString('vi-VN')}
                               </Text>
                             </div>
+                            
+                            {/* Color-based stock breakdown */}
+                            {product.stocks && product.stocks.length > 0 && product.stocks.some((stock: any) => stock.color) && (
+                              <div style={{ marginTop: 8 }}>
+                                <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+                                  Tồn kho theo màu:
+                                </div>
+                                <Space wrap size={2}>
+                                  {product.stocks
+                                    .filter((stock: any) => stock.color && stock.quantity > 0)
+                                    .map((stock: any, index: number) => (
+                                      <Tag 
+                                        key={index} 
+                                        color="cyan" 
+                                        style={{ borderRadius: 4, fontSize: 10, margin: 0 }}
+                                      >
+                                        {stock.color}: {stock.quantity}
+                                      </Tag>
+                                    ))}
+                                </Space>
+                              </div>
+                            )}
                           </Space>
+                          
+                          {/* Action Buttons */}
+                          <div style={{ 
+                            display: 'flex', 
+                            gap: 10, 
+                            marginTop: 16,
+                            paddingTop: 16,
+                            borderTop: '1px solid #f0f0f0',
+                            justifyContent: 'center'
+                          }}>
+                            <div className="relative group">
+                              <Button 
+                                type="primary"
+                                icon={<EyeOutlined />}
+                                onClick={() => handleViewProduct(product._id)}
+                                style={{ 
+                                  backgroundColor: '#0050b3',
+                                  borderColor: '#0050b3',
+                                  color: '#fff',
+                                  width: 38,
+                                  height: 38,
+                                  borderRadius: 10,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxShadow: '0 2px 6px rgba(0, 80, 179, 0.4)',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              />
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                Xem chi tiết sản phẩm
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                              </div>
+                            </div>
+                            <div className="relative group">
+                              <Button 
+                                type="primary"
+                                icon={<EditOutlined />}
+                                onClick={() => handleEditProduct(product)}
+                                style={{ 
+                                  backgroundColor: '#d46b08',
+                                  borderColor: '#d46b08',
+                                  color: '#fff',
+                                  width: 38,
+                                  height: 38,
+                                  borderRadius: 10,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxShadow: '0 2px 6px rgba(212, 107, 8, 0.4)',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              />
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                Chỉnh sửa sản phẩm
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                              </div>
+                            </div>
+                            {product.status === 'active' ? (
+                              <div className="relative group">
+                                <Button 
+                                  type="primary"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => handleDeleteProduct(product)}
+                                  style={{ 
+                                    backgroundColor: '#cf1322',
+                                    borderColor: '#cf1322',
+                                    color: '#fff',
+                                    width: 38,
+                                    height: 38,
+                                    borderRadius: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 6px rgba(207, 19, 34, 0.4)',
+                                    transition: 'all 0.3s ease'
+                                  }}
+                                />
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                  Ngừng kinh doanh sản phẩm
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="relative group">
+                                <Button 
+                                  type="primary"
+                                  icon={<CheckCircleOutlined />}
+                                  onClick={() => handleReactivateProduct(product)}
+                                  style={{ 
+                                    backgroundColor: '#389e0d',
+                                    borderColor: '#389e0d',
+                                    color: '#fff',
+                                    width: 38,
+                                    height: 38,
+                                    borderRadius: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 6px rgba(56, 158, 13, 0.4)',
+                                    transition: 'all 0.3s ease'
+                                  }}
+                                />
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                  Kích hoạt lại sản phẩm
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </Card>
                     </Col>
@@ -1133,11 +1324,33 @@ const ProductManagement: React.FC = () => {
                     </Descriptions.Item>
                     
                     <Descriptions.Item label="Tồn kho">
-                      <Tag color="geekblue" style={{ borderRadius: 4 }}>
-                        {selectedProduct.stocks && selectedProduct.stocks.length > 0 
-                          ? selectedProduct.stocks[0].quantity 
-                          : selectedProduct.stock || 0} chiếc
-                      </Tag>
+                      <div>
+                        <Tag color="geekblue" style={{ borderRadius: 4, marginBottom: 8 }}>
+                          Tổng: {selectedProduct.stocks && selectedProduct.stocks.length > 0 
+                            ? selectedProduct.stocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
+                            : selectedProduct.stock || 0} chiếc
+                        </Tag>
+                        {selectedProduct.stocks && selectedProduct.stocks.length > 0 && selectedProduct.stocks.some((stock: any) => stock.color) && (
+                          <div style={{ marginTop: 8 }}>
+                            <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
+                              Chi tiết theo màu:
+                            </div>
+                            <Space wrap size={4}>
+                              {selectedProduct.stocks
+                                .filter((stock: any) => stock.color && stock.quantity > 0)
+                                .map((stock: any, index: number) => (
+                                  <Tag 
+                                    key={index} 
+                                    color="cyan" 
+                                    style={{ borderRadius: 4 }}
+                                  >
+                                    {stock.color}: {stock.quantity} chiếc
+                                  </Tag>
+                                ))}
+                            </Space>
+                          </div>
+                        )}
+                      </div>
                     </Descriptions.Item>
                     
                     <Descriptions.Item label="Bảo hành">
