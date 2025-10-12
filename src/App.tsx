@@ -1,31 +1,32 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LoginPage } from './components/LoginPage';
-import { Dashboard } from './components/Dashboard';
-import { Layout } from './components/common/Layout';
-import { CarDetail } from './components/pages/car/CarDetail';
-import { CarProduct } from './components/pages/car/CarProduct';
-import { CompareModels } from './components/pages/car/CompareModels';
-import { ModelSelector } from './components/pages/car/ModelSelector';
-import { TestDrive } from './components/pages/car/TestDrive';
-import { Motorbike } from './components/pages/motorbike/Motorbike';
-import { MotorbikeDetail } from './components/pages/motorbike/MotorbikeDetail';
-import { CompareMotorbikes } from './components/pages/motorbike/CompareMotorbikes';
-import { MotorbikeModelSelector } from './components/pages/motorbike/MotorbikeModelSelector';
-import { MotorbikeDeposit } from './components/pages/motorbike/MotorbikeDeposit';
-import { MotorbikeSchedule } from './components/pages/motorbike/MotorbikeSchedule';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { LoginPage } from "./components/LoginPage";
+import { Dashboard } from "./components/Dashboard";
+import { Layout } from "./components/common/Layout";
+import { CarDetail } from "./components/pages/car/CarDetail";
+import { CarProduct } from "./components/pages/car/CarProduct";
+import { CompareModels } from "./components/pages/car/CompareModels";
+import { ModelSelector } from "./components/pages/car/ModelSelector";
+import { TestDrive } from "./components/pages/car/TestDrive";
+import { Motorbike } from "./components/pages/motorbike/Motorbike";
+import { MotorbikeDetail } from "./components/pages/motorbike/MotorbikeDetail";
+import { CompareMotorbikes } from "./components/pages/motorbike/CompareMotorbikes";
+import { MotorbikeModelSelector } from "./components/pages/motorbike/MotorbikeModelSelector";
+import { MotorbikeDeposit } from "./components/pages/motorbike/MotorbikeDeposit";
+import { MotorbikeSchedule } from "./components/pages/motorbike/MotorbikeSchedule";
 
 import { AdminStaffManagement } from "./components/pages/admin/AdminStaffManagement";
 
-import { CarDeposit } from './components/pages/car/CarDeposit';
-import { StaffManagement } from './components/pages/DealerManager/StaffManagement';
-import ProductManagement from './components/pages/EVM/ProductManagement';
-import { CustomerManagement } from './components/pages/EVM/CustomerManagement';
-import { AdminDealerManagement } from './components/pages/EVM/DealerManagement';
-import { AddDealer } from './components/pages/EVM/AddDealer';
-import InventoryManagement from './components/pages/EVM/InventoryManagement';
-import PromotionManagement from './components/pages/EVM/PromotionManagement';
-import { DealerInfo } from './components/pages/DealerManager/DealerInfo';
+import { CarDeposit } from "./components/pages/car/CarDeposit";
+import { StaffManagement } from "./components/pages/DealerManager/StaffManagement";
+import ProductManagement from "./components/pages/EVM/ProductManagement";
+import { CustomerManagement } from "./components/pages/EVM/CustomerManagement";
+import { AdminDealerManagement } from "./components/pages/EVM/DealerManagement";
+import { AddDealer } from "./components/pages/EVM/AddDealer";
+import InventoryManagement from "./components/pages/EVM/InventoryManagement";
+import PromotionManagement from "./components/pages/EVM/PromotionManagement";
+import { DealerInfo } from "./components/pages/DealerManager/DealerInfo";
+import { PromotionsDashboard } from "./components/PromotionsDashboard";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -69,9 +70,9 @@ function AppContent() {
       />
       <Route path="/portal/deposit" element={<CarDeposit />} />
       <Route path="/portal/staff-management" element={<StaffManagement />} />
+      <Route path="/portal/promotions" element={<PromotionsDashboard />} />
       <Route path="/portal/dealer-info" element={<DealerInfo />} />
-     
-      
+
       {/* Admin routes */}
 
       <Route
@@ -98,15 +99,17 @@ function AppContent() {
         path="/admin/dealer-management"
         element={<AdminDealerManagement />}
       />
-      <Route
-        path="/admin/dealer-management/add"
-        element={<AddDealer />}
-      />
+      <Route path="/admin/dealer-management/add" element={<AddDealer />} />
       <Route path="/evm/product-management" element={<ProductManagement />} />
       <Route path="/evm/customer-management" element={<CustomerManagement />} />
-      <Route path="/evm/inventory-management" element={<InventoryManagement />} />
-      <Route path="/evm/promotion-management" element={<PromotionManagement />} />
-      
+      <Route
+        path="/evm/inventory-management"
+        element={<InventoryManagement />}
+      />
+      <Route
+        path="/evm/promotion-management"
+        element={<PromotionManagement />}
+      />
 
       {/* Default route */}
       <Route path="*" element={<Dashboard />} />
