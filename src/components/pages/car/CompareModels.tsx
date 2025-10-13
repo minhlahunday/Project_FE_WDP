@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, X, Battery, Zap, Clock, Car } from 'lucide-react';
-// import { mockVehicles } from '../../../data/mockData';
 import { Vehicle } from '../../../types';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
@@ -24,6 +23,7 @@ export const CompareModels: React.FC = () => {
   }, [location.state]);
 
   const formatPrice = (price: number) => {
+    if (!price) return 'Liên hệ';
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
@@ -60,12 +60,14 @@ export const CompareModels: React.FC = () => {
               <span className="text-2xl font-light text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
                 Chọn mẫu xe
               </span>
-              <span className="text-sm text-gray-500 mt-2">Chọn mẫu xe VinFast đầu tiên của bạn</span>
+              <span className="text-sm text-gray-500 mt-2">Chọn mẫu xe để so sánh</span>
             </button>
           </div>
         </div>
       );
     }
+
+    const v = vehicle as Record<string, unknown>;
 
     return (
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -82,48 +84,50 @@ export const CompareModels: React.FC = () => {
         {/* Vehicle Image */}
         <div className="px-6 pb-4">
           <img
-            src={((vehicle as Record<string, unknown>).images as string[])?.[0] || '/placeholder-car.jpg'}
-            alt={(vehicle as Record<string, unknown>).model as string}
+            src={(v.images as string[])?.[0] || '/placeholder-car.jpg'}
+            alt={v.model as string}
             className="w-full h-48 object-cover rounded-xl"
           />
         </div>
 
         {/* Vehicle Info */}
         <div className="p-6 pt-0">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">{(vehicle as Record<string, unknown>).name as string}</h3>
-          <p className="text-sm text-gray-600 mb-2">{((vehicle as Record<string, unknown>).version as string) || '2025'} - {(((vehicle as Record<string, unknown>).color_options as string[]) || ['Black'])[0]}</p>
-          <p className="text-2xl font-bold text-green-600 mb-6">{formatPrice((vehicle as Record<string, unknown>).price as number)}</p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{v.name as string}</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            {v.version as string || 'Phiên bản chuẩn'} - {(v.color_options as string[])?.[0] || 'Màu chuẩn'}
+          </p>
+          <p className="text-2xl font-bold text-green-600 mb-6">{formatPrice(v.price as number)}</p>
 
           {/* Specifications Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
             <div className="flex items-center space-x-2">
               <Battery className="h-4 w-4 text-blue-500" />
-              <span>{(vehicle as Record<string, unknown>).range_km as number}km</span>
+              <span>{v.range_km as number || 0}km</span>
             </div>
             <div className="flex items-center space-x-2">
               <Zap className="h-4 w-4 text-yellow-500" />
-              <span>{(vehicle as Record<string, unknown>).top_speed as number}km/h</span>
+              <span>{v.top_speed as number || 0}km/h</span>
             </div>
             <div className="flex items-center space-x-2">
               <Clock className="h-4 w-4 text-red-500" />
-              <span>{(vehicle as Record<string, unknown>).charging_fast as number}h</span>
+              <span>{v.charging_fast as number || 0}h</span>
             </div>
             <div className="flex items-center space-x-2">
               <Car className="h-4 w-4 text-gray-500" />
-              <span>{(vehicle as Record<string, unknown>).stock as number || 0} xe</span>
+              <span>{v.stock as number || 0} xe</span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex space-x-2">
             <button
-              onClick={() => navigate(`/portal/car-detail/${(vehicle as Record<string, unknown>)._id as string || (vehicle as Record<string, unknown>).id as string}`)}
+              onClick={() => navigate(`/portal/car-detail/${v._id as string || v.id as string}`)}
               className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
             >
               Chi tiết
             </button>
             <button
-              onClick={() => navigate(`/portal/car-deposit?vehicleId=${(vehicle as Record<string, unknown>)._id as string || (vehicle as Record<string, unknown>).id as string}`)}
+              onClick={() => navigate(`/portal/car-deposit?vehicleId=${v._id as string || v.id as string}`)}
               className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
               Đặt cọc
@@ -256,7 +260,7 @@ export const CompareModels: React.FC = () => {
                               v.release_status === 'coming_soon' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {v.release_status as string}
+                              {v.release_status as string || 'Không xác định'}
                             </span>
                           </td>
                         );
@@ -307,7 +311,7 @@ export const CompareModels: React.FC = () => {
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-blue-600 font-semibold">{v.battery_capacity as number} kWh</td>
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-blue-600 font-semibold">{v.battery_capacity as number || 0} kWh</td>
                         );
                       })}
                     </tr>
@@ -316,7 +320,7 @@ export const CompareModels: React.FC = () => {
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-blue-600 font-semibold text-lg">{v.range_km as number} km</td>
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-blue-600 font-semibold text-lg">{v.range_km as number || 0} km</td>
                         );
                       })}
                     </tr>
@@ -325,7 +329,7 @@ export const CompareModels: React.FC = () => {
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-blue-600 font-semibold">{v.wltp_range_km as number} km</td>
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-blue-600 font-semibold">{v.wltp_range_km as number || 0} km</td>
                         );
                       })}
                     </tr>
@@ -334,7 +338,7 @@ export const CompareModels: React.FC = () => {
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-red-600 font-semibold">{v.charging_fast as number}h</td>
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-red-600 font-semibold">{v.charging_fast as number || 0}h</td>
                         );
                       })}
                     </tr>
@@ -343,7 +347,7 @@ export const CompareModels: React.FC = () => {
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-orange-600 font-semibold">{v.charging_slow as number}h</td>
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-orange-600 font-semibold">{v.charging_slow as number || 0}h</td>
                         );
                       })}
                     </tr>
@@ -368,7 +372,7 @@ export const CompareModels: React.FC = () => {
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-yellow-600 font-semibold">{v.motor_power as number} kW</td>
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-yellow-600 font-semibold">{v.motor_power as number || 0} kW</td>
                         );
                       })}
                     </tr>
@@ -377,7 +381,7 @@ export const CompareModels: React.FC = () => {
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-yellow-600 font-semibold text-lg">{v.top_speed as number} km/h</td>
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-yellow-600 font-semibold text-lg">{v.top_speed as number || 0} km/h</td>
                         );
                       })}
                     </tr>
@@ -662,41 +666,8 @@ export const CompareModels: React.FC = () => {
             <div className="inline-flex items-center bg-white px-6 py-3 rounded-full shadow-md">
               <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 animate-pulse"></div>
               <p className="text-sm text-gray-600 font-medium">
-                Chọn hai mẫu xe VinFast để so sánh thông số kỹ thuật và tính năng cạnh nhau
+                Chọn hai mẫu xe để so sánh thông số kỹ thuật và tính năng
               </p>
-            </div>
-          </div>
-
-          {/* Features Preview */}
-          <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Thông số chi tiết</h3>
-              <p className="text-gray-600 text-sm">So sánh thông số kỹ thuật chi tiết cạnh nhau</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Hiệu suất</h3>
-              <p className="text-gray-600 text-sm">Tầm hoạt động, tốc độ và khả năng sạc</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Giá cả</h3>
-              <p className="text-gray-600 text-sm">So sánh giá cả và đề xuất giá trị</p>
             </div>
           </div>
         </div>

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { mockVehicles } from '../../../data/mockData';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
+import { authService } from '../../../services/authService';
 
 export const CarDeposit: React.FC = () => {
   const navigate = useNavigate();
@@ -10,8 +10,8 @@ export const CarDeposit: React.FC = () => {
   const vehicleId = searchParams.get('vehicleId');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('vehicles');
-  
-  const vehicle = mockVehicles.find(v => v.id === vehicleId) || mockVehicles[0];
+  const [vehicle, setVehicle] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -20,56 +20,104 @@ export const CarDeposit: React.FC = () => {
     email: '',
     address: '',
     paymentMethod: 'transfer',
-    version: vehicle.version || 'Standard',
-    color: 'Trắng Ngọc Trai'
+    version: '',
+    color: ''
   });
 
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
+  useEffect(() => {
+    if (vehicleId) {
+      loadVehicle(vehicleId);
+    }
+  }, [vehicleId]);
+
+  const loadVehicle = async (id: string) => {
+    try {
+      setLoading(true);
+      const response = await authService.getVehicleById(id);
+      if (response.success && response.data) {
+        const vehicleData = response.data as Record<string, unknown>;
+        setVehicle(vehicleData);
+        setFormData(prev => ({
+          ...prev,
+          version: vehicleData.version as string || 'Phiên bản chuẩn',
+          color: (vehicleData.color_options as string[])?.[0] || 'Màu chuẩn'
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading vehicle:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatPrice = (price: number) => {
+    if (!price) return 'Liên hệ';
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(price);
   };
 
-  const depositAmount = 100000000; // 100 triệu VND đặt cọc cho xe hơi
-
-  const carVersions = [
-    { name: 'Eco', price: vehicle.price },
-    { name: 'Plus', price: vehicle.price + 200000000 }
-  ];
-
-  const carColors = [
-    'Trắng Ngọc Trai',
-    'Đen Obsidian', 
-    'Đỏ Cherry',
-    'Xanh Dương Đại Dương',
-    'Xám Titanium'
-  ];
+  const calculateDepositAmount = (price: number) => {
+    return Math.round(price * 0.1); // 10% of vehicle price
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreedToTerms) {
-      alert('Vui lòng đồng ý với các điều kiện của VinFast');
+      alert('Vui lòng đồng ý với các điều kiện');
       return;
     }
     
-    // Process car deposit
-    console.log('Car Deposit Data:', { ...formData, vehicle: vehicle.model, depositAmount });
-    alert('Đặt cọc xe hơi thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.');
+    console.log('Car Deposit Data:', { 
+      ...formData, 
+      vehicle: vehicle?.name, 
+      vehicleId,
+      depositAmount: calculateDepositAmount(vehicle?.price as number || 0)
+    });
+    alert('Đặt cọc xe thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.');
     navigate('/');
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Đang tải thông tin xe...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vehicle) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy xe</h2>
+          <button 
+            onClick={() => navigate('/portal/car-product')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg"
+          >
+            Quay lại danh sách xe
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const depositAmount = calculateDepositAmount(vehicle.price as number || 0);
+  const colorOptions = vehicle.color_options as string[] || ['Màu chuẩn'];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Header 
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         isSidebarOpen={isSidebarOpen}
       />
       
-      {/* Sidebar */}
       <Sidebar
         activeSection={activeSection}
         onSectionChange={(section) => setActiveSection(section)}
@@ -78,7 +126,6 @@ export const CarDeposit: React.FC = () => {
       />
 
       <div className={`pt-[73px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        {/* Back Button */}
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-6 py-3">
             <button 
@@ -94,34 +141,37 @@ export const CarDeposit: React.FC = () => {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Đặt cọc xe ô tô điện</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Đặt cọc xe điện</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left: Vehicle Info */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Thông tin xe</h2>
               
               <img
-                src={vehicle.images[0]}
-                alt={vehicle.model}
+                src={(vehicle.images as string[])?.[0] || '/placeholder-car.jpg'}
+                alt={vehicle.name as string}
                 className="w-full h-48 object-cover rounded-lg mb-4"
               />
               
-              <h3 className="text-lg font-bold text-gray-900">{vehicle.model}</h3>
-              <p className="text-gray-600 mb-4">{vehicle.description}</p>
+              <h3 className="text-lg font-bold text-gray-900">{vehicle.name as string}</h3>
+              <p className="text-gray-600 mb-4">{vehicle.description as string || 'Xe điện hiện đại'}</p>
               
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tầm hoạt động:</span>
-                  <span className="font-medium">{vehicle.range} km</span>
+                  <span className="font-medium">{vehicle.range_km as number || 0} km</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tốc độ tối đa:</span>
-                  <span className="font-medium">{vehicle.maxSpeed} km/h</span>
+                  <span className="font-medium">{vehicle.top_speed as number || 0} km/h</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Thời gian sạc:</span>
-                  <span className="font-medium">{vehicle.chargingTime}</span>
+                  <span className="text-gray-600">Thời gian sạc nhanh:</span>
+                  <span className="font-medium">{vehicle.charging_fast as number || 0}h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Dung lượng pin:</span>
+                  <span className="font-medium">{vehicle.battery_capacity as number || 0} kWh</span>
                 </div>
               </div>
 
@@ -136,7 +186,6 @@ export const CarDeposit: React.FC = () => {
               </div>
             </div>
 
-            {/* Right: Deposit Form */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Thông tin đặt cọc</h2>
               
@@ -220,11 +269,7 @@ export const CarDeposit: React.FC = () => {
                     onChange={(e) => setFormData({...formData, version: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
-                    {carVersions.map((version) => (
-                      <option key={version.name} value={version.name}>
-                        {version.name} - {formatPrice(version.price)}
-                      </option>
-                    ))}
+                    <option value="">{vehicle.version}</option>
                   </select>
                 </div>
 
@@ -237,7 +282,7 @@ export const CarDeposit: React.FC = () => {
                     onChange={(e) => setFormData({...formData, color: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
-                    {carColors.map((color) => (
+                    {colorOptions.map((color) => (
                       <option key={color} value={color}>{color}</option>
                     ))}
                   </select>
