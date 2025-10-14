@@ -1,6 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
+  Row, 
+  Col, 
+  Card, 
+  Button, 
+  Tabs, 
+  Image, 
+  Tag, 
+  Descriptions, 
+  Divider, 
+  Space, 
+  Typography, 
+  List, 
+  Badge,
+  Carousel,
+  Grid,
+  Spin,
+  Alert,
+  ConfigProvider
+} from 'antd';
+import { 
   Battery, 
   Zap, 
   Clock, 
@@ -24,13 +44,17 @@ import {
   AlertCircle,
   Info,
   Eye,
-  Bike
+  Bike,
+  ArrowLeft,
+  Play
 } from 'lucide-react';
-// import { mockMotorbikes } from '../../../data/mockData';
-// import { Vehicle } from '../../../types';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
+
+const { Title, Text, Paragraph } = Typography;
+const { TabPane } = Tabs;
+const { useBreakpoint } = Grid;
 
 export const MotorbikeDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +67,7 @@ export const MotorbikeDetail: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
   const [isFavorite, setIsFavorite] = useState(false);
+  const screens = useBreakpoint();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -121,14 +146,15 @@ export const MotorbikeDetail: React.FC = () => {
     navigate(`/portal/motorbike-deposit?vehicleId=${vehicleId}`);
   };
 
+  // Get image array
+  const images = (getVehicleProperty('images', ['/placeholder-motorbike.jpg']) as string[]);
+  
   // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải thông tin xe máy...</p>
-        </div>
+        <Spin size="large" />
+        <Text className="ml-4">Đang tải thông tin xe máy...</Text>
       </div>
     );
   }
@@ -137,265 +163,458 @@ export const MotorbikeDetail: React.FC = () => {
   if (error && !vehicle) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Không thể tải thông tin xe máy</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
+        <div className="text-center max-w-md">
+          <Alert
+            message="Không thể tải thông tin xe máy"
+            description={error}
+            type="error"
+            showIcon
+            className="mb-4"
+          />
+          <Button 
+            type="primary" 
+            size="large"
             onClick={() => navigate('/portal/motorbike-product')}
-            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800"
           >
             Quay lại danh sách xe máy
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header 
-        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        isSidebarOpen={isSidebarOpen}
-      />
-      
-      {/* Sidebar */}
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={(section) => setActiveSection(section)}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        onOpen={() => setIsSidebarOpen(true)}
-      />
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#1890ff',
+          borderRadius: 8,
+        },
+      }}
+    >
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Header */}
+        <Header 
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
+        />
+        
+        {/* Sidebar */}
+        <Sidebar
+          activeSection={activeSection}
+          onSectionChange={(section) => setActiveSection(section)}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          onOpen={() => setIsSidebarOpen(true)}
+        />
 
-      <div className={`pt-[73px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        {/* Back Button */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-6 py-3">
-            <button 
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 group"
-            >
-              <svg className="w-4 h-4 mr-1 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Quay lại
-            </button>
+        <div className={`flex-1 pt-[73px] transition-all duration-300 pb-8 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+          {/* Breadcrumb */}
+          <div className="bg-white border-b">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <Button 
+                type="text" 
+                icon={<ArrowLeft size={16} />}
+                onClick={() => navigate(-1)}
+                className="flex items-center"
+              >
+                Quay lại
+              </Button>
+            </div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 py-8">
+            {/* Product Header */}
+            <div className="mb-8">
+              <Space className="mb-4">
+                <Tag color="blue">{getVehicleProperty('sku', 'N/A') as string}</Tag>
+                <Tag color="green">Version {getVehicleProperty('version', '2025') as string}</Tag>
+                <Tag color={getVehicleProperty('release_status') === 'available' ? 'success' : 'warning'}>
+                  {getVehicleProperty('release_status') === 'available' ? 'Có sẵn' : 'Sắp ra mắt'}
+                </Tag>
+              </Space>
+              
+              <Title level={1} className="mb-2">
+                {getVehicleProperty('name', getVehicleProperty('model', 'Motorbike')) as string}
+              </Title>
+              
+              <Text type="secondary" className="text-lg">
+                {getVehicleProperty('version', '2025') as string} - {(getVehicleProperty('color_options', ['Black']) as string[]).join(', ')}
+              </Text>
+            </div>
+
+            <Row gutter={[32, 32]}>
+              {/* Image Gallery */}
+              <Col xs={24} lg={14}>
+                <Card className="overflow-hidden shadow-lg">
+                  <div className="relative">
+                    <Image.PreviewGroup>
+                      <Image
+                        src={images[selectedImage]}
+                        alt={getVehicleProperty('model', 'Motorbike') as string}
+                        className="w-full h-[500px] object-cover rounded-lg"
+                        preview={{
+                          mask: <div className="flex items-center"><Eye size={20} className="mr-2" />Xem chi tiết</div>
+                        }}
+                      />
+                    </Image.PreviewGroup>
+                  </div>
+                  
+                  {/* Thumbnail Gallery */}
+                  {images.length > 1 && (
+                    <div className="mt-4">
+                      <Row gutter={[8, 8]}>
+                        {images.slice(0, 5).map((img, index) => (
+                          <Col key={index} span={4}>
+                            <div
+                              className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                                selectedImage === index ? 'border-blue-500' : 'border-gray-200 hover:border-gray-400'
+                              }`}
+                              onClick={() => setSelectedImage(index)}
+                            >
+                              <img
+                                src={img}
+                                alt={`View ${index + 1}`}
+                                className="w-full h-16 object-cover"
+                              />
+                            </div>
+                          </Col>
+                        ))}
+                      </Row>
+                    </div>
+                  )}
+                </Card>
+              </Col>
+
+              {/* Product Info */}
+              <Col xs={24} lg={10}>
+                <Card className="shadow-lg h-fit">
+                  <div className="mb-6">
+                    <Title level={2} className="text-green-600 mb-0">
+                      {formatPrice(getVehicleProperty('price', 25000000) as number)}
+                    </Title>
+                    <Text type="secondary">Giá đã bao gồm VAT</Text>
+                  </div>
+
+                  {/* Key Specs */}
+                  <div className="mb-6">
+                    <Title level={4} className="mb-4">Thông số chính</Title>
+                    <Row gutter={[16, 16]}>
+                      <Col span={12}>
+                        <Card size="small" className="text-center bg-blue-50">
+                          <Battery className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+                          <Text strong className="block">{getVehicleProperty('range_km', '120')} km</Text>
+                          <Text type="secondary" className="text-xs">Tầm hoạt động</Text>
+                        </Card>
+                      </Col>
+                      <Col span={12}>
+                        <Card size="small" className="text-center bg-yellow-50">
+                          <Zap className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
+                          <Text strong className="block">{getVehicleProperty('top_speed', '80')} km/h</Text>
+                          <Text type="secondary" className="text-xs">Tốc độ tối đa</Text>
+                        </Card>
+                      </Col>
+                      <Col span={12}>
+                        <Card size="small" className="text-center bg-red-50">
+                          <Clock className="h-6 w-6 text-red-500 mx-auto mb-2" />
+                          <Text strong className="block">{getVehicleProperty('charging_fast', '1')}h</Text>
+                          <Text type="secondary" className="text-xs">Sạc nhanh</Text>
+                        </Card>
+                      </Col>
+                      <Col span={12}>
+                        <Card size="small" className="text-center bg-green-50">
+                          <Users className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                          <Text strong className="block">{getVehicleProperty('seating_capacity', '2')}</Text>
+                          <Text type="secondary" className="text-xs">Chỗ ngồi</Text>
+                        </Card>
+                      </Col>
+                    </Row>
+                  </div>
+
+                  {/* Additional Specs */}
+                  <div className="mb-6">
+                    <Title level={5}>Thông số bổ sung</Title>
+                    <Row gutter={[8, 8]}>
+                      <Col span={12}>
+                        <div className="bg-purple-50 p-3 rounded-lg text-center">
+                          <Settings className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+                          <Text strong className="block text-sm">{getVehicleProperty('motor_power', '0')} kW</Text>
+                          <Text type="secondary" className="text-xs">Công suất</Text>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="bg-orange-50 p-3 rounded-lg text-center">
+                          <Battery className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+                          <Text strong className="block text-sm">{getVehicleProperty('battery_capacity', '0')} kWh</Text>
+                          <Text type="secondary" className="text-xs">Dung lượng pin</Text>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="bg-gray-50 p-3 rounded-lg text-center">
+                          <Weight className="h-5 w-5 text-gray-600 mx-auto mb-1" />
+                          <Text strong className="block text-sm">{getVehicleProperty('weight', '0')} kg</Text>
+                          <Text type="secondary" className="text-xs">Trọng lượng</Text>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="bg-blue-50 p-3 rounded-lg text-center">
+                          <AlertCircle className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+                          <Text strong className="block text-sm">{getVehicleProperty('stock', '0')}</Text>
+                          <Text type="secondary" className="text-xs">Tồn kho</Text>
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+
+                  {/* Color Options */}
+                  <div className="mb-6">
+                    <Title level={5}>Màu sắc có sẵn</Title>
+                    <Space wrap>
+                      {(getVehicleProperty('color_options', ['red']) as string[]).map((color, index) => (
+                        <div key={index} className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
+                          <div 
+                            className="w-6 h-6 rounded-full border-2 border-gray-300"
+                            style={{ backgroundColor: color.toLowerCase() }}
+                          />
+                          <Text className="font-medium">{color}</Text>
+                        </div>
+                      ))}
+                    </Space>
+                  </div>
+
+                  {/* Safety Features */}
+                  <div className="mb-6">
+                    <Title level={5}>Tính năng an toàn</Title>
+                    <div className="flex flex-wrap gap-2">
+                      {(getVehicleProperty('safety_features', ['ABS', 'Cảnh báo va chạm']) as string[]).map((feature, index) => (
+                        <Tag key={index} color="success" className="mb-1">
+                          <CheckCircle size={12} className="mr-1" />
+                          {feature}
+                        </Tag>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Stock Status */}
+                  <div className="mb-6">
+                    <Badge 
+                      count={`${getVehicleProperty('stock', '0')} xe có sẵn`} 
+                      style={{ backgroundColor: '#52c41a' }}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <Space direction="vertical" className="w-full" size="middle">
+                    <Button
+                      type="primary"
+                      size="large"
+                      block
+                      icon={<ShoppingCart size={20} />}
+                      onClick={() => handleDeposit(id || '')}
+                      className="bg-black hover:bg-gray-800 border-black h-12"
+                    >
+                      Đặt cọc ngay
+                    </Button>
+                    <Button
+                      size="large"
+                      block
+                      onClick={() => handleTestDrive(id || '')}
+                      className="h-12"
+                    >
+                      Đặt lịch lái thử
+                    </Button>
+                    <Row gutter={8}>
+                      <Col span={12}>
+                        <Button
+                          icon={<Heart size={18} />}
+                          block
+                          onClick={() => setIsFavorite(!isFavorite)}
+                          className={isFavorite ? 'text-red-500' : ''}
+                        >
+                          Yêu thích
+                        </Button>
+                      </Col>
+                      <Col span={12}>
+                        <Button icon={<Share2 size={18} />} block>
+                          Chia sẻ
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Space>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Detailed Information Tabs */}
+            <Card className="mt-8 shadow-lg mb-8">
+              <Tabs defaultActiveKey="overview" size="large">
+                <TabPane tab="Tổng quan" key="overview">
+                  <Row gutter={[24, 24]}>
+                    <Col xs={24} md={12}>
+                      <Title level={4}>Mô tả sản phẩm</Title>
+                      <Paragraph className="text-gray-700">
+                        {getVehicleProperty('description', 'Xe máy điện VinFast với công nghệ tiên tiến và thiết kế hiện đại.') as string}
+                      </Paragraph>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Title level={4}>Thông tin bổ sung</Title>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 text-center">
+                          <div className="text-lg font-bold text-gray-800 mb-1">{getVehicleProperty('battery_type', 'N/A') as string}</div>
+                          <p className="text-gray-600 text-sm font-medium">Loại pin</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 text-center">
+                          <div className="text-lg font-bold text-blue-600 mb-1">{getVehicleProperty('charging_slow', '0')}h</div>
+                          <p className="text-gray-600 text-sm font-medium">Sạc chậm</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 text-center">
+                          <div className="text-lg font-bold text-green-600 mb-1">{getVehicleProperty('acceleration', '0')}s</div>
+                          <p className="text-gray-600 text-sm font-medium">Gia tốc</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 text-center">
+                          <div className="text-lg font-bold text-purple-600 mb-1">{getVehicleProperty('warranty_years', '3')} năm</div>
+                          <p className="text-gray-600 text-sm font-medium">Bảo hành</p>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                </TabPane>
+
+                <TabPane tab="Thông số kỹ thuật" key="specs">
+                  <Descriptions bordered column={2}>
+                    <Descriptions.Item label="Công suất động cơ">
+                      {getVehicleProperty('motor_power', '0')} kW
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Dung lượng pin">
+                      {getVehicleProperty('battery_capacity', '0')} kWh
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Loại pin">
+                      {getVehicleProperty('battery_type', 'NMC') as string}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Trọng lượng">
+                      {getVehicleProperty('weight', '0')} kg
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tầm hoạt động">
+                      {getVehicleProperty('range_km', '120')} km
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tốc độ tối đa">
+                      {getVehicleProperty('top_speed', '80')} km/h
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Sạc nhanh">
+                      {getVehicleProperty('charging_fast', '1')} giờ
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Sạc chậm">
+                      {getVehicleProperty('charging_slow', '5')} giờ
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Gia tốc 0-50km/h">
+                      {getVehicleProperty('acceleration', '4')} giây
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Số chỗ ngồi">
+                      {getVehicleProperty('seating_capacity', '2')}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Bảo hành">
+                      {getVehicleProperty('warranty_years', '3')} năm
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tình trạng kho">
+                      <Badge 
+                        status={Number(getVehicleProperty('stock', 0)) > 0 ? 'success' : 'error'}
+                        text={`${getVehicleProperty('stock', '0')} xe`}
+                      />
+                    </Descriptions.Item>
+                  </Descriptions>
+                </TabPane>
+
+                <TabPane tab="Hình ảnh & Video" key="media">
+                  <Row gutter={[16, 16]}>
+                    {images.map((img, index) => (
+                      <Col key={index} xs={24} sm={12} md={8} lg={6}>
+                        <Image
+                          src={img}
+                          alt={`Gallery ${index + 1}`}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                      </Col>
+                    ))}
+                  </Row>
+                </TabPane>
+              </Tabs>
+            </Card>
+            
+            {/* Call to Action Bottom - With proper margin to ensure space between content and footer */}
+            <div className="mt-8 mb-10 bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white text-center shadow-xl">
+              <Title level={2} className="text-white mb-4">Sẵn sàng trải nghiệm {getVehicleProperty('model', 'xe máy điện') as string}?</Title>
+              <Paragraph className="text-blue-100 mb-6 text-lg">
+                Đặt lịch lái thử hoặc đặt cọc ngay hôm nay để nhận ưu đãi đặc biệt
+              </Paragraph>
+              
+              <Space size="large">
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={() => handleDeposit(id || '')}
+                  className="bg-white text-blue-700 border-none hover:bg-blue-50 h-12 px-8 font-semibold"
+                >
+                  Đặt cọc ngay
+                </Button>
+                <Button
+                  size="large"
+                  onClick={() => handleTestDrive(id || '')}
+                  className="border-white text-white hover:bg-white/20 h-12 px-8 font-semibold"
+                >
+                  Đặt lịch lái thử
+                </Button>
+              </Space>
+            </div>
           </div>
         </div>
-
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-4xl font-light text-gray-900 mb-8">{getVehicleProperty('model', 'Chi tiết xe máy điện') as string}</h1>
-          
-          {/* Thêm thông tin mới từ API */}
-          <div className="mb-8 flex items-center space-x-6">
-            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-              <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">SKU</span>
-              <span className="text-sm font-semibold text-gray-800">{getVehicleProperty('sku', 'N/A') as string}</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-              <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Version</span>
-              <span className="text-sm font-semibold text-gray-800">{getVehicleProperty('version', '2025') as string}</span>
-            </div>
-            <div className={`px-4 py-2 rounded-full shadow-sm border ${
-              getVehicleProperty('release_status') === 'available' 
-                ? 'bg-green-100 text-green-800 border-green-200' 
-                : 'bg-orange-100 text-orange-800 border-orange-200'
-            }`}>
-              <span className="text-xs font-semibold uppercase tracking-wide">
-                {getVehicleProperty('release_status', 'available') === 'available' ? 'Có sẵn' : 'Sắp ra mắt'}
-              </span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Image Gallery */}
-            <div>
-              <div className="bg-white rounded-xl overflow-hidden shadow-lg mb-6">
-                <img
-                  src={(getVehicleProperty('images', []) as string[])[0] || '/placeholder-motorbike.jpg'}
-                  alt={getVehicleProperty('model', 'Motorbike') as string}
-                  className="w-full h-[400px] object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Vehicle Info */}
-            <div>
-              <div className="bg-white rounded-xl p-8 shadow-lg">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">{getVehicleProperty('name', getVehicleProperty('model', 'Motorbike')) as string}</h2>
-                <p className="text-lg text-gray-600 mb-4">{getVehicleProperty('version', '2025') as string} - {(getVehicleProperty('color_options', ['Black']) as string[]).join(', ')}</p>
-                <p className="text-3xl font-bold text-green-600 mb-8">{formatPrice(getVehicleProperty('price', 25000000) as number)}</p>
-
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="flex items-center space-x-3">
-                    <Battery className="h-6 w-6 text-blue-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Tầm hoạt động</p>
-                      <p className="font-semibold">{getVehicleProperty('range_km', '120')} km</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Zap className="h-6 w-6 text-yellow-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Tốc độ tối đa</p>
-                      <p className="font-semibold">{getVehicleProperty('top_speed', '80')} km/h</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Clock className="h-6 w-6 text-red-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Thời gian sạc</p>
-                      <p className="font-semibold">{getVehicleProperty('charging_fast', '1')}h</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Users className="h-6 w-6 text-green-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Số chỗ ngồi</p>
-                      <p className="font-semibold">{getVehicleProperty('seating_capacity', '2')}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Thêm thông tin chi tiết từ API */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="flex items-center space-x-3 bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-xl">
-                    <Settings className="h-6 w-6 text-purple-600" />
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Công suất động cơ</p>
-                      <p className="font-bold text-gray-900">{getVehicleProperty('motor_power', '0')} kW</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-xl">
-                    <Battery className="h-6 w-6 text-orange-600" />
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Dung lượng pin</p>
-                      <p className="font-bold text-gray-900">{getVehicleProperty('battery_capacity', '0')} kWh</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl">
-                    <Weight className="h-6 w-6 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Trọng lượng</p>
-                      <p className="font-bold text-gray-900">{getVehicleProperty('weight', '0')} kg</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl">
-                    <AlertCircle className="h-6 w-6 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Tồn kho</p>
-                      <p className="font-bold text-gray-900">{getVehicleProperty('stock', '0')} xe</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 py-6 mb-8">
-                  <h3 className="text-lg font-bold mb-4">Tính năng nổi bật</h3>
-                  <div className="space-y-4">
-                    {/* Loại pin */}
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-gray-600 font-medium">Loại pin</span>
-                      <span className="font-semibold text-gray-900">{getVehicleProperty('battery_type', 'NMC') as string}</span>
-                    </div>
-                    
-                    {/* Sạc chậm */}
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-gray-600 font-medium">Sạc chậm</span>
-                      <span className="font-semibold text-gray-900">{getVehicleProperty('charging_slow', '5')}h</span>
-                    </div>
-                    
-                    {/* Gia tốc */}
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-gray-600 font-medium">Gia tốc</span>
-                      <span className="font-semibold text-gray-900">{getVehicleProperty('acceleration', '4')}s</span>
-                    </div>
-                    
-                    {/* Tồn kho */}
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-gray-600 font-medium">Tồn kho</span>
-                      <span className="font-semibold text-gray-900">{getVehicleProperty('stock', '0')} xe</span>
-                    </div>
-                    
-                    {/* Tính năng an toàn */}
-                    <div className="pt-4">
-                      <h4 className="text-md font-semibold text-gray-900 mb-3">Tính năng an toàn</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {(getVehicleProperty('safety_features', ['aaaaaaaaaac']) as string[]).map((feature, index) => (
-                          <span key={index} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                            ✓ {feature}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Màu sắc có sẵn */}
-                    <div className="pt-4">
-                      <h4 className="text-md font-semibold text-gray-900 mb-3">Màu sắc có sẵn</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {(getVehicleProperty('color_options', ['red']) as string[]).map((color, index) => (
-                          <div key={index} className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">
-                            <div 
-                              className="w-4 h-4 rounded-full border border-gray-300"
-                              style={{ backgroundColor: color.toLowerCase() }}
-                            ></div>
-                            <span className="text-gray-700 font-medium text-sm">{color}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => handleTestDrive(id || '')}
-                    className="flex-1 bg-gray-100 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-200"
-                  >
-                    Đặt lái thử
-                  </button>
-                  <button
-                    onClick={() => handleDeposit(id || '')}
-                    className="flex-1 bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 flex items-center justify-center space-x-2"
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    <span>Đặt cọc ngay</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Description Section */}
-          <div className="mt-12">
-            <div className="bg-white rounded-xl p-8 shadow-lg">
-              <h3 className="text-2xl font-bold mb-6">Thông tin chi tiết</h3>
-              <p className="text-gray-700 leading-relaxed">{getVehicleProperty('description', 'Xe máy điện VinFast với công nghệ tiên tiến và thiết kế hiện đại.') as string}</p>
-              
-              {/* Thêm thông tin bổ sung từ API */}
-              <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 text-center">
-                  <div className="text-lg font-bold text-gray-800 mb-1">{getVehicleProperty('battery_type', 'N/A') as string}</div>
-                  <p className="text-gray-600 text-sm font-medium">Loại pin</p>
-                </div>
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 text-center">
-                  <div className="text-lg font-bold text-blue-600 mb-1">{getVehicleProperty('charging_slow', '0')}h</div>
-                  <p className="text-gray-600 text-sm font-medium">Sạc chậm</p>
-                </div>
-                <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 text-center">
-                  <div className="text-lg font-bold text-green-600 mb-1">{getVehicleProperty('acceleration', '0')}s</div>
-                  <p className="text-gray-600 text-sm font-medium">Gia tốc</p>
-                </div>
-                <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 text-center">
-                  <div className="text-lg font-bold text-purple-600 mb-1">{getVehicleProperty('warranty_years', '3')} năm</div>
-                  <p className="text-gray-600 text-sm font-medium">Bảo hành</p>
-                </div>
-              </div>
+        
+        {/* Footer - Added fixed height and proper styling */}
+        <div className="bg-gray-800 text-white py-8 shadow-inner">
+          <div className="max-w-7xl mx-auto px-6">
+            <Row gutter={[32, 32]}>
+              <Col xs={24} md={8}>
+                <Title level={4} className="text-white mb-4">VinFast</Title>
+                <Text className="text-gray-300 block mb-2">Công ty CP Sản xuất và Kinh doanh VinFast</Text>
+                <Text className="text-gray-300 block mb-2">Hotline: 1900 23 23 89</Text>
+                <Text className="text-gray-300 block">Email: cskh@vinfast.vn</Text>
+              </Col>
+              <Col xs={24} md={8}>
+                <Title level={4} className="text-white mb-4">Về chúng tôi</Title>
+                <ul className="space-y-2">
+                  <li><Button type="link" className="text-gray-300 hover:text-white p-0">Giới thiệu</Button></li>
+                  <li><Button type="link" className="text-gray-300 hover:text-white p-0">Tin tức</Button></li>
+                  <li><Button type="link" className="text-gray-300 hover:text-white p-0">Tuyển dụng</Button></li>
+                </ul>
+              </Col>
+              <Col xs={24} md={8}>
+                <Title level={4} className="text-white mb-4">Kết nối với chúng tôi</Title>
+                <Space size="large">
+                  <Button 
+                    shape="circle" 
+                    icon={<i className="fab fa-facebook-f"></i>}
+                    className="bg-blue-600 border-0 hover:bg-blue-700"
+                  />
+                  <Button 
+                    shape="circle" 
+                    icon={<i className="fab fa-youtube"></i>}
+                    className="bg-red-600 border-0 hover:bg-red-700"
+                  />
+                  <Button 
+                    shape="circle" 
+                    icon={<i className="fab fa-instagram"></i>}
+                    className="bg-purple-600 border-0 hover:bg-purple-700"
+                  />
+                </Space>
+              </Col>
+            </Row>
+            <Divider className="bg-gray-700" />
+            <div className="text-center">
+              <Text className="text-gray-400">© {new Date().getFullYear()} VinFast. Tất cả các quyền được bảo lưu.</Text>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ConfigProvider>
   );
 };
