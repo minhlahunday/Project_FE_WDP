@@ -196,7 +196,7 @@ export const CarDetail: React.FC = () => {
                 <Button 
                   icon={<ArrowLeftOutlined />} 
                   type="text"
-                  onClick={() => navigate(-1)}
+            onClick={() => navigate(-1)}
                   style={{ 
                     color: '#1f2937',
                     fontWeight: 500,
@@ -329,10 +329,10 @@ export const CarDetail: React.FC = () => {
                         height: 'auto'
                       }}
                       preview={false}
-                      onLoad={handleImageLoad}
-                    />
-                  </div>
-                  
+            onLoad={handleImageLoad}
+          />
+        </div>
+
                   {/* Floating Badge */}
                   <div style={{
                     position: 'absolute',
@@ -348,7 +348,7 @@ export const CarDetail: React.FC = () => {
                   }}>
                     🔥 Mới nhất 2024
                   </div>
-                </div>
+        </div>
               </Col>
               
               <Col xs={24} lg={10}>
@@ -399,7 +399,7 @@ export const CarDetail: React.FC = () => {
                     <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14 }}>
                       Đã bao gồm VAT • Hỗ trợ trả góp 0%
                     </Text>
-                  </div>
+      </div>
 
                   {/* CTA Buttons */}
                   <Space size={16} style={{ width: '100%' }} direction="vertical">
@@ -442,8 +442,8 @@ export const CarDetail: React.FC = () => {
                 </div>
               </Col>
             </Row>
-          </div>
         </div>
+      </div>
 
         {/* Key Features - Modern Cards */}
         <div style={{ 
@@ -497,7 +497,7 @@ export const CarDetail: React.FC = () => {
                       {getVehicleProperty('motor_power', '30')} kW
                     </Title>
                     <Text style={{ color: 'rgba(255,255,255,0.9)' }}>Công suất tối đa</Text>
-                  </div>
+            </div>
                 </Card>
               </Col>
               
@@ -516,7 +516,7 @@ export const CarDetail: React.FC = () => {
                       {getVehicleProperty('charging_fast', '1')}h
                     </Title>
                     <Text style={{ color: 'rgba(255,255,255,0.9)' }}>Sạc nhanh (10%-70%)</Text>
-                  </div>
+            </div>
                 </Card>
               </Col>
               
@@ -535,13 +535,13 @@ export const CarDetail: React.FC = () => {
                       5★
                     </Title>
                     <Text style={{ color: 'rgba(255,255,255,0.9)' }}>An toàn tối đa</Text>
-                  </div>
+            </div>
                 </Card>
               </Col>
             </Row>
+            </div>
           </div>
-        </div>
-
+          
         {/* Exterior Section - 360° Viewer */}
         <div ref={exteriorRef} style={{ 
           background: 'white', 
@@ -676,9 +676,9 @@ export const CarDetail: React.FC = () => {
                       }}
                     />
                   </div>
-                </div>
-              </div>
-            </div>
+          </div>
+        </div>
+      </div>
 
             {/* Color Selection */}
             <div style={{ textAlign: 'center' }}>
@@ -733,15 +733,15 @@ export const CarDetail: React.FC = () => {
                           justifyContent: 'center'
                         }}>
                           <CheckCircleOutlined style={{ color: 'white', fontSize: 12 }} />
-                        </div>
-                      )}
-                    </div>
+                </div>
+                )}
+              </div>
                   );
                 })}
               </div>
             </div>
+            </div>
           </div>
-        </div>
 
         {/* Specifications Section - Premium Table */}
         <div ref={specsRef} style={{ 
@@ -854,11 +854,11 @@ export const CarDetail: React.FC = () => {
                   <Text style={{ color: '#64748b' }}>
                     {getVehicleProperty('category', 'Xe điện thành phố')}
                   </Text>
-                </div>
+          </div>
               </Col>
             </Row>
-          </div>
         </div>
+      </div>
       </Content>
 
       <BackTop style={{ right: 32, bottom: 32 }}>
@@ -879,4 +879,3 @@ export const CarDetail: React.FC = () => {
     </Layout>
   );
 };
-  
