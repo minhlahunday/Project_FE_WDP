@@ -386,7 +386,7 @@ export const StaffManagement: React.FC = () => {
       console.log('📋 Note: dealership_id không được truyền - Backend sẽ tự động set theo Manager hiện tại');
       console.log('🔍 Role ID being sent:', createData.role_id);
       console.log('🔍 Available roles:', getAvailableRoles());
-      
+
       // Gọi API tạo user
       const result = await authService.createUser(createData);
 
@@ -545,8 +545,8 @@ export const StaffManagement: React.FC = () => {
       <div className="flex">
         {/* Sidebar có sẵn của dự án với prop cần thiết */}
         <Sidebar onSectionChange={handleSectionChange} />
-        
-        {/* Main Content */}
+      
+      {/* Main Content */}
         <main className="flex-1 ml-64 pt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="space-y-6">
@@ -558,105 +558,105 @@ export const StaffManagement: React.FC = () => {
                     <p className="text-gray-600 text-lg">
                       Quản lý thông tin nhân viên trong đại lý hiện tại
                     </p>
-                  </div>
+          </div>
                   <div className="hidden md:flex items-center space-x-4">
                     <div className="bg-blue-50 p-4 rounded-full">
                       <UsersIcon className="h-8 w-8 text-blue-600" />
-                    </div>
+        </div>
                   </div>
                 </div>
-              </div>
+            </div>
 
               {/* Enhanced Search and Filters */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Tìm kiếm & Bộ lọc</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {/* Enhanced Search */}
                   <div className="relative group">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
-                    <input
-                      type="text"
-                      placeholder="Tìm kiếm nhân viên..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm nhân viên..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
-                    />
-                  </div>
+                  />
+                </div>
 
                   <div></div>
                   <div></div>
 
                   {/* Enhanced Add Staff Button */}
-                  <button
-                    onClick={handleAddStaff}
+                <button
+                  onClick={handleAddStaff}
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    <Plus className="h-5 w-5" />
-                    <span>Thêm nhân viên</span>
-                  </button>
-                </div>
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Thêm nhân viên</span>
+                </button>
               </div>
+            </div>
 
               {/* Enhanced Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex items-center justify-between">
+                  <div>
                       <p className="text-sm text-gray-600 font-medium">Tổng nhân viên</p>
                       <p className="text-3xl font-bold text-gray-900 mt-1">{totalUsers}</p>
                       
-                    </div>
+                  </div>
                     <div className="bg-blue-100 p-4 rounded-full">
                       <UserCheck className="h-8 w-8 text-blue-600" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Hoạt động</p>
-                      <p className="text-3xl font-bold text-green-600 mt-1">
-                        {staffList.filter(s => s.status === 'active').length}
-                      </p>
-                      
-                    </div>
-                    <div className="bg-green-100 p-4 rounded-full">
-                      <UserCheck className="h-8 w-8 text-green-600" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Bị khóa</p>
-                      <p className="text-3xl font-bold text-red-600 mt-1">
-                        {staffList.filter(s => s.status === 'inactive').length}
-                      </p>
-                     
-                    </div>
-                    <div className="bg-red-100 p-4 rounded-full">
-                      <UserX className="h-8 w-8 text-red-600" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 font-medium">Chờ duyệt</p>
-                      <p className="text-3xl font-bold text-yellow-600 mt-1">
-                        {staffList.filter(s => s.status === 'pending').length}
-                      </p>
-                      
-                    </div>
-                    <div className="bg-yellow-100 p-4 rounded-full">
-                      <Filter className="h-8 w-8 text-yellow-600" />
-                    </div>
                   </div>
                 </div>
               </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                      <p className="text-sm text-gray-600 font-medium">Hoạt động</p>
+                      <p className="text-3xl font-bold text-green-600 mt-1">
+                      {staffList.filter(s => s.status === 'active').length}
+                    </p>
+                      
+                  </div>
+                    <div className="bg-green-100 p-4 rounded-full">
+                      <UserCheck className="h-8 w-8 text-green-600" />
+                  </div>
+                </div>
+              </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                      <p className="text-sm text-gray-600 font-medium">Bị khóa</p>
+                      <p className="text-3xl font-bold text-red-600 mt-1">
+                      {staffList.filter(s => s.status === 'inactive').length}
+                    </p>
+                     
+                  </div>
+                    <div className="bg-red-100 p-4 rounded-full">
+                      <UserX className="h-8 w-8 text-red-600" />
+                  </div>
+                </div>
+              </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                      <p className="text-sm text-gray-600 font-medium">Chờ duyệt</p>
+                      <p className="text-3xl font-bold text-yellow-600 mt-1">
+                      {staffList.filter(s => s.status === 'pending').length}
+                    </p>
+                      
+                  </div>
+                    <div className="bg-yellow-100 p-4 rounded-full">
+                      <Filter className="h-8 w-8 text-yellow-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
 
               {/* Enhanced Staff Table */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -665,44 +665,44 @@ export const StaffManagement: React.FC = () => {
                   <p className="text-sm text-gray-600">Quản lý và theo dõi thông tin nhân viên</p>
                 </div>
                 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Nhân viên
-                        </th>
+                        Nhân viên
+                      </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Trạng thái
-                        </th>
+                        Trạng thái
+                      </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Thao tác
-                        </th>
-                      </tr>
-                    </thead>
+                        Thao tác
+                      </th>
+                    </tr>
+                  </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                      {filteredStaff.map((staff) => (
+                    {filteredStaff.map((staff) => (
                         <tr key={staff.id} className="hover:bg-gray-50 transition-colors duration-150">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
                               <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
                                 <span className="text-sm font-semibold text-white">
                                   {staff.fullName?.charAt(0) || '?'}
-                                </span>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-semibold text-gray-900">{staff.fullName}</div>
-                                <div className="text-sm text-gray-500">{staff.email}</div>
-                                <div className="text-sm text-gray-400">{staff.phone}</div>
-                              </div>
+                              </span>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(staff.status)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="ml-4">
+                                <div className="text-sm font-semibold text-gray-900">{staff.fullName}</div>
+                              <div className="text-sm text-gray-500">{staff.email}</div>
+                                <div className="text-sm text-gray-400">{staff.phone}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(staff.status)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex items-center space-x-3">
-                              <button
+                            <button
                                 onClick={() => handleViewStaffDetail(staff)}
                                 className="text-green-600 hover:text-green-900 hover:bg-green-50 p-2 rounded-lg transition-all duration-150"
                                 title="Xem chi tiết"
@@ -713,91 +713,91 @@ export const StaffManagement: React.FC = () => {
                                 onClick={() => handleEditStaff(staff)}
                                 className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-lg transition-all duration-150"
                                 title="Chỉnh sửa"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleToggleStatus(staff.id)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(staff.id)}
                                 className={`${staff.status === 'active' ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} p-2 rounded-lg transition-all duration-150`}
                                 title={staff.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                              >
-                                {staff.status === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteStaff(staff.id)}
+                            >
+                              {staff.status === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStaff(staff.id)}
                                 className="text-red-600 hover:text-red-900 hover:bg-red-50 p-2 rounded-lg transition-all duration-150"
                                 title="Xóa nhân viên"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                {filteredStaff.length === 0 && !loading && (
+              {filteredStaff.length === 0 && !loading && (
                   <div className="text-center py-16">
                     <UsersIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 text-lg">Không tìm thấy nhân viên nào.</p>
                     <p className="text-gray-400 text-sm">Hãy thử thay đổi bộ lọc hoặc thêm nhân viên mới.</p>
-                  </div>
-                )}
-                
-                {loading && (
+                </div>
+              )}
+              
+              {loading && (
                   <div className="text-center py-16">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
                     <p className="text-gray-500 text-lg">Đang tải...</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Enhanced Pagination */}
-              {totalPages > 1 && (
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                      <span className="font-medium">Hiển thị</span> {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalUsers)} <span className="font-medium">trong tổng số</span> {totalUsers} <span className="font-medium">nhân viên</span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-150 font-medium"
-                      >
-                        Trước
-                      </button>
-                      
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const page = i + 1;
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all duration-150 ${
-                              currentPage === page
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                                : 'border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        );
-                      })}
-                      
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-150 font-medium"
-                      >
-                        Sau
-                      </button>
-                    </div>
-                  </div>
                 </div>
               )}
+            </div>
+
+              {/* Enhanced Pagination */}
+            {totalPages > 1 && (
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                      <span className="font-medium">Hiển thị</span> {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalUsers)} <span className="font-medium">trong tổng số</span> {totalUsers} <span className="font-medium">nhân viên</span>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-150 font-medium"
+                  >
+                    Trước
+                  </button>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const page = i + 1;
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all duration-150 ${
+                          currentPage === page
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-150 font-medium"
+                  >
+                    Sau
+                  </button>
+                    </div>
+                </div>
+              </div>
+            )}
             </div>
           </div>
         </main>
@@ -814,20 +814,20 @@ export const StaffManagement: React.FC = () => {
                   <h2 className="text-2xl font-bold">Thêm nhân viên mới</h2>
                   <p className="text-blue-100 mt-1">Tạo tài khoản cho nhân viên mới</p>
                 </div>
-                <button
-                  onClick={() => setShowAddModal(false)}
+              <button
+                onClick={() => setShowAddModal(false)}
                   className="text-white hover:text-gray-200 hover:bg-white/20 p-2 rounded-full transition-all duration-150 focus:outline-none"
-                  disabled={loading}
-                >
-                  <X className="h-6 w-6" />
-                </button>
+                disabled={loading}
+              >
+                <X className="h-6 w-6" />
+              </button>
               </div>
             </div>
 
             {/* Form Content */}
             <div className="p-8">
               {/* Alert Messages */}
-              {error && (
+            {error && (
                 <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg">
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -837,10 +837,10 @@ export const StaffManagement: React.FC = () => {
                       <p className="text-sm font-medium">{error}</p>
                     </div>
                   </div>
-                </div>
-              )}
+              </div>
+            )}
 
-              {success && (
+            {success && (
                 <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg">
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -850,8 +850,8 @@ export const StaffManagement: React.FC = () => {
                       <p className="text-sm font-medium">{success}</p>
                     </div>
                   </div>
-                </div>
-              )}
+              </div>
+            )}
 
               <form onSubmit={handleSaveNewStaff} className="space-y-8">
                 {/* Personal Information Section */}
@@ -864,23 +864,23 @@ export const StaffManagement: React.FC = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+              <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Họ và tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="fullName"
-                        required
-                        value={newStaff.fullName}
-                        onChange={handleInputChange}
-                        disabled={loading}
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  value={newStaff.fullName}
+                  onChange={handleInputChange}
+                  disabled={loading}
                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
                         placeholder="Nhập họ và tên đầy đủ"
-                      />
-                    </div>
+                />
+              </div>
 
-                    <div>
+              <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Số điện thoại <span className="text-red-500">*</span>
                       </label>
@@ -926,20 +926,20 @@ export const StaffManagement: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        required
-                        value={newStaff.email}
-                        onChange={handleInputChange}
-                        disabled={loading}
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={newStaff.email}
+                  onChange={handleInputChange}
+                  disabled={loading}
                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
                         placeholder="example@company.com"
-                      />
-                    </div>
+                />
+              </div>
 
-                    <div>
+              <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Mật khẩu <span className="text-red-500">*</span>
                       </label>
@@ -1186,35 +1186,35 @@ export const StaffManagement: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Số điện thoại <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        required
-                        value={newStaff.phone}
-                        onChange={handleInputChange}
-                        disabled={loading}
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  value={newStaff.phone}
+                  onChange={handleInputChange}
+                  disabled={loading}
                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
                         placeholder="0XXXXXXXXX"
-                      />
-                    </div>
+                />
+              </div>
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Địa chỉ (Tùy chọn)
-                      </label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={newStaff.address}
-                        onChange={handleInputChange}
-                        disabled={loading}
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={newStaff.address}
+                  onChange={handleInputChange}
+                  disabled={loading}
                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
                         placeholder="Nhập địa chỉ liên hệ"
-                      />
+                />
                     </div>
                   </div>
-                </div>
+              </div>
 
                 {/* Account Information Section */}
                 <div className="bg-gray-50 rounded-xl p-6">
@@ -1226,7 +1226,7 @@ export const StaffManagement: React.FC = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+              <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Email <span className="text-red-500">*</span>
                       </label>
@@ -1245,44 +1245,44 @@ export const StaffManagement: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Mật khẩu <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="password"
-                        name="password"
-                        required
-                        value={newStaff.password}
-                        onChange={handleInputChange}
-                        disabled={loading}
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  value={newStaff.password}
+                  onChange={handleInputChange}
+                  disabled={loading}
                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
                         placeholder="Tối thiểu 6 ký tự"
-                        minLength={6}
-                      />
+                  minLength={6}
+                />
                       <p className="mt-1 text-xs text-gray-500">Mật khẩu phải có ít nhất 6 ký tự</p>
-                    </div>
+              </div>
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Vai trò <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="roleId"
-                        required
-                        value={newStaff.roleId}
-                        onChange={handleInputChange}
-                        disabled={loading}
+                </label>
+                <select
+                  name="roleId"
+                  required
+                  value={newStaff.roleId}
+                  onChange={handleInputChange}
+                  disabled={loading}
                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                      >
+                >
                         <option value="">-- Chọn vai trò --</option>
-                        {getAvailableRoles().map((role) => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </select>
+                  {getAvailableRoles().map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
                       <p className="mt-1 text-xs text-gray-500">Chọn vai trò cho nhân viên mới</p>
                     </div>
                   </div>
-                </div>
+              </div>
 
                 {/* Permissions & Organization Section */}
                 <div className="bg-gray-50 rounded-xl p-6">
@@ -1294,10 +1294,10 @@ export const StaffManagement: React.FC = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+              <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Trạng thái vai trò
-                      </label>
+                </label>
                       <div className={`border rounded-lg p-4 ${newStaff.roleId ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
                         <div className="flex items-center">
                           {newStaff.roleId ? (
@@ -1324,8 +1324,8 @@ export const StaffManagement: React.FC = () => {
                         Đại lý
                       </label>
                       <div className="relative">
-                        <input
-                          type="text"
+                <input
+                  type="text"
                           value="Tự động từ Manager hiện tại"
                           disabled
                           className="block w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 shadow-sm"
@@ -1365,15 +1365,15 @@ export const StaffManagement: React.FC = () => {
                           type="file"
                           name="avatar"
                           accept="image/*"
-                          onChange={handleInputChange}
-                          disabled={loading}
+                  onChange={handleInputChange}
+                  disabled={loading}
                           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200"
-                        />
+                />
                         <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                       </div>
                     </div>
                   </div>
-                </div>
+              </div>
 
                 {/* Form Actions */}
                 <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
@@ -1413,7 +1413,7 @@ export const StaffManagement: React.FC = () => {
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white p-6 rounded-t-2xl">
               <div className="flex justify-between items-center">
-                <div>
+              <div>
                   <h2 className="text-2xl font-bold">Chỉnh sửa nhân viên</h2>
                   <p className="text-green-100 mt-1">Cập nhật thông tin nhân viên</p>
                 </div>
@@ -1473,20 +1473,20 @@ export const StaffManagement: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Họ và tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
+                </label>
+                <input
+                  type="text"
                         name="fullName"
                         required
                         value={newStaff.fullName}
-                        onChange={handleInputChange}
-                        disabled={loading}
+                  onChange={handleInputChange}
+                  disabled={loading}
                         className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
                         placeholder="Nhập họ và tên đầy đủ"
-                      />
-                    </div>
+                />
+              </div>
 
-                    <div>
+              <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Số điện thoại <span className="text-red-500">*</span>
                       </label>
@@ -1632,8 +1632,8 @@ export const StaffManagement: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Avatar
-                    </label>
+                  Avatar
+                </label>
                     <div className="flex items-center space-x-4">
                       <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300">
                         {editingStaff.avatar ? (
@@ -1651,52 +1651,52 @@ export const StaffManagement: React.FC = () => {
                         )}
                       </div>
                       <div className="flex-1">
-                        <input
-                          type="file"
-                          name="avatar"
-                          accept="image/*"
-                          onChange={handleInputChange}
-                          disabled={loading}
+                <input
+                  type="file"
+                  name="avatar"
+                  accept="image/*"
+                  onChange={handleInputChange}
+                  disabled={loading}
                           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all duration-200"
-                        />
+                />
                         <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                       </div>
                     </div>
                   </div>
-                </div>
+              </div>
 
                 {/* Form Actions */}
                 <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
+                <button
+                  type="button"
                     onClick={() => {
                       setShowEditModal(false);
                       setEditingStaff(null);
                     }}
-                    disabled={loading}
+                  disabled={loading}
                     className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium disabled:opacity-50"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
                     className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg hover:from-green-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none"
-                  >
-                    {loading ? (
+                >
+                  {loading ? (
                       <div className="flex items-center">
                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-r-transparent mr-2"></div>
-                        Đang xử lý...
+                      Đang xử lý...
                       </div>
-                    ) : (
+                  ) : (
                       'Cập nhật nhân viên'
-                    )}
-                  </button>
-                </div>
-              </form>
+                  )}
+                </button>
+              </div>
+            </form>
             </div>
           </div>
-               </div>
+        </div>
       )}
 
       {/* Enhanced Staff Detail Modal - Redesigned to match modern style */}
@@ -1709,7 +1709,7 @@ export const StaffManagement: React.FC = () => {
                 <div>
                   <h2 className="text-2xl font-bold">Thông tin chi tiết nhân viên</h2>
                   <p className="text-indigo-100 mt-1">Xem thông tin đầy đủ của nhân viên</p>
-                </div>
+    </div>
                 <button
                   onClick={() => {
                     setShowDetailModal(false);

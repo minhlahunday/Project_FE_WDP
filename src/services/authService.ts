@@ -802,5 +802,80 @@ export const authService = {
         message: error.message || 'Không thể tải thông tin xe'
       };
     }
+  },
+
+  async compareVehicles(id1: string, id2: string): Promise<{ success: boolean; message: string; vehicle1?: unknown; vehicle2?: unknown; analysis?: string }> {
+    try {
+      const url = `/api/vehicles/compare/${id1}/${id2}`;
+      console.log('🚀 Calling API compare vehicles:', url);
+      console.log('🚀 Vehicle ID 1:', id1);
+      console.log('🚀 Vehicle ID 2:', id2);
+      
+      const response = await get<unknown>(url);
+      
+      console.log('✅ API compare vehicles response:', response);
+      console.log('🔍 Response type:', typeof response);
+      console.log('🔍 Response keys:', response && typeof response === 'object' ? Object.keys(response) : 'not an object');
+      
+      // Kiểm tra cấu trúc response
+      if (response && typeof response === 'object') {
+        const responseObj = response as Record<string, unknown>;
+        
+        // API có thể trả về nhiều format khác nhau:
+        // 1. { vehicle1: {...}, vehicle2: {...} }
+        // 2. { car1: "...", car2: "...", analysis: "..." } (text format)
+        // 3. Có thể có analysis field
+        
+        // Kiểm tra xem có car1/car2 (text format) hay vehicle1/vehicle2 (object format)
+        if (responseObj.car1 || responseObj.car2) {
+          console.log('⚠️ API trả về dạng text (car1/car2), không phải object vehicle');
+          console.log('📝 car1 type:', typeof responseObj.car1);
+          console.log('📝 car2 type:', typeof responseObj.car2);
+          
+          // Nếu API trả về text format, chúng ta cần lấy dữ liệu xe từ API khác
+          // Trả về thất bại để component sử dụng dữ liệu từ ModelSelector
+          return {
+            success: false,
+            message: 'API trả về dạng text, sử dụng dữ liệu từ ModelSelector',
+            analysis: responseObj.analysis as string
+          };
+        }
+        
+        // API trả về: { vehicle1: {...}, vehicle2: {...} }
+        if (responseObj.vehicle1 && responseObj.vehicle2) {
+          console.log('✅ Found both vehicles in response (object format)');
+          return {
+            success: true,
+            message: 'So sánh xe thành công',
+            vehicle1: responseObj.vehicle1,
+            vehicle2: responseObj.vehicle2,
+            analysis: responseObj.analysis as string
+          };
+        }
+      }
+      
+      console.log('⚠️ Response structure not recognized');
+      return {
+        success: false,
+        message: 'Dữ liệu so sánh không hợp lệ - sử dụng dữ liệu từ ModelSelector'
+      };
+    } catch (error: unknown) {
+      console.error('❌ Lỗi khi gọi API compare vehicles:', error);
+      
+      const errorObj = error as Record<string, unknown>;
+      
+      // Kiểm tra nếu có lỗi 404 - một hoặc cả hai xe không tìm thấy
+      if (errorObj.status === 404 || (errorObj.response as Record<string, unknown>)?.status === 404) {
+        return {
+          success: false,
+          message: 'Một hoặc cả hai xe không tìm thấy'
+        };
+      }
+      
+      return {
+        success: false,
+        message: (error as Error).message || 'Không thể so sánh hai xe'
+      };
+    }
   }
 };
