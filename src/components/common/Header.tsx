@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bell, Search, User, ChevronDown, LogOut, Settings } from 'lucide-react';
+import { Bell, Search, User, ChevronDown, LogOut, Settings, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom'; // Fix import
 
@@ -9,7 +9,7 @@ interface HeaderProps {
   isSidebarOpen?: boolean; // Thêm prop mới
 }
 
-export const Header: React.FC<HeaderProps> = ({  isTransparent = false, isSidebarOpen = false }) => {
+export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = false, isSidebarOpen = false }) => {
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({  isTransparent = false, isSideba
 
   return (
     <header className={`
-      fixed top-0 left-0 right-0 z-40
+      fixed top-0 left-0 right-0 z-30
       transition-all duration-300 ease-in-out
       ${isTransparent 
         ? 'bg-transparent backdrop-blur-sm border-b border-white/10' 
@@ -46,7 +46,17 @@ export const Header: React.FC<HeaderProps> = ({  isTransparent = false, isSideba
     `}>
       <div className="h-[73px] px-6 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          {/* Nút menu đã được xóa */}
+          {/* Menu toggle button */}
+          <button 
+            onClick={onMenuClick}
+            className={`p-2 rounded-lg transition-colors lg:hidden ${
+              isTransparent 
+                ? 'text-white hover:bg-white/10' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           
           {/* Chỉnh sửa phần Dashboard title và tooltip */}
           <div className="hidden md:block relative group">
