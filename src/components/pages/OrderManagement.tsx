@@ -28,14 +28,18 @@ import {
   Refresh as ReloadIcon,
   Add as AddIcon,
   AttachMoney as DollarIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateRangePicker, DateRange } from '@mui/x-date-pickers-pro';
 import { orderService, Order, OrderSearchParams } from '../../services/orderService'; 
-import { useAuth } from '../../contexts/AuthContext'; 
+import { useAuth } from '../../contexts/AuthContext';
+import Swal from 'sweetalert2'; 
 import OrderDetailModalMUI from './OrderDetailModalMUI'; 
 import { DepositPayment } from './DepositPayment';
+import EditOrderModal from './EditOrderModal';
 import dayjs, { Dayjs } from 'dayjs';
 
 export const OrderManagement: React.FC = () => {
@@ -65,6 +69,10 @@ export const OrderManagement: React.FC = () => {
   // Deposit Payment Modal
   const [depositModalVisible, setDepositModalVisible] = useState(false);
   const [selectedOrderForDeposit, setSelectedOrderForDeposit] = useState<Order | null>(null);
+
+  // Edit Order Modal
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedOrderForEdit, setSelectedOrderForEdit] = useState<Order | null>(null);
 
   const statusOptions = [
     { value: 'pending', label: 'Chờ xác nhận', color: 'warning' },
@@ -353,10 +361,93 @@ export const OrderManagement: React.FC = () => {
     loadOrders({});
   };
 
-  const handleEditOrder = (_order: Order) => {
-    setSnackbarMessage('Tính năng chỉnh sửa đơn hàng đang được phát triển');
-    setSnackbarSeverity('info');
-    setSnackbarOpen(true);
+  const handleEditOrder = (order: Order) => {
+    setSelectedOrderForEdit(order);
+    setEditModalVisible(true);
+  };
+
+  const handleUpdateOrder = async (orderId: string, updateData: any) => {
+    await orderService.updateOrder(orderId, updateData);
+    
+    // Reload orders
+    loadOrders({
+      page: pagination.current,
+      limit: pagination.pageSize,
+      q: searchText || undefined,
+      status: selectedStatus || undefined,
+      payment_method: selectedPaymentMethod || undefined,
+      startDate: dateRange[0]?.format('YYYY-MM-DD'),
+      endDate: dateRange[1]?.format('YYYY-MM-DD'),
+    });
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalVisible(false);
+    setSelectedOrderForEdit(null);
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    if (!user || user.role !== 'dealer_manager') {
+      setSnackbarMessage('Chỉ dealer manager mới có quyền xóa đơn hàng');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Confirm deletion with SweetAlert2
+    const result = await Swal.fire({
+      title: 'Xác nhận xóa đơn hàng',
+      text: `Bạn có chắc chắn muốn xóa đơn hàng ${order.code}? Hành động này không thể hoàn tác.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      reverseButtons: true
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await orderService.deleteOrder(order._id);
+      
+      // Show success message with SweetAlert2
+      await Swal.fire({
+        title: 'Thành công!',
+        text: 'Đơn hàng đã được xóa thành công.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#10b981'
+      });
+      
+      // Reload orders
+      loadOrders({
+        page: pagination.current,
+        limit: pagination.pageSize,
+        q: searchText || undefined,
+        status: selectedStatus || undefined,
+        payment_method: selectedPaymentMethod || undefined,
+        startDate: dateRange[0]?.format('YYYY-MM-DD'),
+        endDate: dateRange[1]?.format('YYYY-MM-DD'),
+      });
+    } catch (error: any) {
+      console.error('Error deleting order:', error);
+      
+      // Show error message with SweetAlert2
+      await Swal.fire({
+        title: 'Lỗi!',
+        text: error.response?.data?.message || 'Có lỗi xảy ra khi xóa đơn hàng',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ef4444'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSnackbarClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
@@ -416,34 +507,7 @@ export const OrderManagement: React.FC = () => {
             >
               Tạo đơn hàng mới
             </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                // Test: Create a confirmed order for testing deposit functionality
-                const testOrder = {
-                  _id: 'test-confirmed-order',
-                  code: 'TEST-CONFIRMED-001',
-                  customer: { full_name: 'Test Customer', phone: '0900000000' },
-                  salesperson: { full_name: 'Test Salesperson' },
-                  items: [{ vehicle_id: 'test-vehicle', quantity: 1 }],
-                  final_amount: 100000000,
-                  paid_amount: 0,
-                  payment_method: 'cash',
-                  status: 'confirmed',
-                  createdAt: new Date().toISOString(),
-                  contract_signed: false
-                };
-                setSelectedOrderForDeposit(testOrder as any);
-                setDepositModalVisible(true);
-                setSnackbarMessage('Test: Mở modal đặt cọc cho đơn hàng test');
-                setSnackbarSeverity('info');
-                setSnackbarOpen(true);
-              }}
-            >
-              Test Đặt Cọc
-            </Button>
+           
           </Stack>
         </Box>
 
@@ -677,6 +741,17 @@ export const OrderManagement: React.FC = () => {
                             </IconButton>
                             </Tooltip>
                             
+                            {/* Edit Order Button */}
+                            <Tooltip title="Chỉnh sửa đơn hàng">
+                                <IconButton
+                                onClick={() => handleEditOrder(order)}
+                                size="small"
+                                color="primary"
+                                >
+                                <EditIcon fontSize="inherit" />
+                                </IconButton>
+                            </Tooltip>
+                            
                             {/* Deposit Payment Button - Only show for confirmed orders */}
                             {order.status === 'confirmed' && (
                             <Tooltip title="Đặt cọc">
@@ -704,6 +779,19 @@ export const OrderManagement: React.FC = () => {
                                 size="small"
                                 >
                                 <FileTextIcon fontSize="inherit" color="action" />
+                                </IconButton>
+                            </Tooltip>
+                            )}
+                            
+                            {/* Delete Order Button - Only show for dealer_manager */}
+                            {user?.role === 'dealer_manager' && (
+                            <Tooltip title="Xóa đơn hàng">
+                                <IconButton
+                                onClick={() => handleDeleteOrder(order)}
+                                size="small"
+                                color="error"
+                                >
+                                <DeleteIcon fontSize="inherit" />
                                 </IconButton>
                             </Tooltip>
                             )}
@@ -747,6 +835,14 @@ export const OrderManagement: React.FC = () => {
           order={selectedOrderForDeposit}
           onClose={handleCloseDepositModal}
           onSuccess={handleDepositSuccess}
+        />
+
+        {/* Edit Order Modal */}
+        <EditOrderModal
+          open={editModalVisible}
+          onClose={handleCloseEditModal}
+          order={selectedOrderForEdit}
+          onUpdate={handleUpdateOrder}
         />
 
         {/* Global Snackbar (Thay thế AntD message) */}

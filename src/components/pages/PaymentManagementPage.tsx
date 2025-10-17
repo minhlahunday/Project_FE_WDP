@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Table, Button, message, Space, Input, Tag } from 'antd';
-import { SearchOutlined, CreditCardOutlined } from '@ant-design/icons';
+import { SearchOutlined, CreditCardOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { Order, orderService } from '../../services/orderService';
 import { PaymentManagement } from './PaymentManagement';
 import { BankProfileModal } from './BankProfileModal';
-import { DebtTracking } from './DebtTracking';
+import DebtManagement from './DebtManagement';
+import { paymentService } from '../../services/paymentService';
+import { downloadPDF, generateContractFilename } from '../../utils/pdfUtils';
 
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -22,6 +24,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
   const [activeTab, setActiveTab] = useState('payments');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [generatingContract, setGeneratingContract] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -91,6 +94,25 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
   const handleBankProfile = (order: Order) => {
     setSelectedOrder(order);
     setShowBankProfileModal(true);
+  };
+
+  const handleGenerateContract = async (order: Order) => {
+    setGeneratingContract(order._id);
+    try {
+      message.info('Đang tạo hợp đồng PDF...');
+      
+      const blob = await paymentService.generateContractPDF(order._id);
+      const filename = generateContractFilename(order.code);
+      downloadPDF(blob, filename);
+      
+      message.success('Hợp đồng đã được tạo và tải xuống thành công!');
+    } catch (error: any) {
+      console.error('Error generating contract:', error);
+      const errorMessage = error?.message || 'Lỗi khi tạo hợp đồng';
+      message.error(errorMessage);
+    } finally {
+      setGeneratingContract(null);
+    }
   };
 
 
@@ -217,6 +239,16 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
               Hồ sơ ngân hàng
             </Button>
           )}
+          <Button
+            type="default"
+            size="small"
+            icon={<FilePdfOutlined />}
+            onClick={() => handleGenerateContract(record)}
+            loading={generatingContract === record._id}
+            disabled={record.status === 'cancelled'}
+          >
+            Xuất hợp đồng
+          </Button>
         </Space>
       ),
     },
@@ -307,7 +339,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
             />
           </>
         ) : (
-          <DebtTracking />
+          <DebtManagement />
         )}
       </Card>
 

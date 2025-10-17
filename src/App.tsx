@@ -28,13 +28,14 @@ import PromotionManagement from "./components/pages/EVM/PromotionManagement";
 import { DealerInfo } from "./components/pages/DealerManager/DealerInfo";
 import { PromotionsDashboard } from "./components/PromotionsDashboard";
 import { SalesManagement } from "./components/pages/Dealerstaff/SalesManagementNew";
+import TestAPI from "./components/pages/TestAPI";
 
 // Order Management Components
 import { OrderManagement } from "./components/pages/OrderManagement";
 import { OrderDetailMUI } from "./components/pages/OrderDetailMUI";
 import { QuoteToOrderPageMUI } from "./components/pages/QuoteToOrderPageMUI";
 import { PaymentManagementPage } from "./components/pages/PaymentManagementPage";
-import { PaymentFeaturesDemo } from "./components/pages/PaymentFeaturesDemo";
+import DebtManagement from "./components/pages/DebtManagement";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -104,7 +105,8 @@ function AppContent() {
       <Route path="/portal/orders/:orderId" element={<OrderDetailMUI />} />
       <Route path="/portal/quote-to-order" element={<QuoteToOrderPageMUI />} />
       <Route path="/portal/payments" element={<PaymentManagementPage />} />
-      <Route path="/portal/payment-demo" element={<PaymentFeaturesDemo />} />
+      <Route path="/portal/debt-management" element={<DebtManagement />} />
+      <Route path="/portal/test-api" element={<TestAPI />} />
 
       {/* EVM routes */}
       <Route

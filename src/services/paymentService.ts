@@ -184,29 +184,51 @@ export const paymentService = {
     return get(`/api/debts/customer/${customerId}`);
   },
 
-  // Invoice generation
-  async generateInvoice(orderId: string): Promise<{
-    success: boolean;
-    message: string;
-    data: {
-      invoice_url: string;
-      invoice_number: string;
-    };
-  }> {
-    return post(`/api/orders/${orderId}/generate-invoice`);
-  },
-
-  // Download invoice
-  async downloadInvoice(orderId: string): Promise<Blob> {
-    const response = await fetch(`/api/orders/${orderId}/download-invoice`, {
-      method: 'GET',
+  // Generate contract PDF (using existing API)
+  async generateContractPDF(orderId: string): Promise<Blob> {
+    const token = localStorage.getItem('accessToken');
+    console.log('Token exists:', !!token);
+    console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
+    
+    if (!token) {
+      throw new Error('No authentication token found. Please login again.');
+    }
+    
+    const response = await fetch(`http://localhost:5000/api/contracts/orders/${orderId}/generate`, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        template_name: 'default',
+        template_data: {
+          location: 'Thành phố Hồ Chí Minh',
+          dealership: {
+            name: 'VinFast Dealership',
+            address: '123 Đường ABC, Quận 1, TP.HCM',
+            phone: '1900 1234',
+            tax_code: '0123456789'
+          },
+          downPayment: 0
+        }
+      }),
     });
     
     if (!response.ok) {
-      throw new Error('Failed to download invoice');
+      const errorText = await response.text();
+      console.error('API Error:', response.status, errorText);
+      
+        if (response.status === 401) {
+          // Token invalid, clear it and redirect to login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          throw new Error('Authentication token expired. Please login again.');
+        }
+      
+      throw new Error(`Failed to generate contract PDF: ${response.status} ${errorText}`);
     }
     
     return response.blob();

@@ -364,9 +364,9 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
                                     <TableHead>
                                         <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: 'grey.100' } }}>
                                             <TableCell>Mã báo giá</TableCell>
-                                            <TableCell>Khách hàng</TableCell>
+                                            {/* <TableCell>Khách hàng</TableCell>
                                             <TableCell>Số điện thoại</TableCell>
-                                            <TableCell>Email</TableCell>
+                                            <TableCell>Email</TableCell> */}
                                             <TableCell align="right">Tổng tiền</TableCell>
                                             <TableCell>Ngày tạo</TableCell>
                                             <TableCell>Hiệu lực đến</TableCell>
@@ -391,7 +391,7 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
                                                             {quote.code}
                                                         </Typography>
                                                     </TableCell>
-                                                    <TableCell>
+                                                    {/* <TableCell>
                                                         <Typography variant="body2">
                                                             {quote.customer?.full_name || 'N/A'}
                                                         </Typography>
@@ -405,7 +405,7 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
                                                         <Typography variant="body2">
                                                             {quote.customer?.email || 'N/A'}
                                                         </Typography>
-                                                    </TableCell>
+                                                    </TableCell> */}
                                                     <TableCell align="right">
                                                         <Typography variant="body2" fontWeight="medium">
                                                             {formatCurrency(quote.final_amount)}
