@@ -153,6 +153,240 @@
   }
 }
 
+/* Modal and Dialog fixes */
+.ant-modal {
+  z-index: 10000 !important;
+}
+
+.ant-modal-mask {
+  z-index: 9999 !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.ant-modal-wrap {
+  z-index: 9999 !important;
+}
+
+/* MUI Dialog fixes */
+.MuiDialog-root {
+  z-index: 10000 !important;
+}
+
+.MuiBackdrop-root {
+  z-index: 9999 !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.MuiModal-root {
+  z-index: 10000 !important;
+}
+
+/* Ensure modals are always visible and break out of any container */
+.ant-modal,
+.MuiDialog-root,
+.MuiModal-root {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10000 !important;
+}
+
+/* Force modal to break out of any parent container */
+.ant-modal-wrap,
+.MuiModal-root {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 10000 !important;
+}
+
+/* Specific modal fixes */
+.order-detail-modal {
+  z-index: 10001 !important;
+}
+
+.order-detail-modal .ant-modal {
+  z-index: 10001 !important;
+}
+
+.order-detail-modal .ant-modal-mask {
+  z-index: 10000 !important;
+}
+
+/* Fix for nested modals */
+.ant-modal .ant-modal {
+  z-index: 10002 !important;
+}
+
+.ant-modal .ant-modal-mask {
+  z-index: 10001 !important;
+}
+
+/* Ensure modal content is visible */
+.ant-modal-content {
+  position: relative !important;
+  z-index: 10001 !important;
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* MUI Dialog content fixes */
+.MuiDialog-paper {
+  position: relative !important;
+  z-index: 10001 !important;
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Simple modal backdrop styling */
+.ant-modal-mask,
+.MuiBackdrop-root {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  /* Remove backdrop-filter that can cause performance issues */
+}
+
+/* Ensure modal is not hidden by other elements */
+body.modal-open {
+  overflow: hidden !important;
+}
+
+/* Fix for any potential layout issues */
+.ant-modal-wrap,
+.MuiModal-root {
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Override any parent container constraints */
+.ant-modal-wrap,
+.MuiModal-root,
+.ant-modal,
+.MuiDialog-root {
+  transform: none !important;
+  overflow: visible !important;
+  contain: none !important;
+  isolation: auto !important;
+}
+
+/* Ensure modal backdrop covers entire viewport */
+.ant-modal-mask,
+.MuiBackdrop-root {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+}
+
+/* Force modal content to be positioned correctly */
+.ant-modal-content,
+.MuiDialog-paper {
+  position: relative !important;
+  z-index: 10001 !important;
+  margin: auto !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+  overflow: auto !important;
+}
+
+/* Better z-index management for nested modals */
+.ant-modal-wrap,
+.MuiModal-root {
+  z-index: 10000 !important;
+}
+
+/* Workflow modals should have higher z-index */
+.ant-modal-wrap[data-modal-type="workflow"],
+.MuiModal-root[data-modal-type="workflow"] {
+  z-index: 10001 !important;
+}
+
+/* Contract viewer modal should be highest */
+.ant-modal-wrap[data-modal-type="contract-viewer"],
+.MuiModal-root[data-modal-type="contract-viewer"] {
+  z-index: 10002 !important;
+}
+
+/* Simple modal opening - no heavy animations */
+.ant-modal-mask,
+.MuiBackdrop-root {
+  opacity: 1 !important;
+}
+
+.ant-modal,
+.MuiDialog-root {
+  opacity: 1 !important;
+}
+
+.ant-modal-content,
+.MuiDialog-paper {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Remove conflicting transitions */
+.ant-modal-wrap,
+.MuiModal-root {
+  transition: none !important;
+}
+
+/* Remove heavy animations that can cause freezing */
+
+/* Ensure modal is responsive and not frozen */
+.ant-modal,
+.MuiDialog-root {
+  pointer-events: auto !important;
+  user-select: auto !important;
+}
+
+.ant-modal-content,
+.MuiDialog-paper {
+  pointer-events: auto !important;
+  user-select: auto !important;
+}
+
+/* Prevent modal from blocking interactions */
+.ant-modal-mask,
+.MuiBackdrop-root {
+  pointer-events: auto !important;
+}
+
+/* Simple modal rendering - no heavy optimizations */
+.ant-modal-wrap,
+.MuiModal-root {
+  /* Remove contain property that might cause issues */
+}
+
+.ant-modal,
+.MuiDialog-root {
+  /* Remove will-change and backface-visibility */
+}
+
+/* Simple modal content */
+.ant-modal-content,
+.MuiDialog-paper {
+  /* Remove heavy CSS properties */
+}
+
+/* Simple backdrop */
+.ant-modal-mask,
+.MuiBackdrop-root {
+  /* Remove backface-visibility */
+}
+
 /* Custom animations */
 @keyframes fadeInUp {
   from {

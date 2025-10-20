@@ -3,6 +3,8 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 // Base API URL - change this to your actual API URL
 const API_BASE_URL = 'http://localhost:5000';
 
+console.log('HttpClient initialized with base URL:', API_BASE_URL);
+
 const httpClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -77,22 +79,36 @@ async function refreshAccessToken(): Promise<string | null> {
 // --- Axios interceptor ---
 httpClient.interceptors.request.use(
   async (config) => {
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    
     let token = getAccessToken();
     if (!token || isTokenExpired(token)) {
+      console.log('🔄 Token expired, refreshing...');
       token = await refreshAccessToken();
     }
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('✅ Token attached to request');
+    } else {
+      console.log('⚠️ No token available');
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.log('❌ Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    return response;
+  },
   async (error: AxiosError) => {
+    console.log(`❌ API Error: ${error.response?.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.response?.data);
+    
     if (error.response?.status === 401) {
       clearTokens();
       window.location.href = '/login';

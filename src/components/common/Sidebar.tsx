@@ -8,12 +8,13 @@ import {
   Package,
   Building2,
   Calendar,
-  FileText,
   CreditCard,
   MessageSquare,
   UserCog,
   Info,
   Gift,
+  ClipboardList,
+  FileSignature,
 } from "lucide-react";
 import { Layout, Menu, Input, Avatar, Button, Typography, Space } from "antd";
 import {
@@ -60,10 +61,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
       route: "/portal/sales",
     },
     {
+      key: "orders",
+      label: "Quản lý đơn hàng",
+      icon: <ClipboardList className="h-4 w-4" />,
+      route: "/portal/orders",
+    },
+    {
+      key: "quote-to-order",
+      label: "Chuyển báo giá",
+      icon: <FileSignature className="h-4 w-4" />,
+      route: "/portal/quote-to-order",
+    },
+    {
+      key: "payments",
+      label: "Thanh toán",
+      icon: <CreditCard className="h-4 w-4" />,
+      route: "/portal/payments",
+    },
+    {
+      key: "payment-demo",
+      label: "Demo Thanh toán",
+      icon: <CreditCard className="h-4 w-4" />,
+      route: "/portal/payment-demo",
+    },
+    {
       key: "customers",
       label: "Quản lý khách hàng",
       icon: <Users className="h-4 w-4" />,
       route: "/portal/customers",
+    },
+    {
+      key: "test-drives",
+      label: "Lịch lái thử",
+      icon: <Calendar className="h-4 w-4" />,
+      route: "/portal/test-drives",
     },
     {
       key: "promotions",
@@ -81,24 +112,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           },
         ]
       : []),
-    {
-      key: "test-drives",
-      label: "Lịch lái thử",
-      icon: <Calendar className="h-4 w-4" />,
-      route: "/portal/test-drives",
-    },
-    {
-      key: "orders",
-      label: "Đơn hàng",
-      icon: <FileText className="h-4 w-4" />,
-      route: "/portal/orders",
-    },
-    {
-      key: "payments",
-      label: "Thanh toán",
-      icon: <CreditCard className="h-4 w-4" />,
-      route: "/portal/payments",
-    },
     {
       key: "feedback",
       label: "Phản hồi",
