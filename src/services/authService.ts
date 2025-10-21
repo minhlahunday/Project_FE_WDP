@@ -877,5 +877,155 @@ export const authService = {
         message: (error as Error).message || 'Không thể so sánh hai xe'
       };
     }
+  },
+
+  // Quotation API Methods
+  async createQuotation(quotationData: {
+    notes?: string;
+    customer_id?: string;
+    items: {
+      vehicle_id: string;
+      quantity: number;
+      discount?: number;
+      color?: string;
+      promotion_id?: string;
+      options?: { option_id: string }[];
+      accessories?: { accessory_id: string; quantity: number }[];
+    }[];
+  }): Promise<{ success: boolean; message: string; data?: unknown }> {
+    try {
+      console.log('🚀 Creating quotation with data:', quotationData);
+      const response = await post<unknown>('/api/quotes', quotationData);
+      console.log('✅ Quotation created successfully:', response);
+
+      return {
+        success: true,
+        message: 'Tạo báo giá thành công',
+        data: response
+      };
+    } catch (error: unknown) {
+      console.error('❌ Error creating quotation:', error);
+      return {
+        success: false,
+        message: (error as Error).message || 'Không thể tạo báo giá'
+      };
+    }
+  },
+
+  // Get all quotations with pagination and filters
+  async getQuotations(params?: {
+    q?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<unknown> {
+    try {
+      console.log('📋 Fetching quotations with params:', params);
+      const queryParams = new URLSearchParams();
+      
+      if (params?.q) queryParams.append('q', params.q);
+      if (params?.page) queryParams.append('page', params.page.toString());
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
+      
+      const url = `/api/quotes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await get<unknown>(url);
+      console.log('✅ Quotations fetched successfully:', response);
+      return response;
+    } catch (error: unknown) {
+      console.error('❌ Error fetching quotations:', error);
+      throw error;
+    }
+  },
+
+  async getQuotationById(id: string): Promise<unknown> {
+    try {
+      console.log('📋 Fetching quotation detail for ID:', id);
+      const response = await get<unknown>(`/api/quotes/${id}`);
+      console.log('✅ Quotation detail fetched successfully:', response);
+      return response;
+    } catch (error: unknown) {
+      console.error('❌ Error fetching quotation detail:', error);
+      throw error;
+    }
+  },
+
+  async deleteQuotation(id: string): Promise<unknown> {
+    try {
+      console.log('🗑️ Canceling quotation (soft delete) ID:', id);
+      const response = await del<unknown>(`/api/quotes/${id}`);
+      console.log('✅ Quotation canceled successfully:', response);
+      return response;
+    } catch (error: unknown) {
+      console.error('❌ Error canceling quotation:', error);
+      
+      // Log detailed error for debugging
+      if (error && typeof error === 'object') {
+        const apiError = error as { 
+          response?: { 
+            data?: { message?: string; error?: string | number };
+            status?: number;
+          };
+          message?: string;
+        };
+        
+        if (apiError.response?.data) {
+          console.error('📋 API Error Details:', apiError.response.data);
+          console.error('📋 Full error response:', apiError.response);
+          const errorMessage = apiError.response.data.message || 'Không thể hủy báo giá';
+          throw new Error(errorMessage);
+        }
+        
+        if (apiError.response) {
+          console.error('📋 Full error response (no data):', apiError.response);
+        }
+      }
+      
+      console.error('📋 Raw error object:', error);
+      throw error;
+    }
+  },
+
+  async exportQuotationPDF(id: string): Promise<Blob> {
+    try {
+      console.log('📄 Exporting quotation PDF for ID:', id);
+      const token = localStorage.getItem('accessToken'); // Fixed: Use 'accessToken' instead of 'token'
+      console.log('🔑 Token exists:', !!token);
+      console.log('🔑 Token length:', token?.length);
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please login again.');
+      }
+      
+      const url = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/quotes/${id}/export`;
+      console.log('🌐 Request URL:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/pdf'
+        }
+      });
+
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
+
+      if (!response.ok) {
+        // Try to get error message from response
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          console.error('❌ API Error:', errorData);
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      console.log('✅ PDF exported successfully, size:', blob.size);
+      return blob;
+    } catch (error: unknown) {
+      console.error('❌ Error exporting PDF:', error);
+      throw error;
+    }
   }
 };

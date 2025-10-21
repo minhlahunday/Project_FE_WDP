@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* FORCE Ant Design Select Dropdown to show */
+.ant-select-dropdown {
+  z-index: 999999 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: fixed !important;
+}
+
+.ant-select-dropdown-hidden {
+  display: none !important;
+}
+
 /* Ferrari-style login design */
 @layer utilities {
   .bg-grid-white {

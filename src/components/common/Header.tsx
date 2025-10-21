@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
 
   return (
     <header className={`
-      fixed top-0 left-0 right-0 z-30
+      fixed top-0 left-0 right-0 z-20 lg:z-30
       transition-all duration-300 ease-in-out
       ${isTransparent 
         ? 'bg-transparent backdrop-blur-sm border-b border-white/10' 

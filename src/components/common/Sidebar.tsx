@@ -15,6 +15,7 @@ import {
   Gift,
   ClipboardList,
   FileSignature,
+  FileText,
 } from "lucide-react";
 import { Layout, Menu, Input, Avatar, Button, Typography, Space } from "antd";
 import {
@@ -65,6 +66,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Quản lý đơn hàng",
       icon: <ClipboardList className="h-4 w-4" />,
       route: "/portal/orders",
+    },
+    {
+      key: "quotations",
+      label: "Quản lý báo giá",
+      icon: <FileText className="h-4 w-4" />,
+      route: "/portal/quotations",
     },
     {
       key: "quote-to-order",

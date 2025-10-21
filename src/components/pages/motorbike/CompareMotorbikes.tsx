@@ -188,7 +188,7 @@ export const CompareMotorbikes: React.FC = () => {
         onOpen={() => setIsSidebarOpen(true)}
       />
 
-      <div className={`pt-[73px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`pt-16 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
         {/* Back Button */}
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-6 py-3">

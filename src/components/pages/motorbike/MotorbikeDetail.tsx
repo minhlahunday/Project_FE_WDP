@@ -51,6 +51,7 @@ import {
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
+import { QuotationModal } from '../../common/QuotationModal';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -67,6 +68,7 @@ export const MotorbikeDetail: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
   const screens = useBreakpoint();
 
   useEffect(() => {
@@ -193,35 +195,35 @@ export const MotorbikeDetail: React.FC = () => {
       }}
     >
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Header */}
-        <Header 
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          isSidebarOpen={isSidebarOpen}
-        />
-        
-        {/* Sidebar */}
-        <Sidebar
-          activeSection={activeSection}
-          onSectionChange={(section) => setActiveSection(section)}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          onOpen={() => setIsSidebarOpen(true)}
-        />
+      {/* Header */}
+      <Header 
+        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        isSidebarOpen={isSidebarOpen}
+      />
+      
+      {/* Sidebar */}
+      <Sidebar
+        activeSection={activeSection}
+        onSectionChange={(section) => setActiveSection(section)}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onOpen={() => setIsSidebarOpen(true)}
+      />
 
-        <div className={`flex-1 pt-[73px] transition-all duration-300 pb-8 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <div className={`flex-1 pt-16 transition-all duration-300 pb-8 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
           {/* Breadcrumb */}
           <div className="bg-white border-b">
             <div className="max-w-7xl mx-auto px-6 py-4">
               <Button 
                 type="text" 
                 icon={<ArrowLeft size={16} />}
-                onClick={() => navigate(-1)}
+              onClick={() => navigate(-1)}
                 className="flex items-center"
-              >
-                Quay lại
+            >
+              Quay lại
               </Button>
-            </div>
           </div>
+        </div>
 
           <div className="max-w-7xl mx-auto px-6 py-8">
             {/* Product Header */}
@@ -241,10 +243,10 @@ export const MotorbikeDetail: React.FC = () => {
               <Text type="secondary" className="text-lg">
                 {getVehicleProperty('version', '2025') as string} - {(getVehicleProperty('color_options', ['Black']) as string[]).join(', ')}
               </Text>
-            </div>
+        </div>
 
             <Row gutter={[32, 32]}>
-              {/* Image Gallery */}
+            {/* Image Gallery */}
               <Col xs={24} lg={14}>
                 <Card className="overflow-hidden shadow-lg">
                   <div className="relative">
@@ -276,8 +278,8 @@ export const MotorbikeDetail: React.FC = () => {
                                 src={img}
                                 alt={`View ${index + 1}`}
                                 className="w-full h-16 object-cover"
-                              />
-                            </div>
+                />
+              </div>
                           </Col>
                         ))}
                       </Row>
@@ -294,7 +296,7 @@ export const MotorbikeDetail: React.FC = () => {
                       {formatPrice(getVehicleProperty('price', 25000000) as number)}
                     </Title>
                     <Text type="secondary">Giá đã bao gồm VAT</Text>
-                  </div>
+            </div>
 
                   {/* Key Specs */}
                   <div className="mb-6">
@@ -354,17 +356,17 @@ export const MotorbikeDetail: React.FC = () => {
                           <Weight className="h-5 w-5 text-gray-600 mx-auto mb-1" />
                           <Text strong className="block text-sm">{getVehicleProperty('weight', '0')} kg</Text>
                           <Text type="secondary" className="text-xs">Trọng lượng</Text>
-                        </div>
+                    </div>
                       </Col>
                       <Col span={12}>
                         <div className="bg-blue-50 p-3 rounded-lg text-center">
                           <AlertCircle className="h-5 w-5 text-blue-600 mx-auto mb-1" />
                           <Text strong className="block text-sm">{getVehicleProperty('stock', '0')}</Text>
                           <Text type="secondary" className="text-xs">Tồn kho</Text>
-                        </div>
+                  </div>
                       </Col>
                     </Row>
-                  </div>
+                    </div>
 
                   {/* Color Options */}
                   <div className="mb-6">
@@ -377,10 +379,10 @@ export const MotorbikeDetail: React.FC = () => {
                             style={{ backgroundColor: color.toLowerCase() }}
                           />
                           <Text className="font-medium">{color}</Text>
-                        </div>
+                  </div>
                       ))}
                     </Space>
-                  </div>
+                    </div>
 
                   {/* Safety Features */}
                   <div className="mb-6">
@@ -392,8 +394,8 @@ export const MotorbikeDetail: React.FC = () => {
                           {feature}
                         </Tag>
                       ))}
-                    </div>
                   </div>
+                </div>
 
                   {/* Stock Status */}
                   <div className="mb-6">
@@ -402,7 +404,7 @@ export const MotorbikeDetail: React.FC = () => {
                       style={{ backgroundColor: '#52c41a' }}
                       className="w-full"
                     />
-                  </div>
+                </div>
 
                   {/* Action Buttons */}
                   <Space direction="vertical" className="w-full" size="middle">
@@ -423,6 +425,20 @@ export const MotorbikeDetail: React.FC = () => {
                       className="h-12"
                     >
                       Đặt lịch lái thử
+                    </Button>
+                    <Button
+                      type="default"
+                      size="large"
+                      block
+                      onClick={() => setShowQuotationModal(true)}
+                      className="h-12 bg-gradient-to-r from-amber-400 to-yellow-500 border-amber-500 hover:from-amber-500 hover:to-yellow-600 text-white font-semibold"
+                    >
+                      <span className="flex items-center justify-center">
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Tạo báo giá
+                      </span>
                     </Button>
                     <Row gutter={8}>
                       <Col span={12}>
@@ -548,7 +564,7 @@ export const MotorbikeDetail: React.FC = () => {
                 Đặt lịch lái thử hoặc đặt cọc ngay hôm nay để nhận ưu đãi đặc biệt
               </Paragraph>
               
-              <Space size="large">
+              <Space size="large" wrap>
                 <Button
                   type="primary"
                   size="large"
@@ -564,11 +580,23 @@ export const MotorbikeDetail: React.FC = () => {
                 >
                   Đặt lịch lái thử
                 </Button>
+                <Button
+                  size="large"
+                  onClick={() => setShowQuotationModal(true)}
+                  className="bg-gradient-to-r from-amber-400 to-yellow-500 border-none hover:from-amber-500 hover:to-yellow-600 text-white h-12 px-8 font-semibold"
+                >
+                  <span className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Tạo báo giá
+                  </span>
+                </Button>
               </Space>
+              </div>
             </div>
           </div>
-        </div>
-        
+
         {/* Footer - Added fixed height and proper styling */}
         <div className="bg-gray-800 text-white py-8 shadow-inner">
           <div className="max-w-7xl mx-auto px-6">
@@ -614,6 +642,16 @@ export const MotorbikeDetail: React.FC = () => {
             </div>
           </div>
         </div>
+
+      {/* Quotation Modal */}
+      <QuotationModal
+        visible={showQuotationModal}
+        onClose={() => setShowQuotationModal(false)}
+        vehicleId={id || ''}
+        vehicleName={getVehicleProperty('name', getVehicleProperty('model', 'Motorbike')) as string}
+        vehiclePrice={getVehicleProperty('price', 0) as number}
+        colorOptions={getVehicleProperty('color_options', []) as string[]}
+      />
       </div>
     </ConfigProvider>
   );

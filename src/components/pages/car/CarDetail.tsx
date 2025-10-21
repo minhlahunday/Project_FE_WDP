@@ -33,6 +33,7 @@ import {
   SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { authService } from '../../../services/authService';
+import { QuotationModal } from '../../common/QuotationModal';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -64,6 +65,7 @@ export const CarDetail: React.FC = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
   const [rotation, setRotation] = useState(0);
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
   
   // Refs for section navigation
   const introRef = useRef<HTMLDivElement>(null);
@@ -437,6 +439,24 @@ export const CarDetail: React.FC = () => {
                       }}
                     >
                       Đăng ký lái thử miễn phí
+                    </Button>
+                    <Button
+                      size="large"
+                      icon={<ThunderboltOutlined />}
+                      onClick={() => setShowQuotationModal(true)}
+                      style={{ 
+                        borderColor: 'rgba(255,255,255,0.4)',
+                        color: 'white',
+                        borderRadius: 12,
+                        height: 48,
+                        width: '100%',
+                        fontWeight: 600,
+                        background: 'linear-gradient(135deg, rgba(250,204,21,0.2), rgba(234,179,8,0.3))',
+                        border: '2px solid rgba(250,204,21,0.6)',
+                        backdropFilter: 'blur(20px)'
+                      }}
+                    >
+                      Tạo báo giá
                     </Button>
                   </Space>
                 </div>
@@ -876,6 +896,16 @@ export const CarDetail: React.FC = () => {
           }}
         />
       </BackTop>
+
+      {/* Quotation Modal */}
+      <QuotationModal
+        visible={showQuotationModal}
+        onClose={() => setShowQuotationModal(false)}
+        vehicleId={id || ''}
+        vehicleName={`VinFast ${getVehicleProperty('model', 'VF3')} ${getVehicleProperty('version', '')}`}
+        vehiclePrice={getVehicleProperty('price', 0) as number}
+        colorOptions={colorOptions}
+      />
     </Layout>
   );
 };

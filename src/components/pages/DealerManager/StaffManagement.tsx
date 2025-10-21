@@ -6,11 +6,9 @@ import {
   Trash2, 
   UserCheck, 
   UserX, 
-  Filter, 
   X, 
   Eye, 
   Users as UsersIcon, 
-  TrendingUp, 
   Clock,
   AlertCircle,
   CheckCircle,
@@ -18,7 +16,9 @@ import {
   Shield,
   Info,
   Camera,
-  Users
+  Users,
+  Mail,
+  Phone
 } from 'lucide-react';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
@@ -101,7 +101,7 @@ export const StaffManagement: React.FC = () => {
         });
         
         // Check if response.data has nested data property
-        const responseData = response.data as Record<string, unknown>;
+        const responseData = response.data as unknown as Record<string, unknown>;
         let rolesArray: Record<string, unknown>[];
         
         if (responseData.data && Array.isArray(responseData.data)) {
@@ -538,197 +538,223 @@ export const StaffManagement: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header có sẵn của dự án */}
-      <Header />
-      
-      <div className="flex">
-        {/* Sidebar có sẵn của dự án với prop cần thiết */}
-        <Sidebar onSectionChange={handleSectionChange} />
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar
+        activeSection="staff-management"
+        onSectionChange={handleSectionChange}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpen={() => setSidebarOpen(true)}
+      />
       
       {/* Main Content */}
-        <main className="flex-1 ml-64 pt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="space-y-6">
-              {/* Enhanced Header */}
-              <div className="bg-white rounded-xl shadow-sm p-8 border-l-4 border-blue-500">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+      }`}>
+        {/* Header */}
+        <div className="fixed top-0 right-0 left-0 z-30 lg:left-16">
+          <div className={`transition-all duration-300 ${
+            sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+          }`}>
+            <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+          </div>
+        </div>
+        
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto pt-16">
+          <div className="p-6 pt-0">
+            {/* Page Header */}
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl shadow-xl p-8 text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý nhân viên</h1>
-                    <p className="text-gray-600 text-lg">
-                      Quản lý thông tin nhân viên trong đại lý hiện tại
-                    </p>
-          </div>
-                  <div className="hidden md:flex items-center space-x-4">
-                    <div className="bg-blue-50 p-4 rounded-full">
-                      <UsersIcon className="h-8 w-8 text-blue-600" />
-        </div>
+                    <h1 className="text-4xl font-bold mb-2">Quản lý nhân viên</h1>
+                    <p className="text-indigo-100 text-lg">Quản lý thông tin nhân viên trong đại lý của bạn</p>
+                  </div>
+                  <div className="hidden md:flex items-center space-x-3">
+                    <button
+                      onClick={handleAddStaff}
+                      className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 shadow-lg transition-all duration-200 hover:scale-105"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <span>Thêm nhân viên</span>
+                    </button>
                   </div>
                 </div>
+              </div>
             </div>
 
-              {/* Enhanced Search and Filters */}
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tìm kiếm & Bộ lọc</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* Enhanced Search */}
-                  <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
+            {/* Search Bar */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                   <input
                     type="text"
-                    placeholder="Tìm kiếm nhân viên..."
+                    placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-lg"
                   />
                 </div>
-
-                  <div></div>
-                  <div></div>
-
-                  {/* Enhanced Add Staff Button */}
-                <button
-                  onClick={handleAddStaff}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
+                <button className="md:hidden bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-4 rounded-xl font-semibold flex items-center space-x-2 shadow-lg transition-all duration-200">
                   <Plus className="h-5 w-5" />
-                  <span>Thêm nhân viên</span>
                 </button>
               </div>
             </div>
 
-              {/* Enhanced Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow duration-200">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div>
-                      <p className="text-sm text-gray-600 font-medium">Tổng nhân viên</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-1">{totalUsers}</p>
-                      
+                    <p className="text-blue-100 text-sm font-medium mb-1">Tổng nhân viên</p>
+                    <p className="text-4xl font-bold">{totalUsers}</p>
                   </div>
-                    <div className="bg-blue-100 p-4 rounded-full">
-                      <UserCheck className="h-8 w-8 text-blue-600" />
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
+                    <Users className="h-8 w-8" />
                   </div>
                 </div>
               </div>
 
-                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-200">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div>
-                      <p className="text-sm text-gray-600 font-medium">Hoạt động</p>
-                      <p className="text-3xl font-bold text-green-600 mt-1">
+                    <p className="text-green-100 text-sm font-medium mb-1">Đang hoạt động</p>
+                    <p className="text-4xl font-bold">
                       {staffList.filter(s => s.status === 'active').length}
                     </p>
-                      
                   </div>
-                    <div className="bg-green-100 p-4 rounded-full">
-                      <UserCheck className="h-8 w-8 text-green-600" />
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
+                    <UserCheck className="h-8 w-8" />
                   </div>
                 </div>
               </div>
 
-                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow duration-200">
+              <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div>
-                      <p className="text-sm text-gray-600 font-medium">Bị khóa</p>
-                      <p className="text-3xl font-bold text-red-600 mt-1">
+                    <p className="text-red-100 text-sm font-medium mb-1">Bị khóa</p>
+                    <p className="text-4xl font-bold">
                       {staffList.filter(s => s.status === 'inactive').length}
                     </p>
-                     
                   </div>
-                    <div className="bg-red-100 p-4 rounded-full">
-                      <UserX className="h-8 w-8 text-red-600" />
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
+                    <UserX className="h-8 w-8" />
                   </div>
                 </div>
               </div>
 
-                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 hover:shadow-lg transition-shadow duration-200">
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div>
-                      <p className="text-sm text-gray-600 font-medium">Chờ duyệt</p>
-                      <p className="text-3xl font-bold text-yellow-600 mt-1">
+                    <p className="text-amber-100 text-sm font-medium mb-1">Chờ duyệt</p>
+                    <p className="text-4xl font-bold">
                       {staffList.filter(s => s.status === 'pending').length}
                     </p>
-                      
                   </div>
-                    <div className="bg-yellow-100 p-4 rounded-full">
-                      <Filter className="h-8 w-8 text-yellow-600" />
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
+                    <Clock className="h-8 w-8" />
                   </div>
                 </div>
               </div>
             </div>
 
-              {/* Enhanced Staff Table */}
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                  <h3 className="text-lg font-semibold text-gray-900">Danh sách nhân viên</h3>
-                  <p className="text-sm text-gray-600">Quản lý và theo dõi thông tin nhân viên</p>
+            {/* Staff Table */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-1">Danh sách nhân viên</h3>
+                    <p className="text-gray-600">Tổng cộng {filteredStaff.length} nhân viên</p>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-xl shadow-sm">
+                    <Settings className="h-5 w-5 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-600">Bộ lọc</span>
+                  </div>
                 </div>
+              </div>
                 
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b-2 border-indigo-100">
                     <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                         Nhân viên
                       </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                        Vị trí
+                      </th>
+                      <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                         Trạng thái
                       </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-8 py-5 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
                         Thao tác
                       </th>
                     </tr>
                   </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white divide-y divide-gray-100">
                     {filteredStaff.map((staff) => (
-                        <tr key={staff.id} className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                      <tr key={staff.id} className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200">
+                        <td className="px-8 py-6">
                           <div className="flex items-center">
-                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
-                                <span className="text-sm font-semibold text-white">
-                                  {staff.fullName?.charAt(0) || '?'}
+                            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 flex items-center justify-center shadow-lg">
+                              <span className="text-lg font-bold text-white">
+                                {staff.fullName?.charAt(0) || '?'}
                               </span>
                             </div>
-                            <div className="ml-4">
-                                <div className="text-sm font-semibold text-gray-900">{staff.fullName}</div>
-                              <div className="text-sm text-gray-500">{staff.email}</div>
-                                <div className="text-sm text-gray-400">{staff.phone}</div>
+                            <div className="ml-5">
+                              <div className="text-lg font-bold text-gray-900">{staff.fullName}</div>
+                              <div className="text-sm text-gray-600 flex items-center mt-1">
+                                <Mail className="h-4 w-4 mr-1" />
+                                {staff.email}
+                              </div>
+                              <div className="text-sm text-gray-500 flex items-center mt-1">
+                                <Phone className="h-4 w-4 mr-1" />
+                                {staff.phone}
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center">
+                            <Shield className="h-5 w-5 text-indigo-500 mr-2" />
+                            <span className="text-sm font-semibold text-gray-700">{staff.position || 'N/A'}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
                           {getStatusBadge(staff.status)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-3">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center justify-center space-x-2">
                             <button
-                                onClick={() => handleViewStaffDetail(staff)}
-                                className="text-green-600 hover:text-green-900 hover:bg-green-50 p-2 rounded-lg transition-all duration-150"
-                                title="Xem chi tiết"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleEditStaff(staff)}
-                                className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-lg transition-all duration-150"
-                                title="Chỉnh sửa"
+                              onClick={() => handleViewStaffDetail(staff)}
+                              className="bg-green-100 text-green-600 hover:bg-green-200 p-3 rounded-xl transition-all duration-200 group"
+                              title="Xem chi tiết"
                             >
-                              <Edit2 className="h-4 w-4" />
+                              <Eye className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                            </button>
+                            <button
+                              onClick={() => handleEditStaff(staff)}
+                              className="bg-blue-100 text-blue-600 hover:bg-blue-200 p-3 rounded-xl transition-all duration-200 group"
+                              title="Chỉnh sửa"
+                            >
+                              <Edit2 className="h-5 w-5 group-hover:scale-110 transition-transform" />
                             </button>
                             <button
                               onClick={() => handleToggleStatus(staff.id)}
-                                className={`${staff.status === 'active' ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} p-2 rounded-lg transition-all duration-150`}
-                                title={staff.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                              className={`${staff.status === 'active' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'} p-3 rounded-xl transition-all duration-200 group`}
+                              title={staff.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
                             >
-                              {staff.status === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                              {staff.status === 'active' ? <UserX className="h-5 w-5 group-hover:scale-110 transition-transform" /> : <UserCheck className="h-5 w-5 group-hover:scale-110 transition-transform" />}
                             </button>
                             <button
                               onClick={() => handleDeleteStaff(staff.id)}
-                                className="text-red-600 hover:text-red-900 hover:bg-red-50 p-2 rounded-lg transition-all duration-150"
-                                title="Xóa nhân viên"
+                              className="bg-red-100 text-red-600 hover:bg-red-200 p-3 rounded-xl transition-all duration-200 group"
+                              title="Xóa nhân viên"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-5 w-5 group-hover:scale-110 transition-transform" />
                             </button>
                           </div>
                         </td>
@@ -798,10 +824,6 @@ export const StaffManagement: React.FC = () => {
                 </div>
               </div>
             )}
-            </div>
-          </div>
-        </main>
-      </div>
 
       {/* Enhanced Add Staff Modal - Redesigned to match Admin style */}
       {showAddModal && (
@@ -1919,6 +1941,9 @@ export const StaffManagement: React.FC = () => {
           </div>
         </div>
       )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

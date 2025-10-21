@@ -2,7 +2,6 @@ import React, { ReactNode, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
-import { Footer } from './Footer';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface LayoutProps {
@@ -35,7 +34,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <main className="flex-grow">
           {children}
         </main>
-        <Footer />
       </div>
     );
   }
@@ -59,15 +57,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
         
         {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'} ml-0`}>
-          <div className="pt-[73px]">
-            {children}
-          </div>
+        <main className={`flex-1 transition-all duration-300 pt-16 ${sidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'} ml-0`}>
+          {children}
         </main>
       </div>
-      
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

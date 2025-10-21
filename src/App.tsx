@@ -28,6 +28,7 @@ import PromotionManagement from "./components/pages/EVM/PromotionManagement";
 import { DealerInfo } from "./components/pages/DealerManager/DealerInfo";
 import { PromotionsDashboard } from "./components/PromotionsDashboard";
 import { SalesManagement } from "./components/pages/Dealerstaff/SalesManagementNew";
+import { QuotationManagement } from "./components/pages/Dealerstaff/QuotationManagement";
 import TestAPI from "./components/pages/TestAPI";
 
 // Order Management Components
@@ -82,6 +83,7 @@ function AppContent() {
       <Route path="/portal/promotions" element={<PromotionsDashboard />} />
       <Route path="/portal/dealer-info" element={<DealerInfo />} />
       <Route path="/portal/sales" element={<SalesManagement />} />
+      <Route path="/portal/quotations" element={<QuotationManagement />} />
 
       {/* Admin routes */}
 
