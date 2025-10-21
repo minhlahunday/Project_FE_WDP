@@ -1,0 +1,392 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  Button,
+  Card,
+  Typography,
+  Alert,
+  Row,
+  Col,
+  Progress,
+  message,
+  Space,
+  Table
+} from 'antd';
+import {
+  CheckCircleOutlined,
+  FilePdfOutlined
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
+
+import { Order } from '../../services/orderService';
+import { paymentService, Payment } from '../../services/paymentService';
+import { useAuth } from '../../contexts/AuthContext';
+import { downloadPDF, generateContractFilename } from '../../utils/pdfUtils';
+
+const { Title, Text } = Typography;
+const { TextArea } = Input;
+
+interface PaymentManagementProps {
+  visible: boolean;
+  order: Order | null;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export const PaymentManagement: React.FC<PaymentManagementProps> = ({
+  visible,
+  order,
+  onClose,
+  onSuccess
+}) => {
+  const { user } = useAuth();
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
+
+  const totalAmount = order?.final_amount || 0;
+  const paidAmount = order?.paid_amount || 0;
+  const remainingAmount = totalAmount - paidAmount;
+  const paymentProgress = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+
+  // Load payment history
+  const loadPaymentHistory = async () => {
+    if (!order) return;
+    
+    setLoadingHistory(true);
+    try {
+      const response = await paymentService.getPaymentsByOrder(order._id);
+      if (response.success) {
+        setPaymentHistory(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error loading payment history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (visible && order) {
+      loadPaymentHistory();
+    }
+  }, [visible, order]);
+
+  // Handle form submission
+  const handleSubmit = async (values: any) => {
+    if (!order) return;
+
+    // Check dealership permission
+    if (user?.role === 'dealer_staff' || user?.role === 'dealer_manager') {
+      const userDealershipId = user.dealership_id || user.dealerId;
+      if (order.dealership_id !== userDealershipId) {
+        message.error(`Bạn không có quyền thanh toán cho đơn hàng này. Đơn hàng thuộc về dealership khác.`);
+        console.error('Dealership mismatch:', {
+          order_dealership_id: order.dealership_id,
+          user_dealership_id: userDealershipId
+        });
+        return;
+      }
+    }
+    
+    setLoading(true);
+    try {
+      // API call to create payment
+      const response = await paymentService.createPayment({
+        order_id: order._id,
+        amount: values.amount,
+        method: values.method,
+        notes: values.notes
+      });
+      
+      if (response.success) {
+        message.success('Thanh toán đã được ghi nhận thành công!');
+        
+        // Check if fully paid to automatically generate contract
+        if (response.data.order.status === 'fullyPayment') {
+          message.info('Đơn hàng đã được thanh toán đủ! Đang tạo hợp đồng...');
+          
+          // Automatically generate contract PDF
+          try {
+            const blob = await paymentService.generateContractPDF(order._id);
+            const filename = generateContractFilename(order.code);
+            downloadPDF(blob, filename);
+            message.success('Hợp đồng đã được tạo và tải xuống thành công!');
+          } catch (error) {
+            console.error('Error generating contract:', error);
+            message.warning('Thanh toán thành công nhưng không thể tạo hợp đồng. Vui lòng thử lại sau.');
+          }
+        }
+        
+        // Reload payment history
+        await loadPaymentHistory();
+        
+        onSuccess();
+        handleClose();
+      } else {
+        console.error('Payment failed:', response.message);
+        message.error(response.message || 'Có lỗi xảy ra khi xử lý thanh toán');
+      }
+      
+    } catch (error: any) {
+      console.error('Error processing payment:', error);
+      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán';
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle close
+  const handleClose = () => {
+    form.resetFields();
+    onClose();
+  };
+
+  // Generate and download contract PDF
+  const handleGenerateInvoice = async () => {
+    if (!order) return;
+    
+    setGeneratingInvoice(true);
+    try {
+      message.info('Đang tạo hợp đồng PDF...');
+      
+      // Generate contract PDF using existing API
+      const blob = await paymentService.generateContractPDF(order._id);
+      message.success('Hợp đồng đã được tạo thành công!');
+      
+      // Download the contract
+      const filename = generateContractFilename(order.code);
+      downloadPDF(blob, filename);
+      
+    } catch (error: any) {
+      console.error('Error generating contract:', error);
+      const errorMessage = error?.message || 'Lỗi khi tạo hợp đồng';
+      message.error(errorMessage);
+    } finally {
+      setGeneratingInvoice(false);
+    }
+  };
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  // Payment history columns
+  const historyColumns: ColumnsType<Payment> = [
+    {
+      title: 'Ngày thanh toán',
+      dataIndex: 'paid_at',
+      key: 'paid_at',
+      render: (date: string) => new Date(date).toLocaleString('vi-VN'),
+    },
+    {
+      title: 'Số tiền',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (amount: number) => formatCurrency(amount),
+    },
+    {
+      title: 'Phương thức',
+      dataIndex: 'method',
+      key: 'method',
+      render: (method: string) => {
+        const methodMap = {
+          cash: 'Tiền mặt',
+          bank: 'Chuyển khoản',
+          qr: 'QR Code',
+          card: 'Thẻ'
+        };
+        return methodMap[method as keyof typeof methodMap] || method;
+      },
+    },
+    {
+      title: 'Mã tham chiếu',
+      dataIndex: 'reference',
+      key: 'reference',
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'notes',
+      key: 'notes',
+    },
+  ];
+
+  if (!order) return null;
+
+  return (
+    <Modal
+      title={`Xử lý thanh toán - ${order.code}`}
+      open={visible}
+      onCancel={handleClose}
+      footer={null}
+      width={800}
+    >
+      <div className="space-y-4">
+        {/* Order Info */}
+        <Card title="Thông tin đơn hàng" size="small">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Text strong>Mã đơn hàng:</Text> {order.code}
+            </Col>
+            <Col span={12}>
+              <Text strong>Khách hàng:</Text> {order.customer?.full_name || 'N/A'}
+            </Col>
+            <Col span={12}>
+              <Text strong>Tổng tiền:</Text> {formatCurrency(totalAmount)}
+            </Col>
+            <Col span={12}>
+              <Text strong>Đã thanh toán:</Text> {formatCurrency(paidAmount)}
+            </Col>
+            <Col span={12}>
+              <Text strong>Còn lại:</Text> {formatCurrency(remainingAmount)}
+            </Col>
+            <Col span={12}>
+              <Text strong>Trạng thái:</Text> {order.status}
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Payment Progress */}
+        <Card title="Tiến độ thanh toán" size="small">
+          <div>
+            <Title level={4}>Tiến độ thanh toán</Title>
+            <Progress
+              percent={paymentProgress}
+              strokeColor={paymentProgress === 100 ? '#52c41a' : '#1890ff'}
+              status={paymentProgress === 100 ? 'success' : 'active'}
+            />
+            <div className="text-center mt-2">
+              <Text type="secondary">
+                {paymentProgress}% đã thanh toán
+              </Text>
+            </div>
+          </div>
+        </Card>
+
+        {/* Payment Form */}
+        {paymentProgress < 100 && (
+          <Card title="Thêm thanh toán" size="small">
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+            >
+              <Form.Item
+                label="Số tiền thanh toán"
+                name="amount"
+                rules={[
+                  { required: true, message: 'Vui lòng nhập số tiền' },
+                  { type: 'number', min: 1, message: 'Số tiền phải lớn hơn 0' },
+                  {
+                    validator: (_, value) => {
+                      if (value > remainingAmount) {
+                        return Promise.reject(`Số tiền không được vượt quá ${formatCurrency(remainingAmount)}`);
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+                  placeholder="Nhập số tiền thanh toán"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Phương thức thanh toán"
+                name="method"
+                rules={[{ required: true, message: 'Vui lòng chọn phương thức thanh toán' }]}
+              >
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <option value="">Chọn phương thức</option>
+                  <option value="cash">Tiền mặt</option>
+                  <option value="bank">Chuyển khoản</option>
+                  <option value="qr">QR Code</option>
+                  <option value="card">Thẻ</option>
+                </select>
+              </Form.Item>
+
+              <Form.Item
+                label="Ghi chú"
+                name="notes"
+              >
+                <TextArea
+                  rows={3}
+                  placeholder="Nhập ghi chú (tùy chọn)"
+                />
+              </Form.Item>
+
+              <Form.Item>
+                <Space>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    icon={<CheckCircleOutlined />}
+                  >
+                    Ghi nhận thanh toán
+                  </Button>
+                  <Button onClick={handleClose}>
+                    Hủy
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </Card>
+        )}
+
+        {/* Payment Status */}
+        {paymentProgress === 100 && (
+          <Alert
+            message="Đơn hàng đã được thanh toán đủ"
+            description={
+              <div>
+                <p>Khách hàng đã thanh toán đủ số tiền cho đơn hàng này.</p>
+                <p className="text-sm text-gray-600 mb-2">
+                  Nhấn nút bên dưới để tạo và tải xuống hợp đồng PDF
+                </p>
+                <Button
+                  type="primary"
+                  icon={<FilePdfOutlined />}
+                  loading={generatingInvoice}
+                  onClick={handleGenerateInvoice}
+                  className="mt-2"
+                  size="large"
+                >
+                  {generatingInvoice ? 'Đang tạo hợp đồng...' : 'Xuất hợp đồng PDF'}
+                </Button>
+              </div>
+            }
+            type="success"
+            showIcon
+          />
+        )}
+
+        {/* Payment History */}
+        <Card title="Lịch sử thanh toán">
+          <Table
+            columns={historyColumns}
+            dataSource={paymentHistory}
+            rowKey="_id"
+            loading={loadingHistory}
+            pagination={false}
+            size="small"
+          />
+        </Card>
+      </div>
+    </Modal>
+  );
+};

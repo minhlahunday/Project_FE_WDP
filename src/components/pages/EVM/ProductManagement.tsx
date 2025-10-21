@@ -19,8 +19,7 @@ import {
   Avatar,
   Modal,
   Descriptions,
-  Divider,
-  Statistic
+  Divider
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -36,6 +35,7 @@ import {
   HomeOutlined,
   RightOutlined
 } from '@ant-design/icons';
+import { Link } from "react-router-dom";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -287,67 +287,100 @@ const ProductManagement: React.FC = () => {
     <AdminLayout activeSection="product-management">
       <div style={{ background: '#f5f7fa' }}>
         {/* Modern Page Header */}
-        <div style={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '32px 0',
-          marginLeft: '-24px',
-          marginRight: '-24px',
-          marginBottom: 24,
-          paddingLeft: '60px',
-          paddingRight: '40px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-            <HomeOutlined style={{ color: 'rgba(255,255,255,0.8)', marginRight: 8 }} />
-            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14 }}>Trang chủ</Text>
-            <RightOutlined style={{ color: 'rgba(255,255,255,0.8)', margin: '0 8px', fontSize: 12 }} />
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>Quản lý sản phẩm</Text>
+        <div className="mb-6 p-8 rounded-xl border border-blue-100" 
+             style={{ 
+               background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%)',
+               boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06)',
+               marginLeft: '-24px',
+               marginRight: '-24px'
+             }}>
+          {/* Breadcrumb */}
+          <div className="flex items-center mb-4">
+            <Link to ="/">
+            <HomeOutlined className="text-blue-400 mr-2" />
+            </Link>
+            <RightOutlined className="text-blue-300 mx-2 text-xs" />
+            <Text className="text-blue-600 text-sm font-medium">Quản lý sản phẩm</Text>
           </div>
           
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Title level={2} style={{ margin: 0, color: '#fff', marginBottom: 8, marginLeft: 16 }}>
-                Quản lý sản phẩm
-              </Title>
-              <Space size="large">
-                <Statistic 
-                  title={<span style={{ color: 'rgba(255,255,255,0.8)' }}>Tổng sản phẩm</span>}
-                  value={products.length} 
-                  valueStyle={{ color: '#fff', fontSize: 24 }}
-                />
-                <Statistic 
-                  title={<span style={{ color: 'rgba(255,255,255,0.8)' }}>Ô tô</span>}
-                  value={cars.length} 
-                  valueStyle={{ color: '#fff', fontSize: 24 }}
-                  prefix={<CarOutlined />}
-                />
-                <Statistic 
-                  title={<span style={{ color: 'rgba(255,255,255,0.8)' }}>Xe máy điện</span>}
-                  value={motorbikes.length} 
-                  valueStyle={{ color: '#fff', fontSize: 24 }}
-                  prefix={<ThunderboltOutlined />}
-                />
-              </Space>
+          <Row gutter={[32, 24]} align="middle">
+            {/* Title Section */}
+            <Col xs={24} lg={8}>
+              <div className="text-center lg:text-left">
+                {/* <div className="flex items-center justify-center lg:justify-start mb-3">
+                  <AppstoreOutlined className="text-blue-500 text-2xl mr-3" />
+                  <Text className="text-gray-600 text-sm font-medium">QUẢN LÝ SẢN PHẨM</Text>
+                </div> */}
+                <Title level={2} className="text-blue-600 mb-0">
+                  Danh mục sản phẩm
+                </Title>
+                <Text className="text-gray-500 text-sm">
+                  Quản lý và theo dõi tất cả sản phẩm xe điện
+                </Text>
+              </div>
             </Col>
-            <Col>
-              <Button
-                type="primary"
-                size="large"
-                icon={<PlusOutlined />}
-                onClick={() => setShowAddProduct(!showAddProduct)}
-                style={{ 
-                  background: '#fff',
-                  borderColor: '#fff',
-                  color: '#667eea',
-                  borderRadius: 8,
-                  height: 48,
-                  paddingLeft: 24,
-                  paddingRight: 24,
-                  fontWeight: 600,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                }}
-              >
-                {showAddProduct ? 'Đóng form' : 'Thêm sản phẩm mới'}
-              </Button>
+
+            {/* Statistics Section */}
+            <Col xs={24} lg={12}>
+              <Row gutter={[16, 16]}>
+                <Col xs={8} sm={8}>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <AppstoreOutlined className="text-blue-500 text-lg mr-2" />
+                      <Text className="text-gray-600 text-xs font-medium">TỔNG SẢN PHẨM</Text>
+                    </div>
+                    <Text className="text-blue-600 text-2xl font-bold block">
+                      {products.length}
+                    </Text>
+                    <Text className="text-gray-500 text-xs">
+                      sản phẩm
+                    </Text>
+                  </div>
+                </Col>
+                <Col xs={8} sm={8}>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <CarOutlined className="text-green-500 text-lg mr-2" />
+                      <Text className="text-gray-600 text-xs font-medium">Ô TÔ</Text>
+                    </div>
+                    <Text className="text-green-600 text-2xl font-bold block">
+                      {cars.length}
+                    </Text>
+                    <Text className="text-gray-500 text-xs">
+                      xe
+                    </Text>
+                  </div>
+                </Col>
+                <Col xs={8} sm={8}>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <ThunderboltOutlined className="text-orange-500 text-lg mr-2" />
+                      <Text className="text-gray-600 text-xs font-medium">XE MÁY</Text>
+                    </div>
+                    <Text className="text-orange-600 text-2xl font-bold block">
+                      {motorbikes.length}
+                    </Text>
+                    <Text className="text-gray-500 text-xs">
+                      xe
+                    </Text>
+                  </div>
+                </Col>
+              </Row>
+            </Col>
+
+            {/* Action Button */}
+            <Col xs={24} lg={4}>
+              <div className="flex justify-center lg:justify-end">
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<PlusOutlined />}
+                  onClick={() => setShowAddProduct(!showAddProduct)}
+                  className="bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700 rounded-lg h-12 px-6 font-semibold shadow-lg"
+                >
+                  {showAddProduct ? 'Đóng form' : 'Thêm sản phẩm'}
+                </Button>
+              </div>
             </Col>
           </Row>
         </div>

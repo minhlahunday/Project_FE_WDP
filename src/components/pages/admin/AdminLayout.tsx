@@ -20,7 +20,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 overflow-hidden">
       <Sidebar 
         activeSection={currentSection}
         onSectionChange={handleSectionChange}
@@ -37,7 +37,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           />
         </div>
         {/* Page Content */}
-        <main className="flex-1 mt-[73px] pb-4 px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 pt-16 pb-4 px-4 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

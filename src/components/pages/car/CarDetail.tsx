@@ -33,6 +33,7 @@ import {
   SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { authService } from '../../../services/authService';
+import { QuotationModal } from '../QuotationModal';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -64,6 +65,7 @@ export const CarDetail: React.FC = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
   const [rotation, setRotation] = useState(0);
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
   
   // Refs for section navigation
   const introRef = useRef<HTMLDivElement>(null);
@@ -195,17 +197,20 @@ export const CarDetail: React.FC = () => {
               <Space size="large">
                 <Button 
                   icon={<ArrowLeftOutlined />} 
-                  type="text"
+                  type="default"
                   onClick={() => navigate(-1)}
+                  size="large"
                   style={{ 
-                    color: '#1f2937',
+                    borderRadius: '8px',
+                    minWidth: '120px',
                     fontWeight: 500,
-                    fontSize: 16,
-                    border: 'none',
-                    background: 'transparent'
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}
+                  className="hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
                 >
-                  Trở về
+                  Quay lại
                 </Button>
                 <Title level={2} style={{ 
                   margin: 0, 
@@ -329,10 +334,10 @@ export const CarDetail: React.FC = () => {
                         height: 'auto'
                       }}
                       preview={false}
-                      onLoad={handleImageLoad}
-                    />
-                  </div>
-                  
+            onLoad={handleImageLoad}
+          />
+        </div>
+
                   {/* Floating Badge */}
                   <div style={{
                     position: 'absolute',
@@ -348,7 +353,7 @@ export const CarDetail: React.FC = () => {
                   }}>
                     🔥 Mới nhất 2024
                   </div>
-                </div>
+        </div>
               </Col>
               
               <Col xs={24} lg={10}>
@@ -399,7 +404,7 @@ export const CarDetail: React.FC = () => {
                     <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14 }}>
                       Đã bao gồm VAT • Hỗ trợ trả góp 0%
                     </Text>
-                  </div>
+      </div>
 
                   {/* CTA Buttons */}
                   <Space size={16} style={{ width: '100%' }} direction="vertical">
@@ -438,12 +443,30 @@ export const CarDetail: React.FC = () => {
                     >
                       Đăng ký lái thử miễn phí
                     </Button>
+                    <Button
+                      size="large"
+                      icon={<ThunderboltOutlined />}
+                      onClick={() => setShowQuotationModal(true)}
+                      style={{ 
+                        borderColor: 'rgba(255,255,255,0.4)',
+                        color: 'white',
+                        borderRadius: 12,
+                        height: 48,
+                        width: '100%',
+                        fontWeight: 600,
+                        background: 'linear-gradient(135deg, rgba(250,204,21,0.2), rgba(234,179,8,0.3))',
+                        border: '2px solid rgba(250,204,21,0.6)',
+                        backdropFilter: 'blur(20px)'
+                      }}
+                    >
+                      Tạo báo giá
+                    </Button>
                   </Space>
                 </div>
               </Col>
             </Row>
-          </div>
         </div>
+      </div>
 
         {/* Key Features - Modern Cards */}
         <div style={{ 
@@ -497,7 +520,7 @@ export const CarDetail: React.FC = () => {
                       {getVehicleProperty('motor_power', '30')} kW
                     </Title>
                     <Text style={{ color: 'rgba(255,255,255,0.9)' }}>Công suất tối đa</Text>
-                  </div>
+            </div>
                 </Card>
               </Col>
               
@@ -516,7 +539,7 @@ export const CarDetail: React.FC = () => {
                       {getVehicleProperty('charging_fast', '1')}h
                     </Title>
                     <Text style={{ color: 'rgba(255,255,255,0.9)' }}>Sạc nhanh (10%-70%)</Text>
-                  </div>
+            </div>
                 </Card>
               </Col>
               
@@ -535,13 +558,13 @@ export const CarDetail: React.FC = () => {
                       5★
                     </Title>
                     <Text style={{ color: 'rgba(255,255,255,0.9)' }}>An toàn tối đa</Text>
-                  </div>
+            </div>
                 </Card>
               </Col>
             </Row>
+            </div>
           </div>
-        </div>
-
+          
         {/* Exterior Section - 360° Viewer */}
         <div ref={exteriorRef} style={{ 
           background: 'white', 
@@ -676,9 +699,9 @@ export const CarDetail: React.FC = () => {
                       }}
                     />
                   </div>
-                </div>
-              </div>
-            </div>
+          </div>
+        </div>
+      </div>
 
             {/* Color Selection */}
             <div style={{ textAlign: 'center' }}>
@@ -733,15 +756,15 @@ export const CarDetail: React.FC = () => {
                           justifyContent: 'center'
                         }}>
                           <CheckCircleOutlined style={{ color: 'white', fontSize: 12 }} />
-                        </div>
-                      )}
-                    </div>
+                </div>
+                )}
+              </div>
                   );
                 })}
               </div>
             </div>
+            </div>
           </div>
-        </div>
 
         {/* Specifications Section - Premium Table */}
         <div ref={specsRef} style={{ 
@@ -797,30 +820,7 @@ export const CarDetail: React.FC = () => {
                     ))}
                   </div>
                   
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '40px',
-                    background: '#f8fafc'
-                  }}>
-                    <Button
-                      type="primary"
-                      size="large"
-                      icon={<DownloadOutlined />}
-                      style={{ 
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        border: 'none',
-                        borderRadius: 12,
-                        height: 48,
-                        paddingLeft: 32,
-                        paddingRight: 32,
-                        fontSize: 16,
-                        fontWeight: 600,
-                        boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)'
-                      }}
-                    >
-                      Tải brochure chi tiết
-                    </Button>
-                  </div>
+                  
                 </Card>
               </Col>
               
@@ -854,11 +854,11 @@ export const CarDetail: React.FC = () => {
                   <Text style={{ color: '#64748b' }}>
                     {getVehicleProperty('category', 'Xe điện thành phố')}
                   </Text>
-                </div>
+          </div>
               </Col>
             </Row>
-          </div>
         </div>
+      </div>
       </Content>
 
       <BackTop style={{ right: 32, bottom: 32 }}>
@@ -876,7 +876,16 @@ export const CarDetail: React.FC = () => {
           }}
         />
       </BackTop>
+
+      {/* Quotation Modal */}
+      <QuotationModal
+        visible={showQuotationModal}
+        onClose={() => setShowQuotationModal(false)}
+        vehicleId={id || ''}
+        vehicleName={`VinFast ${getVehicleProperty('model', 'VF3')} ${getVehicleProperty('version', '')}`}
+        vehiclePrice={getVehicleProperty('price', 0) as number}
+        colorOptions={colorOptions}
+      />
     </Layout>
   );
 };
-  

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, X, Battery, Zap, Clock, Car } from 'lucide-react';
-import { Vehicle } from '../../../types';
+import { Button } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
+// import { Vehicle } from '../../../types';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
@@ -12,6 +14,8 @@ export const CompareModels: React.FC = () => {
   const [selectedModels, setSelectedModels] = useState<unknown[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('vehicles');
+  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState<string>('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -19,8 +23,49 @@ export const CompareModels: React.FC = () => {
     // Check if models were passed from ModelSelector
     if (location.state?.models) {
       setSelectedModels(location.state.models);
+      
+      // Nếu đã có đủ 2 xe, gọi API so sánh để lấy dữ liệu đầy đủ
+      if (location.state.models.length === 2) {
+        const models = location.state.models;
+        const id1 = (models[0] as Record<string, unknown>)._id as string || (models[0] as Record<string, unknown>).id as string;
+        const id2 = (models[1] as Record<string, unknown>)._id as string || (models[1] as Record<string, unknown>).id as string;
+        
+        if (id1 && id2) {
+          loadComparisonData(id1, id2);
+        }
+      }
     }
   }, [location.state]);
+
+  const loadComparisonData = async (id1: string, id2: string) => {
+    try {
+      setLoading(true);
+      console.log('🚀 Loading comparison data for vehicles:', id1, id2);
+      
+      const result = await authService.compareVehicles(id1, id2);
+      
+      if (result.success && result.vehicle1 && result.vehicle2) {
+        console.log('✅ Comparison data loaded successfully (object format)');
+        setSelectedModels([result.vehicle1, result.vehicle2]);
+        if (result.analysis) {
+          setAnalysis(result.analysis);
+        }
+      } else {
+        console.log('ℹ️ API response:', result.message);
+        // Nếu API trả về text format hoặc không có dữ liệu đầy đủ
+        // Giữ nguyên dữ liệu từ ModelSelector
+        if (result.analysis) {
+          console.log('📝 Received analysis from API');
+          setAnalysis(result.analysis);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error loading comparison data:', error);
+      // Giữ nguyên dữ liệu từ ModelSelector nếu có lỗi
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     if (!price) return 'Liên hệ';
@@ -41,7 +86,7 @@ export const CompareModels: React.FC = () => {
 
   const removeModel = (index: number) => {
     const newModels = [...selectedModels];
-    newModels[index] = null as any;
+    newModels[index] = null as unknown;
     setSelectedModels(newModels.filter(m => m !== null));
   };
 
@@ -49,15 +94,15 @@ export const CompareModels: React.FC = () => {
     if (!vehicle) {
       return (
         <div className="group">
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-gray-200 p-12 text-center min-h-[500px] flex flex-col justify-center items-center hover:border-gray-400 hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-gray-200 p-12 text-center min-h-[500px] flex flex-col justify-center items-center hover:border-gray-400 hover:shadow-xl transition-all duration-150 group-hover:scale-105">
             <button
               onClick={() => openModelSelector(index)}
               className="w-full h-full flex flex-col justify-center items-center"
             >
-              <div className={`w-20 h-20 ${index === 0 ? 'bg-black' : 'bg-gray-300'} rounded-full flex items-center justify-center mb-6 group-hover:${index === 0 ? 'bg-gray-800' : 'bg-gray-400'} transition-colors duration-300 shadow-lg`}>
+              <div className={`w-20 h-20 ${index === 0 ? 'bg-black' : 'bg-gray-300'} rounded-full flex items-center justify-center mb-6 group-hover:${index === 0 ? 'bg-gray-800' : 'bg-gray-400'} transition-colors duration-150 shadow-lg`}>
                 <Plus className="h-10 w-10 text-white" />
               </div>
-              <span className="text-2xl font-light text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
+              <span className="text-2xl font-light text-gray-900 group-hover:text-gray-700 transition-colors duration-150">
                 Chọn mẫu xe
               </span>
               <span className="text-sm text-gray-500 mt-2">Chọn mẫu xe để so sánh</span>
@@ -152,22 +197,29 @@ export const CompareModels: React.FC = () => {
         onSectionChange={(section) => setActiveSection(section)}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onOpen={() => setIsSidebarOpen(true)}
       />
 
-      <div className={`pt-[73px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`pt-16 transition-all duration-150 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
         {/* Back Button */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-6 py-3">
-            <button 
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 group"
-            >
-              <svg className="w-4 h-4 mr-1 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Quay lại
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <Button 
+            type="default"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+            size="large"
+            style={{
+              borderRadius: '8px',
+              minWidth: '120px',
+              fontWeight: 500,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            className="hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
+          >
+            Quay lại
+          </Button>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-20">
@@ -187,8 +239,18 @@ export const CompareModels: React.FC = () => {
             <ModelCard vehicle={selectedModels[1]} index={1} />
           </div>
 
+          {/* Loading Indicator */}
+          {loading && (
+            <div className="mt-20 text-center">
+              <div className="inline-flex items-center bg-white px-6 py-4 rounded-full shadow-lg">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                <p className="text-gray-700 font-medium">Đang tải dữ liệu so sánh...</p>
+              </div>
+            </div>
+          )}
+
           {/* Detailed Comparison Table */}
-          {selectedModels.length === 2 && (
+          {selectedModels.length === 2 && !loading && (
             <div className="mt-20 bg-white rounded-2xl shadow-xl overflow-hidden">
               <div className="bg-black p-8">
                 <h2 className="text-3xl font-bold text-white text-center">So sánh chi tiết</h2>
@@ -204,7 +266,7 @@ export const CompareModels: React.FC = () => {
                         return (
                           <th key={v._id as string || v.id as string || index} className="text-center p-6 font-semibold text-gray-900 border-b min-w-[300px]">
                             {v.name as string}
-                          </th>
+                        </th>
                         );
                       })}
                     </tr>
@@ -218,7 +280,7 @@ export const CompareModels: React.FC = () => {
                         return (
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center">
                             <img src={((v.images as string[]) || [])[0] || '/placeholder-car.jpg'} alt={v.name as string} className="w-32 h-24 object-cover mx-auto rounded-lg shadow-sm" />
-                          </td>
+                        </td>
                         );
                       })}
                     </tr>
@@ -641,21 +703,95 @@ export const CompareModels: React.FC = () => {
                     const v = vehicle as Record<string, unknown>;
                     return (
                       <div key={v._id as string || v.id as string || index} className="flex space-x-4">
-                        <button
+                      <button
                           onClick={() => navigate(`/portal/car-detail/${v._id as string || v.id as string}`)}
-                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-                        >
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                      >
                           Xem {v.name as string}
-                        </button>
-                        <button
+                      </button>
+                      <button
                           onClick={() => navigate(`/portal/car-deposit?vehicleId=${v._id as string || v.id as string}`)}
-                          className="flex-1 bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-                        >
+                        className="flex-1 bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                      >
                           Đặt {v.name as string}
-                        </button>
+                      </button>
+                    </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Analysis */}
+          {analysis && selectedModels.length === 2 && (
+            <div className="mt-20 bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="bg-black p-8">
+                <div className="flex items-center justify-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-3xl font-bold text-white text-center">Phân tích chi tiết từ AI</h2>
+                </div>
+              </div>
+
+              <div className="p-8">
+                {/* Phân tích cho từng xe */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {selectedModels.map((vehicle, index) => {
+                    const v = vehicle as Record<string, unknown>;
+                    return (
+                      <div key={v._id as string || v.id as string || index} 
+                        className={`p-6 rounded-xl ${index === 0 ? 'bg-blue-50 border border-blue-100' : 'bg-green-50 border border-green-100'}`}
+                      >
+                        <h3 className={`text-xl font-bold mb-4 ${index === 0 ? 'text-blue-800' : 'text-green-800'}`}>
+                          {v.name as string}
+                        </h3>
+                        <div className="space-y-3">
+                          <h4 className={`font-semibold ${index === 0 ? 'text-blue-700' : 'text-green-700'}`}>Ưu điểm:</h4>
+                          <ul className="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Giá: {formatPrice(v.price as number)}</li>
+                            <li>Tầm hoạt động: {v.range_km as number} km</li>
+                            <li>Thời gian sạc nhanh: {v.charging_fast as number}h</li>
+                            <li>Công suất: {v.motor_power as number} kW</li>
+                          </ul>
+                        </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Phân tích tổng quan */}
+                <div className="mt-8 p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                  <h3 className="text-xl font-bold text-indigo-800 mb-4">Phân tích tổng quan</h3>
+                  <div className="prose prose-indigo max-w-none">
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{analysis}</p>
+                  </div>
+                </div>
+
+                {/* Gợi ý lựa chọn */}
+                <div className="mt-8 p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-100">
+                  <h3 className="text-xl font-bold text-amber-800 mb-4">Gợi ý lựa chọn</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center mt-1">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-700">Nếu bạn cần một chiếc xe đô thị với giá cả phải chăng, {(selectedModels[0] as Record<string, unknown>).name as string} là lựa chọn tốt.</p>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center mt-1">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-700">Nếu bạn cần một chiếc xe mạnh mẽ hơn với tầm hoạt động xa, {(selectedModels[1] as Record<string, unknown>).name as string} sẽ phù hợp hơn.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

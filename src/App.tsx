@@ -27,6 +27,16 @@ import InventoryManagement from "./components/pages/EVM/InventoryManagement";
 import PromotionManagement from "./components/pages/EVM/PromotionManagement";
 import { DealerInfo } from "./components/pages/DealerManager/DealerInfo";
 import { PromotionsDashboard } from "./components/PromotionsDashboard";
+import { SalesManagement } from "./components/pages/Dealerstaff/SalesManagementNew";
+import { QuotationManagement } from "./components/pages/Dealerstaff/QuotationManagement";
+import TestAPI from "./components/pages/TestAPI";
+
+// Order Management Components
+import { OrderManagement } from "./components/pages/OrderManagement";
+import { OrderDetailMUI } from "./components/pages/OrderDetailMUI";
+import { QuoteToOrderPageMUI } from "./components/pages/QuoteToOrderPageMUI";
+import { PaymentManagementPage } from "./components/pages/PaymentManagementPage";
+import DebtManagement from "./components/pages/DebtManagement";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -72,6 +82,8 @@ function AppContent() {
       <Route path="/portal/staff-management" element={<StaffManagement />} />
       <Route path="/portal/promotions" element={<PromotionsDashboard />} />
       <Route path="/portal/dealer-info" element={<DealerInfo />} />
+      <Route path="/portal/sales" element={<SalesManagement />} />
+      <Route path="/portal/quotations" element={<QuotationManagement />} />
 
       {/* Admin routes */}
 
@@ -89,6 +101,14 @@ function AppContent() {
       <Route path="/sections/feedback" element={<Dashboard />} />
       <Route path="/sections/pricing" element={<Dashboard />} />
       <Route path="/car-deposit" element={<CarDeposit />} />
+
+      {/* Order Management Routes */}
+      <Route path="/portal/orders" element={<OrderManagement />} />
+      <Route path="/portal/orders/:orderId" element={<OrderDetailMUI />} />
+      <Route path="/portal/quote-to-order" element={<QuoteToOrderPageMUI />} />
+      <Route path="/portal/payments" element={<PaymentManagementPage />} />
+      <Route path="/portal/debt-management" element={<DebtManagement />} />
+      <Route path="/portal/test-api" element={<TestAPI />} />
 
       {/* EVM routes */}
       <Route

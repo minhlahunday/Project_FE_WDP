@@ -221,7 +221,7 @@ export const Dashboard: React.FC = () => {
 
         {/* Content for non-vehicle sections */}
         {activeSection !== "vehicles" && (
-          <main className="mt-[73px] p-6">{renderContent()}</main>
+          <main className="pt-16 p-6">{renderContent()}</main>
         )}
       </div>
     </div>

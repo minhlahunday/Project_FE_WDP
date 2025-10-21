@@ -1479,80 +1479,108 @@ const InventoryManagement: React.FC = () => {
         >
           {selectedProduct && (
             <div>
-              {/* Product Info */}
-              <div style={{ 
-                marginBottom: '24px', 
-                padding: '16px', 
-                backgroundColor: '#f8f9fa', 
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <div>
-                      <Text strong style={{ color: '#495057' }}>Xe:</Text>
-                      <br />
-                      <Text style={{ fontSize: '16px', fontWeight: 500, color: '#1890ff' }}>
+              {/* Product Info Header */}
+              <div className="mb-6 p-6 rounded-xl border border-blue-100" 
+                   style={{ 
+                     background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%)',
+                     boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06)'
+                   }}>
+                <Row gutter={[24, 16]} align="middle">
+                  {/* Thông tin xe chính */}
+                  <Col xs={24} sm={12} lg={8}>
+                    <div className="text-center sm:text-left">
+                      <div className="flex items-center justify-center sm:justify-start mb-2">
+                        <CarOutlined className="text-blue-500 text-xl mr-2" />
+                        <Text className="text-gray-600 text-sm font-medium">THÔNG TIN XE</Text>
+                      </div>
+                      <Text className="text-blue-600 text-lg font-semibold block mb-1">
                         {selectedProduct.name}
                       </Text>
-                      <br />
-                      <Text type="secondary">{selectedProduct.model} - {selectedProduct.sku}</Text>
+                      <Text className="text-gray-500 text-sm">
+                        {selectedProduct.model} • {selectedProduct.sku}
+                      </Text>
                     </div>
                   </Col>
-                  <Col span={12}>
-                    <div>
-                      <Text strong style={{ color: '#495057' }}>Tồn kho nhà sản xuất:</Text>
-                      <br />
-                      <Text style={{ fontSize: '16px', fontWeight: 500, color: '#52c41a' }}>
-                        {getManufacturerStock(selectedProduct)} xe
-                      </Text>
-                      <br />
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        Đã phân phối: {getDealerStock(selectedProduct)} xe
-                      </Text>
-                      <br />
-                      <Text type="secondary">
-                        Giá: {selectedProduct.price?.toLocaleString()}₫
-                      </Text>
-                      
-                      {/* Chi tiết tồn kho theo màu */}
-                      {(() => {
-                        const manufacturerStocks = selectedProduct.stocks?.filter(stock => 
-                          stock.owner_type === 'manufacturer' && 
-                          stock.color && 
-                          stock.color.trim() !== ''
-                        ) || [];
 
-                        if (manufacturerStocks.length > 0) {
-                          return (
-                            <div style={{ marginTop: 8 }}>
-                              <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginBottom: 4 }}>
-                                Chi tiết theo màu:
-                              </Text>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                {manufacturerStocks.map((stock, index) => (
-                                  <div key={index} style={{ display: 'flex', alignItems: 'center', fontSize: 10 }}>
-                                    <span style={{
-                                      display: 'inline-block',
-                                      width: 8,
-                                      height: 8,
-                                      backgroundColor: getColorDot(stock.color || ''),
-                                      borderRadius: '50%',
-                                      marginRight: 4,
-                                      border: '1px solid #d9d9d9'
-                                    }}></span>
-                                    <Text style={{ fontSize: 10 }}>{stock.color}: {stock.quantity}</Text>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      })()}
+                  {/* Tồn kho */}
+                  <Col xs={24} sm={12} lg={8}>
+                    <div className="text-center sm:text-left">
+                      <div className="flex items-center justify-center sm:justify-start mb-2">
+                        <InboxOutlined className="text-green-500 text-xl mr-2" />
+                        <Text className="text-gray-600 text-sm font-medium">TỒN KHO</Text>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-center sm:justify-start">
+                          <Text className="text-green-600 text-lg font-semibold mr-2">
+                            {getManufacturerStock(selectedProduct)}
+                          </Text>
+                          <Text className="text-gray-500 text-sm">xe có sẵn</Text>
+                        </div>
+                        <Text className="text-gray-500 text-xs">
+                          Đã phân phối: {getDealerStock(selectedProduct)} xe
+                        </Text>
+                      </div>
+                    </div>
+                  </Col>
+
+                  {/* Giá và trạng thái */}
+                  <Col xs={24} sm={12} lg={8}>
+                    <div className="text-center sm:text-left">
+                      <div className="flex items-center justify-center sm:justify-start mb-2">
+                        <ThunderboltOutlined className="text-orange-500 text-xl mr-2" />
+                        <Text className="text-gray-600 text-sm font-medium">GIÁ & TRẠNG THÁI</Text>
+                      </div>
+                      <div className="space-y-1">
+                        <Text className="text-orange-600 text-lg font-semibold">
+                          {selectedProduct.price?.toLocaleString()}₫
+                        </Text>
+                        <div className="flex items-center justify-center sm:justify-start">
+                          <Tag 
+                            color={selectedProduct.status === 'active' ? 'green' : 'red'}
+                            className="text-xs"
+                          >
+                            {selectedProduct.status === 'active' ? 'Hoạt động' : 'Tạm dừng'}
+                          </Tag>
+                        </div>
+                      </div>
                     </div>
                   </Col>
                 </Row>
+                      
+                
+                {/* Chi tiết tồn kho theo màu */}
+                {(() => {
+                  const manufacturerStocks = selectedProduct?.stocks?.filter(stock => 
+                    stock.owner_type === 'manufacturer' && 
+                    stock.color && 
+                    stock.color.trim() !== ''
+                  ) || [];
+
+                  if (manufacturerStocks.length > 0) {
+                    return (
+                      <div className="mt-4 pt-4 border-t border-blue-200">
+                        <div className="flex items-center justify-center sm:justify-start mb-3">
+                          <AppstoreOutlined className="text-purple-500 text-sm mr-2" />
+                          <Text className="text-gray-600 text-xs font-medium">CHI TIẾT THEO MÀU SẮC</Text>
+                        </div>
+                        <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                          {manufacturerStocks.map((stock, index) => (
+                            <div key={index} className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-blue-200 shadow-sm">
+                              <div 
+                                className="w-3 h-3 rounded-full border border-gray-300"
+                                style={{ backgroundColor: getColorDot(stock.color || '') }}
+                              />
+                              <Text className="text-gray-700 text-xs font-medium">
+                                {stock.color}: <span className="text-blue-600 font-semibold">{stock.quantity}</span>
+                              </Text>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               {/* Form */}

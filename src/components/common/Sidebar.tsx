@@ -8,12 +8,14 @@ import {
   Package,
   Building2,
   Calendar,
-  FileText,
   CreditCard,
   MessageSquare,
   UserCog,
   Info,
   Gift,
+  ClipboardList,
+  FileSignature,
+  FileText,
 } from "lucide-react";
 import { Layout, Menu, Input, Avatar, Button, Typography, Space } from "antd";
 import {
@@ -60,10 +62,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
       route: "/portal/sales",
     },
     {
+      key: "orders",
+      label: "Quản lý đơn hàng",
+      icon: <ClipboardList className="h-4 w-4" />,
+      route: "/portal/orders",
+    },
+    {
+      key: "quotations",
+      label: "Quản lý báo giá",
+      icon: <FileText className="h-4 w-4" />,
+      route: "/portal/quotations",
+    },
+    {
+      key: "quote-to-order",
+      label: "Chuyển báo giá",
+      icon: <FileSignature className="h-4 w-4" />,
+      route: "/portal/quote-to-order",
+    },
+    {
+      key: "payments",
+      label: "Thanh toán",
+      icon: <CreditCard className="h-4 w-4" />,
+      route: "/portal/payments",
+    },
+    {
+      key: "payment-demo",
+      label: "Demo Thanh toán",
+      icon: <CreditCard className="h-4 w-4" />,
+      route: "/portal/payment-demo",
+    },
+    {
       key: "customers",
       label: "Quản lý khách hàng",
       icon: <Users className="h-4 w-4" />,
       route: "/portal/customers",
+    },
+    {
+      key: "test-drives",
+      label: "Lịch lái thử",
+      icon: <Calendar className="h-4 w-4" />,
+      route: "/portal/test-drives",
     },
     {
       key: "promotions",
@@ -81,24 +119,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           },
         ]
       : []),
-    {
-      key: "test-drives",
-      label: "Lịch lái thử",
-      icon: <Calendar className="h-4 w-4" />,
-      route: "/portal/test-drives",
-    },
-    {
-      key: "orders",
-      label: "Đơn hàng",
-      icon: <FileText className="h-4 w-4" />,
-      route: "/portal/orders",
-    },
-    {
-      key: "payments",
-      label: "Thanh toán",
-      icon: <CreditCard className="h-4 w-4" />,
-      route: "/portal/payments",
-    },
     {
       key: "feedback",
       label: "Phản hồi",
@@ -210,7 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-150"
           onClick={onClose}
         />
       )}
@@ -223,12 +243,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         width={280}
         collapsedWidth={64}
         theme="dark"
-        className={`fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out shadow-2xl z-50 ${
+        className={`fixed top-0 left-0 h-screen transition-all duration-150 ease-out shadow-2xl z-50 ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
         style={{
           background: "linear-gradient(180deg, #1f2937 0%, #111827 100%)",
           height: "100vh",
+          transition: "all 150ms ease-out",
         }}
       >
         {/* Header */}
