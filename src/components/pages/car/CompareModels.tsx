@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, X, Battery, Zap, Clock, Car } from 'lucide-react';
+import { Button } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 // import { Vehicle } from '../../../types';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
@@ -92,15 +94,15 @@ export const CompareModels: React.FC = () => {
     if (!vehicle) {
       return (
         <div className="group">
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-gray-200 p-12 text-center min-h-[500px] flex flex-col justify-center items-center hover:border-gray-400 hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-gray-200 p-12 text-center min-h-[500px] flex flex-col justify-center items-center hover:border-gray-400 hover:shadow-xl transition-all duration-150 group-hover:scale-105">
             <button
               onClick={() => openModelSelector(index)}
               className="w-full h-full flex flex-col justify-center items-center"
             >
-              <div className={`w-20 h-20 ${index === 0 ? 'bg-black' : 'bg-gray-300'} rounded-full flex items-center justify-center mb-6 group-hover:${index === 0 ? 'bg-gray-800' : 'bg-gray-400'} transition-colors duration-300 shadow-lg`}>
+              <div className={`w-20 h-20 ${index === 0 ? 'bg-black' : 'bg-gray-300'} rounded-full flex items-center justify-center mb-6 group-hover:${index === 0 ? 'bg-gray-800' : 'bg-gray-400'} transition-colors duration-150 shadow-lg`}>
                 <Plus className="h-10 w-10 text-white" />
               </div>
-              <span className="text-2xl font-light text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
+              <span className="text-2xl font-light text-gray-900 group-hover:text-gray-700 transition-colors duration-150">
                 Chọn mẫu xe
               </span>
               <span className="text-sm text-gray-500 mt-2">Chọn mẫu xe để so sánh</span>
@@ -198,20 +200,26 @@ export const CompareModels: React.FC = () => {
         onOpen={() => setIsSidebarOpen(true)}
       />
 
-      <div className={`pt-16 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`pt-16 transition-all duration-150 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
         {/* Back Button */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-6 py-3">
-            <button 
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 group"
-            >
-              <svg className="w-4 h-4 mr-1 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Quay lại
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <Button 
+            type="default"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+            size="large"
+            style={{
+              borderRadius: '8px',
+              minWidth: '120px',
+              fontWeight: 500,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            className="hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
+          >
+            Quay lại
+          </Button>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-20">

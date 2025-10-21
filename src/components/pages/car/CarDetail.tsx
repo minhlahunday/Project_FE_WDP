@@ -33,7 +33,7 @@ import {
   SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { authService } from '../../../services/authService';
-import { QuotationModal } from '../../common/QuotationModal';
+import { QuotationModal } from '../QuotationModal';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -197,17 +197,20 @@ export const CarDetail: React.FC = () => {
               <Space size="large">
                 <Button 
                   icon={<ArrowLeftOutlined />} 
-                  type="text"
-            onClick={() => navigate(-1)}
+                  type="default"
+                  onClick={() => navigate(-1)}
+                  size="large"
                   style={{ 
-                    color: '#1f2937',
+                    borderRadius: '8px',
+                    minWidth: '120px',
                     fontWeight: 500,
-                    fontSize: 16,
-                    border: 'none',
-                    background: 'transparent'
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}
+                  className="hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
                 >
-                  Trở về
+                  Quay lại
                 </Button>
                 <Title level={2} style={{ 
                   margin: 0, 
@@ -817,30 +820,7 @@ export const CarDetail: React.FC = () => {
                     ))}
                   </div>
                   
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '40px',
-                    background: '#f8fafc'
-                  }}>
-                    <Button
-                      type="primary"
-                      size="large"
-                      icon={<DownloadOutlined />}
-                      style={{ 
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        border: 'none',
-                        borderRadius: 12,
-                        height: 48,
-                        paddingLeft: 32,
-                        paddingRight: 32,
-                        fontSize: 16,
-                        fontWeight: 600,
-                        boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)'
-                      }}
-                    >
-                      Tải brochure chi tiết
-                    </Button>
-                  </div>
+                  
                 </Card>
               </Col>
               

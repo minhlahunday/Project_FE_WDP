@@ -51,7 +51,7 @@ import {
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
-import { QuotationModal } from '../../common/QuotationModal';
+import { QuotationModal } from '../QuotationModal';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -210,20 +210,27 @@ export const MotorbikeDetail: React.FC = () => {
         onOpen={() => setIsSidebarOpen(true)}
       />
 
-        <div className={`flex-1 pt-16 transition-all duration-300 pb-8 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <div className={`flex-1 pt-16 transition-all duration-150 pb-8 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
           {/* Breadcrumb */}
-          <div className="bg-white border-b">
-            <div className="max-w-7xl mx-auto px-6 py-4">
-              <Button 
-                type="text" 
-                icon={<ArrowLeft size={16} />}
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <Button 
+              type="default"
+              icon={<ArrowLeft size={18} />}
               onClick={() => navigate(-1)}
-                className="flex items-center"
+              size="large"
+              style={{
+                borderRadius: '8px',
+                minWidth: '120px',
+                fontWeight: 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              className="hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
             >
               Quay lại
-              </Button>
+            </Button>
           </div>
-        </div>
 
           <div className="max-w-7xl mx-auto px-6 py-8">
             {/* Product Header */}
@@ -576,7 +583,7 @@ export const MotorbikeDetail: React.FC = () => {
                 <Button
                   size="large"
                   onClick={() => handleTestDrive(id || '')}
-                  className="border-white text-white hover:bg-white/20 h-12 px-8 font-semibold"
+                  className="border-white text-blue-700 hover:bg-white/20 h-12 px-8 font-semibold"
                 >
                   Đặt lịch lái thử
                 </Button>
@@ -597,51 +604,7 @@ export const MotorbikeDetail: React.FC = () => {
             </div>
           </div>
 
-        {/* Footer - Added fixed height and proper styling */}
-        <div className="bg-gray-800 text-white py-8 shadow-inner">
-          <div className="max-w-7xl mx-auto px-6">
-            <Row gutter={[32, 32]}>
-              <Col xs={24} md={8}>
-                <Title level={4} className="text-white mb-4">VinFast</Title>
-                <Text className="text-gray-300 block mb-2">Công ty CP Sản xuất và Kinh doanh VinFast</Text>
-                <Text className="text-gray-300 block mb-2">Hotline: 1900 23 23 89</Text>
-                <Text className="text-gray-300 block">Email: cskh@vinfast.vn</Text>
-              </Col>
-              <Col xs={24} md={8}>
-                <Title level={4} className="text-white mb-4">Về chúng tôi</Title>
-                <ul className="space-y-2">
-                  <li><Button type="link" className="text-gray-300 hover:text-white p-0">Giới thiệu</Button></li>
-                  <li><Button type="link" className="text-gray-300 hover:text-white p-0">Tin tức</Button></li>
-                  <li><Button type="link" className="text-gray-300 hover:text-white p-0">Tuyển dụng</Button></li>
-                </ul>
-              </Col>
-              <Col xs={24} md={8}>
-                <Title level={4} className="text-white mb-4">Kết nối với chúng tôi</Title>
-                <Space size="large">
-                  <Button 
-                    shape="circle" 
-                    icon={<i className="fab fa-facebook-f"></i>}
-                    className="bg-blue-600 border-0 hover:bg-blue-700"
-                  />
-                  <Button 
-                    shape="circle" 
-                    icon={<i className="fab fa-youtube"></i>}
-                    className="bg-red-600 border-0 hover:bg-red-700"
-                  />
-                  <Button 
-                    shape="circle" 
-                    icon={<i className="fab fa-instagram"></i>}
-                    className="bg-purple-600 border-0 hover:bg-purple-700"
-                  />
-                </Space>
-              </Col>
-            </Row>
-            <Divider className="bg-gray-700" />
-            <div className="text-center">
-              <Text className="text-gray-400">© {new Date().getFullYear()} VinFast. Tất cả các quyền được bảo lưu.</Text>
-            </div>
-          </div>
-        </div>
+       
 
       {/* Quotation Modal */}
       <QuotationModal

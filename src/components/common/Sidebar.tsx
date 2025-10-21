@@ -230,7 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-150"
           onClick={onClose}
         />
       )}
@@ -243,12 +243,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         width={280}
         collapsedWidth={64}
         theme="dark"
-        className={`fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out shadow-2xl z-50 ${
+        className={`fixed top-0 left-0 h-screen transition-all duration-150 ease-out shadow-2xl z-50 ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
         style={{
           background: "linear-gradient(180deg, #1f2937 0%, #111827 100%)",
           height: "100vh",
+          transition: "all 150ms ease-out",
         }}
       >
         {/* Header */}

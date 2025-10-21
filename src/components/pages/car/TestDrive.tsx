@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { mockVehicles, mockDealers } from '../../../data/mockData';
 import { Vehicle } from '../../../types';
 import { Calendar, Clock, MapPin, Phone, Mail, AlertCircle } from 'lucide-react';
@@ -203,15 +205,24 @@ export const TestDrive: React.FC = () => {
 
       <div className={`pt-16 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
         {/* Back Button */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <button 
-              onClick={() => navigate(-1)}
-              className="text-gray-600 hover:text-gray-900 flex items-center space-x-2"
-            >
-              <span>← Quay lại</span>
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <Button 
+            type="default"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+            size="large"
+            style={{
+              borderRadius: '8px',
+              minWidth: '120px',
+              fontWeight: 500,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            className="hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
+          >
+            Quay lại
+          </Button>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-10">

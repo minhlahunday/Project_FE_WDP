@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
@@ -126,18 +128,24 @@ export const CarDeposit: React.FC = () => {
       />
 
       <div className={`pt-16 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-6 py-3">
-            <button 
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 group"
-            >
-              <svg className="w-4 h-4 mr-1 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Quay lại
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <Button 
+            type="default"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+            size="large"
+            style={{
+              borderRadius: '8px',
+              minWidth: '120px',
+              fontWeight: 500,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            className="hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
+          >
+            Quay lại
+          </Button>
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-8">
