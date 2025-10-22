@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'dealer_staff' | 'dealer_manager' | 'evm_staff' | 'admin';
+  role: "dealer_staff" | "dealer_manager" | "evm_staff" | "admin";
   dealerId?: string;
   dealerName?: string;
   dealership_id?: string;
@@ -43,7 +43,7 @@ export interface TestDrive {
   customerId: string;
   vehicleId: string;
   scheduledDate: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: "scheduled" | "completed" | "cancelled";
   notes?: string;
 }
 
@@ -74,33 +74,43 @@ export interface OrderItem {
 export interface Order {
   _id: string;
   code: string;
-  customer_id: string | {
-    _id: string;
-    full_name: string;
-    email: string;
-    phone: string;
-    address: string;
-  };
+  customer_id:
+    | string
+    | {
+        _id: string;
+        full_name: string;
+        email: string;
+        phone: string;
+        address: string;
+      };
   dealership_id: string;
-  salesperson_id?: string | {
-    _id: string;
-    full_name: string;
-    email: string;
-  };
+  salesperson_id?:
+    | string
+    | {
+        _id: string;
+        full_name: string;
+        email: string;
+      };
   items: OrderItem[];
   final_amount: number;
   paid_amount: number;
-  payment_method: 'cash' | 'installment';
-  status: 'pending' | 'confirmed' | 'halfPayment' | 'fullyPayment' | 'closed' | 'cancelled';
+  payment_method: "cash" | "installment";
+  status:
+    | "pending"
+    | "confirmed"
+    | "halfPayment"
+    | "fullyPayment"
+    | "closed"
+    | "cancelled";
   notes?: string;
   contract_signed?: boolean;
   contract_image_url?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   // Delivery information
   delivery?: {
-    status: 'pending' | 'scheduled' | 'in_transit' | 'delivered' | 'failed';
+    status: "pending" | "scheduled" | "in_transit" | "delivered" | "failed";
     scheduled_date?: string;
     actual_date?: string;
     delivery_person?: {
@@ -124,7 +134,7 @@ export interface Order {
     signed_at?: string;
     signed_by?: string;
   };
-  
+
   // Contract information
   contract?: {
     signed_contract_url?: string;
@@ -133,7 +143,7 @@ export interface Order {
     uploaded_by?: string;
     template_used?: string;
   };
-  
+
   // Populated fields from backend
   customer?: {
     _id: string;
@@ -164,10 +174,10 @@ export interface Quote {
   notes?: string;
   valid_from: string;
   valid_to: string;
-  status: 'active' | 'expired' | 'converted';
+  status: "active" | "expired" | "converted";
   createdAt: string;
   updatedAt: string;
-  
+
   // Populated fields
   customer?: {
     _id: string;
@@ -210,4 +220,42 @@ export interface Promotion {
   validFrom: string;
   validTo: string;
   applicableVehicles: string[];
+}
+
+// Order Request Types
+export interface OrderRequestItem {
+  vehicle_id: string;
+  color?: string;
+  quantity: number;
+}
+
+export interface OrderRequest {
+  _id: string;
+  code: string;
+  dealer_staff_id: string;
+  items: OrderRequestItem[];
+  notes?: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  updatedAt: string;
+  // Populated fields
+  dealer_staff?: {
+    _id: string;
+    full_name: string;
+    email: string;
+  };
+}
+
+export interface CreateOrderRequestData {
+  items: OrderRequestItem[];
+  notes?: string;
+}
+
+export interface OrderRequestSearchParams {
+  page?: number;
+  limit?: number;
+  q?: string;
+  status?: "pending" | "approved" | "rejected";
+  startDate?: string;
+  endDate?: string;
 }
