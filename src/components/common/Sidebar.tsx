@@ -68,6 +68,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       route: "/portal/orders",
     },
     {
+      key: "order-requests",
+      label: "Yêu cầu đặt xe",
+      icon: <FileSignature className="h-4 w-4" />,
+      route: "/portal/order-requests",
+    },
+    {
       key: "quotations",
       label: "Quản lý báo giá",
       icon: <FileText className="h-4 w-4" />,

@@ -37,6 +37,7 @@ import { OrderDetailMUI } from "./components/pages/OrderDetailMUI";
 import { QuoteToOrderPageMUI } from "./components/pages/QuoteToOrderPageMUI";
 import { PaymentManagementPage } from "./components/pages/PaymentManagementPage";
 import DebtManagement from "./components/pages/DebtManagement";
+import { OrderRequestManagement } from "./components/pages/OrderRequestManagement";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -105,6 +106,10 @@ function AppContent() {
       {/* Order Management Routes */}
       <Route path="/portal/orders" element={<OrderManagement />} />
       <Route path="/portal/orders/:orderId" element={<OrderDetailMUI />} />
+      <Route
+        path="/portal/order-requests"
+        element={<OrderRequestManagement />}
+      />
       <Route path="/portal/quote-to-order" element={<QuoteToOrderPageMUI />} />
       <Route path="/portal/payments" element={<PaymentManagementPage />} />
       <Route path="/portal/debt-management" element={<DebtManagement />} />
