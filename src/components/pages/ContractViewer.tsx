@@ -8,8 +8,7 @@ import {
   Tag, 
   Typography,
   Alert,
-  Spin,
-  Image
+  Spin
 } from 'antd';
 import { 
   FileTextOutlined, 
@@ -115,19 +114,55 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
     if (!order?._id) return;
     
     try {
-      const blob = await contractService.generateContract(order._id);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `hop-dong-${order.code}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      message.success('Đã tải xuống hợp đồng');
+      // Nếu đã có signed contract URL từ Cloudinary
+      if (contractInfo?.contract_url && contractInfo.contract_signed) {
+        // Convert Cloudinary URL to direct download format
+        let downloadUrl = contractInfo.contract_url;
+        
+        // If it's a Cloudinary URL, modify it to force download
+        if (downloadUrl.includes('res.cloudinary.com')) {
+          // Add /fl_attachment/ to force download
+          downloadUrl = downloadUrl.replace(
+            '/upload/v',
+            '/upload/fl_attachment/v'
+          );
+        }
+        
+        // Try to fetch and download the PDF as blob
+        const response = await fetch(downloadUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `hop-dong-${order.code}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          message.success('Đã tải xuống hợp đồng');
+        } else {
+          throw new Error('Failed to fetch PDF from Cloudinary');
+        }
+      } else {
+        // Nếu chưa có contract hoặc cloudinary block, generate mới trên FE
+        const { generateContractPDF, mapOrderToContractPDF } = await import('../../utils/pdfUtils');
+        const contractData = mapOrderToContractPDF(order);
+        generateContractPDF(contractData);
+        message.success('Đã tải xuống hợp đồng');
+      }
     } catch (error: any) {
       console.error('Error downloading contract:', error);
-      message.error('Lỗi khi tải xuống hợp đồng');
+      message.warning('Không thể tải trực tiếp, đang tạo hợp đồng mới...');
+      
+      // Fallback: generate PDF from order data
+      try {
+        const { generateContractPDF, mapOrderToContractPDF } = await import('../../utils/pdfUtils');
+        const contractData = mapOrderToContractPDF(order);
+        generateContractPDF(contractData);
+      } catch (genError: any) {
+        message.error('Lỗi khi tạo hợp đồng: ' + (genError?.message || 'Unknown error'));
+      }
     }
   };
 
@@ -185,7 +220,7 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
       onCancel={onClose}
       width={900}
       style={{ top: 20 }}
-      bodyStyle={{ maxHeight: '80vh', overflowY: 'auto' }}
+      styles={{ body: { maxHeight: '80vh', overflowY: 'auto' } }}
       footer={[
         <Button key="close" onClick={onClose}>
           Đóng
@@ -415,62 +450,35 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
             <Card size="small">
               <Title level={5}>Xem trước hợp đồng</Title>
               <div className="text-center">
-                {contractInfo.contract_url.toLowerCase().includes('.pdf') ? (
-                  <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg">
-                    <FileTextOutlined className="text-6xl text-gray-400 mb-4" />
-                    <p className="text-gray-500 mb-4 text-lg">File PDF hợp đồng</p>
-                    <div className="space-x-4">
-                      <Button 
-                        type="primary" 
-                        size="large"
-                        icon={<EyeOutlined />}
-                        onClick={() => window.open(contractInfo.contract_url, '_blank')}
-                      >
-                        Mở file PDF
-                      </Button>
-                      <Button 
-                        size="large"
-                        icon={<DownloadOutlined />}
-                        onClick={handleDownload}
-                      >
-                        Tải xuống
-                      </Button>
-                      <Button 
-                        size="large"
-                        icon={<PrinterOutlined />}
-                        onClick={handlePrint}
-                      >
-                        In hợp đồng
-                      </Button>
-                    </div>
+                <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                  <FileTextOutlined className="text-6xl text-blue-500 mb-4" />
+                  <p className="text-gray-700 mb-2 text-lg font-semibold">File PDF hợp đồng</p>
+                  <p className="text-gray-500 mb-4 text-sm">{contractInfo.contract_url.substring(0, 60)}...</p>
+                  <div className="space-x-4">
+                    <Button 
+                      type="primary" 
+                      size="large"
+                      icon={<EyeOutlined />}
+                      onClick={() => window.open(contractInfo.contract_url, '_blank')}
+                    >
+                      Mở file PDF
+                    </Button>
+                    <Button 
+                      size="large"
+                      icon={<DownloadOutlined />}
+                      onClick={handleDownload}
+                    >
+                      Tải xuống
+                    </Button>
+                    <Button 
+                      size="large"
+                      icon={<PrinterOutlined />}
+                      onClick={handlePrint}
+                    >
+                      In hợp đồng
+                    </Button>
                   </div>
-                ) : (
-                  <div className="max-h-96 overflow-auto border border-gray-300 rounded-lg p-4">
-                    <Image
-                      src={contractInfo.contract_url}
-                      alt="Hợp đồng đã ký"
-                      style={{ maxWidth: '100%' }}
-                      fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-                    />
-                    <div className="mt-4 space-x-4">
-                      <Button 
-                        type="primary" 
-                        size="large"
-                        icon={<DownloadOutlined />}
-                        onClick={handleDownload}
-                      >
-                        Tải xuống
-                      </Button>
-                      <Button 
-                        size="large"
-                        icon={<PrinterOutlined />}
-                        onClick={handlePrint}
-                      >
-                        In hợp đồng
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             </Card>
           )}

@@ -606,7 +606,8 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
               Sinh hợp đồng
             </Button>
           )}
-          {order?.status === 'pending' && !order?.contract?.signed_contract_url && (
+          {/* Upload button - hiện khi chưa có signed contract */}
+          {!order?.contract?.signed_contract_url && (
             <Button 
               variant="outlined" 
               startIcon={<DescriptionIcon />} 
@@ -616,7 +617,8 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
               Upload hợp đồng
             </Button>
           )}
-          {order?.status === 'pending' && order?.contract?.signed_contract_url && (
+          {/* Deposit button - hiện khi có signed contract và status phù hợp */}
+          {order?.contract?.signed_contract_url && ['pending', 'confirmed'].includes(order?.status || '') && (
             <Button 
               variant="outlined" 
               startIcon={<AttachMoneyIcon />} 
