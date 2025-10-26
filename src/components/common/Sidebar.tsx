@@ -16,6 +16,8 @@ import {
   ClipboardList,
   FileSignature,
   FileText,
+  Receipt,
+  FileCheck,
 } from "lucide-react";
 import { Layout, Menu, Input, Avatar, Button, Typography, Space } from "antd";
 import {
@@ -190,8 +192,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       key: "customer-management",
       label: "Quản lý Đặt Xe",
-      icon: <BarChart3 className="h-4 w-4" />,
+      icon: <FileCheck className="h-4 w-4" />,
       route: "/evm/request-management",
+    },
+    {
+      key: "manufacturer-debt-management",
+      label: "Quản lý công nợ",
+      icon: <Receipt className="h-4 w-4" />,
+      route: "/evm/manufacturer-debt-management",
     },
     {
       key: "forecasting",
