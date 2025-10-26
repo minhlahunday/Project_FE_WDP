@@ -25,7 +25,7 @@ import { Order } from '../../services/orderService';
 import { paymentService, Payment } from '../../services/paymentService';
 import { orderHistoryService } from '../../services/orderHistoryService';
 import { useAuth } from '../../contexts/AuthContext';
-import { downloadPDF, generateContractFilename } from '../../utils/pdfUtils';
+import { generateContractPDF, mapOrderToContractPDF } from '../../utils/pdfUtils';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -148,11 +148,10 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         if (response.data.order.status === 'fullyPayment') {
           message.info('Đơn hàng đã được thanh toán đủ! Đang tạo hợp đồng...');
           
-          // Automatically generate contract PDF
+          // Automatically generate contract PDF on frontend
           try {
-            const blob = await paymentService.generateContractPDF(order._id);
-            const filename = generateContractFilename(order.code);
-            downloadPDF(blob, filename);
+            const contractData = mapOrderToContractPDF(response.data.order);
+            await generateContractPDF(contractData);
             message.success('Hợp đồng đã được tạo và tải xuống thành công!');
           } catch (error) {
             console.error('Error generating contract:', error);
@@ -193,13 +192,10 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     try {
       message.info('Đang tạo hợp đồng PDF...');
       
-      // Generate contract PDF using existing API
-      const blob = await paymentService.generateContractPDF(order._id);
-      message.success('Hợp đồng đã được tạo thành công!');
-      
-      // Download the contract
-      const filename = generateContractFilename(order.code);
-      downloadPDF(blob, filename);
+      // Generate contract PDF on frontend
+      const contractData = mapOrderToContractPDF(order);
+      await generateContractPDF(contractData);
+      message.success('Hợp đồng đã được tạo và tải xuống thành công!');
       
     } catch (error: any) {
       console.error('Error generating contract:', error);

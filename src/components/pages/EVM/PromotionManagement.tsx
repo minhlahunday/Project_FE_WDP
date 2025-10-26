@@ -647,26 +647,22 @@ const PromotionManagement: React.FC = () => {
     setIsViewModalVisible(true);
   };
 
-  const showDistributeModal = (promotion: Promotion) => {
+  const showDistributeModal = async (promotion: Promotion) => {
+    console.log('Opening distribute modal for promotion:', promotion._id);
+    
+    // RESET state trước khi mở modal - KHÔNG load dealer cũ, để trống để user chọn
+    setTargetKeys([]);
+    setSelectedKeys([]);
+    
+    // Set selected promotion
     setSelectedPromotion(promotion);
     
-    // Load đại lý đã được phân bổ trước đó vào targetKeys
-    const currentlyAssignedDealers = promotion.dealerships || [];
-    console.log('Currently assigned dealers:', currentlyAssignedDealers);
-    
-    // Convert dealer IDs to Transfer component format
-    const targetKeysFormatted = currentlyAssignedDealers.map((dealerId, index) => 
-      `dealer-${dealerId}-${index}`
-    );
-    console.log('Formatted target keys:', targetKeysFormatted);
-    
-    setTargetKeys(targetKeysFormatted);
-    setSelectedKeys([]);
+    // Mở modal ngay
     setIsDistributeModalVisible(true);
     
-    // Refresh dealers when opening the modal to ensure we have latest data
+    // Refresh dealers khi cần
     if (dealers.length === 0) {
-      fetchDealers();
+      await fetchDealers();
     }
   };
 
@@ -719,11 +715,19 @@ const PromotionManagement: React.FC = () => {
           timer: 3000,
           timerProgressBar: true
         });
+        
+        // Đóng modal ngay lập tức
         setIsDistributeModalVisible(false);
+        
+        // Reset state TRƯỚC KHI refresh data
         setTargetKeys([]);
         setSelectedKeys([]);
-        // Refresh danh sách promotion để hiển thị thông tin mới
-        fetchPromotions();
+        setSelectedPromotion(null);
+        
+        // Refresh danh sách promotion để lấy dữ liệu mới nhất
+        await fetchPromotions();
+        
+        console.log('Modal closed and promotions refreshed');
       } else {
         Swal.fire({
           toast: true,
@@ -1519,10 +1523,17 @@ const PromotionManagement: React.FC = () => {
         }
         open={isDistributeModalVisible}
         onCancel={() => {
-          setIsDistributeModalVisible(false);
-          setSelectedPromotion(null);
+          // Reset state khi đóng modal
           setTargetKeys([]);
           setSelectedKeys([]);
+          setSelectedPromotion(null);
+          setIsDistributeModalVisible(false);
+        }}
+        afterClose={() => {
+          // Reset state khi modal đóng hoàn toàn
+          setTargetKeys([]);
+          setSelectedKeys([]);
+          setSelectedPromotion(null);
         }}
         onOk={handleDistributePromotion}
         width={900}
