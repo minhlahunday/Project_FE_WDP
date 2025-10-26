@@ -189,9 +189,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       key: "customer-management",
-      label: "Quản lý khách hàng",
+      label: "Quản lý Đặt Xe",
       icon: <BarChart3 className="h-4 w-4" />,
-      route: "/evm/customer-management",
+      route: "/evm/request-management",
     },
     {
       key: "forecasting",

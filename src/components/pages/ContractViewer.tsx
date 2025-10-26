@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 
 import { contractService, ContractInfo } from '../../services/contractService';
 import { Order } from '../../types/index';
+import { generateContractPDF, mapOrderToContractPDF } from '../../utils/pdfUtils';
 
 const { Title } = Typography;
 
@@ -111,58 +112,19 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
 
   // Download contract
   const handleDownload = async () => {
-    if (!order?._id) return;
+    if (!order) return;
     
     try {
-      // Nếu đã có signed contract URL từ Cloudinary
-      if (contractInfo?.contract_url && contractInfo.contract_signed) {
-        // Convert Cloudinary URL to direct download format
-        let downloadUrl = contractInfo.contract_url;
-        
-        // If it's a Cloudinary URL, modify it to force download
-        if (downloadUrl.includes('res.cloudinary.com')) {
-          // Add /fl_attachment/ to force download
-          downloadUrl = downloadUrl.replace(
-            '/upload/v',
-            '/upload/fl_attachment/v'
-          );
-        }
-        
-        // Try to fetch and download the PDF as blob
-        const response = await fetch(downloadUrl);
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `hop-dong-${order.code}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-          message.success('Đã tải xuống hợp đồng');
-        } else {
-          throw new Error('Failed to fetch PDF from Cloudinary');
-        }
-      } else {
-        // Nếu chưa có contract hoặc cloudinary block, generate mới trên FE
-        const { generateContractPDF, mapOrderToContractPDF } = await import('../../utils/pdfUtils');
-        const contractData = mapOrderToContractPDF(order);
-        generateContractPDF(contractData);
-        message.success('Đã tải xuống hợp đồng');
-      }
-    } catch (error: any) {
-      console.error('Error downloading contract:', error);
-      message.warning('Không thể tải trực tiếp, đang tạo hợp đồng mới...');
+      message.info('Đang tạo hợp đồng PDF...');
       
-      // Fallback: generate PDF from order data
-      try {
-        const { generateContractPDF, mapOrderToContractPDF } = await import('../../utils/pdfUtils');
-        const contractData = mapOrderToContractPDF(order);
-        generateContractPDF(contractData);
-      } catch (genError: any) {
-        message.error('Lỗi khi tạo hợp đồng: ' + (genError?.message || 'Unknown error'));
-      }
+      // Generate PDF on frontend
+      const contractData = mapOrderToContractPDF(order);
+      await generateContractPDF(contractData);
+      
+      message.success('Đã tải xuống hợp đồng');
+    } catch (error: any) {
+      console.error('Error generating contract:', error);
+      message.error('Lỗi khi tạo hợp đồng: ' + (error?.message || 'Unknown error'));
     }
   };
 
