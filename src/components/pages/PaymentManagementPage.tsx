@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Table, Button, message, Space, Input, Tag } from 'antd';
-import { SearchOutlined, CreditCardOutlined, FilePdfOutlined } from '@ant-design/icons';
+import { SearchOutlined, CreditCardOutlined, FilePdfOutlined, HistoryOutlined } from '@ant-design/icons';
 import { Order, orderService } from '../../services/orderService';
 import { PaymentManagement } from './PaymentManagement';
 import { BankProfileModal } from './BankProfileModal';
 import DebtManagement from './DebtManagement';
-import { paymentService } from '../../services/paymentService';
-import { downloadPDF, generateContractFilename } from '../../utils/pdfUtils';
+import { mapOrderToContractPDF, generateContractPDF } from '../../utils/pdfUtils';
 
 import { useAuth } from '../../contexts/AuthContext';
+import PaymentHistoryModal from './PaymentHistoryModal';
 
 const { Title } = Typography;
 
@@ -21,6 +21,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showBankProfileModal, setShowBankProfileModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [activeTab, setActiveTab] = useState('payments');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -96,14 +97,21 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
     setShowBankProfileModal(true);
   };
 
+  const handleViewHistory = (order: Order) => {
+    setSelectedOrder(order);
+    setShowHistoryModal(true);
+  };
+
   const handleGenerateContract = async (order: Order) => {
     setGeneratingContract(order._id);
     try {
       message.info('Đang tạo hợp đồng PDF...');
       
-      const blob = await paymentService.generateContractPDF(order._id);
-      const filename = generateContractFilename(order.code);
-      downloadPDF(blob, filename);
+      // Map Order data từ backend → PDF format
+      const contractData = mapOrderToContractPDF(order);
+      
+      // Generate và download PDF (tự động download trong browser)
+      await generateContractPDF(contractData);
       
       message.success('Hợp đồng đã được tạo và tải xuống thành công!');
     } catch (error: any) {
@@ -242,6 +250,14 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
           <Button
             type="default"
             size="small"
+            icon={<HistoryOutlined />}
+            onClick={() => handleViewHistory(record)}
+          >
+            Lịch sử
+          </Button>
+          <Button
+            type="default"
+            size="small"
             icon={<FilePdfOutlined />}
             onClick={() => handleGenerateContract(record)}
             loading={generatingContract === record._id}
@@ -274,13 +290,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
             >
               Theo dõi công nợ
             </Button>
-            <Button
-              type="default"
-              onClick={fetchOrders}
-              loading={loading}
-            >
-              Làm mới
-            </Button>
+            
             </Space>
           </div>
           
@@ -369,6 +379,18 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
             setShowBankProfileModal(false);
             setSelectedOrder(null);
             message.success('Hồ sơ ngân hàng đã được gửi thành công!');
+          }}
+        />
+      )}
+
+      {/* Payment History Modal */}
+      {selectedOrder && (
+        <PaymentHistoryModal
+          visible={showHistoryModal}
+          order={selectedOrder}
+          onClose={() => {
+            setShowHistoryModal(false);
+            setSelectedOrder(null);
           }}
         />
       )}

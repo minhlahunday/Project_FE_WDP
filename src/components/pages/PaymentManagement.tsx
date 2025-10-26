@@ -23,6 +23,7 @@ import type { ColumnsType } from 'antd/es/table';
 
 import { Order } from '../../services/orderService';
 import { paymentService, Payment } from '../../services/paymentService';
+import { orderHistoryService } from '../../services/orderHistoryService';
 import { useAuth } from '../../contexts/AuthContext';
 import { downloadPDF, generateContractFilename } from '../../utils/pdfUtils';
 
@@ -48,6 +49,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [orderHistory, setOrderHistory] = useState<any>(null);
+  const [loadingOrderHistory, setLoadingOrderHistory] = useState(false);
+  
+  // Update loadingOrderHistory when orderHistory changes
+  useEffect(() => {
+    if (orderHistory) {
+      // Order history loaded successfully
+    }
+  }, [orderHistory]);
 
   const totalAmount = order?.final_amount || 0;
   const paidAmount = order?.paid_amount || 0;
@@ -71,11 +81,38 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     }
   };
 
+  // Load order history
+  const loadOrderHistory = async () => {
+    if (!order) return;
+    
+    setLoadingOrderHistory(true);
+    try {
+      const response = await orderHistoryService.getOrderHistory(order._id);
+      if (response.success) {
+        setOrderHistory(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading order history:', error);
+    } finally {
+      setLoadingOrderHistory(false);
+    }
+  };
+
   useEffect(() => {
     if (visible && order) {
       loadPaymentHistory();
+      loadOrderHistory();
     }
   }, [visible, order]);
+
+  // Auto-fill remaining amount when payment history changes
+  useEffect(() => {
+    if (paymentHistory.length >= 1 && remainingAmount > 0) {
+      form.setFieldsValue({
+        amount: remainingAmount
+      });
+    }
+  }, [paymentHistory.length, remainingAmount]);
 
   // Handle form submission
   const handleSubmit = async (values: any) => {
@@ -276,6 +313,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         {/* Payment Form */}
         {paymentProgress < 100 && (
           <Card title="Thêm thanh toán" size="small">
+            {paymentHistory.length >= 2 && (
+              <Alert
+                message="Đã thanh toán nhiều lần"
+                description="Đơn hàng này đã có hơn 2 lần thanh toán. Chỉ được thanh toán nốt phần còn lại."
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            )}
             <Form
               form={form}
               layout="vertical"
@@ -297,12 +343,22 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                   }
                 ]}
               >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value!.replace(/\$\s?|(,*)/g, '')}
-                  placeholder="Nhập số tiền thanh toán"
-                />
+                {paymentHistory.length >= 1 ? (
+                  <InputNumber
+                    style={{ width: '100%', backgroundColor: '#f0f0f0', fontWeight: 'bold' }}
+                    value={remainingAmount}
+                    formatter={value => value !== undefined && value !== null ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                    parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
+                    readOnly
+                  />
+                ) : (
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    formatter={value => value !== undefined && value !== null ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                    parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
+                    placeholder="Nhập số tiền thanh toán"
+                  />
+                )}
               </Form.Item>
 
               <Form.Item
@@ -373,6 +429,86 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
             type="success"
             showIcon
           />
+        )}
+
+        {/* Order Status History Timeline */}
+        {orderHistory && (
+          <Card title="Lịch sử trạng thái đơn hàng" loading={loadingOrderHistory}>
+            <div className="space-y-4">
+              {orderHistory.timeline && orderHistory.timeline.length > 0 && (
+                <div className="relative">
+                  {orderHistory.timeline.map((item: any, index: number) => (
+                    <div key={item.id || index} className={`flex gap-4 ${!item.is_current ? 'pb-6' : ''}`}>
+                      {/* Timeline dot */}
+                      <div className="flex flex-col items-center">
+                        <div className={`w-4 h-4 rounded-full border-2 ${
+                          item.is_current 
+                            ? 'bg-blue-500 border-blue-500' 
+                            : 'bg-white border-gray-400'
+                        }`} />
+                        {index < orderHistory.timeline.length - 1 && (
+                          <div className="w-0.5 h-16 bg-gray-300 mt-2" />
+                        )}
+                      </div>
+                      
+                      {/* Timeline content */}
+                      <div className="flex-1 pb-4">
+                        <div className="bg-white border rounded-lg p-4 shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              {item.status_change && (
+                                <p className="text-sm font-semibold text-gray-800">
+                                  Trạng thái: <span className="text-red-600">{item.status_change.from}</span> → <span className="text-green-600">{item.status_change.to}</span>
+                                </p>
+                              )}
+                              {item.delivery_status_change && (
+                                <p className="text-sm text-gray-600 mt-1">
+                                  Giao hàng: {item.delivery_status_change.from} → {item.delivery_status_change.to}
+                                </p>
+                              )}
+                              {item.current_status && (
+                                <p className="text-sm font-semibold text-blue-600">
+                                  Trạng thái hiện tại: {item.current_status}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(item.timestamp).toLocaleString('vi-VN')}
+                            </div>
+                          </div>
+                          
+                          {item.changed_by && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Thay đổi bởi: {item.changed_by.full_name || item.changed_by.email || 'N/A'}
+                            </p>
+                          )}
+                          
+                          {item.reason && (
+                            <p className="text-sm text-gray-600 mt-2">
+                              <strong>Lý do:</strong> {item.reason}
+                            </p>
+                          )}
+                          
+                          {item.notes && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              <strong>Ghi chú:</strong> {item.notes}
+                            </p>
+                          )}
+                          
+                          {item.payment_info && (
+                            <div className="mt-2 text-xs bg-gray-100 p-2 rounded">
+                              <strong>Thông tin thanh toán:</strong>
+                              <pre className="mt-1 text-xs">{JSON.stringify(item.payment_info, null, 2)}</pre>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
         )}
 
         {/* Payment History */}

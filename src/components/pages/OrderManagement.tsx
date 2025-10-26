@@ -487,26 +487,7 @@ export const OrderManagement: React.FC = () => {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5}>
-            <Button
-              variant="outlined"
-              startIcon={<ReloadIcon />}
-              onClick={() => loadOrders({})}
-              disabled={loading}
-            >
-              Làm mới
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setSnackbarMessage('Tính năng tạo đơn hàng mới đang được phát triển');
-                setSnackbarSeverity('info');
-                setSnackbarOpen(true);
-              }}
-            >
-              Tạo đơn hàng mới
-            </Button>
+            
            
           </Stack>
         </Box>

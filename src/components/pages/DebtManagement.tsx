@@ -67,7 +67,7 @@ export const DebtManagement: React.FC = () => {
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
   const [stats, setStats] = useState<DebtStats | null>(null);
-  const [activeTab, setActiveTab] = useState<'dealer' | 'customers' | 'manufacturers'>('dealer');
+  const [activeTab, setActiveTab] = useState<'dealer' | 'customers'>('dealer');
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
@@ -106,10 +106,6 @@ export const DebtManagement: React.FC = () => {
         case 'customers':
           console.log('Calling getCustomerDebts API');
           response = await debtService.getCustomerDebts(params);
-          break;
-        case 'manufacturers':
-          console.log('Calling getManufacturerDebts API');
-          response = await debtService.getManufacturerDebts(params);
           break;
         case 'dealer':
         default:
@@ -294,16 +290,6 @@ export const DebtManagement: React.FC = () => {
               >
                 Khách hàng nợ đại lý
               </button>
-              <button
-                onClick={() => setActiveTab('manufacturers')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'manufacturers'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Đại lý nợ nhà sản xuất
-              </button>
             </nav>
           </div>
         </div>
@@ -433,14 +419,7 @@ export const DebtManagement: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900">
             Danh sách công nợ ({pagination.total})
           </h3>
-          <button
-            onClick={() => loadDebts()}
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ReloadIcon className="h-4 w-4 mr-2" />
-            Làm mới
-          </button>
+          
         </div>
 
         {/* Error Alert */}
@@ -513,8 +492,6 @@ export const DebtManagement: React.FC = () => {
                           <Typography variant="body2" fontWeight="bold">
                             {activeTab === 'customers' 
                               ? (debt.customer_id?.full_name || 'N/A')
-                              : activeTab === 'manufacturers'
-                              ? `Đại lý ${typeof debt.dealership_id === 'object' ? debt.dealership_id._id : debt.dealership_id}`
                               : (debt.manufacturer_id?.name || 'N/A')
                             }
                           </Typography>
@@ -531,11 +508,6 @@ export const DebtManagement: React.FC = () => {
                               {debt.customer_id.phone}
                             </Typography>
                           )}
-                          {activeTab === 'manufacturers' && (
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              Nợ: {debt.manufacturer_id?.name}
-                            </Typography>
-                          )}
                         </Box>
                       </TableCell>
                       <TableCell>
@@ -543,7 +515,6 @@ export const DebtManagement: React.FC = () => {
                           label={
                             activeTab === 'dealer' ? 'Nhà sản xuất' :
                             activeTab === 'customers' ? 'Khách hàng' :
-                            activeTab === 'manufacturers' ? 'Đại lý' :
                             'Nhà sản xuất'
                           }
                           size="small"
@@ -787,11 +758,6 @@ export const DebtManagement: React.FC = () => {
                             </Descriptions.Item>
                           )}
                         </>
-                      )}
-                      {selectedDebt.manufacturer_id && (
-                        <Descriptions.Item label="Nhà sản xuất">
-                          {selectedDebt.manufacturer_id.name}
-                        </Descriptions.Item>
                       )}
                       <Descriptions.Item label="Đại lý ID">
                         <span className="font-mono text-blue-600">
