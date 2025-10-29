@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 import {
   orderService,
@@ -25,17 +26,38 @@ interface CreateOrderRequestModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialItems?: OrderRequestItem[];
+  initialNotes?: string;
 }
 
 export const CreateOrderRequestModal: React.FC<
   CreateOrderRequestModalProps
-> = ({ open, onClose, onSuccess }) => {
+> = ({ open, onClose, onSuccess, initialItems, initialNotes }) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<OrderRequestItem[]>([
     { vehicle_id: "", color: "", quantity: 1 },
   ]);
+
+  // Update items when initialItems changes
+  React.useEffect(() => {
+    if (open && initialItems && initialItems.length > 0) {
+      setItems(initialItems);
+    } else if (open && !initialItems) {
+      setItems([{ vehicle_id: "", color: "", quantity: 1 }]);
+    }
+  }, [open, initialItems]);
+
+  // Update notes when initialNotes changes
+  React.useEffect(() => {
+    if (open && initialNotes) {
+      setNotes(initialNotes);
+    } else if (open && !initialNotes) {
+      setNotes("");
+    }
+  }, [open, initialNotes]);
 
   const handleAddItem = () => {
     setItems([...items, { vehicle_id: "", color: "", quantity: 1 }]);
@@ -94,6 +116,9 @@ export const CreateOrderRequestModal: React.FC<
 
       handleClose();
       onSuccess();
+
+      // Redirect to order requests page
+      navigate("/portal/order-requests");
     } catch (error: any) {
       console.error("Error creating order request:", error);
       setError(
