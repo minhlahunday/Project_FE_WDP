@@ -13,15 +13,20 @@ import {
   Statistic,
   Row,
   Col,
-  Tooltip
+  Tooltip,
+  Descriptions,
+  Divider,
+  Select
 } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
-  CarOutlined,
   InfoCircleOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  EyeOutlined,
+  TruckOutlined,
+  DollarOutlined
 } from '@ant-design/icons';
 import { requestVehicleService, VehicleRequest } from '../../../services/requestVehicleService';
 
@@ -38,6 +43,7 @@ const RequestManagement: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = useState<VehicleRequest | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeliveredModal, setShowDeliveredModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [rejectNotes, setRejectNotes] = useState('');
   const [deliveredNotes, setDeliveredNotes] = useState('');
 
@@ -79,6 +85,8 @@ const RequestManagement: React.FC = () => {
           const response = await requestVehicleService.approveRequest(request._id);
           if (response.success) {
             message.success('Yêu cầu đã được duyệt!');
+            setShowDetailModal(false);
+            setSelectedRequest(null);
             fetchRequests();
           }
         },
@@ -99,6 +107,7 @@ const RequestManagement: React.FC = () => {
       if (response.success) {
         message.success('Yêu cầu đã bị từ chối!');
         setShowRejectModal(false);
+        setShowDetailModal(false);
         setRejectNotes('');
         setSelectedRequest(null);
         fetchRequests();
@@ -119,6 +128,8 @@ const RequestManagement: React.FC = () => {
           const response = await requestVehicleService.inProgressRequest(request._id);
           if (response.success) {
             message.success('Yêu cầu đã chuyển sang đang xử lý!');
+            setShowDetailModal(false);
+            setSelectedRequest(null);
             fetchRequests();
           }
         },
@@ -139,6 +150,7 @@ const RequestManagement: React.FC = () => {
       if (response.success) {
         message.success('Yêu cầu đã được đánh dấu là đã giao hàng!');
         setShowDeliveredModal(false);
+        setShowDetailModal(false);
         setDeliveredNotes('');
         setSelectedRequest(null);
         fetchRequests();
@@ -152,7 +164,7 @@ const RequestManagement: React.FC = () => {
     const statusMap: { [key: string]: { color: string; text: string; icon: any } } = {
       pending: { color: 'orange', text: 'Đang chờ', icon: ClockCircleOutlined },
       approved: { color: 'blue', text: 'Đã duyệt', icon: CheckCircleOutlined },
-      in_progress: { color: 'cyan', text: 'Đang xử lý', icon: CarOutlined },
+      in_progress: { color: 'cyan', text: 'Đang xử lý', icon: TruckOutlined },
       delivered: { color: 'green', text: 'Đã giao', icon: CheckCircleOutlined },
       rejected: { color: 'red', text: 'Đã từ chối', icon: CloseCircleOutlined },
     };
@@ -167,14 +179,50 @@ const RequestManagement: React.FC = () => {
     );
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  const formatAddress = (address: any) => {
+    if (!address) return 'N/A';
+    
+    if (typeof address === 'string') return address;
+    
+    if (typeof address === 'object') {
+      // Nếu có full_address thì dùng
+      if (address.full_address) return address.full_address;
+      
+      // Nếu không có thì ghép từ các thành phần
+      const parts = [
+        address.street,
+        address.district, 
+        address.city,
+        address.province
+      ].filter(part => part && part.trim() !== '');
+      
+      return parts.length > 0 ? parts.join(', ') : 'N/A';
+    }
+    
+    return 'N/A';
+  };
+
+  const showRequestDetail = (request: VehicleRequest) => {
+    setSelectedRequest(request);
+    setShowDetailModal(true);
+  };
+
   const columns = [
     {
       title: 'ID',
       dataIndex: '_id',
       key: '_id',
+      width: 120,
       render: (id: string) => (
         <Tooltip title={id}>
-          <span className="font-mono text-xs">{id.substring(0, 12)}...</span>
+          <span className="font-mono text-xs">{id.substring(0, 8)}...</span>
         </Tooltip>
       ),
     },
@@ -183,110 +231,86 @@ const RequestManagement: React.FC = () => {
       key: 'dealership',
       render: (_: any, record: VehicleRequest) => {
         const dealer = typeof record.dealership_id === 'object' ? record.dealership_id : {};
-        return dealer.company_name || dealer.name || 'N/A';
+        return (
+          <div>
+            <div className="font-medium">{dealer.company_name || dealer.name || 'N/A'}</div>
+            {dealer.phone && <div className="text-xs text-gray-500">{dealer.phone}</div>}
+            {dealer.address && (
+              <div className="text-xs text-gray-400 truncate" style={{ maxWidth: '200px' }}>
+                {formatAddress(dealer.address)}
+              </div>
+            )}
+          </div>
+        );
       },
     },
     {
-      title: 'Xe',
+      title: 'Thông tin xe',
       key: 'vehicle',
       render: (_: any, record: VehicleRequest) => {
         const vehicle = typeof record.vehicle_id === 'object' ? record.vehicle_id : {};
-        return `${vehicle.name || vehicle.model || 'N/A'}`;
+        return (
+          <div>
+            <div className="font-medium">{vehicle.name || vehicle.model || 'N/A'}</div>
+            <div className="text-xs text-gray-500">
+              SKU: {vehicle.sku || 'N/A'} | Màu: {record.color}
+            </div>
+            {vehicle.price && (
+              <div className="text-xs text-green-600">
+                {formatCurrency(vehicle.price)}
+              </div>
+            )}
+          </div>
+        );
       },
     },
     {
       title: 'Số lượng',
       dataIndex: 'quantity',
       key: 'quantity',
-    },
-    {
-      title: 'Màu',
-      dataIndex: 'color',
-      key: 'color',
-      render: (color: string) => (
-        <Tag color={color === 'đỏ' ? 'red' : color === 'xanh' ? 'blue' : 'default'}>
-          {color}
-        </Tag>
+      width: 80,
+      align: 'center' as const,
+      render: (quantity: number) => (
+        <Tag color="blue">{quantity}</Tag>
       ),
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
+      width: 120,
       render: (status: string) => getStatusTag(status),
     },
     {
-      title: 'Ngày tạo',
-      dataIndex: 'requested_at',
-      key: 'requested_at',
-      render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
+      title: 'Thời gian',
+      key: 'dates',
+      width: 130,
+      render: (_: any, record: VehicleRequest) => (
+        <div className="text-xs">
+          <div>Tạo: {new Date(record.createdAt).toLocaleDateString('vi-VN')}</div>
+          {record.delivered_at && (
+            <div className="text-green-600">
+              Giao: {new Date(record.delivered_at).toLocaleDateString('vi-VN')}
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       title: 'Hành động',
       key: 'actions',
+      width: 100,
+      align: 'center' as const,
       render: (_: any, record: VehicleRequest) => {
         return (
-          <Space>
-            {record.status === 'pending' && (
-              <>
-                <Button
-                  type="primary"
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => handleApprove(record)}
-                >
-                  Duyệt
-                </Button>
-                <Button
-                  danger
-                  icon={<CloseCircleOutlined />}
-                  onClick={() => {
-                    setSelectedRequest(record);
-                    setShowRejectModal(true);
-                  }}
-                >
-                  Từ chối
-                </Button>
-              </>
-            )}
-            {record.status === 'approved' && (
-              <Button
-                icon={<CarOutlined />}
-                onClick={() => handleInProgress(record)}
-              >
-                Đang xử lý
-              </Button>
-            )}
-            {record.status === 'in_progress' && (
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={() => {
-                  setSelectedRequest(record);
-                  setShowDeliveredModal(true);
-                }}
-              >
-                Đã giao
-              </Button>
-            )}
-            {record.status === 'delivered' && (
-              <Button
-                type="default"
-                icon={<InfoCircleOutlined />}
-                disabled
-              >
-                Đã hoàn thành
-              </Button>
-            )}
-            {record.status === 'rejected' && (
-              <Button
-                type="default"
-                icon={<CloseCircleOutlined />}
-                disabled
-              >
-                Đã từ chối
-              </Button>
-            )}
-          </Space>
+          <Button
+            size="small"
+            type="primary"
+            icon={<EyeOutlined />}
+            onClick={() => showRequestDetail(record)}
+          >
+            Xem chi tiết
+          </Button>
         );
       },
     },
@@ -294,10 +318,12 @@ const RequestManagement: React.FC = () => {
 
   // Statistics
   const stats = {
+    total: requests.length,
     pending: requests.filter(r => r.status === 'pending').length,
     approved: requests.filter(r => r.status === 'approved').length,
     in_progress: requests.filter(r => r.status === 'in_progress').length,
     delivered: requests.filter(r => r.status === 'delivered').length,
+    rejected: requests.filter(r => r.status === 'rejected').length,
   };
 
   const filteredRequests = requests.filter(request => {
@@ -321,7 +347,17 @@ const RequestManagement: React.FC = () => {
 
         {/* Statistics */}
         <Row gutter={16} className="mb-6">
-          <Col span={6}>
+          <Col span={4}>
+            <Card>
+              <Statistic
+                title="Tổng số"
+                value={stats.total}
+                valueStyle={{ color: '#666' }}
+                prefix={<InfoCircleOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col span={4}>
             <Card>
               <Statistic
                 title="Đang chờ"
@@ -331,7 +367,7 @@ const RequestManagement: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col span={6}>
+          <Col span={4}>
             <Card>
               <Statistic
                 title="Đã duyệt"
@@ -341,17 +377,17 @@ const RequestManagement: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col span={6}>
+          <Col span={4}>
             <Card>
               <Statistic
                 title="Đang xử lý"
                 value={stats.in_progress}
                 valueStyle={{ color: '#13c2c2' }}
-                prefix={<CarOutlined />}
+                prefix={<TruckOutlined />}
               />
             </Card>
           </Col>
-          <Col span={6}>
+          <Col span={4}>
             <Card>
               <Statistic
                 title="Đã giao"
@@ -361,32 +397,58 @@ const RequestManagement: React.FC = () => {
               />
             </Card>
           </Col>
+          <Col span={4}>
+            <Card>
+              <Statistic
+                title="Đã từ chối"
+                value={stats.rejected}
+                valueStyle={{ color: '#ff4d4f' }}
+                prefix={<CloseCircleOutlined />}
+              />
+            </Card>
+          </Col>
         </Row>
 
         {/* Filters */}
         <Card className="mb-4">
-          <Space>
-            <Input
-              placeholder="Tìm kiếm theo ID, đại lý, xe..."
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-              style={{ width: 300 }}
-              allowClear
-            />
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded"
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="pending">Đang chờ</option>
-              <option value="approved">Đã duyệt</option>
-              <option value="in_progress">Đang xử lý</option>
-              <option value="delivered">Đã giao</option>
-              <option value="rejected">Đã từ chối</option>
-            </select>
-            
-          </Space>
+          <Row gutter={16} align="middle">
+            <Col>
+              <Input
+                placeholder="Tìm kiếm theo ID, đại lý, xe..."
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                style={{ width: 300 }}
+                allowClear
+              />
+            </Col>
+            <Col>
+              <Select
+                placeholder="Chọn trạng thái"
+                value={statusFilter || undefined}
+                onChange={setStatusFilter}
+                style={{ width: 200 }}
+                allowClear
+              >
+                <Select.Option value="pending">Đang chờ</Select.Option>
+                <Select.Option value="approved">Đã duyệt</Select.Option>
+                <Select.Option value="in_progress">Đang xử lý</Select.Option>
+                <Select.Option value="delivered">Đã giao</Select.Option>
+                <Select.Option value="rejected">Đã từ chối</Select.Option>
+              </Select>
+            </Col>
+            <Col>
+              <Button 
+                icon={<ReloadOutlined />} 
+                onClick={fetchRequests}
+                loading={loading}
+              >
+                Làm mới
+              </Button>
+            </Col>
+            <Col flex="auto" style={{ textAlign: 'right' }}>
+              <Tag color="blue">Tổng: {filteredRequests.length} yêu cầu</Tag>
+            </Col>
+          </Row>
         </Card>
 
         {/* Table */}
@@ -396,13 +458,20 @@ const RequestManagement: React.FC = () => {
             dataSource={filteredRequests}
             rowKey="_id"
             loading={loading}
+            scroll={{ x: 1200 }}
+            size="small"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: pagination.total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => 
+                `${range[0]}-${range[1]} của ${total} yêu cầu`,
+              pageSizeOptions: ['10', '20', '50', '100'],
               onChange: (page, pageSize) => {
-                setPagination(prev => ({ ...prev, current: page, pageSize }));
-              },
+                setPagination(prev => ({ ...prev, current: page, pageSize: pageSize || 10 }));
+              },  
             }}
           />
         </Card>
@@ -440,9 +509,23 @@ const RequestManagement: React.FC = () => {
             setDeliveredNotes('');
             setSelectedRequest(null);
           }}
-          okText="Xác nhận"
+          okText="Xác nhận giao hàng"
           cancelText="Hủy"
+          width={600}
         >
+          {selectedRequest && (
+            <div className="mb-4">
+              <Descriptions title="Thông tin yêu cầu" size="small" column={2}>
+                <Descriptions.Item label="ID">{selectedRequest._id}</Descriptions.Item>
+                <Descriptions.Item label="Số lượng">{selectedRequest.quantity}</Descriptions.Item>
+                <Descriptions.Item label="Màu xe">{selectedRequest.color}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  {getStatusTag(selectedRequest.status)}
+                </Descriptions.Item>
+              </Descriptions>
+              <Divider />
+            </div>
+          )}
           <p>Ghi chú giao hàng:</p>
           <TextArea
             rows={4}
@@ -450,6 +533,166 @@ const RequestManagement: React.FC = () => {
             onChange={e => setDeliveredNotes(e.target.value)}
             placeholder="Nhập thông tin giao hàng (tùy chọn)..."
           />
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <div className="flex items-center">
+              <DollarOutlined className="text-yellow-600 mr-2" />
+              <span className="text-yellow-800 font-medium">
+                Lưu ý: Việc xác nhận giao hàng sẽ tự động cập nhật kho hàng và tạo công nợ cho đại lý
+              </span>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Detail Modal */}
+        <Modal
+          title="Chi tiết yêu cầu"
+          open={showDetailModal}
+          onCancel={() => {
+            setShowDetailModal(false);
+            setSelectedRequest(null);
+          }}
+          footer={
+            selectedRequest && (
+              <div style={{ textAlign: 'right' }}>
+                <Space>
+                  <Button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedRequest(null);
+                    }}
+                  >
+                    Đóng
+                  </Button>
+                  
+                  {selectedRequest.status === 'pending' && (
+                    <>
+                      <Button
+                        danger
+                        icon={<CloseCircleOutlined />}
+                        onClick={() => {
+                          setShowRejectModal(true);
+                        }}
+                      >
+                        Từ chối
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<CheckCircleOutlined />}
+                        onClick={() => handleApprove(selectedRequest)}
+                      >
+                        Duyệt yêu cầu
+                      </Button>
+                    </>
+                  )}
+                  
+                  {selectedRequest.status === 'approved' && (
+                    <Button
+                      type="primary"
+                      icon={<TruckOutlined />}
+                      onClick={() => handleInProgress(selectedRequest)}
+                    >
+                      Chuyển đang xử lý
+                    </Button>
+                  )}
+                  
+                  {selectedRequest.status === 'in_progress' && (
+                    <Button
+                      type="primary"
+                      icon={<CheckCircleOutlined />}
+                      onClick={() => {
+                        setShowDeliveredModal(true);
+                      }}
+                    >
+                      Đánh dấu đã giao
+                    </Button>
+                  )}
+                </Space>
+              </div>
+            )
+          }
+          width={800}
+        >
+          {selectedRequest && (
+            <div>
+              <Descriptions title="Thông tin cơ bản" bordered size="small" column={2}>
+                <Descriptions.Item label="ID yêu cầu">{selectedRequest._id}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  {getStatusTag(selectedRequest.status)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số lượng">{selectedRequest.quantity}</Descriptions.Item>
+                <Descriptions.Item label="Màu xe">{selectedRequest.color}</Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo">
+                  {new Date(selectedRequest.createdAt).toLocaleString('vi-VN')}
+                </Descriptions.Item>
+                <Descriptions.Item label="Cập nhật cuối">
+                  {new Date(selectedRequest.updatedAt).toLocaleString('vi-VN')}
+                </Descriptions.Item>
+                {selectedRequest.delivered_at && (
+                  <Descriptions.Item label="Ngày giao hàng" span={2}>
+                    {new Date(selectedRequest.delivered_at).toLocaleString('vi-VN')}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+
+              <Divider />
+
+              <Descriptions title="Thông tin đại lý" bordered size="small" column={2}>
+                {typeof selectedRequest.dealership_id === 'object' && selectedRequest.dealership_id && (
+                  <>
+                    <Descriptions.Item label="Tên công ty" span={2}>
+                      {selectedRequest.dealership_id.company_name || selectedRequest.dealership_id.name || 'N/A'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Địa chỉ" span={2}>
+                      {formatAddress(selectedRequest.dealership_id.address)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Điện thoại">
+                      {selectedRequest.dealership_id.phone || 'N/A'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Email">
+                      {selectedRequest.dealership_id.email || 'N/A'}
+                    </Descriptions.Item>
+                  </>
+                )}
+              </Descriptions>
+
+              <Divider />
+
+              <Descriptions title="Thông tin xe" bordered size="small" column={2}>
+                {typeof selectedRequest.vehicle_id === 'object' && selectedRequest.vehicle_id && (
+                  <>
+                    <Descriptions.Item label="Tên xe" span={2}>
+                      {selectedRequest.vehicle_id.name || selectedRequest.vehicle_id.model || 'N/A'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="SKU">
+                      {selectedRequest.vehicle_id.sku || 'N/A'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Giá">
+                      {selectedRequest.vehicle_id.price ? formatCurrency(selectedRequest.vehicle_id.price) : 'N/A'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Thương hiệu">
+                      {typeof selectedRequest.vehicle_id.manufacturer_id === 'object' && selectedRequest.vehicle_id.manufacturer_id
+                        ? selectedRequest.vehicle_id.manufacturer_id.name || 'N/A'
+                        : 'N/A'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Mô tả" span={2}>
+                      {selectedRequest.vehicle_id.description || 'N/A'}
+                    </Descriptions.Item>
+                  </>
+                )}
+              </Descriptions>
+
+              {selectedRequest.notes && (
+                <>
+                  <Divider />
+                  <Descriptions title="Ghi chú" bordered size="small">
+                    <Descriptions.Item span={2}>
+                      {selectedRequest.notes}
+                    </Descriptions.Item>
+                  </Descriptions>
+                </>
+              )}
+            </div>
+          )}
         </Modal>
       </div>
     </AdminLayout>

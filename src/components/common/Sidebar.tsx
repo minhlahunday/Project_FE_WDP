@@ -93,12 +93,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <CreditCard className="h-4 w-4" />,
       route: "/portal/payments",
     },
-    {
-      key: "payment-demo",
-      label: "Demo Thanh toán",
-      icon: <CreditCard className="h-4 w-4" />,
-      route: "/portal/payment-demo",
-    },
+    // {
+    //   key: "payment-demo",
+    //   label: "Demo Thanh toán",
+    //   icon: <CreditCard className="h-4 w-4" />,
+    //   route: "/portal/payment-demo",
+    // },
     {
       key: "customers",
       label: "Quản lý khách hàng",
