@@ -1,7 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
-import { Sidebar } from './Sidebar';
+import { SidebarGitHub } from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface LayoutProps {
@@ -48,7 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       <div className="flex flex-1 relative">
         {/* Sidebar */}
-        <Sidebar
+        <SidebarGitHub
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
           isOpen={sidebarOpen}
@@ -57,7 +57,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
         
         {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 pt-16 ${sidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'} ml-0`}>
+        <main className={`flex-1 transition-all duration-200 pt-16 ${sidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'} ml-0`}>
           {children}
         </main>
       </div>
