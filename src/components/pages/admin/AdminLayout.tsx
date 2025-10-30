@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Sidebar } from '../../common/Sidebar';
 import { Header } from '../../common/Header';
+import { SidebarGitHub } from '../../common/Sidebar';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   return (
     <div className="flex min-h-screen bg-gray-50 overflow-hidden">
-      <Sidebar 
+      < SidebarGitHub
         activeSection={currentSection}
         onSectionChange={handleSectionChange}
         isOpen={isSidebarOpen}

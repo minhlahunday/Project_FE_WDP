@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Car,
@@ -18,18 +18,14 @@ import {
   FileText,
   Receipt,
   FileCheck,
+  Search,
+  Menu,
+  X,
+  User,
+  ChevronRight,
 } from "lucide-react";
-import { Layout, Menu, Input, Avatar, Button, Typography, Space } from "antd";
-import {
-  SearchOutlined,
-  UserOutlined,
-  MenuOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
 import { useAuth } from "../../contexts/AuthContext";
-
-const { Sider } = Layout;
-const { Text } = Typography;
+import "../../styles/sidebar-github.css";
 
 interface SidebarProps {
   activeSection: string;
@@ -39,7 +35,7 @@ interface SidebarProps {
   onOpen: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
+export const SidebarGitHub: React.FC<SidebarProps> = ({
   activeSection,
   onSectionChange,
   isOpen,
@@ -49,72 +45,113 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDesktop, setIsDesktop] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+      
+      // Auto close sidebar on mobile when route changes
+      if (!desktop && isOpen) {
+        onClose();
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen, onClose]);
+
+  // Handle click outside to close sidebar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!isOpen || !sidebarRef.current) return;
+      
+      const target = event.target as HTMLElement;
+      
+      // Don't close if clicking inside sidebar
+      if (sidebarRef.current.contains(target)) return;
+      
+      // Don't close if clicking on toggle buttons
+      if (target.closest('[data-testid="sidebar-toggle"]')) return;
+      
+      // Close sidebar
+      onClose();
+    };
+
+    // Add listener when sidebar is open
+    if (isOpen) {
+      document.addEventListener('click', handleClickOutside, true);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside, true);
+    };
+  }, [isOpen, onClose]);
 
   const dealerMenuItems = [
     {
       key: "vehicles",
       label: "Danh mục xe",
-      icon: <Car className="h-4 w-4" />,
+      icon: <Car className="w-4 h-4" />,
       route: "/portal/car",
     },
     {
       key: "sales",
       label: "Quản lý bán hàng",
-      icon: <ShoppingCart className="h-4 w-4" />,
+      icon: <ShoppingCart className="w-4 h-4" />,
       route: "/portal/sales",
     },
     {
       key: "orders",
       label: "Quản lý đơn hàng",
-      icon: <ClipboardList className="h-4 w-4" />,
+      icon: <ClipboardList className="w-4 h-4" />,
       route: "/portal/orders",
     },
     {
       key: "order-requests",
       label: "Yêu cầu đặt xe",
-      icon: <FileSignature className="h-4 w-4" />,
+      icon: <FileSignature className="w-4 h-4" />,
       route: "/portal/order-requests",
     },
     {
       key: "quotations",
       label: "Quản lý báo giá",
-      icon: <FileText className="h-4 w-4" />,
+      icon: <FileText className="w-4 h-4" />,
       route: "/portal/quotations",
     },
     {
       key: "quote-to-order",
       label: "Chuyển báo giá",
-      icon: <FileSignature className="h-4 w-4" />,
+      icon: <FileSignature className="w-4 h-4" />,
       route: "/portal/quote-to-order",
     },
     {
       key: "payments",
       label: "Thanh toán",
-      icon: <CreditCard className="h-4 w-4" />,
+      icon: <CreditCard className="w-4 h-4" />,
       route: "/portal/payments",
     },
-    // {
-    //   key: "payment-demo",
-    //   label: "Demo Thanh toán",
-    //   icon: <CreditCard className="h-4 w-4" />,
-    //   route: "/portal/payment-demo",
-    // },
     {
       key: "customers",
       label: "Quản lý khách hàng",
-      icon: <Users className="h-4 w-4" />,
+      icon: <Users className="w-4 h-4" />,
       route: "/portal/customers",
     },
     {
       key: "test-drives",
       label: "Lịch lái thử",
-      icon: <Calendar className="h-4 w-4" />,
+      icon: <Calendar className="w-4 h-4" />,
       route: "/portal/test-drives",
     },
     {
       key: "promotions",
       label: "Quản lý khuyến mãi",
-      icon: <Gift className="h-4 w-4" />,
+      icon: <Gift className="w-4 h-4" />,
       route: "/portal/promotions",
     },
     ...(user?.role === "dealer_manager"
@@ -122,7 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {
             key: "staff-management",
             label: "Quản lý nhân viên",
-            icon: <UserCog className="h-4 w-4" />,
+            icon: <UserCog className="w-4 h-4" />,
             route: "/portal/staff-management",
           },
         ]
@@ -130,81 +167,79 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       key: "feedback",
       label: "Phản hồi",
-      icon: <MessageSquare className="h-4 w-4" />,
+      icon: <MessageSquare className="w-4 h-4" />,
       route: "/portal/feedback",
     },
     {
       key: "reports",
       label: "Báo cáo",
-      icon: <BarChart3 className="h-4 w-4" />,
+      icon: <BarChart3 className="w-4 h-4" />,
       route: "/portal/reports",
     },
     {
       key: "dealer-info",
       label: "Thông tin đại lý",
-      icon: <Info className="h-4 w-4" />,
+      icon: <Info className="w-4 h-4" />,
       route: "/portal/dealer-info",
     },
   ];
 
-  // Menu Admin
   const adminMenuItems = [
     {
       key: "dealer-management",
       label: "Quản lý đại lý",
-      icon: <Building2 className="h-4 w-4" />,
+      icon: <Building2 className="w-4 h-4" />,
       route: "/admin/dealer-management",
     },
     {
       key: "admin-staff-management",
       label: "Quản lý nhân viên",
-      icon: <UserCog className="h-4 w-4" />,
+      icon: <UserCog className="w-4 h-4" />,
       route: "/admin/admin-staff-management",
     },
   ];
 
-  // Menu EVM Staff
   const evmMenuItems = [
     {
       key: "product-management",
       label: "Quản lý sản phẩm",
-      icon: <Package className="h-4 w-4" />,
+      icon: <Package className="w-4 h-4" />,
       route: "/evm/product-management",
     },
     {
       key: "inventory-management",
       label: "Quản lý tồn kho",
-      icon: <Package className="h-4 w-4" />,
+      icon: <Package className="w-4 h-4" />,
       route: "/evm/inventory-management",
     },
     {
       key: "dealer-management",
       label: "Quản lý đại lý",
-      icon: <Building2 className="h-4 w-4" />,
+      icon: <Building2 className="w-4 h-4" />,
       route: "/evm/dealer-management",
     },
     {
       key: "pricing",
       label: "Khuyến mãi",
-      icon: <CreditCard className="h-4 w-4" />,
+      icon: <CreditCard className="w-4 h-4" />,
       route: "/evm/promotion-management",
     },
     {
       key: "customer-management",
       label: "Quản lý Đặt Xe",
-      icon: <FileCheck className="h-4 w-4" />,
+      icon: <FileCheck className="w-4 h-4" />,
       route: "/evm/request-management",
     },
     {
       key: "manufacturer-debt-management",
       label: "Quản lý công nợ",
-      icon: <Receipt className="h-4 w-4" />,
+      icon: <Receipt className="w-4 h-4" />,
       route: "/evm/manufacturer-debt-management",
     },
     {
       key: "forecasting",
       label: "Dự báo nhu cầu",
-      icon: <BarChart3 className="h-4 w-4" />,
+      icon: <BarChart3 className="w-4 h-4" />,
       route: "/sections/forecasting",
     },
   ];
@@ -221,7 +256,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const menuItems = getMenuItems();
 
-  // Tự động đồng bộ activeSection với route hiện tại
+  // Filter menu items based on search
+  const filteredMenuItems = menuItems.filter(item =>
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Auto sync activeSection with current route
   useEffect(() => {
     const currentMenu = menuItems.find(
       (item) => item.route === location.pathname
@@ -231,138 +271,140 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [location.pathname, menuItems, activeSection, onSectionChange]);
 
-  const handleMenuItemClick = ({ key }: { key: string }) => {
-    const menuItem = menuItems.find((item) => item.key === key);
-    if (menuItem?.route && menuItem.route !== location.pathname) {
-      navigate(menuItem.route);
+  const handleMenuItemClick = (item: any) => {
+    if (item.route && item.route !== location.pathname) {
+      navigate(item.route);
     }
-    onSectionChange(key);
+    onSectionChange(item.key);
+    
+    // Close sidebar on mobile after navigation
+    if (!isDesktop) {
+      onClose();
+    }
+  };
+
+  const getRoleDisplayName = () => {
+    switch (user?.role) {
+      case "admin":
+        return "Admin Panel";
+      case "evm_staff":
+        return "EVM Management";
+      default:
+        return "Dealer Management";
+    }
   };
 
   return (
     <>
       {/* Mobile Overlay */}
-      {isOpen && (
+      {isOpen && !isDesktop && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-150"
-          onClick={onClose}
+          className="github-sidebar-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
         />
       )}
 
-      {/* Ant Design Sider */}
-      <Sider
-        collapsed={!isOpen}
-        collapsible
-        trigger={null}
-        width={280}
-        collapsedWidth={64}
-        theme="dark"
-        className={`fixed top-0 left-0 h-screen transition-all duration-150 ease-out shadow-2xl z-50 ${
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+      {/* Sidebar Container */}
+      <div
+        ref={sidebarRef}
+        className={`github-sidebar ${isOpen ? 'github-sidebar-open' : 'github-sidebar-closed'}`}
         style={{
-          background: "linear-gradient(180deg, #1f2937 0%, #111827 100%)",
-          height: "100vh",
-          transition: "all 150ms ease-out",
+          transform: (isOpen || isDesktop) ? 'translateX(0)' : 'translateX(-100%)',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="h-16 px-4 border-b border-gray-700 flex items-center justify-between bg-gray-800/50">
-          <Space align="center">
-            <Car className="h-8 w-8 text-green-500 flex-shrink-0" />
-            {isOpen && (
-              <div>
-                <Text
-                  strong
-                  className="text-white text-base block leading-tight"
-                >
-                  VinFast EVM
-                </Text>
-                <Text className="text-gray-400 text-xs block">
-                  {user?.role === "admin"
-                    ? "Admin Panel"
-                    : user?.role === "evm_staff"
-                    ? "EVM Management"
-                    : "Dealer Management"}
-                </Text>
-              </div>
-            )}
-          </Space>
-
+        <div className="github-sidebar-header">
+          <div className="flex items-center gap-3">
+            <div className="github-sidebar-logo">
+              <Car className="w-6 h-6" />
+            </div>
+            <div className="github-sidebar-title">
+              <h1 className="text-sm font-semibold text-gray-900">VinFast EVM</h1>
+              <p className="text-xs text-gray-600">{getRoleDisplayName()}</p>
+            </div>
+          </div>
+          
           {/* Toggle Button */}
-          <Button
-            type="text"
-            icon={isOpen ? <CloseOutlined /> : <MenuOutlined />}
+          <button
             onClick={isOpen ? onClose : onOpen}
-            className="text-gray-400 hover:text-white hover:bg-gray-700"
-            size="small"
-          />
+            data-testid="sidebar-toggle"
+            className="github-sidebar-toggle"
+          >
+            {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Search Bar */}
-        {isOpen && (
-          <div className="p-4">
-            <Input
-              placeholder="Tìm kiếm..."
-              prefix={<SearchOutlined className="text-gray-400" />}
-              className="bg-gray-800 border-gray-600 text-white"
-              style={{
-                backgroundColor: "#374151",
-                borderColor: "#4B5563",
-                color: "white",
-              }}
+        <div className="github-sidebar-search">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="github-search-input"
             />
           </div>
-        )}
-
-        {/* Menu Title */}
-        {isOpen && (
-          <div className="px-4 mb-4">
-            <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              {user?.role === "admin"
-                ? "Admin Menu"
-                : user?.role === "evm_staff"
-                ? "EVM Menu"
-                : "Portal Menu"}
-            </Text>
-          </div>
-        )}
+        </div>
 
         {/* Navigation Menu */}
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[activeSection]}
-          items={menuItems}
-          onClick={handleMenuItemClick}
-          className="border-r-0 bg-transparent"
-          style={{
-            background: "transparent",
-            border: "none",
-          }}
-        />
-
-        {/* User Profile (when expanded) */}
-        {isOpen && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-800/30">
-            <Space align="center" className="w-full">
-              <Avatar
-                size="small"
-                icon={<UserOutlined />}
-                className="bg-green-500"
-              />
-              <div className="flex-1 min-w-0">
-                <Text className="text-white text-sm block truncate">
-                  {user?.email || "Admin User"}
-                </Text>
-                <Text className="text-gray-400 text-xs block truncate">
-                  {user?.role || "Administrator"}
-                </Text>
-              </div>
-            </Space>
+        <nav className="github-sidebar-nav">
+          <div className="github-sidebar-section">
+            <h3 className="github-sidebar-section-title">
+              {user?.role === "admin"
+                ? "Administration"
+                : user?.role === "evm_staff"
+                ? "EVM Operations"
+                : "Portal Features"}
+            </h3>
+            
+            <ul className="github-sidebar-menu">
+              {filteredMenuItems.map((item) => (
+                <li key={item.key}>
+                  <button
+                    onClick={() => handleMenuItemClick(item)}
+                    className={`github-sidebar-menu-item ${
+                      activeSection === item.key ? 'github-sidebar-menu-item-active' : ''
+                    }`}
+                  >
+                    <span className="github-sidebar-menu-icon">
+                      {item.icon}
+                    </span>
+                    <span className="github-sidebar-menu-label">
+                      {item.label}
+                    </span>
+                    {activeSection === item.key && (
+                      <ChevronRight className="w-3 h-3 text-blue-600 ml-auto" />
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
-      </Sider>
+        </nav>
+
+        {/* User Profile */}
+        <div className="github-sidebar-footer">
+          <div className="flex items-center gap-3 p-3">
+            <div className="github-sidebar-avatar">
+              <User className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user?.email || "Admin User"}
+              </p>
+              <p className="text-xs text-gray-600 truncate">
+                {user?.role || "Administrator"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 };

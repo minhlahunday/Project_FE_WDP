@@ -49,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
           {/* Menu toggle button */}
           <button 
             onClick={onMenuClick}
+            data-testid="sidebar-toggle"
             className={`p-2 rounded-lg transition-colors lg:hidden ${
               isTransparent 
                 ? 'text-white hover:bg-white/10' 
