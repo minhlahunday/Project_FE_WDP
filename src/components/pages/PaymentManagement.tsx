@@ -492,9 +492,38 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                           )}
                           
                           {item.payment_info && (
-                            <div className="mt-2 text-xs bg-gray-100 p-2 rounded">
-                              <strong>Thông tin thanh toán:</strong>
-                              <pre className="mt-1 text-xs">{JSON.stringify(item.payment_info, null, 2)}</pre>
+                            <div className="mt-2 text-xs bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                              <strong className="text-blue-800">Thông tin thanh toán:</strong>
+                              <div className="mt-2 space-y-1">
+                                {item.payment_info.amount && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Số tiền:</span>
+                                    <span className="font-medium text-green-600">
+                                      {formatCurrency(item.payment_info.amount)}
+                                    </span>
+                                  </div>
+                                )}
+                                {item.payment_info.method && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Phương thức:</span>
+                                    <span className="font-medium">
+                                      {item.payment_info.method === 'cash' ? 'Tiền mặt' :
+                                       item.payment_info.method === 'bank' ? 'Chuyển khoản' :
+                                       item.payment_info.method === 'card' ? 'Thẻ' :
+                                       item.payment_info.method === 'qr' ? 'QR Code' :
+                                       item.payment_info.method}
+                                    </span>
+                                  </div>
+                                )}
+                                {item.payment_info.reference && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Mã tham chiếu:</span>
+                                    <span className="font-mono text-xs bg-gray-200 px-2 py-1 rounded">
+                                      {item.payment_info.reference}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
