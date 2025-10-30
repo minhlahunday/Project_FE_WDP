@@ -35,7 +35,7 @@ interface SidebarProps {
   onOpen: () => void;
 }
 
-export const SidebarGitHub: React.FC<SidebarProps> = ({
+export const Sidebar: React.FC<SidebarProps> = ({
   activeSection,
   onSectionChange,
   isOpen,
