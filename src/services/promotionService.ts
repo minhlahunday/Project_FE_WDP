@@ -102,15 +102,17 @@ export const promotionService = {
   async getPromotions(active?: boolean): Promise<Promotion[]> {
     try {
       const params = active !== undefined ? `?active=${active}` : "";
+      console.log(`📡 Fetching promotions from /api/promotions${params}`);
       const response = await get<PromotionsApiResponse | Promotion[] | Record<string, unknown>>(
         `/api/promotions${params}`
       );
+      console.log("📦 Promotions API raw response:", JSON.stringify(response, null, 2));
       const promotions = extractPromotions(response);
-      console.log("📦 Promotions API raw response:", response);
       console.log("📦 Parsed promotions:", promotions);
+      console.log(`✅ Found ${promotions.length} promotions`);
       return promotions;
     } catch (error) {
-      console.error("Error fetching promotions:", error);
+      console.error("❌ Error fetching promotions:", error);
       throw error;
     }
   },

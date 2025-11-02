@@ -68,13 +68,16 @@ export const optionService = {
   async getOptions(active?: boolean): Promise<VehicleOption[]> {
     try {
       const params = active !== undefined ? `?active=${active}` : '';
+      console.log(`📡 Fetching options from /api/options${params}`);
       const response = await get<OptionListResponse | VehicleOption[]>(`/api/options${params}`);
+      console.log('📦 Options API raw response:', JSON.stringify(response, null, 2));
       const parsed = extractOptions(response);
-      console.log('📦 Options API raw response:', response);
       console.log('📦 Parsed options:', parsed);
+      console.log(`✅ Found ${parsed.length} options`);
       return parsed;
     } catch (error) {
-      console.error('Error fetching options:', error);
+      console.error('❌ Error fetching options:', error);
+      // Return empty array instead of throwing to prevent blocking
       return [];
     }
   }

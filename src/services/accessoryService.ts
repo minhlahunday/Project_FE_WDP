@@ -68,13 +68,16 @@ export const accessoryService = {
   async getAccessories(active?: boolean): Promise<Accessory[]> {
     try {
       const params = active !== undefined ? `?active=${active}` : '';
+      console.log(`📡 Fetching accessories from /api/accessories${params}`);
       const response = await get<AccessoryListResponse | Accessory[]>(`/api/accessories${params}`);
+      console.log('📦 Accessories API raw response:', JSON.stringify(response, null, 2));
       const parsed = extractAccessories(response);
-      console.log('📦 Accessories API raw response:', response);
       console.log('📦 Parsed accessories:', parsed);
+      console.log(`✅ Found ${parsed.length} accessories`);
       return parsed;
     } catch (error) {
-      console.error('Error fetching accessories:', error);
+      console.error('❌ Error fetching accessories:', error);
+      // Return empty array instead of throwing to prevent blocking
       return [];
     }
   }

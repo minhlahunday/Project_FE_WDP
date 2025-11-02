@@ -5,16 +5,49 @@
 /* GitHub-style Sidebar */
 @import './styles/sidebar-github.css';
 
-/* FORCE Ant Design Select Dropdown to show */
+/* Ensure Ant Design Select dropdown appears above modal */
 .ant-select-dropdown {
-  z-index: 999999 !important;
-  visibility: visible !important;
-  display: block !important;
-  position: fixed !important;
+  z-index: 10000 !important;
 }
 
-.ant-select-dropdown-hidden {
+.ant-select-dropdown:not(.ant-select-dropdown-hidden) {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.ant-select-dropdown.ant-select-dropdown-hidden {
   display: none !important;
+}
+
+/* Fix dropdown positioning - ensure visible */
+.ant-select-dropdown {
+  z-index: 10000 !important;
+}
+
+/* Override any wrong positioning */
+.ant-select-dropdown:not(.ant-select-dropdown-hidden) {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Allow modal body to show dropdowns */
+.ant-modal-body {
+  overflow: visible !important;
+}
+
+.ant-modal-content {
+  overflow: visible !important;
+}
+
+/* Ensure Select is clickable */
+.ant-select {
+  cursor: pointer !important;
+}
+
+.ant-select-selector {
+  cursor: pointer !important;
 }
 
 /* Ferrari-style login design */

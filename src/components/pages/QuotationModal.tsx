@@ -14,7 +14,8 @@ import {
   Card,
   message,
   Tag,
-  Spin
+  Spin,
+  ConfigProvider
 } from 'antd';
 import {
   FileTextOutlined,
@@ -145,6 +146,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
   const [optionCatalog, setOptionCatalog] = useState<VehicleOption[]>([]);
   const [accessoryCatalog, setAccessoryCatalog] = useState<Accessory[]>([]);
   const [discountSelection, setDiscountSelection] = useState<string | undefined>();
+  const modalRef = React.useRef<HTMLDivElement>(null);
 
   const quantityValue = Form.useWatch('quantity', form) ?? 1;
   const discountValue = Form.useWatch('discount', form) ?? 0;
@@ -156,19 +158,26 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     return total > 0 ? total : 0;
   }, [vehiclePrice, quantityValue, discountValue]);
 
-  const colorSelectOptions = useMemo(
-    () => (colorOptions || []).map((color) => ({ label: color, value: color })),
-    [colorOptions]
-  );
+  const colorSelectOptions = useMemo(() => {
+    const mapped = (colorOptions || []).map((color) => ({ label: color, value: color }));
+    console.log('🎨 Color options received:', colorOptions);
+    console.log('🎨 Mapped color select options:', mapped);
+    return mapped;
+  }, [colorOptions]);
 
-  const promotionSelectOptions = useMemo(
-    () =>
-      promotions.map((promotion) => ({
-        value: normalizePromotionId(promotion),
-        label: promotion.name ?? normalizePromotionId(promotion)
-      })),
-    [promotions]
-  );
+  const promotionSelectOptions = useMemo(() => {
+    const mapped = promotions.map((promotion) => {
+      const id = normalizePromotionId(promotion);
+      const name = promotion.name || `Promotion ${id.substring(0, 8)}`;
+      const value = getPromotionValue(promotion);
+      return {
+        value: String(id),
+        label: value > 0 ? `${name} - ${formatCurrency(value)}` : name
+      };
+    });
+    console.log('📋 Mapped promotion select options:', mapped);
+    return mapped;
+  }, [promotions]);
 
   const discountSelectOptions = useMemo(
     () =>
@@ -183,55 +192,84 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     [promotions]
   );
 
-  const vehicleOptionSelectOptions = useMemo(
-    () =>
-      optionCatalog.map((option) => ({
-        value: normalizeOptionId(option),
-        label: option.name ?? normalizeOptionId(option),
-        description: option.description,
-        price: option.price
-      })),
-    [optionCatalog]
-  );
+  const vehicleOptionSelectOptions = useMemo(() => {
+    const mapped = optionCatalog.map((option) => {
+      const id = normalizeOptionId(option);
+      const name = option.name || `Option ${id.substring(0, 8)}`;
+      const price = option.price || 0;
+      return {
+        value: String(id),
+        label: price > 0 ? `${name} - ${formatCurrency(price)}` : name
+      };
+    });
+    console.log('📋 Mapped option select options:', mapped);
+    return mapped;
+  }, [optionCatalog]);
 
-  const accessorySelectOptions = useMemo(
-    () =>
-      accessoryCatalog.map((accessory) => ({
-        value: normalizeAccessoryId(accessory),
-        label: accessory.name ?? normalizeAccessoryId(accessory),
-        description: accessory.description,
-        price: accessory.price
-      })),
-    [accessoryCatalog]
-  );
+  const accessorySelectOptions = useMemo(() => {
+    const mapped = accessoryCatalog.map((accessory) => {
+      const id = normalizeAccessoryId(accessory);
+      const name = accessory.name || `Accessory ${id.substring(0, 8)}`;
+      const price = accessory.price || 0;
+      return {
+        value: String(id),
+        label: price > 0 ? `${name} - ${formatCurrency(price)}` : name
+      };
+    });
+    console.log('📋 Mapped accessory select options:', mapped);
+    return mapped;
+  }, [accessoryCatalog]);
 
   const loadReferenceData = useCallback(async () => {
     try {
       setReferenceLoading(true);
+      console.log('🔄 Loading reference data for quotation...');
+      
       const [promotionResult, optionResult, accessoryResult] = await Promise.allSettled([
         promotionService.getPromotions(),
         optionService.getOptions(),
         accessoryService.getAccessories()
       ]);
 
+      // Handle promotions
       if (promotionResult.status === 'fulfilled') {
-        setPromotions(promotionResult.value ?? []);
+        const promotionsData = promotionResult.value ?? [];
+        console.log('✅ Promotions loaded:', promotionsData.length, promotionsData);
+        setPromotions(promotionsData);
+      } else {
+        console.error('❌ Promotions failed:', promotionResult.reason);
       }
 
+      // Handle options
       if (optionResult.status === 'fulfilled') {
-        setOptionCatalog(optionResult.value ?? []);
+        const optionsData = optionResult.value ?? [];
+        console.log('✅ Options loaded:', optionsData.length, optionsData);
+        setOptionCatalog(optionsData);
+      } else {
+        console.error('❌ Options failed:', optionResult.reason);
       }
 
+      // Handle accessories
       if (accessoryResult.status === 'fulfilled') {
-        setAccessoryCatalog(accessoryResult.value ?? []);
+        const accessoriesData = accessoryResult.value ?? [];
+        console.log('✅ Accessories loaded:', accessoriesData.length, accessoriesData);
+        setAccessoryCatalog(accessoriesData);
+      } else {
+        console.error('❌ Accessories failed:', accessoryResult.reason);
       }
 
-      if (
-        promotionResult.status !== 'fulfilled' ||
-        optionResult.status !== 'fulfilled' ||
+      // Show warning if any failed
+      const failedCount = [
+        promotionResult.status !== 'fulfilled',
+        optionResult.status !== 'fulfilled',
         accessoryResult.status !== 'fulfilled'
-      ) {
-        message.warning('Không thể tải đầy đủ dữ liệu tham chiếu. Vui lòng thử lại nếu cần.');
+      ].filter(Boolean).length;
+
+      if (failedCount > 0) {
+        console.warn(`⚠️ ${failedCount} API(s) failed to load`);
+        message.warning(`Không thể tải ${failedCount} loại dữ liệu tham chiếu. Vui lòng thử lại.`);
+      } else {
+        console.log('✅ All reference data loaded successfully');
       }
     } catch (error) {
       console.error('❌ Error loading reference data for quotation:', error);
@@ -333,7 +371,15 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     }
   };
 
+  // Render dropdowns to document.body - Ant Design will handle positioning automatically
+  const getPopupContainer = useCallback(() => {
+    return document.body;
+  }, []);
+
   return (
+    <ConfigProvider
+      getPopupContainer={getPopupContainer}
+    >
     <Modal
       open={visible}
       onCancel={handleClose}
@@ -341,6 +387,10 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       width={920}
       centered
       destroyOnClose
+      getContainer={false}
+      styles={{
+        body: { overflow: 'visible', maxHeight: 'none' }
+      }}
       title={
         <Space align="center" size="middle">
           <div
@@ -421,12 +471,25 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           <Col span={12}>
             <Form.Item label="Màu sắc" name="color">
               <Select
-                placeholder="Chọn màu sắc"
+                placeholder={colorSelectOptions.length > 0 ? `Chọn màu sắc (${colorSelectOptions.length} mục)` : 'Chọn màu sắc'}
                 allowClear
-                options={colorSelectOptions}
                 showSearch
-                optionFilterProp="label"
-              />
+                optionFilterProp="children"
+                getPopupContainer={getPopupContainer}
+                onOpenChange={(open) => {
+                  if (open) {
+                    console.log('🎨 Color dropdown opening, options:', colorSelectOptions.length);
+                    console.log('🎨 Color options available:', colorSelectOptions);
+                  }
+                }}
+                notFoundContent={colorSelectOptions.length === 0 ? 'Không có màu sắc' : 'Không tìm thấy'}
+              >
+                {colorSelectOptions.map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
           </Col>
         </Row>
@@ -440,29 +503,46 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             <Form.Item label="Giảm giá (VNĐ)" name="discountSelection">
               <Select
                 allowClear
-                placeholder="Chọn giảm giá"
+                placeholder={discountSelectOptions.length > 0 ? `Chọn giảm giá (${discountSelectOptions.length} mục)` : 'Chọn giảm giá'}
                 value={discountSelection}
                 onChange={handleDiscountChange}
-                options={discountSelectOptions}
                 showSearch
-                optionFilterProp="label"
+                optionFilterProp="children"
                 loading={referenceLoading && promotions.length === 0}
-                notFoundContent={referenceLoading ? <Spin size="small" /> : 'Không có dữ liệu'}
-              />
+                getPopupContainer={getPopupContainer}
+                notFoundContent={referenceLoading ? <Spin size="small" /> : discountSelectOptions.length === 0 ? 'Không có dữ liệu giảm giá' : 'Không tìm thấy'}
+              >
+                {discountSelectOptions.map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
           </Col>
 
           <Col span={12}>
-            <Form.Item label="ID Khuyến mãi" name="promotion_id">
+            <Form.Item label="Khuyến mãi" name="promotion_id">
               <Select
                 allowClear
-                placeholder="Chọn khuyến mãi"
-                options={promotionSelectOptions}
+                placeholder={promotionSelectOptions.length > 0 ? `Chọn khuyến mãi (${promotionSelectOptions.length} mục)` : 'Chọn khuyến mãi'}
                 showSearch
-                optionFilterProp="label"
-                loading={referenceLoading && promotions.length === 0}
-                notFoundContent={referenceLoading ? <Spin size="small" /> : 'Không có dữ liệu'}
-              />
+                optionFilterProp="children"
+                loading={referenceLoading}
+                getPopupContainer={getPopupContainer}
+                onOpenChange={(open) => {
+                  if (open) {
+                    console.log('🔍 Promotion dropdown opening, options:', promotionSelectOptions.length);
+                  }
+                }}
+                notFoundContent={referenceLoading ? <Spin size="small" /> : promotionSelectOptions.length === 0 ? 'Không có dữ liệu khuyến mãi' : 'Không tìm thấy'}
+              >
+                {promotionSelectOptions.map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
           </Col>
         </Row>
@@ -486,14 +566,25 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       rules={[{ required: false }]}
                     >
                       <Select
-                        placeholder="Chọn tùy chọn"
+                        placeholder={vehicleOptionSelectOptions.length > 0 ? `Chọn tùy chọn bổ sung (${vehicleOptionSelectOptions.length} mục)` : 'Chọn tùy chọn bổ sung'}
                         allowClear
                         showSearch
-                        optionFilterProp="label"
-                        options={vehicleOptionSelectOptions}
-                        loading={referenceLoading && optionCatalog.length === 0}
-                        notFoundContent={referenceLoading ? <Spin size="small" /> : 'Không có dữ liệu'}
-                      />
+                        optionFilterProp="children"
+                        loading={referenceLoading}
+                        getPopupContainer={getPopupContainer}
+                        onOpenChange={(open) => {
+                          if (open) {
+                            console.log('🔍 Option dropdown opening, options:', vehicleOptionSelectOptions.length);
+                          }
+                        }}
+                        notFoundContent={referenceLoading ? <Spin size="small" /> : vehicleOptionSelectOptions.length === 0 ? 'Không có dữ liệu tùy chọn' : 'Không tìm thấy'}
+                      >
+                        {vehicleOptionSelectOptions.map((option) => (
+                          <Select.Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Select.Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                   <Col>
@@ -539,14 +630,25 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       rules={[{ required: false }]}
                     >
                       <Select
-                        placeholder="Chọn phụ kiện"
+                        placeholder={accessorySelectOptions.length > 0 ? `Chọn phụ kiện (${accessorySelectOptions.length} mục)` : 'Chọn phụ kiện'}
                         allowClear
                         showSearch
-                        optionFilterProp="label"
-                        options={accessorySelectOptions}
-                        loading={referenceLoading && accessoryCatalog.length === 0}
-                        notFoundContent={referenceLoading ? <Spin size="small" /> : 'Không có dữ liệu'}
-                      />
+                        optionFilterProp="children"
+                        loading={referenceLoading}
+                        getPopupContainer={getPopupContainer}
+                        onOpenChange={(open) => {
+                          if (open) {
+                            console.log('🔍 Accessory dropdown opening, options:', accessorySelectOptions.length);
+                          }
+                        }}
+                        notFoundContent={referenceLoading ? <Spin size="small" /> : accessorySelectOptions.length === 0 ? 'Không có dữ liệu phụ kiện' : 'Không tìm thấy'}
+                      >
+                        {accessorySelectOptions.map((option) => (
+                          <Select.Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Select.Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                   <Col xs={12} sm={6}>
@@ -633,6 +735,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </Form.Item>
       </Form>
     </Modal>
+    </ConfigProvider>
   );
 };
 
