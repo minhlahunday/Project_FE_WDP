@@ -37,6 +37,23 @@ export const CompareModels: React.FC = () => {
     }
   }, [location.state]);
 
+  // Gọi lại API compare mỗi khi có đủ 2 xe được chọn
+  useEffect(() => {
+    if (selectedModels.length === 2) {
+      const id1 = (selectedModels[0] as Record<string, unknown>)._id as string || (selectedModels[0] as Record<string, unknown>).id as string;
+      const id2 = (selectedModels[1] as Record<string, unknown>)._id as string || (selectedModels[1] as Record<string, unknown>).id as string;
+      
+      if (id1 && id2) {
+        console.log('🔄 Re-fetching comparison data for updated models');
+        loadComparisonData(id1, id2);
+      }
+    } else {
+      // Reset analysis khi không đủ 2 xe
+      setAnalysis('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedModels.length]);
+
   const loadComparisonData = async (id1: string, id2: string) => {
     try {
       setLoading(true);
@@ -767,7 +784,50 @@ export const CompareModels: React.FC = () => {
                 <div className="mt-8 p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
                   <h3 className="text-xl font-bold text-indigo-800 mb-4">Phân tích tổng quan</h3>
                   <div className="prose prose-indigo max-w-none">
-                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{analysis}</p>
+                    <div className="text-gray-700 leading-relaxed space-y-4">
+                      {analysis.split('\n').map((line, idx) => {
+                        // Loại bỏ các ký tự markdown và format
+                        const cleanText = line
+                          .replace(/\*\*([^*]+)\*\*/g, '$1')  // Loại bỏ ** nhưng giữ text bên trong
+                          .replace(/\*([^*]+)\*/g, '$1')      // Loại bỏ * nhưng giữ text bên trong
+                          .replace(/###\s*/g, '')             // Loại bỏ ###
+                          .replace(/##\s*/g, '')              // Loại bỏ ##
+                          .replace(/^\d+\.\s*\*\*/g, '')      // Loại bỏ "1. **"
+                          .replace(/^\d+\.\s*/g, '• ')        // Thay số thành bullet point
+                          .replace(/^\s*-\s*/g, '• ')         // Thay dấu - thành bullet point
+                          .trim();
+                        
+                        // Bỏ qua dòng trống
+                        if (!cleanText) return null;
+                        
+                        // Kiểm tra nếu là tiêu đề (dòng kết thúc bằng :)
+                        const isHeader = cleanText.endsWith(':') && !cleanText.startsWith('•');
+                        
+                        // Kiểm tra nếu là bullet point
+                        const isBullet = cleanText.startsWith('•');
+                        
+                        if (isHeader) {
+                          return (
+                            <h4 key={idx} className="text-lg font-semibold text-indigo-700 mt-4 mb-2">
+                              {cleanText}
+                            </h4>
+                          );
+                        } else if (isBullet) {
+                          return (
+                            <div key={idx} className="flex items-start space-x-2 ml-4">
+                              <span className="text-indigo-500 font-bold">•</span>
+                              <p className="text-base flex-1">{cleanText.substring(2)}</p>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <p key={idx} className="text-base">
+                              {cleanText}
+                            </p>
+                          );
+                        }
+                      })}
+                    </div>
                   </div>
                 </div>
 
