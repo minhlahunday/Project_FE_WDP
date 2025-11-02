@@ -11,6 +11,11 @@ import {
   Eye,
   Loader2,
   CreditCard,
+  X,
+  AlertCircle,
+  User,
+  ShoppingCart,
+  MessageCircle,
 } from "lucide-react";
 import { mockVehicles, mockMotorbikes } from "../../../data/mockData";
 import { Customer } from "../../../types";
@@ -267,70 +272,98 @@ export const CustomerManagement: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Quản lý khách hàng</h1>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowCreateModal(true);
-          }}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Thêm khách hàng</span>
-        </button>
-      </div>
-
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              activeTab === "all"
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Tất cả khách hàng
-          </button>
-          <button
-            onClick={() => setActiveTab("yours")}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              activeTab === "yours"
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Khách hàng của tôi
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-6">
+      {/* Header Section with Gradient */}
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">Quản lý khách hàng</h1>
+              <p className="text-blue-100 text-lg">Quản lý và theo dõi thông tin khách hàng của bạn</p>
+            </div>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowCreateModal(true);
+              }}
+              className="bg-white hover:bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Thêm khách hàng</span>
+            </button>
+          </div>
         </div>
       </div>
-      <div className="mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          />
+
+      {/* Filter Tabs & Search Bar */}
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                activeTab === "all"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <span>Tất cả khách hàng</span>
+                <span className="bg-white bg-opacity-30 px-2 py-1 rounded-full text-xs">
+                  {activeTab === "all" ? customers.length : ""}
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab("yours")}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                activeTab === "yours"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg transform scale-105"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <span>Khách hàng của tôi</span>
+                <span className="bg-white bg-opacity-30 px-2 py-1 rounded-full text-xs">
+                  {activeTab === "yours" ? customers.length : ""}
+                </span>
+              </div>
+            </button>
+          </div>
+          
+          <div className="relative flex-1 md:max-w-md">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
+            />
+          </div>
         </div>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
-          {error}
+        <div className="mb-6 bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 text-red-700 px-6 py-4 rounded-xl shadow-md">
+          <div className="flex items-center">
+            <svg className="h-5 w-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {error}
+          </div>
         </div>
       )}
 
       {/* Loading State */}
       {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-          <span className="ml-2 text-gray-500">
+        <div className="flex flex-col justify-center items-center py-20">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <Loader2 className="h-10 w-10 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <span className="mt-6 text-gray-600 font-medium text-lg">
             Đang tải danh sách khách hàng...
           </span>
         </div>
@@ -341,90 +374,98 @@ export const CustomerManagement: React.FC = () => {
             {filteredCustomers.map((customer) => (
               <div
                 key={customer.id}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">
-                      {customer?.name || "N/A"}
-                    </h3>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center space-x-2">
-                        <Mail className="h-4 w-4" />
-                        <span>{customer.email || "N/A"}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="h-4 w-4" />
-                        <span>{customer.phone || "N/A"}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{customer.address || "N/A"}</span>
+                {/* Gradient Header */}
+                <div className="bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+                  
+                  <div className="relative flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-3 truncate">
+                        {customer?.name || "N/A"}
+                      </h3>
+                      <div className="space-y-2 text-sm text-white text-opacity-95">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{customer.email || "N/A"}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4 flex-shrink-0" />
+                          <span>{customer.phone || "N/A"}</span>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                          <span className="line-clamp-2">{customer.address || "N/A"}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setSelectedCustomer(customer)}
-                      className="text-blue-600 hover:text-blue-800"
-                      title="Xem chi tiết"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEditCustomer(customer)}
-                      className="text-green-600 hover:text-green-800"
-                      title="Chỉnh sửa"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedCustomerForPayments(customer);
-                        loadCustomerPayments(customer.id);
-                        setShowPaymentsModal(true);
-                      }}
-                      className="text-purple-600 hover:text-purple-800"
-                      title="Xem thanh toán"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                    </button>
+                    <div className="flex flex-col space-y-2 ml-3">
+                      <button
+                        onClick={() => setSelectedCustomer(customer)}
+                        className="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white p-2.5 rounded-lg transition-all duration-200 transform hover:scale-110"
+                        title="Xem chi tiết"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEditCustomer(customer)}
+                        className="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white p-2.5 rounded-lg transition-all duration-200 transform hover:scale-110"
+                        title="Chỉnh sửa"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedCustomerForPayments(customer);
+                          loadCustomerPayments(customer.id);
+                          setShowPaymentsModal(true);
+                        }}
+                        className="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white p-2.5 rounded-lg transition-all duration-200 transform hover:scale-110"
+                        title="Xem thanh toán"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-xl font-bold text-gray-900">
+                {/* Stats Section */}
+                <div className="p-6">
+                  {/* <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3">
+                      <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         {customer.orders?.length || 0}
                       </p>
-                      <p className="text-xs text-gray-600">Đơn hàng</p>
+                      <p className="text-xs text-gray-600 font-medium">Đơn hàng</p>
                     </div>
-                    <div>
-                      <p className="text-xl font-bold text-gray-900">
+                    <div className="text-center bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3">
+                      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                         {customer.testDrives?.length || 0}
                       </p>
-                      <p className="text-xs text-gray-600">Lái thử</p>
+                      <p className="text-xs text-gray-600 font-medium">Lái thử</p>
                     </div>
-                    <div>
-                      <p className="text-xl font-bold text-green-600">VIP</p>
-                      <p className="text-xs text-gray-600">Hạng</p>
+                    <div className="text-center bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-3">
+                      <p className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">VIP</p>
+                      <p className="text-xs text-gray-600 font-medium">Hạng</p>
                     </div>
-                  </div>
-                </div>
+                  </div> */}
 
-                <div className="flex space-x-2 mt-4">
-                  <button
-                    onClick={() => handleScheduleClick(customer)}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center justify-center space-x-1"
-                  >
-                    <Calendar className="h-3 w-3" />
-                    <span>Đặt lịch</span>
-                  </button>
-                  <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm font-medium flex items-center justify-center space-x-1">
-                    <MessageSquare className="h-3 w-3" />
-                    <span>Nhắn tin</span>
-                  </button>
+                  {/* Action Buttons */}
+                  {/* <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleScheduleClick(customer)}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      <span>Đặt lịch</span>
+                    </button>
+                    <button className="bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 px-4 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>Nhắn tin</span>
+                    </button>
+                  </div> */}
                 </div>
               </div>
             ))}
@@ -434,47 +475,89 @@ export const CustomerManagement: React.FC = () => {
 
       {/* Create Customer Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Thêm khách hàng mới
-                </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl transform transition-all">
+            {/* Modal Header with Gradient */}
+            <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 p-6 rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
+                    <Plus className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Thêm khách hàng mới
+                    </h2>
+                    <p className="text-green-100 text-sm">Điền thông tin khách hàng bên dưới</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
                 >
-                  ✕
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
+            </div>
 
+            <div className="p-6">
               {error && (
-                <div className="mb-4 bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
-                  {error}
+                <div className="mb-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg shadow-md">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    {error}
+                  </div>
                 </div>
               )}
 
-              <form onSubmit={handleCreateCustomer} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Họ và tên *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={customerForm.name}
-                    onChange={(e) =>
-                      setCustomerForm({ ...customerForm, name: e.target.value })
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                    placeholder="Nhập họ và tên"
-                  />
+              <form onSubmit={handleCreateCustomer} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                      <span className="text-red-500 mr-1">*</span>
+                      Họ và tên
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={customerForm.name}
+                      onChange={(e) =>
+                        setCustomerForm({ ...customerForm, name: e.target.value })
+                      }
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
+                      placeholder="Nhập họ và tên"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                      <span className="text-red-500 mr-1">*</span>
+                      Số điện thoại
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={customerForm.phone}
+                      onChange={(e) =>
+                        setCustomerForm({
+                          ...customerForm,
+                          phone: e.target.value,
+                        })
+                      }
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
+                      placeholder="Nhập số điện thoại"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <span className="text-red-500 mr-1">*</span>
+                    Email
                   </label>
                   <input
                     type="email"
@@ -486,32 +569,13 @@ export const CustomerManagement: React.FC = () => {
                         email: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
                     placeholder="Nhập email"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Số điện thoại *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={customerForm.phone}
-                    onChange={(e) =>
-                      setCustomerForm({
-                        ...customerForm,
-                        phone: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                    placeholder="Nhập số điện thoại"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Địa chỉ
                   </label>
                   <textarea
@@ -522,14 +586,14 @@ export const CustomerManagement: React.FC = () => {
                         address: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
                     rows={3}
                     placeholder="Nhập địa chỉ"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Ghi chú
                   </label>
                   <textarea
@@ -540,20 +604,20 @@ export const CustomerManagement: React.FC = () => {
                         notes: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
                     rows={2}
                     placeholder="Ghi chú về khách hàng"
                   />
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4">
+                <div className="flex justify-end space-x-3 pt-4 border-t">
                   <button
                     type="button"
                     onClick={() => {
                       setShowCreateModal(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
                     disabled={creating}
                   >
                     Hủy
@@ -561,9 +625,9 @@ export const CustomerManagement: React.FC = () => {
                   <button
                     type="submit"
                     disabled={creating}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   >
-                    {creating && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {creating && <Loader2 className="h-5 w-5 animate-spin" />}
                     <span>{creating ? "Đang tạo..." : "Thêm khách hàng"}</span>
                   </button>
                 </div>
@@ -575,51 +639,89 @@ export const CustomerManagement: React.FC = () => {
 
       {/* Edit Customer Modal */}
       {showEditModal && selectedCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Chỉnh sửa khách hàng
-                </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
+                    <Edit className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Chỉnh sửa khách hàng
+                    </h2>
+                    <p className="text-blue-100 text-sm mt-1">
+                      Cập nhật thông tin khách hàng
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedCustomer(null);
                     resetForm();
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
                 >
-                  ✕
+                  <X className="h-6 w-6" />
                 </button>
               </div>
+            </div>
 
+            <div className="p-6">
               {error && (
-                <div className="mb-4 bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
-                  {error}
+                <div className="mb-5 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-lg flex items-start shadow-sm">
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-red-700 font-medium">{error}</span>
                 </div>
               )}
 
-              <form onSubmit={handleUpdateCustomer} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Họ và tên *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={customerForm.name}
-                    onChange={(e) =>
-                      setCustomerForm({ ...customerForm, name: e.target.value })
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                    placeholder="Nhập họ và tên"
-                  />
+              <form onSubmit={handleUpdateCustomer} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                      <span className="text-red-500 mr-1">*</span>
+                      Họ và tên
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={customerForm.name}
+                      onChange={(e) =>
+                        setCustomerForm({ ...customerForm, name: e.target.value })
+                      }
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
+                      placeholder="Nhập họ và tên"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                      <span className="text-red-500 mr-1">*</span>
+                      Số điện thoại
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={customerForm.phone}
+                      onChange={(e) =>
+                        setCustomerForm({
+                          ...customerForm,
+                          phone: e.target.value,
+                        })
+                      }
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
+                      placeholder="Nhập số điện thoại"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <span className="text-red-500 mr-1">*</span>
+                    Email
                   </label>
                   <input
                     type="email"
@@ -631,32 +733,13 @@ export const CustomerManagement: React.FC = () => {
                         email: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
                     placeholder="Nhập email"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Số điện thoại *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={customerForm.phone}
-                    onChange={(e) =>
-                      setCustomerForm({
-                        ...customerForm,
-                        phone: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                    placeholder="Nhập số điện thoại"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Địa chỉ
                   </label>
                   <textarea
@@ -667,13 +750,13 @@ export const CustomerManagement: React.FC = () => {
                         address: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
                     rows={3}
                     placeholder="Nhập địa chỉ"
                   />
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4">
+                <div className="flex justify-end space-x-3 pt-4 border-t">
                   <button
                     type="button"
                     onClick={() => {
@@ -681,7 +764,7 @@ export const CustomerManagement: React.FC = () => {
                       setSelectedCustomer(null);
                       resetForm();
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
                     disabled={updating}
                   >
                     Hủy
@@ -689,9 +772,9 @@ export const CustomerManagement: React.FC = () => {
                   <button
                     type="submit"
                     disabled={updating}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   >
-                    {updating && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {updating && <Loader2 className="h-5 w-5 animate-spin" />}
                     <span>{updating ? "Đang cập nhật..." : "Cập nhật"}</span>
                   </button>
                 </div>
@@ -703,99 +786,128 @@ export const CustomerManagement: React.FC = () => {
 
       {/* Customer Detail Modal */}
       {selectedCustomer && !showEditModal && !showPaymentsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Thông tin chi tiết khách hàng
-                </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 p-6 rounded-t-2xl sticky top-0 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
+                    <Eye className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Thông tin chi tiết khách hàng
+                    </h2>
+                    <p className="text-purple-100 text-sm mt-1">
+                      Xem thông tin và lịch sử hoạt động
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setSelectedCustomer(null)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
                 >
-                  ✕
+                  <X className="h-6 w-6" />
                 </button>
               </div>
+            </div>
 
+            <div className="p-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Customer Info */}
                 <div className="lg:col-span-1">
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">
-                      Thông tin cá nhân
-                    </h3>
-                    <div className="space-y-3">
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-100 shadow-sm">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <User className="h-5 w-5 text-purple-600" />
+                      <h3 className="text-lg font-bold text-gray-900">
+                        Thông tin cá nhân
+                      </h3>
+                    </div>
+                    <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-gray-600">Họ và tên</p>
-                        <p className="font-medium">{selectedCustomer.name}</p>
+                        <p className="text-sm text-gray-600 mb-1">Họ và tên</p>
+                        <p className="font-semibold text-gray-900">{selectedCustomer.name}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Email</p>
-                        <p className="font-medium">{selectedCustomer.email}</p>
+                        <p className="text-sm text-gray-600 mb-1">Email</p>
+                        <p className="font-semibold text-gray-900">{selectedCustomer.email}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Số điện thoại</p>
-                        <p className="font-medium">{selectedCustomer.phone}</p>
+                        <p className="text-sm text-gray-600 mb-1">Số điện thoại</p>
+                        <p className="font-semibold text-gray-900">{selectedCustomer.phone}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Địa chỉ</p>
-                        <p className="font-medium">
+                        <p className="text-sm text-gray-600 mb-1">Địa chỉ</p>
+                        <p className="font-semibold text-gray-900">
                           {selectedCustomer.address}
                         </p>
                       </div>
                     </div>
 
-                    <button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
-                      Chỉnh sửa thông tin
-                    </button>
+                    {/* <button className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
+                      <Edit className="h-5 w-5" />
+                      <span>Chỉnh sửa thông tin</span>
+                    </button> */}
                   </div>
                 </div>
 
                 {/* Activity History */}
                 <div className="lg:col-span-2">
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {/* Test Drives */}
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">
-                        Lịch sử lái thử
-                      </h3>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-gray-600 text-center py-8">
+                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border-2 border-blue-100 shadow-sm">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Calendar className="h-5 w-5 text-blue-600" />
+                        <h3 className="text-lg font-bold text-gray-900">
+                          Lịch sử lái thử
+                        </h3>
+                      </div>
+                      <div className="bg-white rounded-lg p-4">
+                        <p className="text-gray-600 text-center py-6">
                           Chưa có lịch lái thử nào
                         </p>
-                        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
-                          Đặt lịch lái thử mới
+                        <button className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
+                          <Plus className="h-5 w-5" />
+                          <span>Đặt lịch lái thử mới</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Orders */}
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">
-                        Lịch sử đơn hàng
-                      </h3>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-gray-600 text-center py-8">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border-2 border-green-100 shadow-sm">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <ShoppingCart className="h-5 w-5 text-green-600" />
+                        <h3 className="text-lg font-bold text-gray-900">
+                          Lịch sử đơn hàng
+                        </h3>
+                      </div>
+                      <div className="bg-white rounded-lg p-4">
+                        <p className="text-gray-600 text-center py-6">
                           Chưa có đơn hàng nào
                         </p>
-                        <button className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
-                          Tạo đơn hàng mới
+                        <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
+                          <Plus className="h-5 w-5" />
+                          <span>Tạo đơn hàng mới</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Feedback */}
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">
-                        Phản hồi & Khiếu nại
-                      </h3>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-gray-600 text-center py-8">
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border-2 border-amber-100 shadow-sm">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <MessageCircle className="h-5 w-5 text-amber-600" />
+                        <h3 className="text-lg font-bold text-gray-900">
+                          Phản hồi & Khiếu nại
+                        </h3>
+                      </div>
+                      <div className="bg-white rounded-lg p-4">
+                        <p className="text-gray-600 text-center py-6">
                           Chưa có phản hồi nào
                         </p>
-                        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium">
-                          Ghi nhận phản hồi
+                        <button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
+                          <Plus className="h-5 w-5" />
+                          <span>Ghi nhận phản hồi</span>
                         </button>
                       </div>
                     </div>
@@ -809,29 +921,43 @@ export const CustomerManagement: React.FC = () => {
 
       {/* Add Schedule Modal */}
       {showScheduleModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Đặt lịch cho khách hàng
-                </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
+                    <Calendar className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Đặt lịch cho khách hàng
+                    </h2>
+                    <p className="text-cyan-100 text-sm mt-1">
+                      Chọn xe để đặt lịch lái thử
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowScheduleModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
                 >
-                  ✕
+                  <X className="h-6 w-6" />
                 </button>
               </div>
+            </div>
 
-              <form onSubmit={handleScheduleSubmit} className="space-y-4">
+            <div className="p-6">
+              <form onSubmit={handleScheduleSubmit} className="space-y-5">
                 {/* Vehicle Type Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Loại xe *
+                  <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <span className="text-red-500 mr-1">*</span>
+                    Loại xe
                   </label>
                   <div className="flex space-x-4">
-                    <label className="flex items-center">
+                    <label className="flex-1">
                       <input
                         type="radio"
                         name="vehicleType"
@@ -844,11 +970,13 @@ export const CustomerManagement: React.FC = () => {
                             vehicleId: "",
                           })
                         }
-                        className="mr-2"
+                        className="peer sr-only"
                       />
-                      <span>Ô tô điện</span>
+                      <div className="cursor-pointer border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-cyan-500 peer-checked:bg-cyan-50 hover:border-gray-300 transition-all duration-200">
+                        <span className="font-semibold text-gray-700">Ô tô điện</span>
+                      </div>
                     </label>
-                    <label className="flex items-center">
+                    <label className="flex-1">
                       <input
                         type="radio"
                         name="vehicleType"
@@ -861,17 +989,20 @@ export const CustomerManagement: React.FC = () => {
                             vehicleId: "",
                           })
                         }
-                        className="mr-2"
+                        className="peer sr-only"
                       />
-                      <span>Xe máy điện</span>
+                      <div className="cursor-pointer border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-cyan-500 peer-checked:bg-cyan-50 hover:border-gray-300 transition-all duration-200">
+                        <span className="font-semibold text-gray-700">Xe máy điện</span>
+                      </div>
                     </label>
                   </div>
                 </div>
 
                 {/* Vehicle Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Chọn xe *
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <span className="text-red-500 mr-1">*</span>
+                    Chọn xe
                   </label>
                   <select
                     required
@@ -882,7 +1013,7 @@ export const CustomerManagement: React.FC = () => {
                         vehicleId: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200 hover:border-gray-300"
                   >
                     <option value="">Chọn xe</option>
                     {scheduleForm.vehicleType === "car"
@@ -899,17 +1030,17 @@ export const CustomerManagement: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4">
+                <div className="flex justify-end space-x-3 pt-4 border-t">
                   <button
                     type="button"
                     onClick={() => setShowScheduleModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   >
                     Tiếp tục
                   </button>
@@ -922,30 +1053,45 @@ export const CustomerManagement: React.FC = () => {
 
       {/* Customer Payments Modal */}
       {showPaymentsModal && selectedCustomerForPayments && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Lịch sử thanh toán - {selectedCustomerForPayments.name}
-                </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-6 rounded-t-2xl sticky top-0 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Lịch sử thanh toán
+                    </h2>
+                    <p className="text-amber-100 text-sm mt-1">
+                      {selectedCustomerForPayments.name}
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => {
                     setShowPaymentsModal(false);
                     setSelectedCustomerPayments([]);
                     setSelectedCustomerForPayments(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
                 >
-                  ✕
+                  <X className="h-6 w-6" />
                 </button>
               </div>
+            </div>
 
+            <div className="p-6">
               {!selectedCustomerPayments ||
               selectedCustomerPayments.length === 0 ? (
-                <div className="text-center py-12">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="text-center py-16">
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                    <CreditCard className="h-12 w-12 text-amber-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
                     Chưa có thanh toán nào
                   </h3>
                   <p className="text-gray-500">
@@ -958,48 +1104,61 @@ export const CustomerManagement: React.FC = () => {
                   {(selectedCustomerPayments || []).map((payment, index) => (
                     <div
                       key={index}
-                      className="border border-gray-200 rounded-lg p-4"
+                      className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 rounded-xl p-5 hover:shadow-lg transition-all duration-200"
                     >
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium text-gray-900">
-                            Thanh toán #{payment?.id || index + 1}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Ngày: {payment?.date || "N/A"}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Phương thức: {payment?.method || "N/A"}
-                          </p>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-2 rounded-lg">
+                              <CreditCard className="h-5 w-5 text-white" />
+                            </div>
+                            <h4 className="font-bold text-gray-900 text-lg">
+                              Thanh toán #{payment?.id || index + 1}
+                            </h4>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 ml-11">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Ngày thanh toán</p>
+                              <p className="text-sm font-semibold text-gray-700">
+                                {payment?.date || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Phương thức</p>
+                              <p className="text-sm font-semibold text-gray-700">
+                                {payment?.method || "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                          {payment?.description && (
+                            <p className="text-sm text-gray-600 mt-3 ml-11">
+                              {payment.description}
+                            </p>
+                          )}
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-green-600">
+                        <div className="text-right ml-4">
+                          <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
                             {payment?.amount
-                              ? `${payment.amount.toLocaleString()} VND`
+                              ? `${payment.amount.toLocaleString()} ₫`
                               : "N/A"}
                           </p>
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            className={`inline-flex px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm ${
                               payment?.status === "completed"
-                                ? "bg-green-100 text-green-800"
+                                ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
                                 : payment?.status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
+                                ? "bg-gradient-to-r from-yellow-500 to-amber-600 text-white"
+                                : "bg-gradient-to-r from-red-500 to-rose-600 text-white"
                             }`}
                           >
                             {payment?.status === "completed"
-                              ? "Hoàn thành"
+                              ? "✓ Hoàn thành"
                               : payment?.status === "pending"
-                              ? "Đang xử lý"
-                              : "Thất bại"}
+                              ? "⏳ Đang xử lý"
+                              : "✗ Thất bại"}
                           </span>
                         </div>
                       </div>
-                      {payment?.description && (
-                        <p className="text-sm text-gray-600 mt-2">
-                          Mô tả: {payment.description}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
