@@ -183,6 +183,22 @@ export const generateQuotePDF = async (data: QuotePDFData): Promise<void> => {
             <td>${formatCurrency(item.discount)} VNĐ</td>
             <td>${formatCurrency(item.finalAmount)} VNĐ</td>
           </tr>
+          ${item.options && item.options.length > 0 ? `
+          <tr style="background-color: #f0f7ff;">
+            <td colspan="6" style="padding-left: 30px;">
+              <strong>🔧 Tùy chọn bổ sung:</strong><br/>
+              ${item.options.map(opt => `• ${opt.name} (+${formatCurrency(opt.price)} VNĐ)`).join('<br/>')}
+            </td>
+          </tr>
+          ` : ''}
+          ${item.accessories && item.accessories.length > 0 ? `
+          <tr style="background-color: #f0fff0;">
+            <td colspan="6" style="padding-left: 30px;">
+              <strong>🛠️ Phụ kiện:</strong><br/>
+              ${item.accessories.map(acc => `• ${acc.name} x${acc.quantity} (+${formatCurrency(acc.price * acc.quantity)} VNĐ)`).join('<br/>')}
+            </td>
+          </tr>
+          ` : ''}
         `).join('')}
       </tbody>
     </table>

@@ -11,21 +11,18 @@ import {
   Space, 
   Card, 
   Divider,
-  BackTop,
   Affix,
   Badge,
-  Progress
+  FloatButton
 } from 'antd';
 import {
   ArrowLeftOutlined,
   ShoppingCartOutlined,
   CarOutlined,
   HeartOutlined,
-  ShareAltOutlined,
   CheckCircleOutlined,
   RotateLeftOutlined,
   RotateRightOutlined,
-  DownloadOutlined,
   ArrowUpOutlined,
   ThunderboltOutlined,
   PoweroffOutlined,
@@ -56,9 +53,7 @@ const colorHexMap: Record<string, string> = {
 export const CarDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [showContent, setShowContent] = useState(false);
+  // Local UI states
   const [vehicle, setVehicle] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,14 +65,13 @@ export const CarDetail: React.FC = () => {
   // Refs for section navigation
   const introRef = useRef<HTMLDivElement>(null);
   const exteriorRef = useRef<HTMLDivElement>(null);
-  const interiorRef = useRef<HTMLDivElement>(null);
+  // const interiorRef = useRef<HTMLDivElement>(null);
   const specsRef = useRef<HTMLDivElement>(null);
-  const priceRef = useRef<HTMLDivElement>(null);
+  // const priceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setImageLoaded(false);
-    setShowContent(false);
+  // reset any transient UI state if needed
     
     if (id) {
       loadVehicle(id);
@@ -107,12 +101,7 @@ export const CarDetail: React.FC = () => {
     }
   };
 
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-    setTimeout(() => {
-      setShowContent(true);
-    }, 500);
-  };
+  // const handleImageLoad = () => {};
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -121,10 +110,11 @@ export const CarDetail: React.FC = () => {
     }).format(price);
   };
 
-  const getVehicleProperty = (property: string, defaultValue: unknown = '') => {
-    if (!vehicle) return defaultValue;
+  const getVehicleProperty = <T = unknown>(property: string, defaultValue: T): T => {
+    if (!vehicle) return defaultValue as T;
     const vehicleObj = vehicle as Record<string, unknown>;
-    return vehicleObj[property] || defaultValue;
+    const value = vehicleObj[property] as T | undefined;
+    return (value ?? defaultValue) as T;
   };
 
   // Scroll to section
@@ -138,11 +128,8 @@ export const CarDetail: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Spin size="large" tip="Đang tải thông tin xe..." />
-      </div>
-    );
+    // Use fullscreen Spin to avoid AntD tip warning and provide a clear loading overlay
+    return <Spin size="large" tip="Đang tải thông tin xe..." fullscreen />;
   }
 
   if (error && !vehicle) {
@@ -164,7 +151,7 @@ export const CarDetail: React.FC = () => {
   // Lấy thông tin cần thiết từ vehicle
   const images = getVehicleProperty('images', []) as string[];
   const colorOptions = getVehicleProperty('color_options', ['Đỏ', 'Trắng', 'Đen', 'Xanh', 'Vàng', 'Xám', 'Bạc']) as string[];
-  const safetyFeatures = getVehicleProperty('safety_features', []) as string[];
+  // const safetyFeatures = getVehicleProperty<string[]>('safety_features', []);
 
   // Dữ liệu cho bảng thông số kỹ thuật
   const specificationData = [
@@ -220,7 +207,7 @@ export const CarDetail: React.FC = () => {
                   WebkitTextFillColor: 'transparent',
                   fontWeight: 700
                 }}>
-                  VinFast {getVehicleProperty('model', 'VF3') as string}
+                  {getVehicleProperty('name', 'VinFast VF3') as string}
                 </Title>
               </Space>
             </Col>
@@ -334,7 +321,6 @@ export const CarDetail: React.FC = () => {
                         height: 'auto'
                       }}
                       preview={false}
-            onLoad={handleImageLoad}
           />
         </div>
 
@@ -370,7 +356,7 @@ export const CarDetail: React.FC = () => {
                     lineHeight: 1.1,
                     textShadow: '0 4px 20px rgba(0,0,0,0.3)'
                   }}>
-                    VinFast<br/>{getVehicleProperty('model', 'VF3') as string}
+                    {getVehicleProperty('name', 'VinFast VF3') as string}
                   </Title>
                   
                   <Paragraph style={{ 
@@ -848,7 +834,7 @@ export const CarDetail: React.FC = () => {
                     marginTop: 24,
                     color: '#1f2937'
                   }}>
-                    {getVehicleProperty('model', 'VF3')} {getVehicleProperty('version', '2024')}
+                    {getVehicleProperty('name', 'VinFast VF3')} {getVehicleProperty('version', '')}
                   </Title>
                   
                   <Text style={{ color: '#64748b' }}>
@@ -861,28 +847,22 @@ export const CarDetail: React.FC = () => {
       </div>
       </Content>
 
-      <BackTop style={{ right: 32, bottom: 32 }}>
-        <Button 
-          type="primary" 
-          shape="circle" 
-          icon={<ArrowUpOutlined />} 
-          size="large"
-          style={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            border: 'none',
-            width: 56,
-            height: 56,
-            boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)'
-          }}
-        />
-      </BackTop>
+      <FloatButton.BackTop 
+        icon={<ArrowUpOutlined />}
+        style={{ 
+          right: 32, 
+          bottom: 32,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: '#fff'
+        }} 
+      />
 
       {/* Quotation Modal */}
       <QuotationModal
         visible={showQuotationModal}
         onClose={() => setShowQuotationModal(false)}
         vehicleId={id || ''}
-        vehicleName={`VinFast ${getVehicleProperty('model', 'VF3')} ${getVehicleProperty('version', '')}`}
+        vehicleName={getVehicleProperty('name', 'VinFast VF3') as string}
         vehiclePrice={getVehicleProperty('price', 0) as number}
         colorOptions={colorOptions}
       />

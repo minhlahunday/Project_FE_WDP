@@ -3,7 +3,6 @@ import {
   Modal,
   Form,
   Input,
-  Select,
   InputNumber,
   Button,
   Space,
@@ -13,19 +12,22 @@ import {
   Col,
   Card,
   message,
-  Tag,
-  Spin,
-  ConfigProvider
+  Tag
 } from 'antd';
+import CustomSelect from '../common/CustomSelect';
 import {
   FileTextOutlined,
   PlusOutlined,
-  MinusCircleOutlined
+  MinusCircleOutlined,
+  FilePdfOutlined
 } from '@ant-design/icons';
 import { authService } from '../../services/authService';
 import { promotionService, Promotion } from '../../services/promotionService';
 import { optionService, VehicleOption } from '../../services/optionService';
 import { accessoryService, Accessory } from '../../services/accessoryService';
+import { customerService } from '../../services/customerService';
+import { Customer } from '../../types';
+import { generateQuotePDF, QuotePDFData } from '../../utils/pdfUtils';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -139,14 +141,19 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
   vehiclePrice,
   colorOptions = []
 }) => {
+  // Debug render
+  console.log('🔍 QuotationModal render - visible:', visible, 'vehicleId:', vehicleId);
+  if (visible) {
+    console.log('🟣 QuotationModal visible = true');
+  }
   const [form] = Form.useForm<QuoteFormValues>();
   const [referenceLoading, setReferenceLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [optionCatalog, setOptionCatalog] = useState<VehicleOption[]>([]);
   const [accessoryCatalog, setAccessoryCatalog] = useState<Accessory[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [discountSelection, setDiscountSelection] = useState<string | undefined>();
-  const modalRef = React.useRef<HTMLDivElement>(null);
 
   const quantityValue = Form.useWatch('quantity', form) ?? 1;
   const discountValue = Form.useWatch('discount', form) ?? 0;
@@ -154,14 +161,35 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
   const accessoriesValue = Form.useWatch('accessories', form) ?? [];
 
   const totalAmount = useMemo(() => {
-    const total = (vehiclePrice || 0) * quantityValue - discountValue;
+    // Giá xe
+    const vehicleTotal = (vehiclePrice || 0) * quantityValue;
+    
+    // Tính tổng giá tùy chọn
+    const optionsTotal = (optionsValue || []).reduce((sum, option) => {
+      if (!option?.option_id) return sum;
+      const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
+      return sum + (optionData?.price || 0);
+    }, 0);
+    
+    // Tính tổng giá phụ kiện
+    const accessoriesTotal = (accessoriesValue || []).reduce((sum, accessory) => {
+      if (!accessory?.accessory_id) return sum;
+      const accessoryData = accessoryCatalog.find(a => normalizeAccessoryId(a) === accessory.accessory_id);
+      const quantity = accessory.quantity || 1;
+      return sum + ((accessoryData?.price || 0) * quantity);
+    }, 0);
+    
+    const total = vehicleTotal + optionsTotal + accessoriesTotal - discountValue;
     return total > 0 ? total : 0;
-  }, [vehiclePrice, quantityValue, discountValue]);
+  }, [vehiclePrice, quantityValue, discountValue, optionsValue, accessoriesValue, optionCatalog, accessoryCatalog]);
 
   const colorSelectOptions = useMemo(() => {
     const mapped = (colorOptions || []).map((color) => ({ label: color, value: color }));
     console.log('🎨 Color options received:', colorOptions);
     console.log('🎨 Mapped color select options:', mapped);
+    console.log('🎨 First color option:', mapped[0]);
+    console.log('🎨 Is array?', Array.isArray(mapped));
+    console.log('🎨 Length:', mapped.length);
     return mapped;
   }, [colorOptions]);
 
@@ -220,15 +248,27 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     return mapped;
   }, [accessoryCatalog]);
 
+  const customerSelectOptions = useMemo(() => {
+    const mapped = customers.map((customer) => ({
+      value: customer.id || '',
+      label: `${customer.name} - ${customer.phone || 'N/A'}`
+    }));
+    console.log('📋 Mapped customer select options:', mapped);
+    return mapped;
+  }, [customers]);
+
+  
+
   const loadReferenceData = useCallback(async () => {
     try {
       setReferenceLoading(true);
       console.log('🔄 Loading reference data for quotation...');
       
-      const [promotionResult, optionResult, accessoryResult] = await Promise.allSettled([
+      const [promotionResult, optionResult, accessoryResult, customerResult] = await Promise.allSettled([
         promotionService.getPromotions(),
         optionService.getOptions(),
-        accessoryService.getAccessories()
+        accessoryService.getAccessories(),
+        customerService.getAllCustomers()
       ]);
 
       // Handle promotions
@@ -258,11 +298,21 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         console.error('❌ Accessories failed:', accessoryResult.reason);
       }
 
+      // Handle customers
+      if (customerResult.status === 'fulfilled') {
+        const customersData = customerResult.value ?? [];
+        console.log('✅ Customers loaded:', customersData.length, customersData);
+        setCustomers(customersData);
+      } else {
+        console.error('❌ Customers failed:', customerResult.reason);
+      }
+
       // Show warning if any failed
       const failedCount = [
         promotionResult.status !== 'fulfilled',
         optionResult.status !== 'fulfilled',
-        accessoryResult.status !== 'fulfilled'
+        accessoryResult.status !== 'fulfilled',
+        customerResult.status !== 'fulfilled'
       ].filter(Boolean).length;
 
       if (failedCount > 0) {
@@ -358,7 +408,59 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       const response = await authService.createQuotation(payload);
 
       if (response.success) {
-        message.success('Tạo báo giá thành công');
+        message.success('Tạo báo giá thành công! Đang tạo file PDF...');
+        
+        // Generate PDF
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const responseData = response.data as any;
+          
+          // Lấy thông tin khách hàng đầy đủ từ danh sách customers
+          const selectedCustomer = customers.find(c => c.id === values.customer_id);
+          
+          const pdfData: QuotePDFData = {
+            quoteCode: responseData?.code || `QTE${Date.now()}`,
+            customerName: selectedCustomer?.name || values.customer_id || 'Khách hàng',
+            customerPhone: selectedCustomer?.phone || 'N/A',
+            customerEmail: selectedCustomer?.email || 'N/A',
+            customerAddress: selectedCustomer?.address || 'N/A',
+            dealershipName: 'VinFast - Đại lý xe điện',
+            dealershipAddress: 'Việt Nam',
+            items: [{
+              vehicleName: vehicleName || 'Xe điện',
+              color: values.color,
+              quantity: values.quantity || 1,
+              unitPrice: vehiclePrice || 0,
+              accessories: sanitizedAccessories.map(acc => {
+                const accessory = accessoryCatalog.find(a => normalizeAccessoryId(a) === acc.accessory_id);
+                return {
+                  name: accessory?.name || 'Phụ kiện',
+                  quantity: acc.quantity,
+                  price: accessory?.price || 0
+                };
+              }),
+              options: sanitizedOptions.map(opt => {
+                const option = optionCatalog.find(o => normalizeOptionId(o) === opt.option_id);
+                return {
+                  name: option?.name || 'Tùy chọn',
+                  price: option?.price || 0
+                };
+              }),
+              discount: values.discount || 0,
+              finalAmount: totalAmount
+            }],
+            totalAmount: totalAmount,
+            notes: values.notes,
+            validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+          };
+
+          await generateQuotePDF(pdfData);
+          message.success('Đã tạo file PDF báo giá thành công!');
+        } catch (pdfError) {
+          console.error('❌ Error generating PDF:', pdfError);
+          message.warning('Báo giá đã tạo nhưng không thể tạo file PDF');
+        }
+        
         handleClose();
       } else {
         message.error(response.message || 'Không thể tạo báo giá');
@@ -371,125 +473,120 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     }
   };
 
-  // Render dropdowns to document.body - Ant Design will handle positioning automatically
-  const getPopupContainer = useCallback(() => {
-    return document.body;
-  }, []);
-
   return (
-    <ConfigProvider
-      getPopupContainer={getPopupContainer}
-    >
     <Modal
       open={visible}
       onCancel={handleClose}
       footer={null}
-      width={920}
+      width={1400}
       centered
-      destroyOnClose
-      getContainer={false}
+      destroyOnClose={false}
       styles={{
-        body: { overflow: 'visible', maxHeight: 'none' }
+        body: { 
+          maxHeight: '85vh', 
+          overflowY: 'auto',
+          padding: '40px 50px'
+        }
       }}
       title={
         <Space align="center" size="middle">
           <div
             style={{
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               borderRadius: 16,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
             }}
           >
-            <FileTextOutlined style={{ color: '#fff', fontSize: 22 }} />
+            <FileTextOutlined style={{ color: '#fff', fontSize: 26 }} />
           </div>
           <div>
-            <Title level={3} style={{ margin: 0 }}>
+            <Title level={3} style={{ margin: 0, fontSize: 22 }}>
               Tạo báo giá
             </Title>
-            <Text type="secondary">Tạo báo giá nhanh cho khách hàng</Text>
+            <Text type="secondary" style={{ fontSize: 15 }}>Tạo báo giá nhanh cho khách hàng</Text>
           </div>
         </Space>
       }
-    >
+      >
       <Form<QuoteFormValues>
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 8 }}
+        size="large"
       >
         <Card
           style={{
-            marginBottom: 24,
-            borderRadius: 16,
+            marginBottom: 32,
+            borderRadius: 20,
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: '#fff'
+            color: '#fff',
+            boxShadow: '0 8px 24px rgba(102, 126, 234, 0.35)',
+            padding: '20px 28px',
+            overflow: 'hidden'
           }}
         >
-          <Row gutter={24}>
-            <Col span={16}>
-              <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14 }}>Xe được chọn</Text>
-              <Title level={3} style={{ marginTop: 8, color: '#fff' }}>
+          <Row gutter={20}>
+            <Col span={14}>
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14 }}>Xe được chọn</Text>
+              <Title level={2} style={{ marginTop: 10, marginBottom: 0, color: '#fff', fontSize: 20, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {vehicleName || 'Xe chưa xác định'}
               </Title>
             </Col>
-            <Col span={8} style={{ textAlign: 'right' }}>
-              <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14 }}>Giá niêm yết</Text>
-              <Title level={3} style={{ marginTop: 8, color: '#fff' }}>
+            <Col span={10} style={{ textAlign: 'right' }}>
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14 }}>Giá niêm yết</Text>
+              <div style={{ marginTop: 10, color: '#fff', fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap' }}>
                 {formatCurrency(vehiclePrice || 0)}
-              </Title>
+              </div>
             </Col>
           </Row>
         </Card>
 
-        <Divider orientation="left">Thông tin khách hàng</Divider>
+        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 24, marginBottom: 24 }}>
+          👤 Thông tin khách hàng
+        </Divider>
 
         <Form.Item
-          label="ID Khách hàng (Tùy chọn)"
+          label={<span style={{ fontSize: 16, fontWeight: 500 }}>Khách hàng</span>}
           name="customer_id"
-          tooltip="Nhập ID khách hàng nếu đã có trong hệ thống"
+          tooltip="Chọn khách hàng từ danh sách"
         >
-          <Input placeholder="Nhập ID khách hàng" allowClear />
+          <CustomSelect
+            options={customerSelectOptions}
+            placeholder="Chọn khách hàng"
+            loading={referenceLoading}
+            allowClear
+            showSearch
+          />
         </Form.Item>
 
-        <Divider orientation="left">Chi tiết sản phẩm</Divider>
+        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+          📦 Chi tiết sản phẩm
+        </Divider>
 
-        <Row gutter={16}>
+        <Row gutter={24}>
           <Col span={12}>
             <Form.Item
-              label="Số lượng"
+              label={<span style={{ fontSize: 16, fontWeight: 500 }}>Số lượng</span>}
               name="quantity"
               rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
             >
-              <InputNumber min={1} style={{ width: '100%' }} />
+              <InputNumber min={1} style={{ width: '100%', fontSize: 16 }} size="large" />
             </Form.Item>
           </Col>
 
           <Col span={12}>
-            <Form.Item label="Màu sắc" name="color">
-              <Select
-                placeholder={colorSelectOptions.length > 0 ? `Chọn màu sắc (${colorSelectOptions.length} mục)` : 'Chọn màu sắc'}
+            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Màu sắc</span>} name="color">
+              <CustomSelect
+                options={colorSelectOptions}
+                placeholder="Chọn màu sắc"
                 allowClear
                 showSearch
-                optionFilterProp="children"
-                getPopupContainer={getPopupContainer}
-                onOpenChange={(open) => {
-                  if (open) {
-                    console.log('🎨 Color dropdown opening, options:', colorSelectOptions.length);
-                    console.log('🎨 Color options available:', colorSelectOptions);
-                  }
-                }}
-                notFoundContent={colorSelectOptions.length === 0 ? 'Không có màu sắc' : 'Không tìm thấy'}
-              >
-                {colorSelectOptions.map((option) => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
+              />
             </Form.Item>
           </Col>
         </Row>
@@ -498,59 +595,38 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           <InputNumber />
         </Form.Item>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item label="Giảm giá (VNĐ)" name="discountSelection">
-              <Select
-                allowClear
-                placeholder={discountSelectOptions.length > 0 ? `Chọn giảm giá (${discountSelectOptions.length} mục)` : 'Chọn giảm giá'}
+        <Row gutter={24}>
+          {/* <Col span={12}>
+            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>💰 Giảm giá (VNĐ)</span>} name="discountSelection">
+              <CustomSelect
+                options={discountSelectOptions}
+                placeholder="Chọn giảm giá"
                 value={discountSelection}
                 onChange={handleDiscountChange}
+                loading={referenceLoading}
+                allowClear
                 showSearch
-                optionFilterProp="children"
-                loading={referenceLoading && promotions.length === 0}
-                getPopupContainer={getPopupContainer}
-                notFoundContent={referenceLoading ? <Spin size="small" /> : discountSelectOptions.length === 0 ? 'Không có dữ liệu giảm giá' : 'Không tìm thấy'}
-              >
-                {discountSelectOptions.map((option) => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
+              />
             </Form.Item>
-          </Col>
+          </Col> */}
 
           <Col span={12}>
-            <Form.Item label="Khuyến mãi" name="promotion_id">
-              <Select
-                allowClear
-                placeholder={promotionSelectOptions.length > 0 ? `Chọn khuyến mãi (${promotionSelectOptions.length} mục)` : 'Chọn khuyến mãi'}
-                showSearch
-                optionFilterProp="children"
+            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>🎁 Khuyến mãi</span>} name="promotion_id">
+              <CustomSelect
+                options={promotionSelectOptions}
+                placeholder="Chọn khuyến mãi"
                 loading={referenceLoading}
-                getPopupContainer={getPopupContainer}
-                onOpenChange={(open) => {
-                  if (open) {
-                    console.log('🔍 Promotion dropdown opening, options:', promotionSelectOptions.length);
-                  }
-                }}
-                notFoundContent={referenceLoading ? <Spin size="small" /> : promotionSelectOptions.length === 0 ? 'Không có dữ liệu khuyến mãi' : 'Không tìm thấy'}
-              >
-                {promotionSelectOptions.map((option) => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
+                allowClear
+                showSearch
+              />
             </Form.Item>
           </Col>
         </Row>
 
-        <Divider orientation="left">
-          <Space>
-            Tùy chọn bổ sung
-            <Tag color="blue">{optionsValue.length}</Tag>
+        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+          <Space size="middle">
+            🔧 Tùy chọn bổ sung
+            <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>{optionsValue.length}</Tag>
           </Space>
         </Divider>
 
@@ -558,33 +634,20 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
-                <Row key={key} gutter={12} align="middle" style={{ marginBottom: 12 }}>
+                <Row key={key} gutter={16} align="middle" style={{ marginBottom: 16 }}>
                   <Col flex="auto">
                     <Form.Item
                       {...restField}
                       name={[name, 'option_id']}
                       rules={[{ required: false }]}
                     >
-                      <Select
-                        placeholder={vehicleOptionSelectOptions.length > 0 ? `Chọn tùy chọn bổ sung (${vehicleOptionSelectOptions.length} mục)` : 'Chọn tùy chọn bổ sung'}
+                      <CustomSelect
+                        options={vehicleOptionSelectOptions}
+                        placeholder="Chọn tùy chọn bổ sung"
+                        loading={referenceLoading}
                         allowClear
                         showSearch
-                        optionFilterProp="children"
-                        loading={referenceLoading}
-                        getPopupContainer={getPopupContainer}
-                        onOpenChange={(open) => {
-                          if (open) {
-                            console.log('🔍 Option dropdown opening, options:', vehicleOptionSelectOptions.length);
-                          }
-                        }}
-                        notFoundContent={referenceLoading ? <Spin size="small" /> : vehicleOptionSelectOptions.length === 0 ? 'Không có dữ liệu tùy chọn' : 'Không tìm thấy'}
-                      >
-                        {vehicleOptionSelectOptions.map((option) => (
-                          <Select.Option key={option.value} value={option.value}>
-                            {option.label}
-                          </Select.Option>
-                        ))}
-                      </Select>
+                      />
                     </Form.Item>
                   </Col>
                   <Col>
@@ -593,6 +656,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       danger
                       icon={<MinusCircleOutlined />}
                       onClick={() => remove(name)}
+                      size="large"
+                      style={{ height: 48 }}
                     />
                   </Col>
                 </Row>
@@ -603,7 +668,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 icon={<PlusOutlined />}
                 onClick={() => add({ option_id: undefined })}
                 block
-                style={{ marginBottom: 16 }}
+                size="large"
+                style={{ marginBottom: 24, height: 48, fontSize: 15 }}
               >
                 Thêm tùy chọn
               </Button>
@@ -611,10 +677,10 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           )}
         </Form.List>
 
-        <Divider orientation="left">
-          <Space>
-            Phụ kiện
-            <Tag color="green">{accessoriesValue.length}</Tag>
+        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+          <Space size="middle">
+            🛠️ Phụ kiện
+            <Tag color="green" style={{ fontSize: 14, padding: '4px 12px' }}>{accessoriesValue.length}</Tag>
           </Space>
         </Divider>
 
@@ -622,33 +688,20 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
-                <Row key={key} gutter={12} align="middle" style={{ marginBottom: 12 }}>
+                <Row key={key} gutter={16} align="middle" style={{ marginBottom: 16 }}>
                   <Col xs={24} sm={14}>
                     <Form.Item
                       {...restField}
                       name={[name, 'accessory_id']}
                       rules={[{ required: false }]}
                     >
-                      <Select
-                        placeholder={accessorySelectOptions.length > 0 ? `Chọn phụ kiện (${accessorySelectOptions.length} mục)` : 'Chọn phụ kiện'}
+                      <CustomSelect
+                        options={accessorySelectOptions}
+                        placeholder="Chọn phụ kiện"
+                        loading={referenceLoading}
                         allowClear
                         showSearch
-                        optionFilterProp="children"
-                        loading={referenceLoading}
-                        getPopupContainer={getPopupContainer}
-                        onOpenChange={(open) => {
-                          if (open) {
-                            console.log('🔍 Accessory dropdown opening, options:', accessorySelectOptions.length);
-                          }
-                        }}
-                        notFoundContent={referenceLoading ? <Spin size="small" /> : accessorySelectOptions.length === 0 ? 'Không có dữ liệu phụ kiện' : 'Không tìm thấy'}
-                      >
-                        {accessorySelectOptions.map((option) => (
-                          <Select.Option key={option.value} value={option.value}>
-                            {option.label}
-                          </Select.Option>
-                        ))}
-                      </Select>
+                      />
                     </Form.Item>
                   </Col>
                   <Col xs={12} sm={6}>
@@ -658,7 +711,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       initialValue={1}
                       rules={[{ type: 'number', min: 1, message: 'Ít nhất 1 phụ kiện' }]}
                     >
-                      <InputNumber min={1} style={{ width: '100%' }} />
+                      <InputNumber min={1} style={{ width: '100%' }} size="large" />
                     </Form.Item>
                   </Col>
                   <Col xs={12} sm={4}>
@@ -667,6 +720,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       danger
                       icon={<MinusCircleOutlined />}
                       onClick={() => remove(name)}
+                      size="large"
+                      style={{ height: 48 }}
                     />
                   </Col>
                 </Row>
@@ -677,7 +732,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 icon={<PlusOutlined />}
                 onClick={() => add({ accessory_id: undefined, quantity: 1 })}
                 block
-                style={{ marginBottom: 16 }}
+                size="large"
+                style={{ marginBottom: 24, height: 48, fontSize: 15 }}
               >
                 Thêm phụ kiện
               </Button>
@@ -685,57 +741,110 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           )}
         </Form.List>
 
-        <Divider orientation="left">Ghi chú</Divider>
+        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+          📝 Ghi chú
+        </Divider>
 
         <Form.Item name="notes">
-          <TextArea rows={4} placeholder="Nhập ghi chú cho báo giá (ví dụ: hiệu lực 7 ngày, gồm 2 phụ kiện...)" />
+          <TextArea 
+            rows={4} 
+            placeholder="Nhập ghi chú cho báo giá (ví dụ: hiệu lực 7 ngày, gồm 2 phụ kiện...)" 
+            style={{ fontSize: 15 }}
+            size="large"
+          />
         </Form.Item>
 
         <Card
           style={{
-            borderRadius: 16,
-            marginTop: 8,
-            marginBottom: 24,
+            borderRadius: 24,
+            marginTop: 40,
+            marginBottom: 40,
             background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            color: '#fff'
+            color: '#fff',
+            boxShadow: '0 12px 32px rgba(240, 147, 251, 0.4)',
+            padding: '24px 32px',
+            overflow: 'hidden'
           }}
         >
-          <Row>
-            <Col span={12}>
-              <Text style={{ color: 'rgba(255,255,255,0.85)' }}>Số lượng</Text>
-              <Title level={4} style={{ marginTop: 4, color: '#fff' }}>
-                {quantityValue}
-              </Title>
-            </Col>
-            <Col span={12} style={{ textAlign: 'right' }}>
-              <Text style={{ color: 'rgba(255,255,255,0.85)' }}>Giảm giá</Text>
-              <Title level={4} style={{ marginTop: 4, color: '#fff' }}>
-                {formatCurrency(discountValue)}
-              </Title>
-            </Col>
-          </Row>
-          <Divider style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-          <Row>
-            <Col span={24} style={{ textAlign: 'center' }}>
-              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>Tổng giá trị báo giá</Text>
-              <Title level={2} style={{ marginTop: 8, color: '#fff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
+            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                Xe × SL
+              </Text>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
+                {formatCurrency((vehiclePrice || 0) * quantityValue)}
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                Tùy chọn
+              </Text>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
+                +{formatCurrency(
+                  (optionsValue || []).reduce((sum, option) => {
+                    if (!option?.option_id) return sum;
+                    const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
+                    return sum + (optionData?.price || 0);
+                  }, 0)
+                )}
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                Phụ kiện
+              </Text>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
+                +{formatCurrency(
+                  (accessoriesValue || []).reduce((sum, accessory) => {
+                    if (!accessory?.accessory_id) return sum;
+                    const accessoryData = accessoryCatalog.find(a => normalizeAccessoryId(a) === accessory.accessory_id);
+                    const quantity = accessory.quantity || 1;
+                    return sum + ((accessoryData?.price || 0) * quantity);
+                  }, 0)
+                )}
+              </div>
+            </div>
+          </div>
+          <Divider style={{ borderColor: 'rgba(255,255,255,0.35)', margin: '20px 0' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '32px' }}>
+            {/* <div style={{ flex: '0 0 auto' }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                Giảm giá
+              </Text>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
+                -{formatCurrency(discountValue)}
+              </div>
+            </div> */}
+            <div style={{ flex: '1 1 auto', textAlign: 'right', minWidth: 0 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                Tổng thanh toán
+              </Text>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
                 {formatCurrency(totalAmount)}
-              </Title>
-            </Col>
-          </Row>
+              </div>
+            </div>
+          </div>
         </Card>
 
         <Form.Item>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleClose}>Hủy</Button>
-            <Button type="primary" htmlType="submit" loading={submitting} icon={<FileTextOutlined />}>
-              Tạo báo giá
+          <Space style={{ width: '100%', justifyContent: 'flex-end' }} size="large">
+            <Button onClick={handleClose} size="large" style={{ fontSize: 15, height: 48, minWidth: 120 }}>
+              Hủy
+            </Button>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={submitting} 
+              icon={<FilePdfOutlined />}
+              size="large"
+              style={{ fontSize: 15, height: 48, minWidth: 180 }}
+            >
+              Tạo báo giá & PDF
             </Button>
           </Space>
         </Form.Item>
       </Form>
     </Modal>
-    </ConfigProvider>
   );
 };
 
