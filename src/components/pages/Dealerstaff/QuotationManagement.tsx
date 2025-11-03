@@ -5,7 +5,7 @@ import {
   Tag, 
   Button, 
   Input, 
-  Typography, 
+  Typography,
   Modal,
   Descriptions,
   message,
@@ -26,9 +26,8 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import { Sidebar } from '../../common/Sidebar';
-import { Header } from '../../common/Header';
 import { authService } from '../../../services/authService';
+import '../../../styles/quotation-management.css';
 
 const { Title, Text } = Typography;
 
@@ -113,8 +112,6 @@ export const QuotationManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('quotations');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -842,67 +839,19 @@ export const QuotationManagement: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        onOpen={() => setIsSidebarOpen(true)}
-      />
-
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ml-0 ${
-        isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
-      } relative`}>
-        <Header 
-          onMenuClick={() => setIsSidebarOpen(true)} 
-          isSidebarOpen={isSidebarOpen}
-        />
-
-        <main className="flex-1 overflow-y-auto pt-16 bg-gray-50 relative z-10">
-          <div className="p-6">
-            {/* Header */}
-            <div className="mb-8" style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: 20,
-              padding: '32px 40px',
-              boxShadow: '0 10px 40px rgba(102, 126, 234, 0.3)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: -50,
-                right: -50,
-                width: 200,
-                height: 200,
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: '50%',
-                filter: 'blur(60px)'
-              }} />
-              <div className="flex items-center justify-between" style={{ position: 'relative' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
-                    <div style={{
-                      width: 56,
-                      height: 56,
-                      background: 'rgba(255,255,255,0.2)',
-                      borderRadius: 16,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backdropFilter: 'blur(10px)'
-                    }}>
-                      <FileTextOutlined style={{ fontSize: 28, color: 'white' }} />
-                    </div>
-                    <div>
-                      <Title level={2} style={{ color: 'white', margin: 0, fontSize: 32, fontWeight: 700 }}>
-                        Quản lý báo giá
-                      </Title>
-                      <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 16, fontWeight: 400 }}>
-                        Quản lý và theo dõi báo giá cho khách hàng
-                      </Text>
-                    </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-6">
+      <div className="w-full mx-auto">
+            {/* Header Section with Gradient */}
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-4xl font-bold text-white mb-2">
+                      Quản lý báo giá
+                    </h1>
+                    <p className="text-blue-100 text-lg">
+                      Quản lý và theo dõi báo giá cho khách hàng
+                    </p>
                   </div>
                 </div>
               </div>
@@ -912,96 +861,102 @@ export const QuotationManagement: React.FC = () => {
             <Row gutter={[16, 16]} className="mb-6">
               <Col xs={24} sm={12} lg={4}>
                 <Card 
-                  className="shadow-md hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                   style={{ 
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     color: 'white'
                   }}
+                  bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
                     title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Tổng báo giá</span>}
                     value={stats.total}
-                    prefix={<FileTextOutlined style={{ color: 'white' }} />}
+                    prefix={<FileTextOutlined style={{ color: 'white', fontSize: 18 }} />}
                     valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={12} lg={4}>
                 <Card 
-                  className="shadow-md hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                   style={{ 
                     background: 'linear-gradient(135deg, #13c2c2 0%, #0891b2 100%)',
                     color: 'white'
                   }}
+                  bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
                     title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Đã gửi</span>}
                     value={stats.sent}
-                    prefix={<ClockCircleOutlined style={{ color: 'white' }} />}
+                    prefix={<ClockCircleOutlined style={{ color: 'white', fontSize: 18 }} />}
                     valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={12} lg={4}>
                 <Card 
-                  className="shadow-md hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                   style={{ 
                     background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
                     color: 'white'
                   }}
+                  bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
                     title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Đã chấp nhận</span>}
                     value={stats.accepted}
-                    prefix={<CheckCircleOutlined style={{ color: 'white' }} />}
+                    prefix={<CheckCircleOutlined style={{ color: 'white', fontSize: 18 }} />}
                     valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={12} lg={4}>
                 <Card 
-                  className="shadow-md hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                   style={{ 
                     background: 'linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%)',
                     color: 'white'
                   }}
+                  bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
                     title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Từ chối</span>}
                     value={stats.rejected}
-                    prefix={<CloseCircleOutlined style={{ color: 'white' }} />}
+                    prefix={<CloseCircleOutlined style={{ color: 'white', fontSize: 18 }} />}
                     valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={12} lg={4}>
                 <Card 
-                  className="shadow-md hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                   style={{ 
                     background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)',
                     color: 'white'
                   }}
+                  bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
                     title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Đã chuyển đơn</span>}
                     value={stats.converted}
-                    prefix={<DollarOutlined style={{ color: 'white' }} />}
+                    prefix={<DollarOutlined style={{ color: 'white', fontSize: 18 }} />}
                     valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={12} lg={4}>
                 <Card 
-                  className="shadow-md hover:shadow-xl transition-all duration-300 rounded-xl border-0"
+                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                   style={{ 
                     background: 'linear-gradient(135deg, #8c8c8c 0%, #595959 100%)',
                     color: 'white'
                   }}
+                  bodyStyle={{ padding: '20px' }}
                 >
                   <Statistic
                     title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Nháp</span>}
                     value={stats.draft}
-                    prefix={<FileTextOutlined style={{ color: 'white' }} />}
+                    prefix={<FileTextOutlined style={{ color: 'white', fontSize: 18 }} />}
                     valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
                   />
                 </Card>
@@ -1009,42 +964,27 @@ export const QuotationManagement: React.FC = () => {
             </Row>
 
             {/* Search Bar */}
-            <Card 
-              className="mb-8" 
-              style={{
-                borderRadius: 16,
-                border: '1px solid #e8e8f5',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                overflow: 'hidden'
-              }}
-            >
-              <div style={{
-                background: 'linear-gradient(135deg, #f8f9fe 0%, #fafaff 100%)',
-                padding: '20px 24px',
-                borderBottom: '1px solid #e8e8f5'
-              }}>
-                <Text strong style={{ fontSize: 16, color: '#1a1a2e' }}>
-                  🔍 Tìm kiếm báo giá
-                </Text>
-              </div>
-              <div style={{ padding: '24px' }}>
-                <div className="flex gap-3">
+            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+              <div className="flex flex-col gap-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <SearchOutlined className="text-blue-600" />
+                  Tìm kiếm báo giá
+                </h3>
+                <div className="flex gap-3 flex-col md:flex-row">
                   <Input
                     placeholder="Nhập mã báo giá hoặc ghi chú để tìm kiếm..."
-                    prefix={<SearchOutlined style={{ color: '#667eea', fontSize: 18 }} />}
+                    prefix={<SearchOutlined style={{ color: '#667eea' }} />}
                     size="large"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     onPressEnter={handleSearch}
                     allowClear
                     onClear={handleSearchClear}
+                    className="flex-1"
                     style={{ 
-                      flex: 1,
-                      borderRadius: 12,
-                      border: '2px solid #e8e8f5',
-                      fontSize: 15
+                      borderRadius: 10,
+                      border: '2px solid #e5e7eb'
                     }}
-                    className="hover:border-[#667eea] focus:border-[#667eea] transition-all"
                   />
                   <Button
                     type="primary"
@@ -1052,80 +992,42 @@ export const QuotationManagement: React.FC = () => {
                     icon={<SearchOutlined />}
                     onClick={handleSearch}
                     loading={loading}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                     style={{ 
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      border: 'none',
-                      minWidth: 140,
-                      height: 48,
-                      borderRadius: 12,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+                      minWidth: 120,
+                      height: 44,
+                      borderRadius: 10
                     }}
-                    className="hover:shadow-lg transition-all"
                   >
                     Tìm kiếm
                   </Button>
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Table */}
-            <Card 
-              style={{
-                borderRadius: 20,
-                border: '1px solid #e8e8f5',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                overflow: 'hidden'
-              }}
-            >
-              <div style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                padding: '24px 32px',
-                borderBottom: 'none'
-              }}>
-                <div className="flex items-center justify-between">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{
-                      width: 40,
-                      height: 40,
-                      background: 'rgba(255,255,255,0.2)',
-                      borderRadius: 10,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <FileTextOutlined style={{ fontSize: 20, color: 'white' }} />
-                    </div>
-                    <div>
-                      <Text strong style={{ fontSize: 18, color: 'white', display: 'block' }}>
-                        Danh sách báo giá
-                      </Text>
-                      <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                        {totalItems > 0 ? `Tổng cộng ${totalItems} báo giá` : 'Không có dữ liệu'}
-                      </Text>
-                    </div>
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-1">
+                      Danh sách báo giá
+                    </h2>
+                    <p className="text-blue-100">
+                      {totalItems > 0 ? `Tổng cộng ${totalItems} báo giá` : 'Không có dữ liệu'}
+                    </p>
                   </div>
                   {searchQuery && (
-                    <Tag 
-                      color="white" 
-                      style={{ 
-                        fontSize: 14,
-                        padding: '6px 16px',
-                        borderRadius: 20,
-                        background: 'rgba(255,255,255,0.2)',
-                        backdropFilter: 'blur(10px)',
-                        color: 'white',
-                        border: '1px solid rgba(255,255,255,0.3)'
-                      }}
-                    >
-                      🔍 "{searchQuery}"
-                    </Tag>
+                    <div className="bg-white bg-opacity-20 backdrop-blur-sm px-4 py-2 rounded-full border border-white border-opacity-30">
+                      <span className="text-white text-sm font-medium">
+                        🔍 "{searchQuery}"
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
               <Spin spinning={loading}>
-                <div style={{ padding: '0' }}>
+                <div style={{ padding: '0', overflowX: 'auto' }}>
                   <Table
                     columns={columns}
                     dataSource={quotations}
@@ -1137,12 +1039,13 @@ export const QuotationManagement: React.FC = () => {
                       showSizeChanger: true,
                       showQuickJumper: true,
                       showTotal: (total, range) => (
-                        <Text style={{ fontSize: 14, fontWeight: 500, color: '#667eea' }}>
+                        <Text style={{ fontSize: 13, fontWeight: 500, color: '#667eea' }}>
                           Hiển thị {range[0]}-{range[1]} trong tổng số {total} báo giá
                         </Text>
                       ),
                       pageSizeOptions: ['10', '20', '50', '100'],
-                      style: { padding: '16px 24px' }
+                      style: { padding: '12px 20px' },
+                      responsive: true
                     }}
                     onChange={handleTableChange}
                     scroll={{ x: 1200 }}
@@ -1156,10 +1059,8 @@ export const QuotationManagement: React.FC = () => {
                   />
                 </div>
               </Spin>
-            </Card>
+            </div>
           </div>
-        </main>
-      </div>
 
       {/* Detail Modal */}
       <Modal
