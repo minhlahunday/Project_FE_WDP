@@ -607,19 +607,19 @@ export const OrderManagement: React.FC = () => {
                   <button
                     onClick={handleSearch}
                     disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mb-6 flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <SearchIcon className="w-5 h-5" />
                     Tìm kiếm
                   </button>
-                  <button
+                  {/* <button
                     onClick={handleReset}
                     disabled={loading}
                     className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ReloadIcon className="w-5 h-5" />
                     Reset
-                  </button>
+                  </button> */}
                 </Box>
               </Box>
             </Box>

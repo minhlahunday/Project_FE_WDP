@@ -297,7 +297,7 @@ export const OrderRequestManagement: React.FC = () => {
 
     try {
       setLoading(true);
-      await orderService.updateOrderRequestStatus(request._id, "approved");
+      await orderService.approveOrderRequest(request._id);
 
       await Swal.fire({
         title: "Thành công!",
@@ -359,11 +359,7 @@ export const OrderRequestManagement: React.FC = () => {
 
     try {
       setLoading(true);
-      await orderService.updateOrderRequestStatus(
-        request._id,
-        "rejected",
-        reason
-      );
+      await orderService.rejectOrderRequest(request._id, reason);
 
       await Swal.fire({
         title: "Thành công!",

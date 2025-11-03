@@ -63,6 +63,13 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const paidAmount = order?.paid_amount || 0;
   const remainingAmount = totalAmount - paidAmount;
   const paymentProgress = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+  
+  // Deposit validation constants
+  // Tối thiểu 20%: Đảm bảo khách hàng nghiêm túc, đủ để giữ hàng và bắt đầu quy trình sản xuất/giao hàng
+  // Tối đa không giới hạn: Khách hàng có thể thanh toán bất kỳ phần nào còn lại
+  const MIN_DEPOSIT_PERCENT = 0.10; // 20% tối thiểu cho lần cọc đầu tiên
+  const MIN_DEPOSIT_AMOUNT = totalAmount * MIN_DEPOSIT_PERCENT;
+  const isFirstPayment = paidAmount === 0;
 
   // Load payment history
   const loadPaymentHistory = async () => {
@@ -105,14 +112,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     }
   }, [visible, order]);
 
-  // Auto-fill remaining amount when payment history changes
+  // Auto-fill remaining amount when payment history changes or already has deposit
   useEffect(() => {
-    if (paymentHistory.length >= 1 && remainingAmount > 0) {
+    // Nếu đã cọc rồi (không phải lần đầu) hoặc đã thanh toán nhiều lần, tự động điền số tiền còn lại
+    if ((!isFirstPayment || paymentHistory.length >= 1) && remainingAmount > 0) {
       form.setFieldsValue({
         amount: remainingAmount
       });
     }
-  }, [paymentHistory.length, remainingAmount]);
+  }, [paymentHistory.length, remainingAmount, isFirstPayment]);
 
   // Handle form submission
   const handleSubmit = async (values: any) => {
@@ -150,7 +158,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
           
           // Automatically generate contract PDF on frontend
           try {
-            const contractData = mapOrderToContractPDF(response.data.order);
+            const contractData = await mapOrderToContractPDF(response.data.order);
             await generateContractPDF(contractData);
             message.success('Hợp đồng đã được tạo và tải xuống thành công!');
           } catch (error) {
@@ -193,7 +201,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
       message.info('Đang tạo hợp đồng PDF...');
       
       // Generate contract PDF on frontend
-      const contractData = mapOrderToContractPDF(order);
+      const contractData = await mapOrderToContractPDF(order);
       await generateContractPDF(contractData);
       message.success('Hợp đồng đã được tạo và tải xuống thành công!');
       
@@ -309,6 +317,36 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         {/* Payment Form */}
         {paymentProgress < 100 && (
           <Card title="Thêm thanh toán" size="small">
+            {isFirstPayment && (
+              <Alert
+                message="Quy định về tiền cọc"
+                description={
+                  <div>
+                    <p className="mb-2">
+                      <strong>Yêu cầu cọc tối thiểu: {MIN_DEPOSIT_PERCENT * 100}% ({formatCurrency(MIN_DEPOSIT_AMOUNT)})</strong>
+                    </p>
+                    <div className="text-sm space-y-1 text-gray-700">
+                      <p><strong>Đảm bảo cam kết:</strong> Khách hàng phải đặt cọc tối thiểu 20% để thể hiện sự nghiêm túc trong giao dịch.</p>
+                      <p><strong>Giữ hàng:</strong> Số tiền này đủ để giữ hàng trong kho và đảm bảo đơn hàng không bị hủy bởi khách hàng khác.</p>
+                      <p><strong>Khởi động quy trình:</strong> Đủ để bắt đầu quy trình sản xuất, nhập hàng, hoặc chuẩn bị giao hàng.</p>
+                      <p><strong>Cân bằng tài chính:</strong> 10% là mức hợp lý, không quá cao để khách hàng có thể thanh toán, nhưng đủ để đảm bảo tính cam kết.</p>
+                    </div>
+                  </div>
+                }
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            )}
+            {!isFirstPayment && (
+              <Alert
+                message="Thanh toán tiếp theo"
+                description={`Đơn hàng đã có cọc ban đầu. Bạn có thể thanh toán bất kỳ số tiền nào từ 1 VNĐ đến ${formatCurrency(remainingAmount)} (số tiền còn lại).`}
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            )}
             {paymentHistory.length >= 2 && (
               <Alert
                 message="Đã thanh toán nhiều lần"
@@ -324,35 +362,70 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               onFinish={handleSubmit}
             >
               <Form.Item
-                label="Số tiền thanh toán"
+                label={
+                  <div>
+                    <span>Số tiền thanh toán</span>
+                    {isFirstPayment ? (
+                      <div className="text-xs text-gray-500 mt-1">
+                        <strong>Yêu cầu cọc:</strong> Tối thiểu {formatCurrency(MIN_DEPOSIT_AMOUNT)} ({MIN_DEPOSIT_PERCENT * 100}% giá trị đơn hàng)
+                        <br />
+                        <span className="text-blue-600">Lý do: Đảm bảo khách hàng nghiêm túc và đủ để giữ hàng, bắt đầu quy trình sản xuất/giao hàng</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500 mt-1">
+                        <span className="text-green-600">✓ Đã có cọc ban đầu. Có thể thanh toán bất kỳ số tiền nào còn lại.</span>
+                      </div>
+                    )}
+                  </div>
+                }
                 name="amount"
                 rules={[
                   { required: true, message: 'Vui lòng nhập số tiền' },
                   { type: 'number', min: 1, message: 'Số tiền phải lớn hơn 0' },
                   {
                     validator: (_, value) => {
+                      if (!value || value <= 0) {
+                        return Promise.resolve();
+                      }
+                      
+                      // Kiểm tra số tiền không vượt quá số còn lại
                       if (value > remainingAmount) {
                         return Promise.reject(`Số tiền không được vượt quá ${formatCurrency(remainingAmount)}`);
                       }
+                      
+                      // Kiểm tra ràng buộc cọc cho lần thanh toán đầu tiên
+                      if (isFirstPayment) {
+                        if (value < MIN_DEPOSIT_AMOUNT) {
+                          return Promise.reject(
+                            `Số tiền cọc tối thiểu phải là ${formatCurrency(MIN_DEPOSIT_AMOUNT)} (${MIN_DEPOSIT_PERCENT * 100}% giá trị đơn hàng)`
+                          );
+                        }
+                      }
+                      
                       return Promise.resolve();
                     }
                   }
                 ]}
               >
-                {paymentHistory.length >= 1 ? (
+                {/* Nếu đã cọc rồi hoặc đã thanh toán nhiều lần: tự động điền số tiền còn lại và readonly */}
+                {!isFirstPayment || paymentHistory.length >= 1 ? (
                   <InputNumber
                     style={{ width: '100%', backgroundColor: '#f0f0f0', fontWeight: 'bold' }}
                     value={remainingAmount}
                     formatter={value => value !== undefined && value !== null ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
                     parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
                     readOnly
+                    min={remainingAmount}
+                    max={remainingAmount}
                   />
                 ) : (
                   <InputNumber
                     style={{ width: '100%' }}
                     formatter={value => value !== undefined && value !== null ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
                     parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
-                    placeholder="Nhập số tiền thanh toán"
+                    placeholder={`Tối thiểu ${formatCurrency(MIN_DEPOSIT_AMOUNT)}`}
+                    min={MIN_DEPOSIT_AMOUNT}
+                    max={remainingAmount}
                   />
                 )}
               </Form.Item>
