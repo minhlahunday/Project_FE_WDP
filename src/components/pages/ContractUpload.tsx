@@ -31,6 +31,7 @@ import {
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
+import Swal from 'sweetalert2';
 
 // Import services and types (Giả định đã có)
 import { orderService } from '../../services/orderService';
@@ -115,11 +116,21 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
     const isLt10M = file.size / 1024 / 1024 < 10;
 
     if (!isImageOrPdf) {
-      alert('Chỉ hỗ trợ file ảnh và PDF!'); 
+      Swal.fire({
+        icon: 'warning',
+        title: 'Lỗi định dạng file',
+        text: 'Chỉ hỗ trợ file ảnh và PDF!',
+        confirmButtonText: 'Đóng'
+      });
       return;
     }
     if (!isLt10M) {
-      alert('File phải nhỏ hơn 10MB!'); 
+      Swal.fire({
+        icon: 'warning',
+        title: 'File quá lớn',
+        text: 'File phải nhỏ hơn 10MB!',
+        confirmButtonText: 'Đóng'
+      });
       return;
     }
 
@@ -148,23 +159,45 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
 
   const handlePreview = async (file: CustomUploadFile) => {
     if (file.originFileObj.type.includes('pdf')) {
-        alert('File PDF. Vui lòng Tải xuống để xem.');
+        Swal.fire({
+          icon: 'info',
+          title: 'File PDF',
+          text: 'Vui lòng Tải xuống để xem.',
+          confirmButtonText: 'Đóng'
+        });
         return;
     }
     
-    // Nếu là ảnh, có thể hiện trong Dialog, ở đây dùng tạm alert
+    // Nếu là ảnh, hiển thị trong SweetAlert
     const previewUrl = (file as any).url || (file as any).preview || await getBase64(file.originFileObj);
-    alert(`Xem trước file ${file.name}. (Dùng Dialog MUI để hiện ảnh)`);
+    Swal.fire({
+      title: `Xem trước: ${file.name}`,
+      imageUrl: previewUrl,
+      imageWidth: '80%',
+      imageAlt: file.name,
+      showCloseButton: true,
+      showConfirmButton: false
+    });
   };
 
   // --- Logic Submit ---
   const handleSubmit = async () => {
     if (fileList.length === 0) {
-      alert('Vui lòng chọn ít nhất một file hợp đồng');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Thiếu thông tin',
+        text: 'Vui lòng chọn ít nhất một file hợp đồng',
+        confirmButtonText: 'Đóng'
+      });
       return;
     }
     if (!uploadDate) {
-      alert('Vui lòng chọn Ngày upload');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Thiếu thông tin',
+        text: 'Vui lòng chọn Ngày upload',
+        confirmButtonText: 'Đóng'
+      });
       return;
     }
 
@@ -191,7 +224,14 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
       if (response && (response.success === true || response.success === undefined)) {
         // Có thể thêm bước cập nhật ghi chú và ngày upload nếu API hỗ trợ
         
-        alert('Đã upload hợp đồng thành công!');
+        await Swal.fire({
+          icon: 'success',
+          title: 'Thành công!',
+          text: 'Đã upload hợp đồng thành công!',
+          confirmButtonText: 'Đóng',
+          timer: 2000,
+          timerProgressBar: true
+        });
         onSuccess();
         onClose();
       } else {
@@ -201,7 +241,12 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
       clearInterval(interval);
       setUploadProgress(0);
       console.error('Error uploading contract:', error);
-      alert('Lỗi khi upload hợp đồng');
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: error?.response?.data?.message || error?.message || 'Lỗi khi upload hợp đồng',
+        confirmButtonText: 'Đóng'
+      });
     } finally {
       setLoading(false);
     }

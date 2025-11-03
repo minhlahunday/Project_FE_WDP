@@ -440,9 +440,9 @@ export const OrderDetailMUI: React.FC = () => {
           {/* Salesperson Information */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              {/* <Typography variant="h6" gutterBottom>
                 Nhân viên phụ trách
-              </Typography>
+              </Typography> */}
               {order.salesperson ? (
                 <Stack spacing={1}>
                   <Box>

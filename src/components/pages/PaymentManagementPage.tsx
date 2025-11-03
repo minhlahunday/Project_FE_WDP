@@ -108,7 +108,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
       message.info('Đang tạo hợp đồng PDF...');
       
       // Map Order data từ backend → PDF format và generate trên FE
-      const contractData = mapOrderToContractPDF(order);
+      const contractData = await mapOrderToContractPDF(order);
       await generateContractPDF(contractData);
       
       message.success('Hợp đồng đã được tạo và tải xuống thành công!');

@@ -468,109 +468,102 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Sản phẩm</TableCell>
-                            <TableCell align="center">Số lượng</TableCell>
-                            <TableCell align="right">Giá gốc</TableCell>
-                            <TableCell align="right">Giảm giá</TableCell>
-                            <TableCell align="right">Thành tiền</TableCell>
+                            <TableCell align="center" sx={{ width: '5%' }}>STT</TableCell>
+                            <TableCell sx={{ width: '40%' }}>Tên hàng hóa, dịch vụ</TableCell>
+                            <TableCell align="center" sx={{ width: '10%' }}>Đơn vị tính</TableCell>
+                            <TableCell align="center" sx={{ width: '10%' }}>Số lượng</TableCell>
+                            <TableCell align="right" sx={{ width: '15%' }}>Đơn giá</TableCell>
+                            <TableCell align="right" sx={{ width: '20%' }}>Thành tiền</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell colSpan={6} align="right" sx={{ fontSize: '0.75rem', fontStyle: 'italic' }}>
+                              (Thành tiền = Số lượng × Đơn giá)
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {order.items.map((item: any, index: number) => (
-                            <TableRow
-                              key={`${item?.vehicle_id || "unknown"}-${
-                                item?.color || "default"
-                              }-${index}`}
-                            >
-                              <TableCell>
-                                <Box>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="medium"
-                                  >
-                                    {item.vehicle_name}
-                                  </Typography>
-                                  {item.color && (
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
-                                    >
-                                      Màu: {item.color}
+                          {(() => {
+                            let rowIndex = 1;
+                            const rows: JSX.Element[] = [];
+                            
+                            order.items.forEach((item: any) => {
+                              const vehicleAmount = (item.vehicle_price || 0) * (item.quantity || 1);
+                              
+                              // Vehicle row
+                              rows.push(
+                                <TableRow key={`vehicle-${rowIndex}`}>
+                                  <TableCell align="center">{rowIndex++}</TableCell>
+                                  <TableCell>
+                                    <Typography variant="body2">
+                                      {item.vehicle_name || 'N/A'}
+                                      {item.color && ` (Màu ${item.color})`}
                                     </Typography>
-                                  )}
-                                  {item.options && item.options.length > 0 && (
-                                    <Typography
-                                      variant="caption"
-                                      color="primary"
-                                      display="block"
-                                    >
-                                      Tùy chọn:{" "}
-                                      {item.options
-                                        .map((opt: any) => opt.name)
-                                        .join(", ")}
-                                    </Typography>
-                                  )}
-                                  {item.accessories &&
-                                    item.accessories.length > 0 && (
-                                      <Typography
-                                        variant="caption"
-                                        color="secondary"
-                                        display="block"
-                                      >
-                                        Phụ kiện:{" "}
-                                        {item.accessories
-                                          .map(
-                                            (acc: any) =>
-                                              `${acc.name} (x${acc.quantity})`
-                                          )
-                                          .join(", ")}
-                                      </Typography>
-                                    )}
-                                </Box>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="medium">
-                                  {item.quantity}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="right">
-                                <Typography variant="body2">
-                                  {formatCurrency(item.vehicle_price)}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="right">
-                                <Typography variant="body2" color="error">
-                                  {item.discount > 0
-                                    ? `-${formatCurrency(item.discount)}`
-                                    : "-"}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="right">
-                                <Typography
-                                  variant="body2"
-                                  fontWeight="medium"
-                                  color="success.main"
-                                >
-                                  {formatCurrency(item.final_amount)}
-                                </Typography>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                                  </TableCell>
+                                  <TableCell align="center">Chiếc</TableCell>
+                                  <TableCell align="center">{item.quantity || 1}</TableCell>
+                                  <TableCell align="right">{formatCurrency(item.vehicle_price || 0)}</TableCell>
+                                  <TableCell align="right">{formatCurrency(vehicleAmount)}</TableCell>
+                                </TableRow>
+                              );
+                              
+                              // Accessories rows
+                              if (item.accessories && item.accessories.length > 0) {
+                                item.accessories.forEach((acc: any, accIndex: number) => {
+                                  const accAmount = (acc.price || 0) * (acc.quantity || 1);
+                                  rows.push(
+                                    <TableRow key={`accessory-${rowIndex}-${accIndex}`}>
+                                      <TableCell align="center">{rowIndex++}</TableCell>
+                                      <TableCell>
+                                        <Typography variant="body2">{acc.name || 'N/A'}</Typography>
+                                      </TableCell>
+                                      <TableCell align="center">Chiếc</TableCell>
+                                      <TableCell align="center">{acc.quantity || 1}</TableCell>
+                                      <TableCell align="right">{formatCurrency(acc.price || 0)}</TableCell>
+                                      <TableCell align="right">{formatCurrency(accAmount)}</TableCell>
+                                    </TableRow>
+                                  );
+                                });
+                              }
+                              
+                              // Options rows
+                              if (item.options && item.options.length > 0) {
+                                item.options.forEach((opt: any, optIndex: number) => {
+                                  const optQuantity = opt.quantity || 1;
+                                  const optAmount = (opt.price || 0) * optQuantity;
+                                  rows.push(
+                                    <TableRow key={`option-${rowIndex}-${optIndex}`}>
+                                      <TableCell align="center">{rowIndex++}</TableCell>
+                                      <TableCell>
+                                        <Typography variant="body2">{opt.name || 'N/A'}</Typography>
+                                      </TableCell>
+                                      <TableCell align="center">Bộ</TableCell>
+                                      <TableCell align="center">{optQuantity}</TableCell>
+                                      <TableCell align="right">{formatCurrency(opt.price || 0)}</TableCell>
+                                      <TableCell align="right">{formatCurrency(optAmount)}</TableCell>
+                                    </TableRow>
+                                  );
+                                });
+                              }
+                            });
+                            
+                            return rows;
+                          })()}
                           <TableRow>
-                            <TableCell colSpan={4}>
+                            <TableCell colSpan={5} sx={{ borderTop: '2px solid #333', fontWeight: 'bold', textAlign: 'right', paddingRight: '16px' }}>
                               <Typography variant="body1" fontWeight="bold">
-                                Tổng cộng:
+                                Tổng cộng tiền thanh toán:
                               </Typography>
                             </TableCell>
-                            <TableCell align="right">
+                            <TableCell align="right" sx={{ borderTop: '2px solid #333' }}>
                               <Typography
                                 variant="body1"
                                 fontWeight="bold"
-                                color="success.main"
+                                color="error.main"
+                                sx={{ fontSize: '1rem' }}
                               >
                                 {formatCurrency(
                                   order.items.reduce(
-                                    (sum, item) => sum + item.final_amount,
+                                    (sum: number, item: any) => sum + (item.final_amount || 0),
                                     0
                                   )
                                 )}
@@ -631,12 +624,12 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                     )}
                   </Paper>
 
-                  {/* Salesperson Information */}
+                  {/* Salesperson Information
                   <Paper elevation={1} sx={{ p: 3, mt: 3 }}>
-                    <Typography variant="h6" gutterBottom fontWeight="bold">
+                    {/* <Typography variant="h6" gutterBottom fontWeight="bold">
                       Nhân viên phụ trách
-                    </Typography>
-                    {order.salesperson ? (
+                    </Typography> */}
+                    {/* {order.salesperson ? (
                       <Stack spacing={1}>
                         <Box>
                           <Typography variant="body2" color="text.secondary">
@@ -656,11 +649,12 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Box>
                       </Stack>
                     ) : (
-                      <Typography color="text.secondary">
-                        Chưa phân công nhân viên
-                      </Typography>
+                      // <Typography color="text.secondary">
+                      //   Chưa phân công nhân viên
+                      // </Typography>
+                      <div></div>
                     )}
-                  </Paper>
+                  </Paper> */} 
 
                   {/* Delivery Information */}
                   {order.delivery && (

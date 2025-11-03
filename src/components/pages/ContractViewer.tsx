@@ -118,7 +118,7 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
       message.info('Đang tạo hợp đồng PDF...');
       
       // Generate PDF on frontend
-      const contractData = mapOrderToContractPDF(order);
+      const contractData = await mapOrderToContractPDF(order);
       await generateContractPDF(contractData);
       
       message.success('Đã tải xuống hợp đồng');
@@ -360,48 +360,101 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
                 <table className="w-full border-collapse border border-gray-300">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-4 py-2 text-left">Tên sản phẩm</th>
-                      <th className="border border-gray-300 px-4 py-2 text-center">Màu sắc</th>
-                      <th className="border border-gray-300 px-4 py-2 text-center">Số lượng</th>
-                      <th className="border border-gray-300 px-4 py-2 text-right">Đơn giá</th>
-                      <th className="border border-gray-300 px-4 py-2 text-right">Thành tiền</th>
+                      <th className="border border-gray-300 px-4 py-2 text-center" style={{ width: '5%' }}>STT</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left" style={{ width: '40%' }}>Tên hàng hóa, dịch vụ</th>
+                      <th className="border border-gray-300 px-4 py-2 text-center" style={{ width: '10%' }}>Đơn vị tính</th>
+                      <th className="border border-gray-300 px-4 py-2 text-center" style={{ width: '10%' }}>Số lượng</th>
+                      <th className="border border-gray-300 px-4 py-2 text-right" style={{ width: '15%' }}>Đơn giá</th>
+                      <th className="border border-gray-300 px-4 py-2 text-right" style={{ width: '20%' }}>Thành tiền</th>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <th colSpan={6} className="border border-gray-300 px-4 py-1 text-right text-xs italic">
+                        (Thành tiền = Số lượng × Đơn giá)
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {order.items.map((item: any, index: number) => (
-                      <tr key={index}>
-                        <td className="border border-gray-300 px-4 py-2">
-                          <div className="font-medium">{item.vehicle_name || 'N/A'}</div>
-                          {item.vehicle_model && (
-                            <div className="text-sm text-gray-500">{item.vehicle_model}</div>
-                          )}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          {item.color || 'N/A'}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          {item.quantity || 1}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-right">
-                          {(() => {
-                            const unitPrice = item.unit_price || item.price || item.vehicle_price || 0;
-                            // Nếu không có giá đơn vị, tính từ tổng tiền chia cho số lượng
-                            const calculatedPrice = unitPrice || (order.final_amount / (order.items?.length || 1));
-                            return formatCurrency(calculatedPrice);
-                          })()}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-right font-medium">
-                          {(() => {
-                            const unitPrice = item.unit_price || item.price || item.vehicle_price || 0;
-                            const quantity = item.quantity || 1;
-                            // Nếu không có giá đơn vị, tính từ tổng tiền chia cho số lượng
-                            const calculatedPrice = unitPrice || (order.final_amount / (order.items?.length || 1));
-                            return formatCurrency(calculatedPrice * quantity);
-                          })()}
-                        </td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      let rowIndex = 1;
+                      const rows: JSX.Element[] = [];
+                      
+                      order.items.forEach((item: any) => {
+                        const unitPrice = item.unit_price || item.price || item.vehicle_price || 0;
+                        const quantity = item.quantity || 1;
+                        const vehicleAmount = unitPrice * quantity;
+                        
+                        // Vehicle row
+                        rows.push(
+                          <tr key={`vehicle-${rowIndex}`}>
+                            <td className="border border-gray-300 px-4 py-2 text-center">{rowIndex++}</td>
+                            <td className="border border-gray-300 px-4 py-2">
+                              <div className="font-medium">
+                                {item.vehicle_name || 'N/A'}
+                                {item.color && ` (Màu ${item.color})`}
+                              </div>
+                              {item.vehicle_model && (
+                                <div className="text-sm text-gray-500">{item.vehicle_model}</div>
+                              )}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-2 text-center">Chiếc</td>
+                            <td className="border border-gray-300 px-4 py-2 text-center">{quantity}</td>
+                            <td className="border border-gray-300 px-4 py-2 text-right">{formatCurrency(unitPrice)}</td>
+                            <td className="border border-gray-300 px-4 py-2 text-right">{formatCurrency(vehicleAmount)}</td>
+                          </tr>
+                        );
+                        
+                        // Accessories rows
+                        if (item.accessories && item.accessories.length > 0) {
+                          item.accessories.forEach((acc: any, accIndex: number) => {
+                            const accPrice = acc.price || 0;
+                            const accQuantity = acc.quantity || 1;
+                            const accAmount = accPrice * accQuantity;
+                            rows.push(
+                              <tr key={`accessory-${rowIndex}-${accIndex}`}>
+                                <td className="border border-gray-300 px-4 py-2 text-center">{rowIndex++}</td>
+                                <td className="border border-gray-300 px-4 py-2">{acc.name || 'N/A'}</td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">Chiếc</td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">{accQuantity}</td>
+                                <td className="border border-gray-300 px-4 py-2 text-right">{formatCurrency(accPrice)}</td>
+                                <td className="border border-gray-300 px-4 py-2 text-right">{formatCurrency(accAmount)}</td>
+                              </tr>
+                            );
+                          });
+                        }
+                        
+                        // Options rows
+                        if (item.options && item.options.length > 0) {
+                          item.options.forEach((opt: any, optIndex: number) => {
+                            const optPrice = opt.price || 0;
+                            const optQuantity = opt.quantity || 1;
+                            const optAmount = optPrice * optQuantity;
+                            rows.push(
+                              <tr key={`option-${rowIndex}-${optIndex}`}>
+                                <td className="border border-gray-300 px-4 py-2 text-center">{rowIndex++}</td>
+                                <td className="border border-gray-300 px-4 py-2">{opt.name || 'N/A'}</td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">Bộ</td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">{optQuantity}</td>
+                                <td className="border border-gray-300 px-4 py-2 text-right">{formatCurrency(optPrice)}</td>
+                                <td className="border border-gray-300 px-4 py-2 text-right">{formatCurrency(optAmount)}</td>
+                              </tr>
+                            );
+                          });
+                        }
+                      });
+                      
+                      return rows;
+                    })()}
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={5} className="border-t-2 border-gray-400 px-4 py-2 text-right font-bold">
+                        Tổng cộng tiền thanh toán:
+                      </td>
+                      <td className="border-t-2 border-gray-400 px-4 py-2 text-right font-bold text-red-600 text-lg">
+                        {formatCurrency(order.final_amount)}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </Card>

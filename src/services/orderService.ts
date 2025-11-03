@@ -1,4 +1,4 @@
-import { get, post, put, del } from "./httpClient";
+import { get, post, put, patch, del } from "./httpClient";
 import { Order as OrderType } from "../types/index";
 
 // Interfaces for Order APIs
@@ -352,15 +352,18 @@ export const orderService = {
     return get<OrderRequestResponse>(`/api/order-request/${requestId}`);
   },
 
-  // Update order request status (for manager to approve/reject)
-  async updateOrderRequestStatus(
+  // Approve order request (for manager)
+  async approveOrderRequest(requestId: string): Promise<OrderRequestResponse> {
+    return patch<OrderRequestResponse>(`/api/order-request/${requestId}/approve`);
+  },
+
+  // Reject order request (for manager)
+  async rejectOrderRequest(
     requestId: string,
-    status: "approved" | "rejected",
-    notes?: string
+    reason: string
   ): Promise<OrderRequestResponse> {
-    return put<OrderRequestResponse>(`/api/order-request/${requestId}/status`, {
-      status,
-      notes,
+    return patch<OrderRequestResponse>(`/api/order-request/${requestId}/reject`, {
+      reason,
     });
   },
 
