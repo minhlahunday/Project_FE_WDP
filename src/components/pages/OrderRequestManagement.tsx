@@ -585,7 +585,7 @@ export const OrderRequestManagement: React.FC = () => {
             Quản lý yêu cầu đặt xe
           </Typography>
 
-          {user?.role === "dealer_staff" && (
+          {/* {user?.role === "dealer_staff" && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -599,7 +599,7 @@ export const OrderRequestManagement: React.FC = () => {
             >
               Tạo yêu cầu mới
             </Button>
-          )}
+          )} */}
         </Box>
 
         {/* Search and Filters */}
