@@ -547,7 +547,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </Card>
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 24, marginBottom: 24 }}>
-          👤 Thông tin khách hàng
+          Thông tin khách hàng
         </Divider>
 
         <Form.Item
@@ -565,7 +565,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </Form.Item>
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
-          📦 Chi tiết sản phẩm
+          Chi tiết sản phẩm
         </Divider>
 
         <Row gutter={24}>
@@ -597,7 +597,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Row gutter={24}>
           {/* <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>💰 Giảm giá (VNĐ)</span>} name="discountSelection">
+            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Giảm giá (VNĐ)</span>} name="discountSelection">
               <CustomSelect
                 options={discountSelectOptions}
                 placeholder="Chọn giảm giá"
@@ -611,7 +611,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </Col> */}
 
           <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>🎁 Khuyến mãi</span>} name="promotion_id">
+            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Khuyến mãi</span>} name="promotion_id">
               <CustomSelect
                 options={promotionSelectOptions}
                 placeholder="Chọn khuyến mãi"
@@ -625,7 +625,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
           <Space size="middle">
-            🔧 Tùy chọn bổ sung
+            Tùy chọn bổ sung
             <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>{optionsValue.length}</Tag>
           </Space>
         </Divider>
@@ -679,7 +679,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
           <Space size="middle">
-            🛠️ Phụ kiện
+            Phụ kiện
             <Tag color="green" style={{ fontSize: 14, padding: '4px 12px' }}>{accessoriesValue.length}</Tag>
           </Space>
         </Divider>
@@ -742,7 +742,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </Form.List>
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
-          📝 Ghi chú
+          Ghi chú
         </Divider>
 
         <Form.Item name="notes">

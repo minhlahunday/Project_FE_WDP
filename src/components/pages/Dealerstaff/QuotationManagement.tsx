@@ -27,6 +27,8 @@ import {
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { authService } from '../../../services/authService';
+import { accessoryService, Accessory } from '../../../services/accessoryService';
+import { optionService, VehicleOption } from '../../../services/optionService';
 import '../../../styles/quotation-management.css';
 
 const { Title, Text } = Typography;
@@ -65,12 +67,20 @@ interface Quotation {
       option_id?: string;
       name?: string;
       price?: number;
+      amount?: number;
+      value?: number;
+      cost?: number;
+      unit_price?: number;
     }>;
     accessories?: Array<{
       accessory_id?: string;
       name?: string;
       quantity: number;
       unit_price?: number;
+      price?: number;
+      amount?: number;
+      value?: number;
+      cost?: number;
     }>;
     final_amount: number; // Per item final amount
     subtotal?: number;
@@ -112,6 +122,13 @@ export const QuotationManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [accessoriesCatalog, setAccessoriesCatalog] = useState<Accessory[]>([]);
+  const [optionsCatalog, setOptionsCatalog] = useState<VehicleOption[]>([]);
+  const [creatorInfo, setCreatorInfo] = useState<{
+    full_name?: string;
+    email?: string;
+    role?: string;
+  } | null>(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -230,7 +247,7 @@ export const QuotationManagement: React.FC = () => {
         setTotalItems(0);
       }
     } catch (error) {
-      console.error('❌ Error loading quotations:', error);
+      console.error(' Error loading quotations:', error);
       message.error('Không thể tải danh sách báo giá');
       setQuotations([]);
       setTotalItems(0);
@@ -262,6 +279,24 @@ export const QuotationManagement: React.FC = () => {
     setStats(newStats);
   };
 
+  // Load accessories and options catalog for price lookup
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      try {
+        const [accessories, options] = await Promise.all([
+          accessoryService.getAccessories(),
+          optionService.getOptions()
+        ]);
+        setAccessoriesCatalog(accessories);
+        setOptionsCatalog(options);
+        console.log('✅ Loaded catalogs - Accessories:', accessories.length, 'Options:', options.length);
+      } catch (error) {
+        console.error('❌ Error loading catalogs:', error);
+      }
+    };
+    loadCatalogs();
+  }, []);
+
   const handleViewDetail = async (quotation: Quotation) => {
     try {
       console.log('🔍 Fetching quotation detail for ID:', quotation._id);
@@ -285,14 +320,94 @@ export const QuotationManagement: React.FC = () => {
         }
       }
       
-      console.log('📋 Setting quotation detail:', detailData);
-      setSelectedQuotation(detailData);
+      // Enrich with catalog prices if missing
+      const enrichedData = { ...detailData };
+      if (enrichedData.items) {
+        enrichedData.items = enrichedData.items.map(item => {
+          const enrichedItem = { ...item };
+          
+          // Enrich accessories with catalog prices
+          if (enrichedItem.accessories && enrichedItem.accessories.length > 0) {
+            enrichedItem.accessories = enrichedItem.accessories.map(acc => {
+              const accObj = acc as Record<string, unknown>;
+              // If no price, try to find in catalog
+              if (!accObj.price && !accObj.unit_price && acc.accessory_id) {
+                const catalogAcc = accessoriesCatalog.find(a => a._id === acc.accessory_id);
+                if (catalogAcc?.price) {
+                  console.log('💰 Found accessory price from catalog:', acc.accessory_id, catalogAcc.price);
+                  return { ...acc, unit_price: catalogAcc.price, price: catalogAcc.price };
+                }
+              }
+              return acc;
+            });
+          }
+          
+          // Enrich options with catalog prices
+          if (enrichedItem.options && enrichedItem.options.length > 0) {
+            enrichedItem.options = enrichedItem.options.map(opt => {
+              const optObj = opt as Record<string, unknown>;
+              // If no price, try to find in catalog
+              if (!optObj.price && opt.option_id) {
+                const catalogOpt = optionsCatalog.find(o => o._id === opt.option_id);
+                if (catalogOpt?.price) {
+                  console.log('💰 Found option price from catalog:', opt.option_id, catalogOpt.price);
+                  return { ...opt, price: catalogOpt.price };
+                }
+              }
+              return opt;
+            });
+          }
+          
+          return enrichedItem;
+        });
+      }
+      
+      // Fetch creator info if created_by is a string ID
+      let creatorData = null;
+      if (enrichedData.created_by) {
+        if (typeof enrichedData.created_by === 'object' && enrichedData.created_by !== null) {
+          // Already populated
+          creatorData = {
+            full_name: enrichedData.created_by.full_name,
+            email: enrichedData.created_by.email,
+            role: enrichedData.created_by.role
+          };
+          console.log('✅ Creator info from populated data:', creatorData);
+        } else if (typeof enrichedData.created_by === 'string') {
+          // Need to fetch
+          try {
+            console.log('🔍 Fetching creator info for ID:', enrichedData.created_by);
+            const userResponse = await authService.getUserById(enrichedData.created_by);
+            if (userResponse.success && userResponse.data) {
+              const user = userResponse.data as unknown as Record<string, unknown>;
+              creatorData = {
+                full_name: (user.full_name as string) || (user.name as string) || '',
+                email: (user.email as string) || '',
+                role: (user.role as string) || ((user.role_id as { name?: string })?.name) || ''
+              };
+              console.log('✅ Creator info fetched:', creatorData);
+            }
+          } catch (error) {
+            console.error('❌ Error fetching creator info:', error);
+          }
+        }
+      }
+      
+      console.log('📋 Setting quotation detail (enriched):', enrichedData);
+      console.log('📊 Items with prices:', enrichedData.items?.map(item => ({
+        vehicle: item.vehicle_name,
+        accessories: item.accessories?.map(acc => ({ name: acc.name, price: (acc as Record<string, unknown>).price || (acc as Record<string, unknown>).unit_price })),
+        options: item.options?.map(opt => ({ name: opt.name, price: (opt as Record<string, unknown>).price }))
+      })));
+      setSelectedQuotation(enrichedData);
+      setCreatorInfo(creatorData);
       setShowDetailModal(true);
     } catch (error) {
       console.error('❌ Error fetching quotation detail:', error);
       message.error('Không thể tải chi tiết báo giá');
       // Fallback: show current data
       setSelectedQuotation(quotation);
+      setCreatorInfo(null);
       setShowDetailModal(true);
     } finally {
       setLoading(false);
@@ -663,7 +778,7 @@ export const QuotationManagement: React.FC = () => {
                   <>
                     <br />
                     <Text type="secondary" style={{ fontSize: 12 }}>
-                      📱 {customerPhone}
+                      {customerPhone}
                     </Text>
                   </>
                 )}
@@ -674,7 +789,7 @@ export const QuotationManagement: React.FC = () => {
       }
     },
     {
-      title: <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>🚗 Xe</span>,
+      title: <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>Xe</span>,
       dataIndex: 'items',
       key: 'vehicles',
       width: 250,
@@ -717,7 +832,7 @@ export const QuotationManagement: React.FC = () => {
       }
     },
     {
-      title: <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>💰 Tổng giá trị</span>,
+      title: <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>Tổng giá trị</span>,
       dataIndex: 'final_amount',
       key: 'final_amount',
       width: 170,
@@ -765,7 +880,7 @@ export const QuotationManagement: React.FC = () => {
       }
     },
     {
-      title: <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>📅 Ngày tạo</span>,
+      title: <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}> Ngày tạo</span>,
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 180,
@@ -1020,7 +1135,7 @@ export const QuotationManagement: React.FC = () => {
                   {searchQuery && (
                     <div className="bg-white bg-opacity-20 backdrop-blur-sm px-4 py-2 rounded-full border border-white border-opacity-30">
                       <span className="text-white text-sm font-medium">
-                        🔍 "{searchQuery}"
+                         "{searchQuery}"
                       </span>
                     </div>
                   )}
@@ -1096,7 +1211,10 @@ export const QuotationManagement: React.FC = () => {
           </div>
         }
         open={showDetailModal}
-        onCancel={() => setShowDetailModal(false)}
+        onCancel={() => {
+          setShowDetailModal(false);
+          setCreatorInfo(null);
+        }}
         width={900}
         footer={[
           <Button 
@@ -1181,26 +1299,77 @@ export const QuotationManagement: React.FC = () => {
                 </Tag>
               </Descriptions.Item>
 
-              <Descriptions.Item label="Người tạo" span={2}>
-                <div>
-                  {typeof selectedQuotation.created_by === 'object' && selectedQuotation.created_by ? (
-                    <>
-                      <Text strong>{selectedQuotation.created_by.full_name || 'N/A'}</Text>
-                      {selectedQuotation.created_by.email && (
-                        <>
-                          <br />
-                          <Text type="secondary">{selectedQuotation.created_by.email}</Text>
-                        </>
-                      )}
-                      {selectedQuotation.created_by.role && (
-                        <Tag color="blue" style={{ marginLeft: 8 }}>{selectedQuotation.created_by.role}</Tag>
-                      )}
-                    </>
-                  ) : (
-                    <Text>{selectedQuotation.created_by_name || selectedQuotation.created_by || 'N/A'}</Text>
-                  )}
-                </div>
-              </Descriptions.Item>
+              {(() => {
+                // Check if we have any creator info to display
+                const createdByObj = typeof selectedQuotation.created_by === 'object' && selectedQuotation.created_by !== null 
+                  ? selectedQuotation.created_by 
+                  : null;
+                const hasCreatorObject = createdByObj && createdByObj.full_name;
+                const hasCreatorInfo = creatorInfo && creatorInfo.full_name;
+                const hasCreatorName = selectedQuotation.created_by_name;
+                const hasCreatorId = selectedQuotation.created_by && typeof selectedQuotation.created_by === 'string';
+                
+                // Only show if we have some creator information
+                if (!hasCreatorObject && !hasCreatorInfo && !hasCreatorName && !hasCreatorId) {
+                  return null;
+                }
+                
+                return (
+                  <Descriptions.Item label="Người tạo" span={2}>
+                    <div>
+                      {(() => {
+                        // Check populated created_by object
+                        if (hasCreatorObject && createdByObj) {
+                          return (
+                            <>
+                              <Text strong>{createdByObj.full_name}</Text>
+                              {createdByObj.email && (
+                                <>
+                                  <br />
+                                  <Text type="secondary">{createdByObj.email}</Text>
+                                </>
+                              )}
+                              {createdByObj.role && (
+                                <Tag color="blue" style={{ marginLeft: 8 }}>{createdByObj.role}</Tag>
+                              )}
+                            </>
+                          );
+                        }
+                        
+                        // Check fetched creator info
+                        if (hasCreatorInfo && creatorInfo) {
+                          return (
+                            <>
+                              <Text strong>{creatorInfo.full_name}</Text>
+                              {creatorInfo.email && (
+                                <>
+                                  <br />
+                                  <Text type="secondary">{creatorInfo.email}</Text>
+                                </>
+                              )}
+                              {creatorInfo.role && (
+                                <Tag color="blue" style={{ marginLeft: 8 }}>{creatorInfo.role}</Tag>
+                              )}
+                            </>
+                          );
+                        }
+                        
+                        // Check created_by_name
+                        if (hasCreatorName) {
+                          return <Text strong>{selectedQuotation.created_by_name}</Text>;
+                        }
+                        
+                        // Check created_by as string ID
+                        if (hasCreatorId && typeof selectedQuotation.created_by === 'string') {
+                          return <Text type="secondary">ID: {selectedQuotation.created_by}</Text>;
+                        }
+                        
+                        return null;
+                      })()}
+                    </div>
+                  </Descriptions.Item>
+                );
+              })()}
 
               {selectedQuotation.updated_by && (
                 <Descriptions.Item label="Người cập nhật" span={2}>
@@ -1218,13 +1387,13 @@ export const QuotationManagement: React.FC = () => {
                     <>
                       <Text strong>{selectedQuotation.customer_id.full_name || 'N/A'}</Text>
                       <br />
-                      <Text type="secondary">📧 {selectedQuotation.customer_id.email || 'N/A'}</Text>
+                      <Text type="secondary"> {selectedQuotation.customer_id.email || 'N/A'}</Text>
                       <br />
-                      <Text type="secondary">📱 {selectedQuotation.customer_id.phone || 'N/A'}</Text>
+                      <Text type="secondary"> {selectedQuotation.customer_id.phone || 'N/A'}</Text>
                       {selectedQuotation.customer_id.address && (
                         <>
                           <br />
-                          <Text type="secondary">📍 {selectedQuotation.customer_id.address}</Text>
+                          <Text type="secondary"> {selectedQuotation.customer_id.address}</Text>
                         </>
                       )}
                     </>
@@ -1261,14 +1430,14 @@ export const QuotationManagement: React.FC = () => {
               )}
 
               {selectedQuotation.startDate && (
-                <Descriptions.Item label="📅 Ngày bắt đầu">
+                <Descriptions.Item label=" Ngày bắt đầu">
                   <Text strong style={{ color: '#1890ff' }}>
                     {formatDate(selectedQuotation.startDate)}
                   </Text>
                 </Descriptions.Item>
               )}
               {selectedQuotation.endDate && (
-                <Descriptions.Item label="⏰ Ngày kết thúc">
+                <Descriptions.Item label=" Ngày kết thúc">
                   <Text strong style={{ 
                     color: new Date(selectedQuotation.endDate) < new Date() ? '#ff4d4f' : '#52c41a' 
                   }}>
@@ -1326,6 +1495,7 @@ export const QuotationManagement: React.FC = () => {
               )}
             </Descriptions>
 
+            {/* Title Section */}
             <div style={{
               marginTop: 24,
               marginBottom: 16,
@@ -1337,231 +1507,256 @@ export const QuotationManagement: React.FC = () => {
               gap: 12,
               boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)'
             }}>
-              <div style={{
-                width: 36,
-                height: 36,
-                background: 'rgba(255,255,255,0.25)',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-                border: '1px solid rgba(255,255,255,0.3)'
-              }}>
-                🚗
-              </div>
               <Title level={5} style={{ margin: 0, color: 'white', fontSize: 16, fontWeight: 600 }}>
-                Chi tiết xe
+                CHI TIẾT BÁO GIÁ
               </Title>
             </div>
-            
-            {selectedQuotation.items.map((item, itemIndex) => (
-              <Card 
-                key={itemIndex} 
-                style={{ 
-                  marginBottom: 16, 
-                  borderRadius: 12,
-                  border: '1px solid #e8eaed',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  overflow: 'hidden'
-                }}
-              >
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <div style={{ 
-                      marginBottom: 16, 
-                      background: 'linear-gradient(135deg, #f8f9fe 0%, #fafaff 100%)',
-                      borderRadius: 10,
-                      padding: '12px 16px',
-                      border: '1px solid #e8eaed'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{
-                          width: 32,
-                          height: 32,
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          borderRadius: 8,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: 16
-                        }}>
-                          🚗
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <Text strong style={{ fontSize: 15, color: '#1a1a2e', display: 'block' }}>
-                            {item.vehicle_name || 'N/A'}
-                          </Text>
-                          {item.vehicle_model && (
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              Model: {item.vehicle_model}
-                            </Text>
-                          )}
-                        </div>
-                        {item.vehicle_id && (
-                          <Tag color="purple" style={{ 
-                            padding: '2px 8px',
-                            fontSize: 11,
-                            borderRadius: 6
-                          }}>
-                            ID: {item.vehicle_id}
-                          </Tag>
-                        )}
-                      </div>
-                    </div>
-                  </Col>
 
-                  <Col xs={24} sm={12} md={6}>
-                    <div style={{
-                      padding: '10px 12px',
-                      background: '#fafbfc',
-                      borderRadius: 8,
-                      border: '1px solid #e8eaed'
-                    }}>
-                      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
-                        🎨 Màu sắc
-                      </Text>
+            {/* Table Section */}
+            <div style={{ 
+              background: 'white', 
+              borderRadius: 12, 
+              overflow: 'hidden',
+              border: '1px solid #e8eaed',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+            }}>
+              <Table
+                dataSource={(() => {
+                  const tableData: Array<{
+                    key: string;
+                    stt: number;
+                    tenHangHoa: string;
+                    donViTinh: string;
+                    soLuong: number;
+                    donGia: number;
+                    thanhTien: number;
+                  }> = [];
+                  let stt = 1;
+
+                  // Helper function to extract price from various possible fields
+                  const getPrice = (obj: Record<string, unknown>, defaultPrice = 0): number => {
+                    const price = obj.price || obj.unit_price || obj.amount || obj.value || obj.cost;
+                    if (typeof price === 'number') {
+                      return price > 0 ? price : defaultPrice;
+                    }
+                    if (typeof price === 'string') {
+                      const parsed = parseFloat(price);
+                      return !isNaN(parsed) && parsed > 0 ? parsed : defaultPrice;
+                    }
+                    return defaultPrice;
+                  };
+
+                  // Add vehicles
+                  selectedQuotation.items.forEach((item) => {
+                    const vehicleName = item.vehicle_name || 'N/A';
+                    const colorText = item.color ? ` (Màu ${item.color})` : '';
+                    const vehiclePrice = item.vehicle_price || item.unit_price || 0;
+                    
+                    tableData.push({
+                      key: `vehicle-${stt}`,
+                      stt: stt++,
+                      tenHangHoa: `${vehicleName}${colorText}`,
+                      donViTinh: 'Chiếc',
+                      soLuong: item.quantity,
+                      donGia: vehiclePrice,
+                      thanhTien: vehiclePrice * item.quantity
+                    });
+
+                    // Add accessories
+                    if (item.accessories && item.accessories.length > 0) {
+                      item.accessories.forEach((acc) => {
+                        const accObj = acc as Record<string, unknown>;
+                        const accPrice = getPrice(accObj);
+                        const accQuantity = acc.quantity || 1;
+                        
+                        console.log('🔍 Accessory data:', acc, 'Price:', accPrice);
+                        
+                        tableData.push({
+                          key: `accessory-${stt}`,
+                          stt: stt++,
+                          tenHangHoa: acc.name || acc.accessory_id || 'Phụ kiện',
+                          donViTinh: 'Chiếc',
+                          soLuong: accQuantity,
+                          donGia: accPrice,
+                          thanhTien: accPrice * accQuantity
+                        });
+                      });
+                    }
+
+                    // Add options
+                    if (item.options && item.options.length > 0) {
+                      item.options.forEach((opt) => {
+                        const optObj = opt as Record<string, unknown>;
+                        const optPrice = getPrice(optObj);
+                        
+                        console.log('🔍 Option data:', opt, 'Price:', optPrice);
+                        
+                        tableData.push({
+                          key: `option-${stt}`,
+                          stt: stt++,
+                          tenHangHoa: opt.name || opt.option_id || 'Tùy chọn',
+                          donViTinh: 'Bộ',
+                          soLuong: 1,
+                          donGia: optPrice,
+                          thanhTien: optPrice
+                        });
+                      });
+                    }
+                  });
+
+                  console.log('📊 Table data generated:', tableData);
+                  return tableData;
+                })()}
+                columns={[
+                  {
+                    title: <Text strong style={{ color: '#1a1a2e' }}>STT</Text>,
+                    dataIndex: 'stt',
+                    key: 'stt',
+                    width: 60,
+                    align: 'center' as const,
+                    render: (text: number) => <Text>{text}</Text>
+                  },
+                  {
+                    title: <Text strong style={{ color: '#1a1a2e' }}>Tên hàng hóa, dịch vụ</Text>,
+                    dataIndex: 'tenHangHoa',
+                    key: 'tenHangHoa',
+                    width: 300,
+                    render: (text: string) => <Text>{text}</Text>
+                  },
+                  {
+                    title: <Text strong style={{ color: '#1a1a2e' }}>Đơn vị tính</Text>,
+                    dataIndex: 'donViTinh',
+                    key: 'donViTinh',
+                    width: 120,
+                    align: 'center' as const,
+                    render: (text: string) => <Text>{text}</Text>
+                  },
+                  {
+                    title: <Text strong style={{ color: '#1a1a2e' }}>Số lượng</Text>,
+                    dataIndex: 'soLuong',
+                    key: 'soLuong',
+                    width: 100,
+                    align: 'center' as const,
+                    render: (text: number) => <Text>{text}</Text>
+                  },
+                  {
+                    title: <Text strong style={{ color: '#1a1a2e' }}>Đơn giá</Text>,
+                    dataIndex: 'donGia',
+                    key: 'donGia',
+                    width: 150,
+                    align: 'right' as const,
+                    render: (price: number) => (
+                      <Text>{new Intl.NumberFormat('vi-VN').format(price)}</Text>
+                    )
+                  },
+                  {
+                    title: (
                       <div>
-                        {item.color ? (
-                          <Tag color="blue" style={{ 
-                            borderRadius: 4, 
-                            padding: '2px 8px',
-                            fontSize: 12
-                          }}>
-                            {item.color}
-                          </Tag>
-                        ) : <Text>-</Text>}
-                      </div>
-                    </div>
-                  </Col>
-
-                  <Col xs={24} sm={12} md={6}>
-                    <div style={{
-                      padding: '10px 12px',
-                      background: '#fafbfc',
-                      borderRadius: 8,
-                      border: '1px solid #e8eaed'
-                    }}>
-                      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
-                        📦 Số lượng
-                      </Text>
-                      <Text strong style={{ fontSize: 16, color: '#1a1a2e' }}>
-                        {item.quantity}
-                      </Text>
-                    </div>
-                  </Col>
-
-                  <Col xs={24} sm={12} md={6}>
-                    <div style={{
-                      padding: '10px 12px',
-                      background: '#fafbfc',
-                      borderRadius: 8,
-                      border: '1px solid #e8eaed'
-                    }}>
-                      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
-                        💰 Đơn giá
-                      </Text>
-                      <Text strong style={{ fontSize: 14, color: '#1890ff' }}>
-                        {formatPrice(item.vehicle_price || item.unit_price || 0)}
-                      </Text>
-                    </div>
-                  </Col>
-
-                  <Col xs={24} sm={12} md={6}>
-                    <div style={{
-                      padding: '10px 12px',
-                      background: item.discount > 0 ? '#f6ffed' : '#fafbfc',
-                      borderRadius: 8,
-                      border: `1px solid ${item.discount > 0 ? '#b7eb8f' : '#e8eaed'}`
-                    }}>
-                      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
-                        🎁 Giảm giá
-                      </Text>
-                      <Text strong style={{ 
-                        fontSize: 14,
-                        color: item.discount > 0 ? '#52c41a' : '#8c8c8c'
-                      }}>
-                        {item.discount > 0 ? `-${formatPrice(item.discount)}` : '-'}
-                      </Text>
-                    </div>
-                  </Col>
-
-                  {/* Promotion */}
-                  {(item.promotion_id || item.promotion_name) && (
-                    <Col span={24} style={{ marginTop: 12 }}>
-                      <div style={{
-                        padding: '10px 12px',
-                        background: 'linear-gradient(135deg, #fff7e6 0%, #fffbe6 100%)',
-                        borderRadius: 8,
-                        border: '1px solid #ffd666'
-                      }}>
-                        <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 6 }}>
-                          🎁 Khuyến mãi
+                        <Text strong style={{ color: '#1a1a2e' }}>Thành tiền</Text>
+                        <br />
+                        <Text type="secondary" style={{ fontSize: 11, fontWeight: 'normal' }}>
+                          (Thành tiền = Số lượng × Đơn giá)
                         </Text>
-                        <Tag color="gold" style={{
-                          padding: '3px 10px',
-                          fontSize: 12,
-                          borderRadius: 6
-                        }}>
-                          {item.promotion_name || item.promotion_id}
-                        </Tag>
                       </div>
-                    </Col>
-                  )}
+                    ),
+                    dataIndex: 'thanhTien',
+                    key: 'thanhTien',
+                    width: 150,
+                    align: 'right' as const,
+                    render: (amount: number) => (
+                      <Text>{new Intl.NumberFormat('vi-VN').format(amount)}</Text>
+                    )
+                  }
+                ]}
+                pagination={false}
+                size="middle"
+                bordered
+                style={{
+                  background: 'white'
+                }}
+                components={{
+                  header: {
+                    cell: (props: React.ThHTMLAttributes<HTMLTableCellElement> & { align?: string }) => (
+                      <th {...props} style={{
+                        ...props.style,
+                        background: '#e6f7ff',
+                        fontWeight: 600,
+                        padding: '12px 8px',
+                        textAlign: (props.align as 'left' | 'right' | 'center') || 'left'
+                      }} />
+                    )
+                  }
+                }}
+                rowClassName={() => 'quotation-detail-row'}
+              />
 
-                  {/* Options */}
-                  {item.options && item.options.length > 0 && (
-                    <Col span={24} style={{ marginTop: 12 }}>
-                      <Text type="secondary" style={{ fontSize: 12 }}>Tùy chọn bổ sung</Text>
-                      <div style={{ marginTop: 4 }}>
-                        {item.options.map((opt, optIdx) => (
-                          <Tag key={optIdx} color="purple">
-                            {opt.name || opt.option_id}
-                            {opt.price && ` (+${formatPrice(opt.price)})`}
-                          </Tag>
-                        ))}
-                      </div>
-                    </Col>
-                  )}
+              {/* Total Row */}
+              <div style={{
+                padding: '16px 20px',
+                background: '#fafafa',
+                borderTop: '2px solid #e8eaed',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ flex: 1, textAlign: 'right', paddingRight: 20 }}>
+                  <Text strong style={{ fontSize: 15 }}>Tổng cộng:</Text>
+                </div>
+                <div style={{ width: 150, textAlign: 'right' }}>
+                  <Text strong style={{ fontSize: 16, color: '#ff4d4f' }}>
+                    {new Intl.NumberFormat('vi-VN').format(
+                      selectedQuotation.items.reduce((total, item) => {
+                        let itemTotal = (item.vehicle_price || item.unit_price || 0) * item.quantity;
+                        
+                        // Helper to get price from various fields
+                        const getPrice = (obj: Record<string, unknown>): number => {
+                          const price = obj.price || obj.unit_price || obj.amount || obj.value || obj.cost;
+                          if (typeof price === 'number') return price > 0 ? price : 0;
+                          if (typeof price === 'string') {
+                            const parsed = parseFloat(price);
+                            return !isNaN(parsed) && parsed > 0 ? parsed : 0;
+                          }
+                          return 0;
+                        };
+                        
+                        // Add accessories
+                        if (item.accessories) {
+                          item.accessories.forEach(acc => {
+                            const accObj = acc as Record<string, unknown>;
+                            const accPrice = getPrice(accObj);
+                            const accQuantity = acc.quantity || 1;
+                            itemTotal += accPrice * accQuantity;
+                          });
+                        }
+                        // Add options
+                        if (item.options) {
+                          item.options.forEach(opt => {
+                            const optObj = opt as Record<string, unknown>;
+                            itemTotal += getPrice(optObj);
+                          });
+                        }
+                        return total + itemTotal;
+                      }, 0)
+                    )}
+                  </Text>
+                </div>
+              </div>
+            </div>
 
-                  {/* Accessories */}
-                  {item.accessories && item.accessories.length > 0 && (
-                    <Col span={24} style={{ marginTop: 12 }}>
-                      <Text type="secondary" style={{ fontSize: 12 }}>Phụ kiện</Text>
-                      <div style={{ marginTop: 4 }}>
-                        {item.accessories.map((acc, accIdx) => (
-                          <Tag key={accIdx} color="green">
-                            {acc.name || acc.accessory_id} x {acc.quantity}
-                            {acc.unit_price && ` (${formatPrice(acc.unit_price)})`}
-                          </Tag>
-                        ))}
-                      </div>
-                    </Col>
-                  )}
-
-                  {/* Subtotal */}
-                  <Col span={24} style={{ marginTop: 16 }}>
-                    <div style={{ 
-                      padding: '12px 16px',
-                      background: 'linear-gradient(135deg, #f6ffed 0%, #f0f9ff 100%)',
-                      borderRadius: 10,
-                      border: '1px solid #b7eb8f',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <Text strong style={{ fontSize: 14, color: '#1a1a2e' }}>
-                        💵 Thành tiền:
-                      </Text>
-                      <Text strong style={{ fontSize: 18, color: '#52c41a', fontWeight: 700 }}>
-                        {formatPrice(item.final_amount || item.subtotal || (item.vehicle_price * item.quantity - item.discount))}
-                      </Text>
-                    </div>
-                  </Col>
-                </Row>
-              </Card>
-            ))}
+            {/* Valid Until Date */}
+            {(selectedQuotation.valid_until || selectedQuotation.endDate) && (
+              <div style={{
+                marginTop: 16,
+                textAlign: 'center',
+                padding: '12px',
+                background: '#f8f9fa',
+                borderRadius: 8
+              }}>
+                <Text style={{ fontSize: 13, color: '#666' }}>
+                  Báo giá có hiệu lực đến: {formatDate(selectedQuotation.valid_until || selectedQuotation.endDate || '')}
+                </Text>
+              </div>
+            )}
 
             <div style={{ 
               marginTop: 20, 
@@ -1630,7 +1825,7 @@ export const QuotationManagement: React.FC = () => {
               }}>
                 <Col span={12}>
                   <Title level={5} style={{ margin: 0, color: 'white', fontSize: 16, fontWeight: 600 }}>
-                    💎 Tổng cộng:
+                    Tổng cộng:
                   </Title>
                 </Col>
                 <Col span={12} style={{ textAlign: 'right' }}>
@@ -1673,7 +1868,6 @@ export const QuotationManagement: React.FC = () => {
                     justifyContent: 'center',
                     fontSize: 14
                   }}>
-                    📝
                   </div>
                   <Title level={5} style={{ margin: 0, color: '#ad6800', fontSize: 15 }}>
                     Ghi chú
@@ -1717,7 +1911,6 @@ export const QuotationManagement: React.FC = () => {
                   fontSize: 20,
                   boxShadow: '0 2px 8px rgba(102, 126, 234, 0.25)'
                 }}>
-                  📊
                 </div>
                 <div>
                   <Title level={5} style={{ margin: 0, color: '#1a1a2e', fontSize: 16, fontWeight: 600 }}>
@@ -1784,7 +1977,7 @@ export const QuotationManagement: React.FC = () => {
                       border: '1px solid #e8eaed'
                     }}>
                       <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
-                        📅 Ngày bắt đầu
+                        Ngày bắt đầu
                       </Text>
                       <Text strong style={{ fontSize: 14, color: '#1890ff' }}>
                         {new Date(selectedQuotation.startDate).toLocaleDateString('vi-VN')}
@@ -1801,7 +1994,7 @@ export const QuotationManagement: React.FC = () => {
                       border: '1px solid #e8eaed'
                     }}>
                       <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
-                        ⏰ Ngày kết thúc
+                        Ngày kết thúc
                       </Text>
                       <Text strong style={{ 
                         fontSize: 14,

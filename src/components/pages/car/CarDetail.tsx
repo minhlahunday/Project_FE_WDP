@@ -30,6 +30,7 @@ import {
   SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { authService } from '../../../services/authService';
+import { quoteService } from '../../../services/quoteService';
 import { QuotationModal } from '../QuotationModal';
 
 const { Header, Content } = Layout;
@@ -102,6 +103,23 @@ export const CarDetail: React.FC = () => {
   };
 
   // const handleImageLoad = () => {};
+
+  // Helper function to load quotes with optional customer_id filter
+  const loadQuotes = async (customerId?: string, page = 1, limit = 10) => {
+    try {
+      console.log('📋 Loading quotes with params:', { customer_id: customerId, page, limit });
+      const response = await quoteService.getQuotes({
+        customer_id: customerId,
+        page,
+        limit
+      });
+      console.log('✅ Quotes loaded successfully:', response);
+      return response;
+    } catch (err) {
+      console.error('❌ Error loading quotes:', err);
+      throw err;
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {

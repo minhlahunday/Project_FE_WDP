@@ -46,6 +46,7 @@ export interface Quote {
 
 export interface QuoteSearchParams {
   q?: string; // keyword search
+  customer_id?: string; // Filter quotes by specific customer
   page?: number;
   limit?: number;
   status?: string;
@@ -104,6 +105,7 @@ export const quoteService = {
   async getQuotes(params?: QuoteSearchParams): Promise<QuoteResponse> {
     const queryParams = new URLSearchParams();
     if (params?.q) queryParams.append('q', params.q);
+    if (params?.customer_id) queryParams.append('customer_id', params.customer_id);
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.status) queryParams.append('status', params.status);

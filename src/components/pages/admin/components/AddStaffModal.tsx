@@ -80,7 +80,7 @@ export const AddStaffModal: React.FC<AddStaffModalProps> = ({
             <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-5 h-5 text-red-500">⚠️</div>
+                  <div className="w-5 h-5 text-red-500"></div>
                 </div>
                 <div className="ml-3">
                   <p className="text-red-800 font-medium">{error}</p>
@@ -93,7 +93,7 @@ export const AddStaffModal: React.FC<AddStaffModalProps> = ({
             <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-5 h-5 text-green-500">✅</div>
+                  <div className="w-5 h-5 text-green-500"></div>
                 </div>
                 <div className="ml-3">
                   <p className="text-green-800 font-medium">{success}</p>
@@ -107,7 +107,7 @@ export const AddStaffModal: React.FC<AddStaffModalProps> = ({
             {/* Personal Information Section */}
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <span className="bg-blue-100 text-blue-600 rounded-full p-2 mr-3">👤</span>
+                <span className="bg-blue-100 text-blue-600 rounded-full p-2 mr-3"></span>
                 Thông tin cá nhân
               </h3>
               
@@ -165,7 +165,7 @@ export const AddStaffModal: React.FC<AddStaffModalProps> = ({
             {/* Account Information Section */}
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <span className="bg-green-100 text-green-600 rounded-full p-2 mr-3">🔐</span>
+                <span className="bg-green-100 text-green-600 rounded-full p-2 mr-3"></span>
                 Thông tin tài khoản
               </h3>
               
