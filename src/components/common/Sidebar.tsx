@@ -162,6 +162,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             icon: <UserCog className="w-4 h-4" />,
             route: "/portal/staff-management",
           },
+          {
+            key: "report-dashboard",
+            label: "Báo cáo Dashboard",
+            icon: <BarChart3 className="w-4 h-4" />,
+            route: "/portal/report-dashboard",
+          },
         ]
       : []),
     // {

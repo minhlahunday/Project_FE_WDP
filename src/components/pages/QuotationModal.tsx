@@ -271,11 +271,47 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         customerService.getAllCustomers()
       ]);
 
-      // Handle promotions
+      // Handle promotions - Filter only active and ongoing promotions
       if (promotionResult.status === 'fulfilled') {
         const promotionsData = promotionResult.value ?? [];
-        console.log('✅ Promotions loaded:', promotionsData.length, promotionsData);
-        setPromotions(promotionsData);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // Filter: is_active === true, is_deleted === false, and current date is within start_date and end_date
+        const activePromotions = promotionsData.filter((promotion) => {
+          const promo = promotion as Promotion;
+          
+          // Check is_active and is_deleted
+          if (promo.is_deleted === true || promo.is_active === false) {
+            return false;
+          }
+          
+          // Check date range
+          if (promo.start_date && promo.end_date) {
+            try {
+              const startDate = new Date(promo.start_date);
+              const endDate = new Date(promo.end_date);
+              
+              // Set time to start of day for accurate comparison
+              startDate.setHours(0, 0, 0, 0);
+              endDate.setHours(23, 59, 59, 999);
+              
+              // Promotion is active if current date is between start and end date
+              return today >= startDate && today <= endDate;
+            } catch (error) {
+              console.error('❌ Error parsing promotion dates:', error, promo);
+              // If date parsing fails, fall back to is_active flag only
+              return promo.is_active === true;
+            }
+          }
+          
+          // If no date range, only check is_active flag
+          return promo.is_active === true;
+        });
+        
+        console.log('✅ Promotions loaded:', promotionsData.length, 'Total promotions');
+        console.log('✅ Active promotions:', activePromotions.length, activePromotions);
+        setPromotions(activePromotions);
       } else {
         console.error('❌ Promotions failed:', promotionResult.reason);
       }

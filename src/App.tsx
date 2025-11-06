@@ -19,6 +19,7 @@ import { AdminStaffManagement } from "./components/pages/admin/AdminStaffManagem
 
 import { CarDeposit } from "./components/pages/car/CarDeposit";
 import { StaffManagement } from "./components/pages/DealerManager/StaffManagement";
+import { ReportDashboard } from "./components/pages/DealerManager/ReportDashboard";
 import ProductManagement from "./components/pages/EVM/ProductManagement";
 import { CustomerManagement } from "./components/pages/EVM/CustomerManagement";
 import { AdminDealerManagement } from "./components/pages/EVM/DealerManagement";
@@ -84,6 +85,7 @@ function AppContent() {
       />
       <Route path="/portal/deposit" element={<CarDeposit />} />
       <Route path="/portal/staff-management" element={<StaffManagement />} />
+      <Route path="/portal/report-dashboard" element={<ReportDashboard />} />
       <Route path="/portal/promotions" element={<PromotionsDashboard />} />
       <Route path="/portal/dealer-info" element={<DealerInfo />} />
       <Route path="/portal/sales" element={<SalesManagement />} />

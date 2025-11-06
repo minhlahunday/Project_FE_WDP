@@ -266,7 +266,7 @@ export const CarDetail: React.FC = () => {
                     color: isFavorite ? '#ff4d4f' : '#6b7280'
                   }}
                 />
-                <Button 
+                {/* <Button 
                   type="primary" 
                   size="large"
                   onClick={() => navigate(`/car-deposit?vehicleId=${id}`)}
@@ -281,7 +281,7 @@ export const CarDetail: React.FC = () => {
                   }}
                 >
                   Đặt cọc ngay
-                </Button>
+                </Button> */}
               </Space>
             </Col>
           </Row>
@@ -412,7 +412,7 @@ export const CarDetail: React.FC = () => {
 
                   {/* CTA Buttons */}
                   <Space size={16} style={{ width: '100%' }} direction="vertical">
-                    <Button
+                    {/* <Button
                       type="primary"
                       size="large"
                       icon={<ShoppingCartOutlined />}
@@ -429,7 +429,7 @@ export const CarDetail: React.FC = () => {
                       }}
                     >
                       ĐẶT CỌC NGAY - NHẬN ƯU ĐÃI
-                    </Button>
+                    </Button> */}
                     <Button
                       size="large"
                       icon={<CarOutlined />}

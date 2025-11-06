@@ -662,13 +662,13 @@ export const CarProduct: React.FC = () => {
                             <Eye className="h-4 w-4" />
                             <span>Chi tiết</span>
                           </button>
-                          <button
+                          {/* <button
                             onClick={() => handleDeposit(v._id as string || v.id as string)}
                             className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
                           >
                             <ShoppingCart className="h-4 w-4" />
                             <span>Đặt cọc</span>
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
