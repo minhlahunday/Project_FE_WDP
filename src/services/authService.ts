@@ -915,6 +915,7 @@ export const authService = {
   // Get all quotations with pagination and filters
   async getQuotations(params?: {
     q?: string;
+    customer_id?: string;
     page?: number;
     limit?: number;
   }): Promise<unknown> {
@@ -923,6 +924,7 @@ export const authService = {
       const queryParams = new URLSearchParams();
       
       if (params?.q) queryParams.append('q', params.q);
+      if (params?.customer_id) queryParams.append('customer_id', params.customer_id);
       if (params?.page) queryParams.append('page', params.page.toString());
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       

@@ -128,14 +128,12 @@ export const CreateOrderRequestModal: React.FC<
       setLoading(false);
     }
   };
-
   const handleClose = () => {
     setNotes("");
     setItems([{ vehicle_id: "", color: "", quantity: 1 }]);
     setError(null);
     onClose();
   };
-
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Tạo yêu cầu đặt xe mới</DialogTitle>
@@ -185,10 +183,10 @@ export const CreateOrderRequestModal: React.FC<
                 <TextField
                   fullWidth
                   label="Mã xe / Tên xe"
-                  value={item.vehicle_id}
-                  onChange={(e) =>
-                    handleItemChange(index, "vehicle_id", e.target.value)
-                  }
+                  value={item.vehicle_name || ""}
+                  // onChange={(e) =>
+                  //   handleItemChange(index, "vehicle_id", e.target.value)
+                  // }
                   required
                   placeholder="Nhập mã xe hoặc tên xe"
                 />
@@ -224,14 +222,14 @@ export const CreateOrderRequestModal: React.FC<
             </Box>
           ))}
 
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={handleAddItem}
             sx={{ mb: 3 }}
           >
             Thêm xe
-          </Button>
+          </Button> */}
 
           <TextField
             fullWidth

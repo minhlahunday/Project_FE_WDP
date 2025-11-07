@@ -162,20 +162,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
             icon: <UserCog className="w-4 h-4" />,
             route: "/portal/staff-management",
           },
+          {
+            key: "report-dashboard",
+            label: "Báo cáo Dashboard",
+            icon: <BarChart3 className="w-4 h-4" />,
+            route: "/portal/report-dashboard",
+          },
         ]
       : []),
-    {
-      key: "feedback",
-      label: "Phản hồi",
-      icon: <MessageSquare className="w-4 h-4" />,
-      route: "/portal/feedback",
-    },
-    {
-      key: "reports",
-      label: "Báo cáo",
-      icon: <BarChart3 className="w-4 h-4" />,
-      route: "/portal/reports",
-    },
+    // {
+    //   key: "feedback",
+    //   label: "Phản hồi",
+    //   icon: <MessageSquare className="w-4 h-4" />,
+    //   route: "/portal/feedback",
+    // },
+    // {
+    //   key: "reports",
+    //   label: "Báo cáo",
+    //   icon: <BarChart3 className="w-4 h-4" />,
+    //   route: "/portal/reports",
+    // },
     {
       key: "dealer-info",
       label: "Thông tin đại lý",

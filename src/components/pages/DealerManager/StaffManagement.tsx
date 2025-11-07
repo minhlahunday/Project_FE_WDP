@@ -683,9 +683,9 @@ export const StaffManagement: React.FC = () => {
                       <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                         Nhân viên
                       </th>
-                      <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                      {/* <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                         Vị trí
-                      </th>
+                      </th> */}
                       <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                         Trạng thái
                       </th>
@@ -717,12 +717,12 @@ export const StaffManagement: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-6">
+                        {/* <td className="px-8 py-6">
                           <div className="flex items-center">
                             <Shield className="h-5 w-5 text-indigo-500 mr-2" />
                             <span className="text-sm font-semibold text-gray-700">{staff.position || 'N/A'}</span>
                           </div>
-                        </td>
+                        </td> */}
                         <td className="px-8 py-6">
                           {getStatusBadge(staff.status)}
                         </td>

@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
       transition-all duration-300 ease-in-out
       ${isTransparent 
         ? 'bg-transparent backdrop-blur-sm border-b border-white/10' 
-        : 'bg-white border-b border-gray-200'
+        : 'bg-gray-900 border-b border-gray-700'
       }
       ${isSidebarOpen ? 'lg:left-[280px]' : 'lg:left-16'}
     `}>
@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
             className={`p-2 rounded-lg transition-colors lg:hidden ${
               isTransparent 
                 ? 'text-white hover:bg-white/10' 
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-white hover:bg-gray-800'
             }`}
           >
             <Menu className="h-5 w-5" />
@@ -63,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
           <div className="hidden md:block relative group">
             <h1 
               className={`text-xl font-semibold cursor-pointer ${
-                isTransparent ? 'text-white' : 'text-gray-900'
+                isTransparent ? 'text-white' : 'text-white'
               }`}
               onClick={() => navigate('/portal/dashboard')}
               onMouseEnter={handleMouseEnter}
@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
           <button className={`p-2 rounded-lg transition-colors ${
             isTransparent 
               ? 'text-white hover:bg-white/10' 
-              : 'text-gray-600 hover:bg-gray-100'
+              : 'text-white hover:bg-gray-800'
           }`}>
             <Search className="h-5 w-5" />
           </button>
@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
           <button className={`p-2 rounded-lg transition-colors ${
             isTransparent 
               ? 'text-white hover:bg-white/10' 
-              : 'text-gray-600 hover:bg-gray-100'
+              : 'text-white hover:bg-gray-800'
           }`}>
             <Bell className="h-5 w-5" />
           </button>
@@ -115,13 +115,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
               className={`flex items-center space-x-2 p-2 rounded-lg transition-colors ${
                 isTransparent 
                   ? 'text-white hover:bg-white/10' 
-                  : 'text-gray-700 hover:bg-gray-100'
+                  : 'text-white hover:bg-gray-800'
               }`}
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 isTransparent 
                   ? 'bg-white/20 text-white' 
-                  : 'bg-gray-300 text-gray-700'
+                  : 'bg-gray-700 text-white'
               }`}>
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
@@ -132,20 +132,20 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
             {/* Dropdown menu */}
             {isUserMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <button
+                {/* <button
                   onClick={() => setIsUserMenuOpen(false)}
                   className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   <User className="h-4 w-4" />
                   <span>Profile</span>
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => setIsUserMenuOpen(false)}
                   className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
-                </button>
+                </button> */}
                 <hr className="my-1" />
                 <button
                   onClick={handleLogout}

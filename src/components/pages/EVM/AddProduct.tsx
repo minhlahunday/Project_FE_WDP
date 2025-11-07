@@ -1057,7 +1057,7 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
             </svg>
             <strong>Lưu ý:</strong> SKU phải duy nhất và chỉ chứa chữ cái, số, dấu gạch ngang và gạch dưới
           </div>
-          <div className="text-blue-600">💡 Sử dụng nút "Tạo SKU" để tự động tạo SKU ngẫu nhiên</div>
+          <div className="text-blue-600">Sử dụng nút "Tạo SKU" để tự động tạo SKU ngẫu nhiên</div>
         </div>
         <label className="font-semibold">Version</label>
         <input name="version" value={form.version} onChange={handleFormChange} placeholder="Version" className="border rounded px-3 py-2" />
@@ -1079,7 +1079,7 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         <label className="font-semibold">Giá *</label>
         <input name="price" type="number" value={form.price} onChange={handleFormChange} placeholder="Giá (VND)" className={`border rounded px-3 py-2 ${fieldErrors.price ? 'border-red-500' : ''}`} required />
         {fieldErrors.price && <div className="text-red-500 text-sm mt-1">{fieldErrors.price}</div>}
-        <div className="text-xs text-gray-500 mb-2">💡 Giá từ 1,000 VND đến 10 tỷ VND</div>
+        <div className="text-xs text-gray-500 mb-2">Giá từ 1,000 VND đến 10 tỷ VND</div>
         <label className="font-semibold">Giá lăn bánh</label>
         <input name="on_road_price" type="number" value={form.on_road_price} onChange={handleFormChange} placeholder="Giá lăn bánh" className={`border rounded px-3 py-2 ${fieldErrors.on_road_price ? 'border-red-500' : ''}`} />
         {fieldErrors.on_road_price && <div className="text-red-500 text-sm mt-1">{fieldErrors.on_road_price}</div>}
@@ -1093,11 +1093,11 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         <label className="font-semibold">Dung lượng pin</label>
         <input name="battery_capacity" type="number" value={form.battery_capacity} onChange={handleFormChange} placeholder="Dung lượng pin (kWh)" className={`border rounded px-3 py-2 ${fieldErrors.battery_capacity ? 'border-red-500' : ''}`} />
         {fieldErrors.battery_capacity && <div className="text-red-500 text-sm mt-1">{fieldErrors.battery_capacity}</div>}
-        <div className="text-xs text-gray-500 mb-2">💡 Dung lượng pin từ 1-200 kWh</div>
+        <div className="text-xs text-gray-500 mb-2">Dung lượng pin từ 1-200 kWh</div>
         <label className="font-semibold">Quãng đường (km)</label>
         <input name="range_km" type="number" value={form.range_km} onChange={handleFormChange} placeholder="Quãng đường (km)" className={`border rounded px-3 py-2 ${fieldErrors.range_km ? 'border-red-500' : ''}`} />
         {fieldErrors.range_km && <div className="text-red-500 text-sm mt-1">{fieldErrors.range_km}</div>}
-        <div className="text-xs text-gray-500 mb-2">💡 Quãng đường từ 50-1000 km</div>
+        <div className="text-xs text-gray-500 mb-2">Quãng đường từ 50-1000 km</div>
         <label className="font-semibold">WLTP range (km)</label>
         <input name="wltp_range_km" type="number" value={form.wltp_range_km} onChange={handleFormChange} placeholder="WLTP range (km)" className="border rounded px-3 py-2" />
         <label className="font-semibold">Sạc nhanh (phút)</label>

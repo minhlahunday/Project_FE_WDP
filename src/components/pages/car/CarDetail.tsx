@@ -30,6 +30,7 @@ import {
   SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { authService } from '../../../services/authService';
+import { quoteService } from '../../../services/quoteService';
 import { QuotationModal } from '../QuotationModal';
 
 const { Header, Content } = Layout;
@@ -102,6 +103,23 @@ export const CarDetail: React.FC = () => {
   };
 
   // const handleImageLoad = () => {};
+
+  // Helper function to load quotes with optional customer_id filter
+  const loadQuotes = async (customerId?: string, page = 1, limit = 10) => {
+    try {
+      console.log('📋 Loading quotes with params:', { customer_id: customerId, page, limit });
+      const response = await quoteService.getQuotes({
+        customer_id: customerId,
+        page,
+        limit
+      });
+      console.log('✅ Quotes loaded successfully:', response);
+      return response;
+    } catch (err) {
+      console.error('❌ Error loading quotes:', err);
+      throw err;
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -248,7 +266,7 @@ export const CarDetail: React.FC = () => {
                     color: isFavorite ? '#ff4d4f' : '#6b7280'
                   }}
                 />
-                <Button 
+                {/* <Button 
                   type="primary" 
                   size="large"
                   onClick={() => navigate(`/car-deposit?vehicleId=${id}`)}
@@ -263,7 +281,7 @@ export const CarDetail: React.FC = () => {
                   }}
                 >
                   Đặt cọc ngay
-                </Button>
+                </Button> */}
               </Space>
             </Col>
           </Row>
@@ -394,7 +412,7 @@ export const CarDetail: React.FC = () => {
 
                   {/* CTA Buttons */}
                   <Space size={16} style={{ width: '100%' }} direction="vertical">
-                    <Button
+                    {/* <Button
                       type="primary"
                       size="large"
                       icon={<ShoppingCartOutlined />}
@@ -411,7 +429,7 @@ export const CarDetail: React.FC = () => {
                       }}
                     >
                       ĐẶT CỌC NGAY - NHẬN ƯU ĐÃI
-                    </Button>
+                    </Button> */}
                     <Button
                       size="large"
                       icon={<CarOutlined />}

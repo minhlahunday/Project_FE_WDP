@@ -348,7 +348,7 @@ export const CompareModels: React.FC = () => {
 
                     {/* Pricing */}
                     <tr className="hover:bg-gray-50 bg-blue-50">
-                      <td className="p-6 font-bold text-blue-900">💰 GIÁ BÁN</td>
+                      <td className="p-6 font-bold text-blue-900">GIÁ BÁN</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
@@ -630,7 +630,7 @@ export const CompareModels: React.FC = () => {
 
                     {/* Safety & Warranty */}
                     <tr className="hover:bg-gray-50 bg-red-50">
-                      <td className="p-6 font-bold text-red-900">🛡️ AN TOÀN & BẢO HÀNH</td>
+                      <td className="p-6 font-bold text-red-900">AN TOÀN & BẢO HÀNH</td>
                       <td></td>
                       <td></td>
                     </tr>
@@ -676,7 +676,7 @@ export const CompareModels: React.FC = () => {
 
                     {/* Availability */}
                     <tr className="hover:bg-gray-50 bg-gray-50">
-                      <td className="p-6 font-bold text-gray-900">📦 TÌNH TRẠNG</td>
+                      <td className="p-6 font-bold text-gray-900">TÌNH TRẠNG</td>
                       <td></td>
                       <td></td>
                     </tr>

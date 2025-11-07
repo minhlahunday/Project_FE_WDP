@@ -1,0 +1,96 @@
+/* QuotationManagement Component Styles */
+
+/* Ensure proper responsive layout */
+.quotation-table .ant-table {
+  font-size: 14px;
+}
+
+.quotation-table .ant-table-thead > tr > th {
+  padding: 14px 12px;
+  background: #fafbfc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.quotation-table .ant-table-tbody > tr > td {
+  padding: 12px;
+}
+
+.quotation-table .ant-table-tbody > tr:hover {
+  background-color: #f9fafb !important;
+  transition: background-color 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .quotation-table .ant-table-thead > tr > th,
+  .quotation-table .ant-table-tbody > tr > td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}
+
+/* Smooth animations */
+.quotation-table .ant-table-tbody > tr {
+  transition: all 0.2s ease;
+}
+
+/* Better card shadows */
+.ant-card {
+  transition: box-shadow 0.3s ease;
+}
+
+/* Improved mobile stats cards */
+@media (max-width: 640px) {
+  .ant-statistic-title {
+    font-size: 11px !important;
+  }
+  
+  .ant-statistic-content-value {
+    font-size: 20px !important;
+  }
+  
+  .ant-statistic-content-prefix {
+    font-size: 14px !important;
+  }
+}
+
+/* Table scroll improvements */
+.ant-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better button spacing on mobile */
+@media (max-width: 640px) {
+  .ant-btn {
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+  
+  .ant-btn-icon-only {
+    padding: 4px 8px;
+  }
+}
+
+/* Pagination improvements */
+.ant-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .ant-pagination-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .ant-pagination-options-size-changer,
+  .ant-pagination-options-quick-jumper {
+    width: 100%;
+  }
+}

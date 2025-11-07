@@ -48,6 +48,28 @@ export interface OrderItem {
 // Use the Order type from types/index.ts
 export type Order = OrderType;
 
+// Status History interfaces
+export interface StatusHistoryEvent {
+  timestamp: string;
+  old_status: string;
+  new_status: string;
+  status_label: string;
+  changed_by: {
+    _id?: string;
+    full_name?: string;
+    role?: string;
+  };
+  notes: string;
+  elapsed_time: string;
+}
+
+export interface OrderStatusHistory {
+  order_code: string;
+  current_status: string;
+  total_events: number;
+  timeline: StatusHistoryEvent[];
+}
+
 export interface CreateOrderRequest {
   quote_id: string; // BẮT BUỘC: Backend yêu cầu quote_id
   notes?: string; // Optional: Ghi chú thêm cho order
@@ -128,6 +150,7 @@ export interface OrderRequest {
   approved_at?: string;
   dealership_id?: any;
   is_deleted?: boolean;
+  order_id?: any; // Order ID when request is converted to order
   __v?: number;
   // Populated fields
   dealer_staff?: {
@@ -165,6 +188,53 @@ export interface OrderRequestSearchParams {
   status?: "pending" | "approved" | "rejected";
   startDate?: string;
   endDate?: string;
+}
+
+// Order Request History Interfaces
+export interface OrderRequestHistoryEvent {
+  _id: string;
+  timestamp: string;
+  status_change?: {
+    from: string;
+    to: string;
+  };
+  changed_by?: {
+    _id: string;
+    full_name: string;
+    role: string;
+  };
+  reason?: string;
+  notes?: string;
+  is_current?: boolean;
+}
+
+export interface OrderRequestHistoryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    order_code?: string;
+    request_id?: string;
+    current_status: string;
+    total_events?: number;
+    timeline: Array<{
+      _id: string;
+      timestamp: string;
+      old_status?: string;
+      new_status: string;
+      status_label?: string;
+      old_delivery_status?: string | null;
+      new_delivery_status?: string | null;
+      changed_by?: {
+        _id: string;
+        email?: string;
+        full_name?: string;
+        role?: string;
+      };
+      reason?: string;
+      notes?: string;
+      elapsed_time?: string;
+    }>;
+  };
 }
 
 // Order Service APIs
@@ -359,7 +429,9 @@ export const orderService = {
 
   // Approve order request (for manager)
   async approveOrderRequest(requestId: string): Promise<OrderRequestResponse> {
-    return patch<OrderRequestResponse>(`/api/order-request/${requestId}/approve`);
+    return patch<OrderRequestResponse>(
+      `/api/order-request/${requestId}/approve`
+    );
   },
 
   // Reject order request (for manager)
@@ -367,9 +439,12 @@ export const orderService = {
     requestId: string,
     reason: string
   ): Promise<OrderRequestResponse> {
-    return patch<OrderRequestResponse>(`/api/order-request/${requestId}/reject`, {
-      reason,
-    });
+    return patch<OrderRequestResponse>(
+      `/api/order-request/${requestId}/reject`,
+      {
+        reason,
+      }
+    );
   },
 
   // Update order request (for staff to edit their request)
@@ -456,6 +531,7 @@ export const orderService = {
   }): Promise<OrderResponse> {
     return patch<OrderResponse>(`/api/orders/${orderId}/complete`, completionData || {});
   },
+  
 };
 
 export default orderService;

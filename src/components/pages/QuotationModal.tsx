@@ -271,11 +271,47 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         customerService.getAllCustomers()
       ]);
 
-      // Handle promotions
+      // Handle promotions - Filter only active and ongoing promotions
       if (promotionResult.status === 'fulfilled') {
         const promotionsData = promotionResult.value ?? [];
-        console.log('✅ Promotions loaded:', promotionsData.length, promotionsData);
-        setPromotions(promotionsData);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // Filter: is_active === true, is_deleted === false, and current date is within start_date and end_date
+        const activePromotions = promotionsData.filter((promotion) => {
+          const promo = promotion as Promotion;
+          
+          // Check is_active and is_deleted
+          if (promo.is_deleted === true || promo.is_active === false) {
+            return false;
+          }
+          
+          // Check date range
+          if (promo.start_date && promo.end_date) {
+            try {
+              const startDate = new Date(promo.start_date);
+              const endDate = new Date(promo.end_date);
+              
+              // Set time to start of day for accurate comparison
+              startDate.setHours(0, 0, 0, 0);
+              endDate.setHours(23, 59, 59, 999);
+              
+              // Promotion is active if current date is between start and end date
+              return today >= startDate && today <= endDate;
+            } catch (error) {
+              console.error('❌ Error parsing promotion dates:', error, promo);
+              // If date parsing fails, fall back to is_active flag only
+              return promo.is_active === true;
+            }
+          }
+          
+          // If no date range, only check is_active flag
+          return promo.is_active === true;
+        });
+        
+        console.log('✅ Promotions loaded:', promotionsData.length, 'Total promotions');
+        console.log('✅ Active promotions:', activePromotions.length, activePromotions);
+        setPromotions(activePromotions);
       } else {
         console.error('❌ Promotions failed:', promotionResult.reason);
       }
@@ -547,7 +583,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </Card>
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 24, marginBottom: 24 }}>
-          👤 Thông tin khách hàng
+          Thông tin khách hàng
         </Divider>
 
         <Form.Item
@@ -565,7 +601,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </Form.Item>
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
-          📦 Chi tiết sản phẩm
+          Chi tiết sản phẩm
         </Divider>
 
         <Row gutter={24}>
@@ -597,7 +633,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Row gutter={24}>
           {/* <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>💰 Giảm giá (VNĐ)</span>} name="discountSelection">
+            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Giảm giá (VNĐ)</span>} name="discountSelection">
               <CustomSelect
                 options={discountSelectOptions}
                 placeholder="Chọn giảm giá"
@@ -611,7 +647,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </Col> */}
 
           <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>🎁 Khuyến mãi</span>} name="promotion_id">
+            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Khuyến mãi</span>} name="promotion_id">
               <CustomSelect
                 options={promotionSelectOptions}
                 placeholder="Chọn khuyến mãi"
@@ -625,7 +661,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
           <Space size="middle">
-            🔧 Tùy chọn bổ sung
+            Tùy chọn bổ sung
             <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>{optionsValue.length}</Tag>
           </Space>
         </Divider>
@@ -679,7 +715,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
           <Space size="middle">
-            🛠️ Phụ kiện
+            Phụ kiện
             <Tag color="green" style={{ fontSize: 14, padding: '4px 12px' }}>{accessoriesValue.length}</Tag>
           </Space>
         </Divider>
@@ -742,7 +778,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
         </Form.List>
 
         <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
-          📝 Ghi chú
+          Ghi chú
         </Divider>
 
         <Form.Item name="notes">

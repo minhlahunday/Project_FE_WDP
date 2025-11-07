@@ -5,10 +5,6 @@ import {
   Typography,
   Button,
   TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Table,
   TableBody,
   TableCell,
@@ -27,7 +23,18 @@ import {
   Snackbar,
   Tooltip,
   Stack,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
+import {
+  Timeline,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineConnector,
+  TimelineContent,
+  TimelineDot,
+  TimelineOppositeContent,
+} from "@mui/lab";
 import {
   Visibility as ViewIcon,
   Delete as DeleteIcon,
@@ -49,6 +56,7 @@ import {
   orderService,
   OrderRequest,
   OrderRequestSearchParams,
+  OrderRequestHistoryEvent,
 } from "../../services/orderService";
 import CreateOrderRequestModal from "./CreateOrderRequestModal";
 
@@ -80,10 +88,23 @@ export const OrderRequestManagement: React.FC = () => {
   );
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
+  // History states
+  const [requestHistory, setRequestHistory] = useState<
+    OrderRequestHistoryEvent[]
+  >([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
   const statusOptions = [
     { value: "pending", label: "Chờ duyệt", color: "warning" },
     { value: "approved", label: "Đã duyệt", color: "success" },
     { value: "rejected", label: "Đã từ chối", color: "error" },
+    {
+      value: "waiting_vehicle_request",
+      label: "Chờ xe từ hãng",
+      color: "info",
+    },
+    { value: "completed", label: "Hoàn thành", color: "success" },
+    { value: "cancelled", label: "Đã hủy", color: "error" },
   ];
 
   const getStatusChip = (status: string) => {
@@ -96,6 +117,29 @@ export const OrderRequestManagement: React.FC = () => {
         sx={{ minWidth: 90 }}
       />
     );
+  };
+
+  const getTimelineDotColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "warning";
+      case "approved":
+        return "success";
+      case "rejected":
+      case "cancelled":
+        return "error";
+      case "waiting_vehicle_request":
+        return "info";
+      case "completed":
+        return "success";
+      default:
+        return "grey";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    const option = statusOptions.find((opt) => opt.value === status);
+    return option?.label || status;
   };
 
   const loadOrderRequests = useCallback(
@@ -157,6 +201,7 @@ export const OrderRequestManagement: React.FC = () => {
                 approved_at: item.approved_at,
                 dealership_id: item.dealership_id,
                 is_deleted: item.is_deleted,
+                order_id: item.order_id,
                 __v: item.__v,
                 // Keep for backward compatibility
                 dealer_staff: item.requested_by
@@ -272,6 +317,57 @@ export const OrderRequestManagement: React.FC = () => {
   const handleViewRequest = (request: OrderRequest) => {
     setSelectedRequest(request);
     setDetailModalOpen(true);
+    // Use request._id for history API call
+    loadOrderRequestHistory(request.order_id._id);
+  };
+
+  const loadOrderRequestHistory = async (requestId: string) => {
+    setHistoryLoading(true);
+    try {
+      const response = await orderService.getOrderRequestHistory(requestId);
+      console.log("📋 Order request history response:", response);
+
+      if (response.success && response.data.timeline) {
+        // Map API response to our interface
+        const mappedTimeline: OrderRequestHistoryEvent[] =
+          response.data.timeline.map((event: any) => ({
+            _id: event._id,
+            timestamp: event.timestamp,
+            status_change: {
+              from: event.old_status,
+              to: event.new_status,
+            },
+            changed_by: event.changed_by
+              ? {
+                  _id: event.changed_by._id,
+                  full_name:
+                    event.changed_by.full_name ||
+                    event.changed_by.email ||
+                    "N/A",
+                  role: event.changed_by.role || "N/A",
+                }
+              : undefined,
+            reason: event.reason || undefined,
+            notes: event.notes || undefined,
+            is_current: false, // Will be set for the latest status
+          }));
+
+        // Mark the latest event as current
+        if (mappedTimeline.length > 0) {
+          mappedTimeline[0].is_current = true;
+        }
+
+        console.log("✅ Mapped timeline:", mappedTimeline);
+        setRequestHistory(mappedTimeline);
+      } else {
+        setRequestHistory([]);
+      }
+    } catch (error) {
+      console.error("Error loading order request history:", error);
+      setRequestHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   const handleApproveRequest = async (request: OrderRequest) => {
@@ -489,7 +585,7 @@ export const OrderRequestManagement: React.FC = () => {
             Quản lý yêu cầu đặt xe
           </Typography>
 
-          {user?.role === "dealer_staff" && (
+          {/* {user?.role === "dealer_staff" && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -503,7 +599,7 @@ export const OrderRequestManagement: React.FC = () => {
             >
               Tạo yêu cầu mới
             </Button>
-          )}
+          )} */}
         </Box>
 
         {/* Search and Filters */}
@@ -523,7 +619,7 @@ export const OrderRequestManagement: React.FC = () => {
                 sx={{ minWidth: 200 }}
               />
 
-              <FormControl sx={{ minWidth: 150 }}>
+              {/* <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel>Trạng thái</InputLabel>
                 <Select
                   value={selectedStatus}
@@ -537,7 +633,7 @@ export const OrderRequestManagement: React.FC = () => {
                     </MenuItem>
                   ))}
                 </Select>
-              </FormControl>
+              </FormControl> */}
 
               <DatePicker
                 label="Từ ngày"
@@ -719,7 +815,7 @@ export const OrderRequestManagement: React.FC = () => {
         <Dialog
           open={detailModalOpen}
           onClose={() => setDetailModalOpen(false)}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
         >
           <DialogTitle>
@@ -728,46 +824,58 @@ export const OrderRequestManagement: React.FC = () => {
           <DialogContent>
             {selectedRequest && (
               <Box sx={{ mt: 2 }}>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                  <Box sx={{ flex: "1 1 300px" }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Mã yêu cầu:
+                <Stack spacing={3}>
+                  {/* Basic Information */}
+                  <Box>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Thông tin cơ bản
                     </Typography>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      {selectedRequest.code}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: "1 1 300px" }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Trạng thái:
-                    </Typography>
-                    <Box sx={{ mb: 2 }}>
-                      {getStatusChip(selectedRequest.status)}
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                      <Box sx={{ flex: "1 1 300px" }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Mã yêu cầu:
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {selectedRequest.code}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ flex: "1 1 300px" }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Trạng thái:
+                        </Typography>
+                        <Box sx={{ mb: 2 }}>
+                          {getStatusChip(selectedRequest.status)}
+                        </Box>
+                      </Box>
+                      <Box sx={{ flex: "1 1 300px" }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Nhân viên:
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {selectedRequest.dealer_staff?.full_name ||
+                            selectedRequest.requested_by?.full_name ||
+                            "N/A"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ flex: "1 1 300px" }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Ngày tạo:
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {dayjs(selectedRequest.createdAt).format(
+                            "DD/MM/YYYY HH:mm"
+                          )}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
-                  <Box sx={{ flex: "1 1 300px" }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Nhân viên:
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      {selectedRequest.dealer_staff?.full_name ||
-                        selectedRequest.requested_by?.full_name ||
-                        "N/A"}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: "1 1 300px" }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Ngày tạo:
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      {dayjs(selectedRequest.createdAt).format(
-                        "DD/MM/YYYY HH:mm"
-                      )}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: "1 1 100%" }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Danh sách xe:
+
+                  <Divider />
+
+                  {/* Vehicle List */}
+                  <Box>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Danh sách xe
                     </Typography>
                     <Box sx={{ mt: 1 }}>
                       {selectedRequest.items?.map((item, index) => (
@@ -778,39 +886,151 @@ export const OrderRequestManagement: React.FC = () => {
                             border: "1px solid #e0e0e0",
                             borderRadius: 1,
                             mb: 1,
+                            bgcolor: "#fafafa",
                           }}
                         >
                           <Typography variant="body2">
                             <strong>Xe #{index + 1}:</strong>{" "}
                             {item.vehicle_name || item.vehicle_id}
                           </Typography>
-                          <Typography variant="body2">
+                          <Typography variant="body2" color="text.secondary">
                             Màu: {item.color || "N/A"} | Số lượng:{" "}
                             {item.quantity}
                           </Typography>
+                          {item.notes && (
+                            <Typography variant="body2" color="text.secondary">
+                              Ghi chú: {item.notes}
+                            </Typography>
+                          )}
                         </Box>
                       ))}
                     </Box>
                   </Box>
+
                   {selectedRequest.notes && (
-                    <Box sx={{ flex: "1 1 100%" }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Ghi chú:
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          mt: 1,
-                          p: 2,
-                          bgcolor: "#f5f5f5",
-                          borderRadius: 1,
-                        }}
-                      >
-                        {selectedRequest.notes}
-                      </Typography>
-                    </Box>
+                    <>
+                      <Divider />
+                      <Box>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                          Ghi chú
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            p: 2,
+                            bgcolor: "#f5f5f5",
+                            borderRadius: 1,
+                            border: "1px solid #e0e0e0",
+                          }}
+                        >
+                          {selectedRequest.notes}
+                        </Typography>
+                      </Box>
+                    </>
                   )}
-                </Box>
+
+                  <Divider />
+
+                  {/* Status Timeline */}
+                  <Box>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Lịch sử trạng thái
+                    </Typography>
+                    {historyLoading ? (
+                      <Box
+                        sx={{ display: "flex", justifyContent: "center", p: 3 }}
+                      >
+                        <CircularProgress />
+                      </Box>
+                    ) : requestHistory.length > 0 ? (
+                      <Timeline>
+                        {requestHistory.map((event, index) => (
+                          <TimelineItem key={index}>
+                            <TimelineOppositeContent
+                              sx={{ m: "auto 0" }}
+                              align="right"
+                              variant="body2"
+                              color="text.secondary"
+                            >
+                              {dayjs(event.timestamp).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </TimelineOppositeContent>
+                            <TimelineSeparator>
+                              <TimelineConnector sx={{ bgcolor: "grey.300" }} />
+                              <TimelineDot
+                                color={
+                                  event.status_change?.to
+                                    ? getTimelineDotColor(
+                                        event.status_change.to
+                                      )
+                                    : "grey"
+                                }
+                              />
+                              <TimelineConnector sx={{ bgcolor: "grey.300" }} />
+                            </TimelineSeparator>
+                            <TimelineContent sx={{ py: "12px", px: 2 }}>
+                              <Typography variant="h6" component="span">
+                                {event.status_change?.from &&
+                                event.status_change?.to
+                                  ? `${getStatusLabel(
+                                      event.status_change.from
+                                    )} → ${getStatusLabel(
+                                      event.status_change.to
+                                    )}`
+                                  : getStatusLabel(
+                                      event.status_change?.to ||
+                                        event.status_change?.from ||
+                                        "pending"
+                                    )}
+                              </Typography>
+                              {event.changed_by && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Bởi: {event.changed_by.full_name}{" "}
+                                  {event.changed_by.role &&
+                                    `(${event.changed_by.role})`}
+                                </Typography>
+                              )}
+                              {event.reason && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Lý do: {event.reason}
+                                </Typography>
+                              )}
+                              {event.notes && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    mt: 1,
+                                    p: 1.5,
+                                    bgcolor: "#f8f9fa",
+                                    borderRadius: 1,
+                                    border: "1px solid #e9ecef",
+                                  }}
+                                >
+                                  {event.notes}
+                                </Typography>
+                              )}
+                            </TimelineContent>
+                          </TimelineItem>
+                        ))}
+                      </Timeline>
+                    ) : (
+                      <Typography
+                        color="text.secondary"
+                        sx={{ p: 2, textAlign: "center" }}
+                      >
+                        Chưa có lịch sử trạng thái
+                      </Typography>
+                    )}
+                  </Box>
+                </Stack>
               </Box>
             )}
           </DialogContent>
