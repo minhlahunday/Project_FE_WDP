@@ -111,38 +111,54 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const file = files[0];
-    const isImageOrPdf = file.type.startsWith('image/') || file.type === 'application/pdf';
-    const isLt10M = file.size / 1024 / 1024 < 10;
+    const newFiles: CustomUploadFile[] = [];
+    const errors: string[] = [];
 
-    if (!isImageOrPdf) {
+    // Xử lý từng file
+    Array.from(files).forEach((file) => {
+      const isImageOrPdf = file.type.startsWith('image/') || file.type === 'application/pdf';
+      const isLt10M = file.size / 1024 / 1024 < 10;
+
+      if (!isImageOrPdf) {
+        errors.push(`${file.name}: Chỉ hỗ trợ file ảnh và PDF!`);
+        return;
+      }
+      if (!isLt10M) {
+        errors.push(`${file.name}: File phải nhỏ hơn 10MB!`);
+        return;
+      }
+
+      // Kiểm tra trùng tên
+      const isDuplicate = fileList.some(f => f.name === file.name);
+      if (isDuplicate) {
+        errors.push(`${file.name}: File đã được chọn!`);
+        return;
+      }
+
+      newFiles.push({
+        uid: Math.random().toString(36).substring(7),
+        name: file.name,
+        size: file.size,
+        originFileObj: file,
+        status: 'done',
+      });
+    });
+
+    // Hiển thị lỗi nếu có
+    if (errors.length > 0) {
       Swal.fire({
         icon: 'warning',
-        title: 'Lỗi định dạng file',
-        text: 'Chỉ hỗ trợ file ảnh và PDF!',
+        title: 'Lỗi khi chọn file',
+        html: errors.join('<br>'),
         confirmButtonText: 'Đóng'
       });
-      return;
-    }
-    if (!isLt10M) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'File quá lớn',
-        text: 'File phải nhỏ hơn 10MB!',
-        confirmButtonText: 'Đóng'
-      });
-      return;
     }
 
-    const newFile: CustomUploadFile = {
-      uid: Math.random().toString(36).substring(7),
-      name: file.name,
-      size: file.size,
-      originFileObj: file,
-      status: 'done',
-    };
-    // Chỉ cho phép 1 file
-    setFileList([newFile]);
+    // Thêm các file hợp lệ vào danh sách
+    if (newFiles.length > 0) {
+      setFileList(prev => [...prev, ...newFiles]);
+    }
+
     // Reset input để cho phép chọn lại cùng một file nếu cần
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -203,44 +219,65 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
 
     setLoading(true);
     setUploadProgress(0);
-    const fileToUpload = fileList[0].originFileObj;
 
-    // Giả lập tiến trình upload
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress = Math.min(progress + 20, 90);
-        setUploadProgress(progress);
-    }, 200);
-
+    let successCount = 0;
+    let failCount = 0;
+    const totalFiles = fileList.length;
 
     try {
-      // 1. Upload contract
-      const response = await contractService.uploadSignedContract(order!._id, fileToUpload);
+      // Upload từng file một
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        
+        // Cập nhật progress
+        const progress = Math.floor((i / totalFiles) * 90);
+        setUploadProgress(progress);
 
-      // 2. Hoàn thành progress bar
-      clearInterval(interval);
+        try {
+          const response = await contractService.uploadSignedContract(order!._id, file.originFileObj);
+          
+          if (response && (response.success === true || response.success === undefined)) {
+            successCount++;
+          } else {
+            failCount++;
+            console.error(`Failed to upload ${file.name}:`, response?.message);
+          }
+        } catch (error: any) {
+          failCount++;
+          console.error(`Error uploading ${file.name}:`, error);
+        }
+      }
+
+      // Hoàn thành progress bar
       setUploadProgress(100);
 
-      if (response && (response.success === true || response.success === undefined)) {
-        // Có thể thêm bước cập nhật ghi chú và ngày upload nếu API hỗ trợ
-        
+      // Hiển thị kết quả
+      if (successCount === totalFiles) {
         await Swal.fire({
           icon: 'success',
           title: 'Thành công!',
-          text: 'Đã upload hợp đồng thành công!',
+          text: `Đã upload thành công ${successCount} hợp đồng!`,
           confirmButtonText: 'Đóng',
           timer: 2000,
           timerProgressBar: true
         });
         onSuccess();
         onClose();
+      } else if (successCount > 0) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Hoàn thành một phần',
+          text: `Đã upload thành công ${successCount}/${totalFiles} hợp đồng. ${failCount} file thất bại.`,
+          confirmButtonText: 'Đóng'
+        });
+        onSuccess();
+        onClose();
       } else {
-        throw new Error(response?.message || 'Failed to upload contract');
+        throw new Error('Tất cả các file upload đều thất bại');
       }
     } catch (error: any) {
-      clearInterval(interval);
       setUploadProgress(0);
-      console.error('Error uploading contract:', error);
+      console.error('Error uploading contracts:', error);
       Swal.fire({
         icon: 'error',
         title: 'Lỗi',
@@ -325,7 +362,7 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
                 sx={{ mb: 2 }}
                 icon={<UploadIcon />}
               >
-                Vui lòng upload file ảnh hợp đồng đã có chữ ký của khách hàng. Hỗ trợ định dạng JPG, PNG, PDF. Kích thước tối đa 10MB.
+                Bạn có thể upload nhiều file hợp đồng đã có chữ ký của khách hàng. Hỗ trợ định dạng JPG, PNG, PDF. Kích thước tối đa 10MB mỗi file.
               </Alert>
               
               <Stack spacing={2}>
@@ -380,34 +417,45 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
                         accept="image/*,.pdf"
                         onChange={handleFileSelect}
                         style={{ display: 'none' }}
-                        disabled={fileList.length > 0} // Chỉ cho chọn 1 file
+                        multiple // Cho phép chọn nhiều file
                     />
                     
                     {fileList.length === 0 ? (
                       <>
                         <UploadIcon color="action" sx={{ fontSize: 40 }} />
-                        <Typography variant="body1" color="textSecondary">Kéo thả hoặc nhấn để chọn file hợp đồng</Typography>
+                        <Typography variant="body1" color="textSecondary">Kéo thả hoặc nhấn để chọn file hợp đồng (có thể chọn nhiều file)</Typography>
                       </>
                     ) : (
-                      // Hiển thị file đã chọn
-                      <Stack key={fileList[0].uid} direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-                          <Stack direction="row" alignItems="center" spacing={1}>
+                      // Hiển thị danh sách file đã chọn
+                      <Stack spacing={1} sx={{ width: '100%' }}>
+                        {fileList.map((file) => (
+                          <Stack key={file.uid} direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                            <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
                               <FileImageIcon color="success" />
-                              <Typography variant="body2" fontWeight="medium">{fileList[0].name}</Typography>
-                              <Chip label={`${(fileList[0].size / 1024 / 1024).toFixed(2)} MB`} color="success" size="small" />
-                          </Stack>
-                          <Stack direction="row" spacing={0}>
+                              <Typography variant="body2" fontWeight="medium" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {file.name}
+                              </Typography>
+                              <Chip label={`${(file.size / 1024 / 1024).toFixed(2)} MB`} color="success" size="small" />
+                            </Stack>
+                            <Stack direction="row" spacing={0}>
                               <Tooltip title="Xem trước">
-                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handlePreview(fileList[0]); }}>
+                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handlePreview(file); }}>
                                       <EyeIcon fontSize="small" color="primary" />
                                   </IconButton>
                               </Tooltip>
                               <Tooltip title="Xóa file">
-                                  <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleRemove(fileList[0].uid); }}>
+                                  <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleRemove(file.uid); }}>
                                       <DeleteIcon fontSize="small" />
                                   </IconButton>
                               </Tooltip>
+                            </Stack>
                           </Stack>
+                        ))}
+                        <Box sx={{ mt: 1, textAlign: 'center' }}>
+                          <Button size="small" variant="outlined" onClick={openFileBrowser} startIcon={<UploadIcon />}>
+                            Thêm file khác
+                          </Button>
+                        </Box>
                       </Stack>
                     )}
                 </Box>

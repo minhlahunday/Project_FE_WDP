@@ -122,15 +122,38 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
   };
 
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async (updatedOrder?: Order) => {
     setShowPaymentModal(false);
     setSelectedOrder(null);
-    // Refresh orders list to get updated data
-    fetchOrders();
-    message.success('Thanh toán được xử lý thành công!');
+    
+    // Nếu có updatedOrder từ response, cập nhật ngay trong state
+    if (updatedOrder) {
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === updatedOrder._id ? updatedOrder : order
+        )
+      );
+    }
+    
+    // Refresh orders list to get updated data (để đảm bảo sync với backend)
+    // Đợi một chút để đảm bảo backend đã commit transaction
+    setTimeout(() => {
+      fetchOrders();
+    }, 500);
+    
+    if (!updatedOrder) {
+      message.success('Thanh toán được xử lý thành công!');
+    }
   };
 
   const filteredOrders = orders.filter(order => {
+    // Filter out deleted orders (is_deleted: true) - hiển thị với status cancelled
+    const isDeleted = (order as any).is_deleted;
+    if (isDeleted) {
+      // Map is_deleted thành status cancelled để hiển thị
+      (order as any).status = 'cancelled';
+    }
+    
     // First, check if order belongs to user's dealership
     const userDealershipId = user?.dealership_id || user?.dealerId;
     const belongsToUserDealership = order.dealership_id === userDealershipId;
@@ -178,12 +201,12 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
     {
       title: 'Khách hàng',
       key: 'customerName',
-      render: (_: any, record: Order) => record.customer?.full_name || 'N/A',
+      render: (_: any, record: Order) => (record as any).customer_id?.full_name || (record as any).customer?.full_name || 'N/A',
     },
     {
       title: 'Số điện thoại',
       key: 'customerPhone',
-      render: (_: any, record: Order) => record.customer?.phone || 'N/A',
+      render: (_: any, record: Order) => (record as any).customer_id?.phone || (record as any).customer?.phone || 'N/A',
     },
     {
       title: 'Tổng tiền',

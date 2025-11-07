@@ -42,6 +42,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { debtService, Debt, DebtSearchParams, DebtStats } from '../../services/debtService';
+import { customerService } from '../../services/customerService';
 import { useAuth } from '../../contexts/AuthContext';
 import Swal from 'sweetalert2';
 import dayjs, { Dayjs } from 'dayjs';
@@ -70,6 +71,8 @@ export const DebtManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dealer' | 'customers'>('dealer');
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [customerMap, setCustomerMap] = useState<Record<string, {name: string; email?: string; phone?: string}>>({});
 
   const statusOptions = [
     { value: 'active', label: 'Đang nợ', color: 'warning' },
@@ -104,20 +107,21 @@ export const DebtManagement: React.FC = () => {
       
       switch (activeTab) {
         case 'customers':
-          console.log('Calling getCustomerDebts API');
-          response = await debtService.getCustomerDebts(params);
+          console.log('Calling getCustomerDebtsOfDealer API');
+          response = await debtService.getCustomerDebtsOfDealer(params);
           break;
         case 'dealer':
         default:
-          console.log('Calling getDebts API');
-          response = await debtService.getDebts(params);
+          console.log('Calling getDealerManufacturerDebts API');
+          response = await debtService.getDealerManufacturerDebts(params);
           break;
       }
       
       console.log('Debts API Response:', response);
       
       if (response.success) {
-        setDebts(response.data?.data || []);
+        const newDebts = response.data?.data || [];
+        setDebts(newDebts);
         // Update pagination from response data
         setPagination(prev => ({
           ...prev,
@@ -125,6 +129,28 @@ export const DebtManagement: React.FC = () => {
           pageSize: response.data?.pagination?.limit || 10,
           total: response.data?.pagination?.total || 0,
         }));
+
+        // Prefetch customer info for rows (when tab = customers)
+        if (activeTab === 'customers' && newDebts.length > 0) {
+          const ids = Array.from(new Set(
+            newDebts
+              .map((d: any) => d?.customer_id && typeof d.customer_id !== 'object' ? String(d.customer_id) : null)
+              .filter(Boolean) as string[]
+          ));
+          if (ids.length > 0) {
+            try {
+              const results = await Promise.allSettled(ids.map(id => customerService.getCustomerById(id)));
+              const map: Record<string, {name: string; email?: string; phone?: string}> = {};
+              results.forEach((r, idx) => {
+                if (r.status === 'fulfilled' && r.value) {
+                  const c = r.value as any;
+                  map[ids[idx]] = {name: c.name, email: c.email, phone: c.phone};
+                }
+              });
+              setCustomerMap(prev => ({...prev, ...map}));
+            } catch {}
+          }
+        }
       } else {
         setError(response.message || 'Có lỗi xảy ra khi tải dữ liệu công nợ');
       }
@@ -139,9 +165,9 @@ export const DebtManagement: React.FC = () => {
   const loadStats = useCallback(async () => {
     try {
       // Calculate stats from current debts data
-      const totalDebt = debts.reduce((sum, debt) => sum + debt.total_amount, 0);
-      const totalPaid = debts.reduce((sum, debt) => sum + debt.paid_amount, 0);
-      const totalRemaining = debts.reduce((sum, debt) => sum + debt.remaining_amount, 0);
+      const totalDebt = debts.reduce((sum, debt: any) => sum + toNumber(debt.total_amount, 0), 0);
+      const totalPaid = debts.reduce((sum, debt) => sum + getPaidAmount(debt), 0);
+      const totalRemaining = debts.reduce((sum, debt: any) => sum + toNumber(debt.remaining_amount, 0), 0);
       const overdueCount = debts.filter(debt => debt.status === 'overdue').length;
       
       setStats({
@@ -207,9 +233,22 @@ export const DebtManagement: React.FC = () => {
     });
   };
 
-  const handleViewDebt = (debt: Debt) => {
+  const handleViewDebt = async (debt: Debt) => {
     setSelectedDebt(debt);
     setDetailModalOpen(true);
+    setSelectedCustomer(null);
+    try {
+      if (activeTab === 'customers') {
+        const cid: any = debt.customer_id as any;
+        const id = (cid && typeof cid === 'object' ? cid._id : cid) || (debt as any).debtor_id;
+        if (id) {
+          const customer = await customerService.getCustomerById(id);
+          setSelectedCustomer(customer);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
   };
 
   const getStatusChip = (status: string) => {
@@ -251,9 +290,66 @@ export const DebtManagement: React.FC = () => {
     return dayjs(dateString).format('DD/MM/YYYY');
   };
 
+  const toNumber = (value: any, fallback = 0): number => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
+  const getRemainingAmount = (debt: Debt): number => {
+    const remaining = (debt as any).remaining_amount;
+    if (remaining === undefined || remaining === null) return 0;
+    return toNumber(remaining, 0);
+  };
+
+  const getPaidAmount = (debt: Debt): number => {
+    const paid = (debt as any).paid_amount;
+    if (paid !== undefined && paid !== null) return toNumber(paid, 0);
+    // Fallback: total - remaining
+    const total = toNumber((debt as any).total_amount, 0);
+    const remaining = getRemainingAmount(debt);
+    const calc = total - remaining;
+    return calc > 0 ? calc : 0;
+  };
+
   const getProgressPercentage = (paid: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((paid / total) * 100);
+    const p = toNumber(paid, 0);
+    const t = toNumber(total, 0);
+    if (t <= 0) return 0;
+    return Math.round((p / t) * 100);
+  };
+
+  // ===== Helpers: hiển thị thông tin KH kể cả khi backend không populate đầy đủ =====
+  const getCustomerName = (debt: Debt) => {
+    const cid: any = debt.customer_id as any;
+    if (cid && typeof cid === 'object') {
+      return cid.full_name || cid.name || 'N/A';
+    }
+    if (cid && typeof cid !== 'object' && customerMap[String(cid)]) {
+      return customerMap[String(cid)].name || 'N/A';
+    }
+    return debt.debtor_name || 'N/A';
+  };
+
+  const getCustomerEmail = (debt: Debt) => {
+    const cid: any = debt.customer_id as any;
+    if (cid && typeof cid === 'object') {
+      return cid.email || '';
+    }
+    if (cid && typeof cid !== 'object' && customerMap[String(cid)]) {
+      return customerMap[String(cid)].email || '';
+    }
+    return debt.debtor_email || '';
+  };
+
+  const getCustomerPhone = (debt: Debt) => {
+    const cid: any = debt.customer_id as any;
+    if (cid && typeof cid === 'object') {
+      return cid.phone || '';
+    }
+    if (cid && typeof cid !== 'object' && customerMap[String(cid)]) {
+      return customerMap[String(cid)].phone || '';
+    }
+    return debt.debtor_phone || '';
   };
 
   return (
@@ -491,21 +587,21 @@ export const DebtManagement: React.FC = () => {
                         <Box>
                           <Typography variant="body2" fontWeight="bold">
                             {activeTab === 'customers' 
-                              ? (debt.customer_id?.full_name || 'N/A')
-                              : (debt.manufacturer_id?.name || 'N/A')
+                              ? getCustomerName(debt)
+                              : (debt.manufacturer_id?.name || debt.debtor_name || 'N/A')
                             }
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             ID: {debt._id}
                           </Typography>
-                          {activeTab === 'customers' && debt.customer_id?.email && (
+                          {activeTab === 'customers' && getCustomerEmail(debt) && (
                             <Typography variant="caption" color="text.secondary" display="block">
-                              {debt.customer_id.email}
+                              {getCustomerEmail(debt)}
                             </Typography>
                           )}
-                          {activeTab === 'customers' && debt.customer_id?.phone && (
+                          {activeTab === 'customers' && getCustomerPhone(debt) && (
                             <Typography variant="caption" color="text.secondary" display="block">
-                              {debt.customer_id.phone}
+                              {getCustomerPhone(debt)}
                             </Typography>
                           )}
                         </Box>
@@ -529,7 +625,7 @@ export const DebtManagement: React.FC = () => {
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" color="success.main">
-                          {formatCurrency(debt.paid_amount)}
+                          {formatCurrency(getPaidAmount(debt))}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -542,7 +638,7 @@ export const DebtManagement: React.FC = () => {
                           <Box sx={{ width: 60, bgcolor: 'grey.200', borderRadius: 1, height: 8 }}>
                             <Box
                               sx={{
-                                width: `${getProgressPercentage(debt.paid_amount, debt.total_amount)}%`,
+                                width: `${getProgressPercentage(getPaidAmount(debt), toNumber((debt as any).total_amount, 0))}%`,
                                 bgcolor: debt.remaining_amount === 0 ? 'success.main' : 'primary.main',
                                 height: '100%',
                                 borderRadius: 1,
@@ -550,7 +646,7 @@ export const DebtManagement: React.FC = () => {
                             />
                           </Box>
                           <Typography variant="caption">
-                            {getProgressPercentage(debt.paid_amount, debt.total_amount)}%
+                            {getProgressPercentage(getPaidAmount(debt), toNumber((debt as any).total_amount, 0))}%
                           </Typography>
                         </Box>
                       </TableCell>
@@ -602,6 +698,7 @@ export const DebtManagement: React.FC = () => {
             }
             open={detailModalOpen}
             onCancel={() => setDetailModalOpen(false)}
+            closable={false}
             width={1200}
             footer={[
               <Button key="close" onClick={() => setDetailModalOpen(false)}>
@@ -631,12 +728,12 @@ export const DebtManagement: React.FC = () => {
                       </Descriptions.Item>
                       <Descriptions.Item label="Đã trả">
                         <span className="font-medium text-green-600">
-                          {formatCurrency(selectedDebt.paid_amount)}
+                          {formatCurrency(getPaidAmount(selectedDebt))}
                         </span>
                       </Descriptions.Item>
                       <Descriptions.Item label="Còn lại">
                         <span className="font-medium text-orange-600">
-                          {formatCurrency(selectedDebt.remaining_amount)}
+                          {formatCurrency(getRemainingAmount(selectedDebt))}
                         </span>
                       </Descriptions.Item>
                       <Descriptions.Item label="Ngày tạo">
@@ -742,28 +839,28 @@ export const DebtManagement: React.FC = () => {
                   <div className="mb-6">
                     <AntTypography.Title level={5}>Thông tin đối tác</AntTypography.Title>
                     <Descriptions column={1} size="small">
-                      {activeTab === 'customers' && selectedDebt.customer_id && (
+                      {activeTab === 'customers' && (selectedDebt.customer_id || selectedCustomer) && (
                         <>
                           <Descriptions.Item label="Khách hàng">
-                            {selectedDebt.customer_id.full_name}
+                            {selectedCustomer?.name || getCustomerName(selectedDebt)}
                           </Descriptions.Item>
-                          {selectedDebt.customer_id.email && (
+                          {(selectedCustomer?.email || getCustomerEmail(selectedDebt)) && (
                             <Descriptions.Item label="Email">
-                              {selectedDebt.customer_id.email}
+                              {selectedCustomer?.email || getCustomerEmail(selectedDebt)}
                             </Descriptions.Item>
                           )}
-                          {selectedDebt.customer_id.phone && (
+                          {(selectedCustomer?.phone || getCustomerPhone(selectedDebt)) && (
                             <Descriptions.Item label="Số điện thoại">
-                              {selectedDebt.customer_id.phone}
+                              {selectedCustomer?.phone || getCustomerPhone(selectedDebt)}
                             </Descriptions.Item>
                           )}
                         </>
                       )}
-                      <Descriptions.Item label="Đại lý ID">
+                      {/* <Descriptions.Item label="Đại lý ID">
                         <span className="font-mono text-blue-600">
                           {typeof selectedDebt.dealership_id === 'object' ? selectedDebt.dealership_id._id : selectedDebt.dealership_id}
                         </span>
-                      </Descriptions.Item>
+                      </Descriptions.Item> */}
                     </Descriptions>
                   </div>
 

@@ -98,6 +98,15 @@ export interface Order {
   status:
     | "pending"
     | "confirmed"
+    | "deposit_paid"
+    | "waiting_vehicle_request"
+    | "waiting_bank_approval"
+    | "vehicle_request_rejected"
+    | "vehicle_ready"
+    | "fully_paid"
+    | "delivered"
+    | "completed"
+    | "canceled"
     | "halfPayment"
     | "fullyPayment"
     | "closed"
@@ -137,7 +146,11 @@ export interface Order {
 
   // Contract information
   contract?: {
-    signed_contract_url?: string;
+    signed_contract_urls?: Array<{
+      url: string;
+      type: string;
+      uploaded_at: string;
+    }>;
     signed_at?: string;
     signed_by?: string;
     uploaded_by?: string;

@@ -588,6 +588,7 @@ export const generateContractPDF = async (data: ContractPDFData): Promise<void> 
     <p>Khách hàng chịu trách nhiệm nhận xe và các giấy tờ liên quan.</p>
   </div>
 
+  <br>
   <div class="section-title">ĐIỀU 4: BẢO HÀNH VÀ TRÁCH NHIỆM</div>
   <div class="article-content">
     <ol>

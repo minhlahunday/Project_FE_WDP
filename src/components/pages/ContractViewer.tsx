@@ -67,15 +67,17 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
           console.log('Contract data from backend:', contractData);
           
           // Transform backend contract structure to frontend format
-          const transformedContract = {
+          const transformedContract: ContractInfo = {
             _id: contractData._id,
-            contract_url: (contractData as any).signed_contract_url,
-            contract_signed: !!(contractData as any).signed_contract_url, // true if has signed_contract_url
+            signed_contract_urls: (contractData as any).signed_contract_urls || [],
+            contract_url: (contractData as any).signed_contract_urls?.[0]?.url || (contractData as any).signed_contract_url, // Backward compatibility
+            contract_signed: !!(contractData as any).signed_contract_urls?.length || !!(contractData as any).signed_contract_url,
             signed_date: (contractData as any).signed_at,
-            upload_date: (contractData as any).signed_at, // same as signed_at in backend
+            upload_date: (contractData as any).signed_at,
             notes: (contractData as any).template_used,
             signed_by: (contractData as any).signed_by,
-            uploaded_by: (contractData as any).uploaded_by
+            uploaded_by: (contractData as any).uploaded_by,
+            template_used: (contractData as any).template_used
           };
           
           setContractInfo(transformedContract);
@@ -138,11 +140,11 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
   };
 
   // Delete contract
-  const handleDelete = async () => {
+  const handleDelete = async (contractUrl: string) => {
     if (!order?._id) return;
     
     try {
-      const response = await contractService.deleteSignedContract(order._id);
+      const response = await contractService.deleteSignedContract(order._id, contractUrl);
       console.log('Delete contract response:', response);
       
       // Handle backend response structure: {status: 200, success: true, message, data}
@@ -195,7 +197,16 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
         >
           Làm mới
         </Button>,
-        contractInfo?.contract_url && (
+        contractInfo?.signed_contract_urls && contractInfo.signed_contract_urls.length > 0 && (
+          <Button 
+            key="download" 
+            icon={<DownloadOutlined />}
+            onClick={handleDownload}
+          >
+            Tải xuống tất cả
+          </Button>
+        ),
+        (!contractInfo?.signed_contract_urls || contractInfo.signed_contract_urls.length === 0) && contractInfo?.contract_url && (
           <Button 
             key="download" 
             icon={<DownloadOutlined />}
@@ -204,23 +215,13 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
             Tải xuống
           </Button>
         ),
-        contractInfo?.contract_url && (
+        (!contractInfo?.signed_contract_urls || contractInfo.signed_contract_urls.length === 0) && contractInfo?.contract_url && (
           <Button 
             key="print" 
             icon={<PrinterOutlined />}
             onClick={handlePrint}
           >
             In hợp đồng
-          </Button>
-        ),
-        contractInfo?.contract_signed && (
-          <Button 
-            key="delete" 
-            danger
-            icon={<DeleteOutlined />}
-            onClick={handleDelete}
-          >
-            Xóa hợp đồng
           </Button>
         )
       ]}
@@ -460,8 +461,79 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
             </Card>
           )}
 
-          {/* Contract Preview */}
-          {contractInfo.contract_url && (
+          {/* Contract Preview - List of contracts */}
+          {contractInfo.signed_contract_urls && contractInfo.signed_contract_urls.length > 0 && (
+            <Card size="small">
+              <Title level={5}>Danh sách hợp đồng đã upload ({contractInfo.signed_contract_urls.length})</Title>
+              <div className="space-y-3 mt-4">
+                {contractInfo.signed_contract_urls.map((contract, index) => (
+                  <Card key={index} size="small" className="border border-gray-200">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <FileTextOutlined className="text-blue-500 text-xl" />
+                          <div>
+                            <p className="font-medium text-gray-700">
+                              Hợp đồng #{index + 1}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {dayjs(contract.uploaded_at).format('DD/MM/YYYY HH:mm:ss')}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Loại: {contract.type}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          danger
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleDelete(contract.url)}
+                        >
+                          Xóa
+                        </Button>
+                      </div>
+                      <div className="break-all text-xs text-gray-600 mb-3">
+                        {contract.url}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<EyeOutlined />}
+                          onClick={() => window.open(contract.url, '_blank')}
+                        >
+                          Xem
+                        </Button>
+                        <Button
+                          size="small"
+                          icon={<DownloadOutlined />}
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = contract.url;
+                            link.download = `hop-dong-${index + 1}.${contract.type.includes('pdf') ? 'pdf' : 'jpg'}`;
+                            link.click();
+                          }}
+                        >
+                          Tải xuống
+                        </Button>
+                        <Button
+                          size="small"
+                          icon={<PrinterOutlined />}
+                          onClick={() => window.open(contract.url, '_blank')}
+                        >
+                          In
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </Card>
+          )}
+          
+          {/* Backward compatibility - single contract */}
+          {(!contractInfo.signed_contract_urls || contractInfo.signed_contract_urls.length === 0) && contractInfo.contract_url && (
             <Card size="small">
               <Title level={5}>Xem trước hợp đồng</Title>
               <div className="text-center">

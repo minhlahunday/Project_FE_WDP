@@ -27,13 +27,13 @@ import {
 } from '@mui/material';
 import {
   ShoppingCart as ShoppingCartIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
 import { orderService } from '../../services/orderService';
 import { quoteService, Quote } from '../../services/quoteService';
+import { customerService } from '../../services/customerService';
 
 interface QuoteToOrderConverterProps {
   visible: boolean;
@@ -53,25 +53,95 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [notes, setNotes] = useState('');
   const [skipStockCheck, setSkipStockCheck] = useState(false);
+  const [customer, setCustomer] = useState<any>(null);
 
-  // Reset form when modal opens/closes
+  // Helper function to get customer from quote
+  const getCustomerFromQuote = (q: Quote | null) => {
+    if (!q) return null;
+    const quoteAny = q as any;
+    // Check if customer_id is populated as object
+    if (quoteAny.customer_id && typeof quoteAny.customer_id === 'object') {
+      return quoteAny.customer_id;
+    }
+    // Check if customer exists
+    if (q.customer) {
+      return q.customer;
+    }
+    return null;
+  };
+
+  // Fetch customer if needed
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      if (!quote) {
+        setCustomer(null);
+        return;
+      }
+
+      const quoteAny = quote as any;
+      const customerFromQuote = getCustomerFromQuote(quote);
+      
+      // If customer is already an object, use it
+      if (customerFromQuote) {
+        setCustomer(customerFromQuote);
+        return;
+      }
+
+      // If customer_id is a string, fetch customer from API
+      if (quoteAny.customer_id && typeof quoteAny.customer_id === 'string') {
+        try {
+          const customerData = await customerService.getCustomerById(quoteAny.customer_id);
+          // Transform to match expected format
+          setCustomer({
+            _id: customerData.id,
+            full_name: customerData.name,
+            email: customerData.email,
+            phone: customerData.phone,
+            address: customerData.address
+          });
+        } catch (error) {
+          console.error('Error fetching customer:', error);
+          setCustomer(null);
+        }
+      } else {
+        setCustomer(null);
+      }
+    };
+
+    if (visible && quote) {
+      fetchCustomer();
+    } else {
+      setCustomer(null);
+    }
+  }, [visible, quote]);
+
+  // Reset form when modal opens/closes and regenerate preview when customer changes
   useEffect(() => {
     if (visible && quote) {
       setPaymentMethod('cash');
       setNotes(`Chuyển từ báo giá ${quote.code}`);
-      generatePreview();
     } else {
       setPreviewData(null);
     }
   }, [visible, quote]);
 
+  // Regenerate preview when customer is loaded
+  useEffect(() => {
+    if (visible && quote) {
+      generatePreview();
+    }
+  }, [visible, quote, customer]);
+
   // Generate preview data
   const generatePreview = () => {
     if (!quote) return;
 
+    // Use customer from state (which may be fetched from API)
+    const customerData = customer || getCustomerFromQuote(quote);
+
     const preview = {
       code: `ORD${dayjs().format('YYMMDDHHmmss')}`,
-      customer: quote.customer,
+      customer: customerData,
       items: quote.items.map(item => ({
         vehicle_id: item.vehicle_id,
         vehicle_name: item.vehicle_name,
@@ -108,45 +178,28 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
     }
   }, [paymentMethod, notes, quote]);
 
-  // Convert quote to order
   const handleConvert = async () => {
     if (!quote || !previewData) return;
 
     setLoading(true);
     try {
-      // Backend already stores colors in Vietnamese, no mapping needed
-      const mappedItems = previewData.items.map((item: any) => ({
-        ...item,
-        // Keep original color as backend already has Vietnamese colors
-        color: item.color
-      }));
-
       const orderData = {
-        customer_id: quote.customer_id,
-        payment_method: previewData.payment_method,
+        quote_id: quote._id, 
         notes: skipStockCheck ? 
           `${previewData.notes}\n\n[LƯU Ý: Bỏ qua kiểm tra tồn kho đại lý - Chuyển đổi thủ công]` : 
           previewData.notes,
-        items: mappedItems,
-        skip_stock_check: skipStockCheck
+        
       };
 
       console.log('🔍 Converting quote to order:', {
         quoteId: quote._id,
-        customerId: quote.customer_id,
-        itemsCount: mappedItems.length,
-        totalAmount: quote.final_amount
+        notes: orderData.notes,
+        skipStockCheck: skipStockCheck
       });
-      
-      // Debug: Log detailed item data being sent to backend
-      console.log('📦 Items being sent to backend:', mappedItems);
-      console.log('🎨 Colors (no mapping needed):', mappedItems.map((item: any) => item.color));
-      console.log('📊 Stock check bypass:', skipStockCheck);
 
       const response = await orderService.createOrder(orderData);
       
       if (response && response.success) {
-        // Update quote status to 'converted' after successful order creation
         try {
           console.log('🔄 Updating quote status...', { quoteId: quote._id, status: 'converted' });
           const updateResponse = await quoteService.updateQuote(quote._id, { status: 'converted' });
@@ -192,6 +245,15 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
         } else if (backendMessage.includes('Customer not found')) {
           errorMessage = 'Không tìm thấy thông tin khách hàng';
           errorDetails = 'Vui lòng thử lại sau.';
+        } else if (backendMessage.includes('quote_id là bắt buộc')) {
+          errorMessage = 'Lỗi hệ thống: Thiếu thông tin báo giá';
+          errorDetails = 'Vui lòng tải lại trang và thử lại.';
+        } else if (backendMessage.includes('Báo giá không hợp lệ')) {
+          errorMessage = 'Báo giá không hợp lệ hoặc đã hết hạn';
+          errorDetails = 'Chỉ có thể tạo đơn hàng từ báo giá có trạng thái "valid".';
+        } else if (backendMessage.includes('đã được chuyển thành đơn hàng')) {
+          errorMessage = 'Báo giá này đã được chuyển thành đơn hàng';
+          errorDetails = 'Mỗi báo giá chỉ có thể chuyển thành đơn hàng một lần.';
         } else {
           errorMessage = backendMessage;
         }
@@ -266,7 +328,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
                     Khách hàng
                   </Typography>
                   <Typography variant="body1">
-                    {quote.customer?.full_name || 'N/A'}
+                    {customer?.full_name || customer?.name || 'N/A'}
                   </Typography>
                 </Box>
                 <Box>
@@ -281,17 +343,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
             </CardContent>
           </Card>
 
-          {/* Stock Warning */}
-          <Alert
-            severity="warning"
-            icon={<WarningIcon />}
-          >
-            <Typography variant="body2">
-              <strong>Lưu ý về tình trạng tồn kho đại lý:</strong> Hệ thống sẽ kiểm tra tình trạng tồn kho của đại lý khi tạo đơn hàng. 
-              Nếu không đủ hàng trong kho đại lý, quá trình chuyển đổi sẽ thất bại.
-            </Typography>
-          </Alert>
-
+          
           {/* Order Configuration */}
           <Card variant="outlined">
             <CardContent>
@@ -390,68 +442,104 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Sản phẩm</TableCell>
-                        <TableCell align="center">Số lượng</TableCell>
-                        <TableCell align="right">Giá gốc</TableCell>
-                        <TableCell align="right">Giảm giá</TableCell>
-                        <TableCell align="right">Thành tiền</TableCell>
+                        <TableCell align="center" sx={{ width: '5%' }}>STT</TableCell>
+                        <TableCell sx={{ width: '40%' }}>Tên hàng hóa, dịch vụ</TableCell>
+                        <TableCell align="center" sx={{ width: '10%' }}>Đơn vị tính</TableCell>
+                        <TableCell align="center" sx={{ width: '10%' }}>Số lượng</TableCell>
+                        <TableCell align="right" sx={{ width: '15%' }}>Đơn giá</TableCell>
+                        <TableCell align="right" sx={{ width: '20%' }}>Thành tiền</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={6} align="right" sx={{ fontSize: '0.75rem', fontStyle: 'italic' }}>
+                          (Thành tiền = Số lượng × Đơn giá)
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {previewData.items.map((item: any, index: number) => (
-                        <TableRow key={`${item?.vehicle_id || 'unknown'}-${item?.color || 'default'}-${index}`}>
+                      {(() => {
+                        let rowIndex = 1;
+                        const rows: JSX.Element[] = [];
+                        
+                        previewData.items.forEach((item: any, itemIndex: number) => {
+                          const vehiclePrice = item.vehicle_price || 0;
+                          const vehicleQuantity = item.quantity || 1;
+                          const vehicleAmount = vehiclePrice * vehicleQuantity;
+                          
+                          // Vehicle row
+                          rows.push(
+                            <TableRow key={`vehicle-${itemIndex}`}>
+                              <TableCell align="center">{rowIndex++}</TableCell>
                           <TableCell>
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {item.vehicle_name}
-                              </Typography>
-                              {item.color && (
-                                <Typography variant="caption" color="text.secondary">
-                                  Màu: {item.color}
+                                <Typography variant="body2">
+                                  {item.vehicle_name || 'N/A'}
+                                  {item.color && ` (Màu ${item.color})`}
                                 </Typography>
-                              )}
-                              {item.options && item.options.length > 0 && (
-                                <Typography variant="caption" color="primary" display="block">
-                                  Tùy chọn: {item.options.map((opt: any) => opt.name).join(', ')}
-                                </Typography>
-                              )}
-                              {item.accessories && item.accessories.length > 0 && (
-                                <Typography variant="caption" color="secondary" display="block">
-                                  Phụ kiện: {item.accessories.map((acc: any) => `${acc.name} (x${acc.quantity})`).join(', ')}
-                                </Typography>
-                              )}
-                            </Box>
                           </TableCell>
-                          <TableCell align="center">
-                            <Typography variant="body2">
-                              {item.quantity}
-                            </Typography>
+                              <TableCell align="center">Chiếc</TableCell>
+                              <TableCell align="center">{vehicleQuantity}</TableCell>
+                              <TableCell align="right">{formatCurrency(vehiclePrice)}</TableCell>
+                              <TableCell align="right">{formatCurrency(vehicleAmount)}</TableCell>
+                            </TableRow>
+                          );
+
+                          // Options rows
+                          if (item.options && item.options.length > 0) {
+                            item.options.forEach((opt: any, optIndex: number) => {
+                              const optPrice = opt.price || 0;
+                              const optQuantity = opt.quantity || 1;
+                              const optAmount = optPrice * optQuantity;
+                              rows.push(
+                                <TableRow key={`option-${itemIndex}-${optIndex}`}>
+                                  <TableCell align="center">{rowIndex++}</TableCell>
+                                  <TableCell>
+                                    <Typography variant="body2">{opt.name || 'N/A'}</Typography>
                           </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2">
-                              {formatCurrency(item.vehicle_price)}
-                            </Typography>
+                                  <TableCell align="center">Bộ</TableCell>
+                                  <TableCell align="center">{optQuantity}</TableCell>
+                                  <TableCell align="right">{formatCurrency(optPrice)}</TableCell>
+                                  <TableCell align="right">{formatCurrency(optAmount)}</TableCell>
+                                </TableRow>
+                              );
+                            });
+                          }
+
+                          // Accessories rows
+                          if (item.accessories && item.accessories.length > 0) {
+                            item.accessories.forEach((acc: any, accIndex: number) => {
+                              const accPrice = acc.price || 0;
+                              const accQuantity = acc.quantity || 1;
+                              const accAmount = accPrice * accQuantity;
+                              rows.push(
+                                <TableRow key={`accessory-${itemIndex}-${accIndex}`}>
+                                  <TableCell align="center">{rowIndex++}</TableCell>
+                                  <TableCell>
+                                    <Typography variant="body2">{acc.name || 'N/A'}</Typography>
                           </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2" color="error">
-                              {item.discount > 0 ? `-${formatCurrency(item.discount)}` : '-'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2" fontWeight="medium" color="success.main">
-                              {formatCurrency(item.final_amount)}
-                            </Typography>
-                          </TableCell>
+                                  <TableCell align="center">Chiếc</TableCell>
+                                  <TableCell align="center">{accQuantity}</TableCell>
+                                  <TableCell align="right">{formatCurrency(accPrice)}</TableCell>
+                                  <TableCell align="right">{formatCurrency(accAmount)}</TableCell>
                         </TableRow>
-                      ))}
+                              );
+                            });
+                          }
+                        });
+                        
+                        return rows;
+                      })()}
                       <TableRow>
-                        <TableCell colSpan={4}>
+                        <TableCell colSpan={5} sx={{ borderTop: '2px solid #333', fontWeight: 'bold', textAlign: 'right', paddingRight: '16px' }}>
                           <Typography variant="body1" fontWeight="bold">
-                            Tổng cộng:
+                            Tổng cộng tiền thanh toán:
                           </Typography>
                         </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body1" fontWeight="bold" color="success.main">
+                        <TableCell align="right" sx={{ borderTop: '2px solid #333' }}>
+                          <Typography
+                            variant="body1"
+                            fontWeight="bold"
+                            color="error.main"
+                            sx={{ fontSize: '1rem' }}
+                          >
                             {formatCurrency(previewData.items.reduce((sum: number, item: any) => sum + (item?.final_amount || 0), 0))}
                           </Typography>
                         </TableCell>
