@@ -28,6 +28,7 @@ import InventoryManagement from "./components/pages/EVM/InventoryManagement";
 import PromotionManagement from "./components/pages/EVM/PromotionManagement";
 import RequestManagement from "./components/pages/EVM/RequestManagement";
 import ManufacturerDebtManagement from "./components/pages/EVM/ManufacturerDebtManagement";
+import { ManufacturerDashboard } from "./components/pages/Manufacturer/ManufacturerDashboard";
 import { DealerInfo } from "./components/pages/DealerManager/DealerInfo";
 import { PromotionsDashboard } from "./components/PromotionsDashboard";
 import { SalesManagement } from "./components/pages/Dealerstaff/SalesManagementNew";
@@ -148,6 +149,14 @@ function AppContent() {
       <Route
         path="/evm/manufacturer-debt-management"
         element={<ManufacturerDebtManagement />}
+      />
+      <Route
+        path="/evm/manufacturer-dashboard"
+        element={<ManufacturerDashboard />}
+      />
+      <Route
+        path="/manufacturer/dashboard"
+        element={<ManufacturerDashboard />}
       />
 
       {/* Default route */}

@@ -207,6 +207,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const evmMenuItems = [
     {
+      key: "manufacturer-dashboard",
+      label: "Dashboard Hãng",
+      icon: <BarChart3 className="w-4 h-4" />,
+      route: "/evm/manufacturer-dashboard",
+    },
+    {
       key: "product-management",
       label: "Quản lý sản phẩm",
       icon: <Package className="w-4 h-4" />,
@@ -242,12 +248,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <Receipt className="w-4 h-4" />,
       route: "/evm/manufacturer-debt-management",
     },
-    {
-      key: "forecasting",
-      label: "Dự báo nhu cầu",
-      icon: <BarChart3 className="w-4 h-4" />,
-      route: "/sections/forecasting",
-    },
+    
   ];
 
   const getMenuItems = () => {
