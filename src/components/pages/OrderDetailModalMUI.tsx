@@ -166,7 +166,13 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       pending: "warning",
       confirmed: "info",
       halfPayment: "secondary",
+      deposit_paid: "warning",
       fullyPayment: "success",
+      fully_paid: "success",
+      waiting_vehicle_request: "warning",
+      vehicle_ready: "info",
+      delivered: "success",
+      completed: "success",
       closed: "default",
       cancelled: "error",
     };
@@ -179,11 +185,120 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       pending: "Chờ xác nhận",
       confirmed: "Đã xác nhận",
       halfPayment: "Đã đặt cọc",
+      deposit_paid: "Đã đặt cọc",
       fullyPayment: "Đã thanh toán",
+      fully_paid: "Đã thanh toán đủ",
+      waiting_vehicle_request: "Chờ yêu cầu xe",
+      vehicle_ready: "Xe sẵn sàng",
+      delivered: "Đã giao",
+      completed: "Hoàn thành",
       closed: "Đã đóng",
       cancelled: "Đã hủy",
     };
     return statusTexts[status as keyof typeof statusTexts] || status;
+  };
+
+  // Get status chip style with gradient background for MUI Chip
+  const getStatusChipStyle = (status: string) => {
+    const styleMap: { [key: string]: any } = {
+      pending: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
+      },
+      confirmed: {
+        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)',
+      },
+      halfPayment: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
+      },
+      deposit_paid: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
+      },
+      fullyPayment: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      fully_paid: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      waiting_vehicle_request: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
+      },
+      vehicle_ready: {
+        background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)',
+      },
+      delivered: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      completed: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      closed: {
+        background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)',
+      },
+      cancelled: {
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
+      },
+    };
+    return styleMap[status] || {};
+  };
+
+  // Delivery status text mapping
+  const getDeliveryStatusText = (status: string) => {
+    const deliveryStatusTexts = {
+      pending: "Chờ xác nhận",
+      scheduled: "Đã lên lịch",
+      in_transit: "Đang giao",
+      delivered: "Đã giao",
+      cancelled: "Đã hủy",
+    };
+    return deliveryStatusTexts[status as keyof typeof deliveryStatusTexts] || status;
   };
 
   // Format currency
@@ -486,7 +601,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Typography>
                         <Chip
                           label={getStatusText(order.status)}
-                          color={getStatusColor(order.status) as any}
+                          sx={getStatusChipStyle(order.status)}
                           size="small"
                         />
                       </Box>
@@ -576,12 +691,12 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Typography>
                         <Chip
                           label={
-                            order.contract?.signed_contract_url
+                            (order.contract?.signed_contract_urls && order.contract.signed_contract_urls.length > 0)
                               ? "Đã ký"
                               : "Chưa ký"
                           }
                           color={
-                            order.contract?.signed_contract_url
+                            (order.contract?.signed_contract_urls && order.contract.signed_contract_urls.length > 0)
                               ? "success"
                               : "error"
                           }
@@ -885,21 +1000,15 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                             Trạng thái giao hàng
                           </Typography>
                           <Chip
-                            label={
-                              order.delivery.status === "delivered"
-                                ? "Đã giao"
-                                : order.delivery.status === "in_transit"
-                                ? "Đang giao"
-                                : order.delivery.status === "scheduled"
-                                ? "Đã lên lịch"
-                                : order.delivery.status
-                            }
+                            label={getDeliveryStatusText(order.delivery.status)}
                             color={
                               order.delivery.status === "delivered"
                                 ? "success"
                                 : order.delivery.status === "in_transit"
                                 ? "info"
                                 : order.delivery.status === "scheduled"
+                                ? "warning"
+                                : order.delivery.status === "pending"
                                 ? "warning"
                                 : "default"
                             }
@@ -956,7 +1065,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
           <Button onClick={handleClose} variant="outlined">
             Đóng
           </Button>
-          {order && onEdit && (
+          {/* {order && onEdit && (
             <Button
               variant="contained"
               startIcon={<EditIcon />}
@@ -964,9 +1073,9 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
             >
               Chỉnh sửa
             </Button>
-          )}
+          )} */}
           {/* Workflow buttons based on order status */}
-          {order?.status === "pending" && (
+          {/* {order?.status === "pending" && (
             <Button
               variant="outlined"
               startIcon={<DescriptionIcon />}
@@ -974,7 +1083,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
             >
               Sinh hợp đồng
             </Button>
-          )}
+          )} */}
           {/* Upload button - luôn hiển thị để có thể upload nhiều hợp đồng */}
           <Button
             variant="outlined"
@@ -985,7 +1094,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
             Upload hợp đồng
           </Button>
           {/* Deposit button - hiện khi có signed contract và status phù hợp */}
-          {(order?.contract?.signed_contract_urls?.length > 0 || order?.contract?.signed_contract_url) &&
+          {/* {((order?.contract?.signed_contract_urls?.length ?? 0) > 0) &&
             ["pending", "confirmed"].includes(order?.status || "") && (
               <Button
                 variant="outlined"
@@ -994,7 +1103,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
               >
                 Đặt cọc
               </Button>
-            )}
+            )} */}
           <Button
             variant="outlined"
             startIcon={<DescriptionIcon />}
@@ -1002,14 +1111,14 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
           >
             Xem hợp đồng
           </Button>
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<ShoppingCartIcon />}
             onClick={handleOpenOrderRequest}
             color="primary"
           >
             Gửi yêu cầu đặt xe
-          </Button>
+          </Button> */}
           <Button variant="outlined" startIcon={<PrintIcon />}>
             In đơn hàng
           </Button>

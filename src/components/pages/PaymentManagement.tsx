@@ -14,7 +14,8 @@ import {
   message,
   Space,
   Table,
-  Radio
+  Radio,
+  Tag
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -343,6 +344,147 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     }).format(amount);
   };
 
+  // Get status text in Vietnamese
+  const getStatusText = (status: string) => {
+    const statusMap: { [key: string]: string } = {
+      pending: 'Chờ xác nhận',
+      confirmed: 'Đã xác nhận',
+      halfPayment: 'Đã đặt cọc',
+      deposit_paid: 'Đã đặt cọc',
+      fullyPayment: 'Đã thanh toán',
+      fully_paid: 'Đã thanh toán đủ',
+      waiting_vehicle_request: 'Chờ yêu cầu xe',
+      vehicle_ready: 'Xe sẵn sàng',
+      delivered: 'Đã giao',
+      completed: 'Hoàn thành',
+      closed: 'Đã đóng',
+      cancelled: 'Đã hủy',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Get status tag style with gradient background
+  const getStatusTagStyle = (status: string) => {
+    const styleMap: { [key: string]: React.CSSProperties } = {
+      pending: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+      },
+      confirmed: {
+        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)'
+      },
+      halfPayment: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
+      },
+      deposit_paid: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
+      },
+      fullyPayment: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      fully_paid: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      waiting_vehicle_request: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+      },
+      vehicle_ready: {
+        background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)'
+      },
+      delivered: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      completed: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      closed: {
+        background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)'
+      },
+      cancelled: {
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)'
+      },
+    };
+    return styleMap[status] || {
+      background: '#f0f0f0',
+      color: '#666',
+      border: '1px solid #d9d9d9',
+      fontWeight: 500,
+      padding: '4px 12px',
+      borderRadius: '6px'
+    };
+  };
+
   // Payment history columns
   const historyColumns: ColumnsType<Payment> = [
     {
@@ -418,7 +560,12 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               <Text strong>Còn lại:</Text> {formatCurrency(remainingAmount)}
             </Col>
             <Col span={12}>
-              <Text strong>Trạng thái:</Text> {order.status}
+              <Text strong>Trạng thái:</Text>{' '}
+              <Tag 
+                style={getStatusTagStyle(order.status)}
+              >
+                {getStatusText(order.status)}
+              </Tag>
             </Col>
           </Row>
         </Card>

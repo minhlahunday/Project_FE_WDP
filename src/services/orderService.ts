@@ -321,7 +321,10 @@ export const orderService = {
 
   // Mark vehicle ready (change status from waiting_vehicle_request to vehicle_ready)
   async markVehicleReady(orderId: string): Promise<OrderResponse> {
-    return patch<OrderResponse>(`/api/orders/${orderId}/mark-vehicle-ready`, {});
+    return patch<OrderResponse>(
+      `/api/orders/${orderId}/mark-vehicle-ready`,
+      {}
+    );
   },
 
   // Delete order (if allowed)
@@ -336,7 +339,7 @@ export const orderService = {
     orderId: string,
     cancelData: {
       cancellation_reason: string;
-      refund_method?: 'cash' | 'bank' | 'qr' | 'card';
+      refund_method?: "cash" | "bank" | "qr" | "card";
     }
   ): Promise<OrderResponse> {
     return post<OrderResponse>(`/api/orders/${orderId}/cancel`, cancelData);
@@ -466,11 +469,14 @@ export const orderService = {
   },
 
   // Pay deposit for order (first payment)
-  async payDeposit(orderId: string, depositData: {
-    deposit_amount: number;
-    payment_method: 'cash' | 'bank' | 'qr' | 'card';
-    notes?: string;
-  }): Promise<{
+  async payDeposit(
+    orderId: string,
+    depositData: {
+      deposit_amount: number;
+      payment_method: "cash" | "bank" | "qr" | "card";
+      notes?: string;
+    }
+  ): Promise<{
     success: boolean;
     message: string;
     data: {
@@ -487,10 +493,13 @@ export const orderService = {
   },
 
   // Pay final amount (remaining balance) - Backend tự tính số tiền còn lại
-  async payFinal(orderId: string, paymentData: {
-    payment_method: 'cash' | 'bank' | 'qr' | 'card';
-    notes?: string;
-  }): Promise<{
+  async payFinal(
+    orderId: string,
+    paymentData: {
+      payment_method: "cash" | "bank" | "qr" | "card";
+      notes?: string;
+    }
+  ): Promise<{
     success: boolean;
     message: string;
     data: {
@@ -503,35 +512,50 @@ export const orderService = {
   },
 
   // Deliver vehicle to customer (change status from fully_paid to delivered)
-  async deliverOrder(orderId: string, deliveryData: {
-    delivery_person?: {
-      name?: string;
-      phone?: string;
-      id_card?: string;
-    };
-    recipient_info: {
-      name: string;
-      phone: string;
-      relationship?: string;
-    };
-    delivery_documents?: Array<{
-      name: string;
-      type: string;
-      file_url: string;
-    }>;
-    delivery_notes?: string;
-    actual_delivery_date?: string;
-  }): Promise<OrderResponse> {
+  async deliverOrder(
+    orderId: string,
+    deliveryData: {
+      delivery_person?: {
+        name?: string;
+        phone?: string;
+        id_card?: string;
+      };
+      recipient_info: {
+        name: string;
+        phone: string;
+        relationship?: string;
+      };
+      delivery_documents?: Array<{
+        name: string;
+        type: string;
+        file_url: string;
+      }>;
+      delivery_notes?: string;
+      actual_delivery_date?: string;
+    }
+  ): Promise<OrderResponse> {
     return post<OrderResponse>(`/api/orders/${orderId}/deliver`, deliveryData);
   },
 
   // Complete order (change status from delivered to completed)
-  async completeOrder(orderId: string, completionData?: {
-    completion_notes?: string;
-  }): Promise<OrderResponse> {
-    return patch<OrderResponse>(`/api/orders/${orderId}/complete`, completionData || {});
+  async completeOrder(
+    orderId: string,
+    completionData?: {
+      completion_notes?: string;
+    }
+  ): Promise<OrderResponse> {
+    return patch<OrderResponse>(
+      `/api/orders/${orderId}/complete`,
+      completionData || {}
+    );
   },
-  
+  async getOrderRequestHistory(
+    requestId: string
+  ): Promise<OrderRequestHistoryResponse> {
+    return get<OrderRequestHistoryResponse>(
+      `/api/orders/${requestId}/status-history`
+    );
+  },
 };
 
 export default orderService;

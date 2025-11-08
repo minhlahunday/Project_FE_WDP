@@ -170,26 +170,228 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
 
   const getPaymentStatusTag = (order: Order) => {
     if (order.paid_amount === 0) {
-      return <Tag color="red">Chưa thanh toán</Tag>;
+      return (
+        <Tag 
+          style={{
+            background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+            color: '#fff',
+            border: 'none',
+            fontWeight: 600,
+            padding: '4px 12px',
+            borderRadius: '6px',
+            boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)'
+          }}
+        >
+          Chưa thanh toán
+        </Tag>
+      );
     } else if (order.paid_amount < order.final_amount) {
-      return <Tag color="orange">Thanh toán một phần</Tag>;
+      return (
+        <Tag 
+          style={{
+            background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+            color: '#fff',
+            border: 'none',
+            fontWeight: 600,
+            padding: '4px 12px',
+            borderRadius: '6px',
+            boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
+          }}
+        >
+          Thanh toán một phần
+        </Tag>
+      );
     } else {
-      return <Tag color="green">Đã thanh toán</Tag>;
+      return (
+        <Tag 
+          style={{
+            background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+            color: '#fff',
+            border: 'none',
+            fontWeight: 600,
+            padding: '4px 12px',
+            borderRadius: '6px',
+            boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+          }}
+        >
+          Đã thanh toán
+        </Tag>
+      );
     }
   };
 
   const getOrderStatusTag = (status: string) => {
     const statusMap = {
-      pending: { text: 'Chờ xử lý', color: 'default' },
-      confirmed: { text: 'Đã xác nhận', color: 'blue' },
-      halfPayment: { text: 'Đã cọc', color: 'orange' },
-      fullyPayment: { text: 'Đã thanh toán', color: 'green' },
-      closed: { text: 'Hoàn tất', color: 'success' },
-      cancelled: { text: 'Đã hủy', color: 'error' },
+      pending: { 
+        text: 'Chờ xác nhận', 
+        color: 'warning',
+        style: { 
+          background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+        }
+      },
+      confirmed: { 
+        text: 'Đã xác nhận', 
+        color: 'blue',
+        style: { 
+          background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)'
+        }
+      },
+      halfPayment: { 
+        text: 'Đã đặt cọc', 
+        color: 'orange',
+        style: { 
+          background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
+        }
+      },
+      deposit_paid: { 
+        text: 'Đã đặt cọc', 
+        color: 'warning',
+        style: { 
+          background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
+        }
+      },
+      fullyPayment: { 
+        text: 'Đã thanh toán', 
+        color: 'green',
+        style: { 
+          background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+        }
+      },
+      fully_paid: { 
+        text: 'Đã thanh toán đủ', 
+        color: 'success',
+        style: { 
+          background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+        }
+      },
+      waiting_vehicle_request: { 
+        text: 'Chờ yêu cầu xe', 
+        color: 'warning',
+        style: { 
+          background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+        }
+      },
+      vehicle_ready: { 
+        text: 'Xe sẵn sàng', 
+        color: 'cyan',
+        style: { 
+          background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)'
+        }
+      },
+      delivered: { 
+        text: 'Đã giao', 
+        color: 'success',
+        style: { 
+          background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+        }
+      },
+      completed: { 
+        text: 'Hoàn thành', 
+        color: 'success',
+        style: { 
+          background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+        }
+      },
+      closed: { 
+        text: 'Đã đóng', 
+        color: 'default',
+        style: { 
+          background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)'
+        }
+      },
+      cancelled: { 
+        text: 'Đã hủy', 
+        color: 'error',
+        style: { 
+          background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 600,
+          padding: '4px 12px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)'
+        }
+      },
     };
     
     const statusInfo = statusMap[status as keyof typeof statusMap];
-    return <Tag color={statusInfo?.color}>{statusInfo?.text || status}</Tag>;
+    if (statusInfo) {
+      return (
+        <Tag 
+          style={statusInfo.style}
+          className="status-tag"
+        >
+          {statusInfo.text}
+        </Tag>
+      );
+    }
+    return <Tag>{status}</Tag>;
   };
 
   const columns = [
@@ -330,12 +532,18 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="">Lọc theo trạng thái</option>
-                <option value="pending">Chờ xử lý</option>
+                <option value="">Tất cả</option>
+                <option value="pending">Chờ xác nhận</option>
                 <option value="confirmed">Đã xác nhận</option>
-                <option value="halfPayment">Đã cọc</option>
+                <option value="halfPayment">Đã đặt cọc</option>
+                <option value="deposit_paid">Đã đặt cọc</option>
                 <option value="fullyPayment">Đã thanh toán</option>
-                <option value="closed">Hoàn tất</option>
+                <option value="fully_paid">Đã thanh toán đủ</option>
+                <option value="waiting_vehicle_request">Chờ yêu cầu xe</option>
+                <option value="vehicle_ready">Xe sẵn sàng</option>
+                <option value="delivered">Đã giao</option>
+                <option value="completed">Hoàn thành</option>
+                <option value="closed">Đã đóng</option>
                 <option value="cancelled">Đã hủy</option>
               </select>
               {/* Custom dropdown arrow */}
@@ -366,6 +574,9 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
                 showQuickJumper: true,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} của ${total} đơn hàng`,
+                locale: {
+                  items_per_page: ' / trang',
+                },
               }}
             />
           </>

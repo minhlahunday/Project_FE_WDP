@@ -69,6 +69,185 @@ export default function PaymentHistoryModal({
     }).format(amount);
   };
 
+  // Get status text in Vietnamese
+  const getStatusText = (status: string) => {
+    const statusMap: { [key: string]: string } = {
+      pending: 'Chờ xác nhận',
+      confirmed: 'Đã xác nhận',
+      halfPayment: 'Đã đặt cọc',
+      deposit_paid: 'Đã đặt cọc',
+      fullyPayment: 'Đã thanh toán',
+      fully_paid: 'Đã thanh toán đủ',
+      waiting_vehicle_request: 'Chờ yêu cầu xe',
+      vehicle_ready: 'Xe sẵn sàng',
+      delivered: 'Đã giao',
+      completed: 'Hoàn thành',
+      closed: 'Đã đóng',
+      cancelled: 'Đã hủy',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Get status tag style with gradient background
+  const getStatusTagStyle = (status: string) => {
+    const styleMap: { [key: string]: React.CSSProperties } = {
+      pending: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      confirmed: {
+        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      halfPayment: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      deposit_paid: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      fullyPayment: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      fully_paid: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      waiting_vehicle_request: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      vehicle_ready: {
+        background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      delivered: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      completed: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      closed: {
+        background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      cancelled: {
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+    };
+    return styleMap[status] || {
+      background: '#f0f0f0',
+      color: '#666',
+      border: '1px solid #d9d9d9',
+      fontWeight: 500,
+      padding: '2px 8px',
+      borderRadius: '4px',
+      fontSize: '12px',
+      display: 'inline-block'
+    };
+  };
+
+  // Format date safely
+  const formatDate = (date: string | Date | null | undefined) => {
+    if (!date) return 'N/A';
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'N/A';
+      return dateObj.toLocaleString('vi-VN');
+    } catch (error) {
+      return 'N/A';
+    }
+  };
+
   // Payment history columns
   const paymentColumns: ColumnsType<Payment> = [
     {
@@ -177,22 +356,39 @@ export default function PaymentHistoryModal({
                             <div>
                               {item.status_change && (
                                 <p className="text-sm font-semibold text-gray-800">
-                                  Trạng thái: <span className="text-red-600">{item.status_change.from}</span> → <span className="text-green-600">{item.status_change.to}</span>
+                                  Trạng thái:{' '}
+                                  <span style={getStatusTagStyle(item.status_change.from)}>
+                                    {getStatusText(item.status_change.from)}
+                                  </span>
+                                  {' → '}
+                                  <span style={getStatusTagStyle(item.status_change.to)}>
+                                    {getStatusText(item.status_change.to)}
+                                  </span>
                                 </p>
                               )}
                               {item.delivery_status_change && (
                                 <p className="text-sm text-gray-600 mt-1">
-                                  Giao hàng: {item.delivery_status_change.from} → {item.delivery_status_change.to}
+                                  Giao hàng:{' '}
+                                  <span style={getStatusTagStyle(item.delivery_status_change.from)}>
+                                    {getStatusText(item.delivery_status_change.from)}
+                                  </span>
+                                  {' → '}
+                                  <span style={getStatusTagStyle(item.delivery_status_change.to)}>
+                                    {getStatusText(item.delivery_status_change.to)}
+                                  </span>
                                 </p>
                               )}
                               {item.current_status && (
-                                <p className="text-sm font-semibold text-blue-600">
-                                  Trạng thái hiện tại: {item.current_status}
+                                <p className="text-sm font-semibold text-gray-800 mt-1">
+                                  Trạng thái hiện tại:{' '}
+                                  <span style={getStatusTagStyle(item.current_status)}>
+                                    {getStatusText(item.current_status)}
+                                  </span>
                                 </p>
                               )}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {new Date(item.timestamp).toLocaleString('vi-VN')}
+                              {formatDate(item.timestamp)}
                             </div>
                           </div>
                           

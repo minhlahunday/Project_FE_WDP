@@ -80,7 +80,13 @@ export const OrderManagement: React.FC = () => {
     { value: 'pending', label: 'Chờ xác nhận', color: 'warning' },
     { value: 'confirmed', label: 'Đã xác nhận', color: 'info' },
     { value: 'halfPayment', label: 'Đã đặt cọc', color: 'primary' },
+    { value: 'deposit_paid', label: 'Đã đặt cọc', color: 'warning' },
     { value: 'fullyPayment', label: 'Đã thanh toán', color: 'success' },
+    { value: 'fully_paid', label: 'Đã thanh toán đủ', color: 'success' },
+    { value: 'waiting_vehicle_request', label: 'Chờ yêu cầu xe', color: 'warning' },
+    { value: 'vehicle_ready', label: 'Xe sẵn sàng', color: 'info' },
+    { value: 'delivered', label: 'Đã giao', color: 'success' },
+    { value: 'completed', label: 'Hoàn thành', color: 'success' },
     { value: 'closed', label: 'Đã đóng', color: 'secondary' },
     { value: 'cancelled', label: 'Đã hủy', color: 'error' },
   ];
@@ -92,12 +98,23 @@ export const OrderManagement: React.FC = () => {
 
   const getStatusChip = (status: string) => {
     const option = statusOptions.find(opt => opt.value === status);
+    if (option) {
+      return (
+        <Chip 
+          label={option.label} 
+          color={option.color as any} 
+          size="small" 
+          sx={{ minWidth: 90, fontWeight: 500 }} 
+        />
+      );
+    }
+    // Fallback: hiển thị status gốc với màu mặc định
     return (
       <Chip 
-        label={option?.label || status} 
-        color={option?.color as any} 
+        label={status} 
+        color="default" 
         size="small" 
-        sx={{ minWidth: 90 }} 
+        sx={{ minWidth: 90, fontWeight: 500 }} 
       />
     );
   };
@@ -1036,17 +1053,37 @@ export const OrderManagement: React.FC = () => {
                             align="center"
                             sx={{ position: 'sticky', right: 0, backgroundColor: 'background.paper' }}
                         >
-                        <Stack direction="row" spacing={0} justifyContent="center">
-                            <Tooltip title="Xem chi tiết">
-                            <IconButton 
-                                onClick={() => handleViewOrder(order._id)} 
-                                size="small"
-                            >
-                                <EyeIcon fontSize="inherit" color="primary" />
-                            </IconButton>
-                            </Tooltip>
+                        <Stack direction="row" spacing={0} justifyContent="flex-start" alignItems="center">
+                            {/* 1. Xem chi tiết - Luôn hiển thị, cố định vị trí */}
+                            <Box sx={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+                                <Tooltip title="Xem chi tiết">
+                                    <IconButton 
+                                        onClick={() => handleViewOrder(order._id)} 
+                                        size="small"
+                                        sx={{ width: 32, height: 32 }}
+                                    >
+                                        <EyeIcon fontSize="small" color="primary" />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
                             
-                            {/* Edit Order Button - Disabled if cancelled */}
+                            {/* 2. Xem hợp đồng - Nếu có hợp đồng */}
+                            {order.contract_signed && (
+                            <Tooltip title="Xem hợp đồng">
+                                <IconButton
+                                onClick={() => {
+                                    setSnackbarMessage('Tính năng xem hợp đồng đang được phát triển');
+                                    setSnackbarSeverity('info');
+                                    setSnackbarOpen(true);
+                                }}
+                                size="small"
+                                >
+                                <FileTextIcon fontSize="inherit" color="action" />
+                                </IconButton>
+                            </Tooltip>
+                            )}
+                            
+                            {/* 3. Chỉnh sửa đơn hàng - Disabled nếu cancelled */}
                             {(() => {
                               const isCancelled = order.status === 'cancelled' || (order as any).is_deleted;
                               return (
@@ -1063,7 +1100,7 @@ export const OrderManagement: React.FC = () => {
                               );
                             })()}
                             
-                            {/* Deposit Payment Button - Only show for confirmed orders (not cancelled) */}
+                            {/* 4. Đặt cọc - Chỉ hiển thị cho confirmed orders */}
                             {order.status === 'confirmed' && (
                             <Tooltip title="Đặt cọc">
                                 <IconButton
@@ -1079,22 +1116,7 @@ export const OrderManagement: React.FC = () => {
                             </Tooltip>
                             )}
                             
-                            {order.contract_signed && (
-                            <Tooltip title="Xem hợp đồng">
-                                <IconButton
-                                onClick={() => {
-                                    setSnackbarMessage('Tính năng xem hợp đồng đang được phát triển');
-                                    setSnackbarSeverity('info');
-                                    setSnackbarOpen(true);
-                                }}
-                                size="small"
-                                >
-                                <FileTextIcon fontSize="inherit" color="action" />
-                                </IconButton>
-                            </Tooltip>
-                            )}
-                            
-                            {/* Mark Ready Button - Only show for waiting_vehicle_request orders (not cancelled) */}
+                            {/* 5. Đánh dấu xe sẵn sàng - Chỉ hiển thị cho waiting_vehicle_request */}
                             {order.status === 'waiting_vehicle_request' && (
                             <Tooltip title="Đánh dấu xe sẵn sàng">
                                 <IconButton
@@ -1107,7 +1129,7 @@ export const OrderManagement: React.FC = () => {
                             </Tooltip>
                             )}
                             
-                            {/* Deliver Order Button - Only show for fully_paid orders (not cancelled) */}
+                            {/* 6. Giao xe - Chỉ hiển thị cho fully_paid */}
                             {(order.status === 'fully_paid' || order.status === 'fullyPayment') && (
                             <Tooltip title="Giao xe cho khách hàng">
                                 <IconButton
@@ -1120,7 +1142,7 @@ export const OrderManagement: React.FC = () => {
                             </Tooltip>
                             )}
                             
-                            {/* Complete Order Button - Only show for delivered orders that have been delivered for at least 1 day (not cancelled) */}
+                            {/* 7. Hoàn tất đơn hàng - Chỉ hiển thị cho delivered orders, có thể disabled */}
                             {(() => {
                               const canComplete = order.status === 'delivered';
                               if (!canComplete) return null;
@@ -1159,7 +1181,7 @@ export const OrderManagement: React.FC = () => {
                               );
                             })()}
                             
-                            {/* Delete Order Button - Only for managers (not for cancelled orders) */}
+                            {/* 8. Xóa đơn hàng - Chỉ cho managers, không cancelled */}
                             {user?.role === 'dealer_manager' && order.status !== 'cancelled' && !(order as any).is_deleted && (
                             <Tooltip title="Xóa đơn hàng">
                                 <IconButton

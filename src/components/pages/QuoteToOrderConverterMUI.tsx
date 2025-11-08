@@ -348,7 +348,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
           <Card variant="outlined">
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Cấu hình đơn hàng
+                Thông tin thanh toán
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div className="w-full">
@@ -360,7 +360,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
                     onChange={handlePaymentMethodChange}
                     className="w-full px-4 py-3 pr-10 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium transition-all duration-200 hover:border-gray-300 appearance-none cursor-pointer"
                   >
-                    <option value="cash">Tiền mặt</option>
+                    <option value="cash">Trả thẳng</option>
                     <option value="installment">Trả góp</option>
                   </select>
                 </div>
@@ -373,7 +373,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
                   onChange={handleNotesChange}
                   placeholder="Nhập ghi chú cho đơn hàng..."
                 />
-                <FormControlLabel
+                {/* <FormControlLabel
                   control={
                     <Checkbox
                       checked={skipStockCheck}
@@ -382,7 +382,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
                     />
                   }
                   label="Bỏ qua kiểm tra tồn kho đại lý (Chỉ dùng khi chắc chắn đại lý có hàng)"
-                />
+                /> */}
               </Box>
             </CardContent>
           </Card>
@@ -418,7 +418,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
                       Phương thức thanh toán
                     </Typography>
                     <Chip 
-                      label={previewData.payment_method === 'cash' ? 'Tiền mặt' : 'Trả góp'} 
+                      label={previewData.payment_method === 'cash' ? 'Trả thẳng' : 'Trả góp'} 
                       color={previewData.payment_method === 'cash' ? 'warning' : 'info'}
                       size="small"
                     />
