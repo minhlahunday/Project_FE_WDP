@@ -79,9 +79,7 @@ export const OrderManagement: React.FC = () => {
   const statusOptions = [
     { value: 'pending', label: 'Chờ xác nhận', color: 'warning' },
     { value: 'confirmed', label: 'Đã xác nhận', color: 'info' },
-    { value: 'halfPayment', label: 'Đã đặt cọc', color: 'primary' },
     { value: 'deposit_paid', label: 'Đã đặt cọc', color: 'warning' },
-    { value: 'fullyPayment', label: 'Đã thanh toán', color: 'success' },
     { value: 'fully_paid', label: 'Đã thanh toán đủ', color: 'success' },
     { value: 'waiting_vehicle_request', label: 'Chờ yêu cầu xe', color: 'warning' },
     { value: 'vehicle_ready', label: 'Xe sẵn sàng', color: 'info' },
@@ -321,6 +319,7 @@ export const OrderManagement: React.FC = () => {
       searchParams.endDate = dateRange[1].format('YYYY-MM-DD');
     }
 
+    console.log('🔍 Search params:', searchParams);
     setPagination(prev => ({ ...prev, current: 1 }));
     loadOrders(searchParams);
   };
@@ -868,7 +867,25 @@ export const OrderManagement: React.FC = () => {
                     <select
                       id="status-filter"
                   value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      onChange={(e) => {
+                        const newStatus = e.target.value;
+                        setSelectedStatus(newStatus);
+                        // Auto-apply filter after a short delay
+                        setTimeout(() => {
+                          const searchParams: OrderSearchParams = {
+                            page: 1,
+                            limit: pagination.pageSize,
+                            q: searchText.trim() || undefined,
+                            status: newStatus || undefined,
+                            payment_method: selectedPaymentMethod || undefined,
+                            startDate: dateRange[0]?.format('YYYY-MM-DD'),
+                            endDate: dateRange[1]?.format('YYYY-MM-DD'),
+                          };
+                          console.log('🔍 Filter by status:', newStatus, 'Params:', searchParams);
+                          setPagination(prev => ({ ...prev, current: 1 }));
+                          loadOrders(searchParams);
+                        }, 100);
+                      }}
                       className="w-full px-4 py-3 pr-10 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium transition-all duration-200 hover:border-gray-300 appearance-none cursor-pointer"
                 >
                       <option value="">Tất cả</option>
@@ -898,7 +915,23 @@ export const OrderManagement: React.FC = () => {
                     <select
                       id="payment-filter"
                   value={selectedPaymentMethod}
-                      onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedPaymentMethod(e.target.value);
+                        // Auto-apply filter after a short delay
+                        setTimeout(() => {
+                          const searchParams: OrderSearchParams = {
+                            page: 1,
+                            limit: pagination.pageSize,
+                            q: searchText.trim() || undefined,
+                            status: selectedStatus || undefined,
+                            payment_method: e.target.value || undefined,
+                            startDate: dateRange[0]?.format('YYYY-MM-DD'),
+                            endDate: dateRange[1]?.format('YYYY-MM-DD'),
+                          };
+                          setPagination(prev => ({ ...prev, current: 1 }));
+                          loadOrders(searchParams);
+                        }, 100);
+                      }}
                       className="w-full px-4 py-3 pr-10 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium transition-all duration-200 hover:border-gray-300 appearance-none cursor-pointer"
                 >
                       <option value="">Tất cả</option>
@@ -925,7 +958,25 @@ export const OrderManagement: React.FC = () => {
               <DateRangePicker
                 localeText={{ start: 'Từ ngày', end: 'Đến ngày' }}
                 value={dateRange}
-                onChange={newValue => setDateRange(newValue)}
+                onChange={newValue => {
+                  setDateRange(newValue);
+                  // Auto-apply filter when both dates are selected
+                  if (newValue && newValue[0] && newValue[1]) {
+                    setTimeout(() => {
+                      const searchParams: OrderSearchParams = {
+                        page: 1,
+                        limit: pagination.pageSize,
+                        q: searchText.trim() || undefined,
+                        status: selectedStatus || undefined,
+                        payment_method: selectedPaymentMethod || undefined,
+                        startDate: newValue[0]?.format('YYYY-MM-DD'),
+                        endDate: newValue[1]?.format('YYYY-MM-DD'),
+                      };
+                      setPagination(prev => ({ ...prev, current: 1 }));
+                      loadOrders(searchParams);
+                    }, 100);
+                  }
+                }}
                   enableAccessibleFieldDOMStructure={false}
                   slots={{
                     textField: TextField
