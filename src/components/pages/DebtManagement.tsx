@@ -708,13 +708,13 @@ export const DebtManagement: React.FC = () => {
             className="debt-detail-modal"
           >
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-[600px] overflow-y-auto" style={{ padding: '0 16px 0 8px' }}>
               <Row gutter={[24, 24]}>
                 {/* Debt Information */}
-                <Col xs={24} lg={16}>
+                <Col xs={24} lg={24}>
                   <div className="mb-6">
                     <AntTypography.Title level={5}>Thông tin công nợ</AntTypography.Title>
-                    <Descriptions column={2} bordered size="small">
+                    <Descriptions column={2} bordered size="small" style={{ marginBottom: 16 }}>
                       <Descriptions.Item label="ID">
                         <span className="font-mono text-blue-600">{selectedDebt._id}</span>
                       </Descriptions.Item>
@@ -754,9 +754,10 @@ export const DebtManagement: React.FC = () => {
 
                   {/* Debt Items */}
                   {selectedDebt.items && selectedDebt.items.length > 0 && (
-                    <div>
+                    <div className="mb-6">
                       <AntTypography.Title level={5}>Chi tiết sản phẩm</AntTypography.Title>
-                      <AntTable
+                      <div style={{ marginRight: '16px' }}>
+                        <AntTable
                         columns={[
                           {
                             title: 'Sản phẩm',
@@ -830,45 +831,16 @@ export const DebtManagement: React.FC = () => {
                           );
                         }}
                       />
+                      </div>
                     </div>
                   )}
-                </Col>
 
-                {/* Partner Information */}
-                <Col xs={24} lg={8}>
-                  <div className="mb-6">
-                    <AntTypography.Title level={5}>Thông tin đối tác</AntTypography.Title>
-                    <Descriptions column={1} size="small">
-                      {activeTab === 'customers' && (selectedDebt.customer_id || selectedCustomer) && (
-                        <>
-                          <Descriptions.Item label="Khách hàng">
-                            {selectedCustomer?.name || getCustomerName(selectedDebt)}
-                          </Descriptions.Item>
-                          {(selectedCustomer?.email || getCustomerEmail(selectedDebt)) && (
-                            <Descriptions.Item label="Email">
-                              {selectedCustomer?.email || getCustomerEmail(selectedDebt)}
-                            </Descriptions.Item>
-                          )}
-                          {(selectedCustomer?.phone || getCustomerPhone(selectedDebt)) && (
-                            <Descriptions.Item label="Số điện thoại">
-                              {selectedCustomer?.phone || getCustomerPhone(selectedDebt)}
-                            </Descriptions.Item>
-                          )}
-                        </>
-                      )}
-                      {/* <Descriptions.Item label="Đại lý ID">
-                        <span className="font-mono text-blue-600">
-                          {typeof selectedDebt.dealership_id === 'object' ? selectedDebt.dealership_id._id : selectedDebt.dealership_id}
-                        </span>
-                      </Descriptions.Item> */}
-                    </Descriptions>
-                  </div>
-
-                  {/* Payment History */}
+                  {/* Payment History - Moved below Product Details */}
                   {selectedDebt.payments && selectedDebt.payments.length > 0 && (
                     <div>
                       <AntTypography.Title level={5}>Lịch sử thanh toán</AntTypography.Title>
-                      <AntTable
+                      <div style={{ marginRight: '16px' }}>
+                        <AntTable
                         columns={[
                           {
                             title: 'Số tiền',
@@ -906,25 +878,57 @@ export const DebtManagement: React.FC = () => {
                         rowKey="_id"
                         pagination={false}
                         size="small"
-                        scroll={{ x: 400 }}
+                        scroll={{ x: 600 }}
                         summary={(pageData: readonly any[]) => {
                           const total = pageData.reduce((sum: number, payment: any) => sum + payment.amount, 0);
                           return (
                             <AntTable.Summary.Row>
-                              <AntTable.Summary.Cell index={0}>
+                              <AntTable.Summary.Cell index={0} align="right">
                                 <span className="font-bold text-green-600">
                                   {formatCurrency(total)}
                                 </span>
                               </AntTable.Summary.Cell>
                               <AntTable.Summary.Cell index={1} colSpan={3}>
-                                <span className="font-bold">Tổng đã trả</span>
+                                <span className="font-bold">Tổng đã trả:</span>
                               </AntTable.Summary.Cell>
                             </AntTable.Summary.Row>
                           );
                         }}
                       />
+                      </div>
                     </div>
                   )}
+                </Col>
+
+                {/* Partner Information */}
+                <Col xs={24} lg={8}>
+                  <div className="mb-6">
+                    {/* <AntTypography.Title level={5}>Thông tin đối tác</AntTypography.Title> */}
+                    <Descriptions column={1} size="small">
+                      {activeTab === 'customers' && (selectedDebt.customer_id || selectedCustomer) && (
+                        <>
+                          <Descriptions.Item label="Khách hàng">
+                            {selectedCustomer?.name || getCustomerName(selectedDebt)}
+                          </Descriptions.Item>
+                          {(selectedCustomer?.email || getCustomerEmail(selectedDebt)) && (
+                            <Descriptions.Item label="Email">
+                              {selectedCustomer?.email || getCustomerEmail(selectedDebt)}
+                            </Descriptions.Item>
+                          )}
+                          {(selectedCustomer?.phone || getCustomerPhone(selectedDebt)) && (
+                            <Descriptions.Item label="Số điện thoại">
+                              {selectedCustomer?.phone || getCustomerPhone(selectedDebt)}
+                            </Descriptions.Item>
+                          )}
+                        </>
+                      )}
+                      {/* <Descriptions.Item label="Đại lý ID">
+                        <span className="font-mono text-blue-600">
+                          {typeof selectedDebt.dealership_id === 'object' ? selectedDebt.dealership_id._id : selectedDebt.dealership_id}
+                        </span>
+                      </Descriptions.Item> */}
+                    </Descriptions>
+                  </div>
                 </Col>
               </Row>
             </div>
