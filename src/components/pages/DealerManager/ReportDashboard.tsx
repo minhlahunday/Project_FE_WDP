@@ -29,7 +29,7 @@ import { reportService, TopSellingProduct, DealerStock, SalesByStaff } from '../
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
@@ -152,8 +152,10 @@ export const ReportDashboard: React.FC = () => {
         end = dayjs().endOf('month');
         break;
       case 'quarter':
-        start = dayjs().startOf('quarter');
-        end = dayjs().endOf('quarter');
+        const currentMonth = dayjs().month(); // 0-11
+        const quarterStartMonth = Math.floor(currentMonth / 3) * 3; // 0, 3, 6, 9
+        start = dayjs().month(quarterStartMonth).startOf('month');
+        end = dayjs().month(quarterStartMonth + 2).endOf('month');
         break;
       case 'year':
         start = dayjs().startOf('year');

@@ -67,15 +67,17 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
           console.log('Contract data from backend:', contractData);
           
           // Transform backend contract structure to frontend format
-          const transformedContract = {
+          const transformedContract: ContractInfo = {
             _id: contractData._id,
-            contract_url: (contractData as any).signed_contract_url,
-            contract_signed: !!(contractData as any).signed_contract_url, // true if has signed_contract_url
+            signed_contract_urls: (contractData as any).signed_contract_urls || [],
+            contract_url: (contractData as any).signed_contract_urls?.[0]?.url || (contractData as any).signed_contract_url, // Backward compatibility
+            contract_signed: !!(contractData as any).signed_contract_urls?.length || !!(contractData as any).signed_contract_url,
             signed_date: (contractData as any).signed_at,
-            upload_date: (contractData as any).signed_at, // same as signed_at in backend
+            upload_date: (contractData as any).signed_at,
             notes: (contractData as any).template_used,
             signed_by: (contractData as any).signed_by,
-            uploaded_by: (contractData as any).uploaded_by
+            uploaded_by: (contractData as any).uploaded_by,
+            template_used: (contractData as any).template_used
           };
           
           setContractInfo(transformedContract);
@@ -138,11 +140,11 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
   };
 
   // Delete contract
-  const handleDelete = async () => {
+  const handleDelete = async (contractUrl: string) => {
     if (!order?._id) return;
     
     try {
-      const response = await contractService.deleteSignedContract(order._id);
+      const response = await contractService.deleteSignedContract(order._id, contractUrl);
       console.log('Delete contract response:', response);
       
       // Handle backend response structure: {status: 200, success: true, message, data}
@@ -166,6 +168,147 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  // Get status text in Vietnamese
+  const getStatusText = (status: string) => {
+    const statusMap: { [key: string]: string } = {
+      pending: 'Chờ xác nhận',
+      confirmed: 'Đã xác nhận',
+      halfPayment: 'Đã đặt cọc',
+      deposit_paid: 'Đã đặt cọc',
+      fullyPayment: 'Đã thanh toán',
+      fully_paid: 'Đã thanh toán đủ',
+      waiting_vehicle_request: 'Chờ yêu cầu xe',
+      vehicle_ready: 'Xe sẵn sàng',
+      delivered: 'Đã giao',
+      completed: 'Hoàn thành',
+      closed: 'Đã đóng',
+      cancelled: 'Đã hủy',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Get status tag style with gradient background
+  const getStatusTagStyle = (status: string) => {
+    const styleMap: { [key: string]: React.CSSProperties } = {
+      pending: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+      },
+      confirmed: {
+        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)'
+      },
+      halfPayment: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
+      },
+      deposit_paid: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
+      },
+      fullyPayment: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      fully_paid: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      waiting_vehicle_request: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+      },
+      vehicle_ready: {
+        background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)'
+      },
+      delivered: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      completed: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+      },
+      closed: {
+        background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)'
+      },
+      cancelled: {
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)'
+      },
+    };
+    return styleMap[status] || {
+      background: '#f0f0f0',
+      color: '#666',
+      border: '1px solid #d9d9d9',
+      fontWeight: 500,
+      padding: '4px 12px',
+      borderRadius: '6px'
+    };
   };
 
   if (!order) return null;
@@ -195,7 +338,16 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
         >
           Làm mới
         </Button>,
-        contractInfo?.contract_url && (
+        contractInfo?.signed_contract_urls && contractInfo.signed_contract_urls.length > 0 && (
+          <Button 
+            key="download" 
+            icon={<DownloadOutlined />}
+            onClick={handleDownload}
+          >
+            Tải xuống tất cả
+          </Button>
+        ),
+        (!contractInfo?.signed_contract_urls || contractInfo.signed_contract_urls.length === 0) && contractInfo?.contract_url && (
           <Button 
             key="download" 
             icon={<DownloadOutlined />}
@@ -204,23 +356,13 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
             Tải xuống
           </Button>
         ),
-        contractInfo?.contract_url && (
+        (!contractInfo?.signed_contract_urls || contractInfo.signed_contract_urls.length === 0) && contractInfo?.contract_url && (
           <Button 
             key="print" 
             icon={<PrinterOutlined />}
             onClick={handlePrint}
           >
             In hợp đồng
-          </Button>
-        ),
-        contractInfo?.contract_signed && (
-          <Button 
-            key="delete" 
-            danger
-            icon={<DeleteOutlined />}
-            onClick={handleDelete}
-          >
-            Xóa hợp đồng
           </Button>
         )
       ]}
@@ -256,11 +398,13 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
                 <span className="font-mono text-blue-600 text-lg font-bold">{order.code}</span>
               </Descriptions.Item>
               <Descriptions.Item label="Khách hàng">
-                <div>
-                  <div className="font-medium">{order.customer?.full_name || 'N/A'}</div>
-                  <div className="text-gray-500 text-sm">{order.customer?.phone || 'N/A'}</div>
-                  <div className="text-gray-500 text-sm">{order.customer?.email || 'N/A'}</div>
-                </div>
+                {order.customer?.full_name || 'N/A'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số điện thoại">
+                {order.customer?.phone || 'N/A'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Email">
+                {order.customer?.email || 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="Địa chỉ khách hàng">
                 {order.customer?.address || 'N/A'}
@@ -284,12 +428,32 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
                 </span>
               </Descriptions.Item>
               <Descriptions.Item label="Phương thức thanh toán">
-                <Tag color={order.payment_method === 'cash' ? 'green' : 'blue'}>
+                <Tag 
+                  style={order.payment_method === 'cash' ? {
+                    background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    fontWeight: 600,
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
+                  } : {
+                    background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    fontWeight: 600,
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)'
+                  }}
+                >
                   {order.payment_method === 'cash' ? 'Tiền mặt' : 'Trả góp'}
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Trạng thái đơn hàng">
-                <Tag color="orange">Chờ xác nhận</Tag>
+                <Tag style={getStatusTagStyle(order.status || 'pending')}>
+                  {getStatusText(order.status || 'pending')}
+                </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Ngày tạo">
                 {dayjs(order.createdAt).format('DD/MM/YYYY HH:mm:ss')}
@@ -307,7 +471,27 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
             <Title level={5}>Thông tin hợp đồng</Title>
             <Descriptions column={2} size="small">
               <Descriptions.Item label="Trạng thái hợp đồng">
-                <Tag color={contractInfo.contract_signed ? 'green' : 'red'} className="text-lg">
+                <Tag 
+                  style={contractInfo.contract_signed ? {
+                    background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    fontWeight: 600,
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+                    fontSize: '14px'
+                  } : {
+                    background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    fontWeight: 600,
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
+                    fontSize: '14px'
+                  }}
+                >
                   {contractInfo.contract_signed ? 'Đã ký' : 'Chưa ký'}
                 </Tag>
               </Descriptions.Item>
@@ -460,8 +644,79 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
             </Card>
           )}
 
-          {/* Contract Preview */}
-          {contractInfo.contract_url && (
+          {/* Contract Preview - List of contracts */}
+          {contractInfo.signed_contract_urls && contractInfo.signed_contract_urls.length > 0 && (
+            <Card size="small">
+              <Title level={5}>Danh sách hợp đồng đã upload ({contractInfo.signed_contract_urls.length})</Title>
+              <div className="space-y-3 mt-4">
+                {contractInfo.signed_contract_urls.map((contract, index) => (
+                  <Card key={index} size="small" className="border border-gray-200">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <FileTextOutlined className="text-blue-500 text-xl" />
+                          <div>
+                            <p className="font-medium text-gray-700">
+                              Hợp đồng #{index + 1}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {dayjs(contract.uploaded_at).format('DD/MM/YYYY HH:mm:ss')}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Loại: {contract.type}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          danger
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleDelete(contract.url)}
+                        >
+                          Xóa
+                        </Button>
+                      </div>
+                      <div className="break-all text-xs text-gray-600 mb-3">
+                        {contract.url}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<EyeOutlined />}
+                          onClick={() => window.open(contract.url, '_blank')}
+                        >
+                          Xem
+                        </Button>
+                        <Button
+                          size="small"
+                          icon={<DownloadOutlined />}
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = contract.url;
+                            link.download = `hop-dong-${index + 1}.${contract.type.includes('pdf') ? 'pdf' : 'jpg'}`;
+                            link.click();
+                          }}
+                        >
+                          Tải xuống
+                        </Button>
+                        <Button
+                          size="small"
+                          icon={<PrinterOutlined />}
+                          onClick={() => window.open(contract.url, '_blank')}
+                        >
+                          In
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </Card>
+          )}
+          
+          {/* Backward compatibility - single contract */}
+          {(!contractInfo.signed_contract_urls || contractInfo.signed_contract_urls.length === 0) && contractInfo.contract_url && (
             <Card size="small">
               <Title level={5}>Xem trước hợp đồng</Title>
               <div className="text-center">

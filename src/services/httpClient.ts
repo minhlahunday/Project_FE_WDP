@@ -1,9 +1,10 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-// Base API URL - change this to your actual API URL
-const API_BASE_URL = 'http://localhost:5000';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 console.log('HttpClient initialized with base URL:', API_BASE_URL);
+console.log('Environment mode:', import.meta.env.MODE);
 
 const httpClient = axios.create({
   baseURL: API_BASE_URL,
@@ -13,7 +14,6 @@ const httpClient = axios.create({
   timeout: 10000, 
 });
 
-// --- Token utils ---
 function getAccessToken() {
   return localStorage.getItem('accessToken');
 }
@@ -29,7 +29,6 @@ function clearTokens() {
   localStorage.removeItem('user');
 }
 
-// --- JWT exp check ---
 function isTokenExpired(token?: string) {
   if (!token) return true;
   try {
@@ -51,7 +50,6 @@ function isTokenExpired(token?: string) {
   }
 }
 
-// --- Refresh logic ---
 let refreshingPromise: Promise<string | null> | null = null;
 async function refreshAccessToken(): Promise<string | null> {
   if (refreshingPromise) return refreshingPromise;
@@ -76,7 +74,6 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshingPromise;
 }
 
-// --- Axios interceptor ---
 httpClient.interceptors.request.use(
   async (config) => {
     console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
@@ -132,7 +129,6 @@ export const request = async<T = any>(
   }
 };
 
-// Helper methods for common HTTP methods
 export const get = <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
   return request<T>({ ...config, method: 'GET', url });
 };

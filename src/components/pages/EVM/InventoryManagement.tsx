@@ -866,7 +866,7 @@ const InventoryManagement: React.FC = () => {
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
             </div>
           </div>
-          <div className="relative group">
+          {/* <div className="relative group">
             <Button
               type="default"
               size="small"
@@ -882,8 +882,8 @@ const InventoryManagement: React.FC = () => {
               Phân phối cho đại lý
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
             </div>
-          </div>
-          <div className="relative group">
+          </div> */}
+          {/* <div className="relative group">
             <Button
               type="default"
               size="small"
@@ -898,7 +898,7 @@ const InventoryManagement: React.FC = () => {
               Xem lịch sử phân phối
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
             </div>
-          </div>
+          </div> */}
           <div className="relative group">
             <Button
               type={record.status === 'active' ? 'default' : 'primary'}
@@ -1454,28 +1454,28 @@ const InventoryManagement: React.FC = () => {
 
         {/* Distribute Vehicle Modal */}
         <Modal
-          title={
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <ShareAltOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-              Phân phối xe cho đại lý
-            </div>
-          }
-          open={showDistributeModal}
-          onCancel={() => {
-            setShowDistributeModal(false);
-            setSelectedProduct(null);
-            setTargetKeys([]);
-            setSelectedKeys([]);
-            distributeForm.resetFields();
-          }}
-          onOk={handleSubmitDistribute}
-          width={800}
-          okText="Phân phối xe"
-          cancelText="Hủy"
-          confirmLoading={loading}
-          okButtonProps={{
-            disabled: targetKeys.length === 0
-          }}
+          // title={
+          //   <div style={{ display: 'flex', alignItems: 'center' }}>
+          //     <ShareAltOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+          //     Phân phối xe cho đại lý
+          //   </div>
+          // }
+          // open={showDistributeModal}
+          // onCancel={() => {
+          //   setShowDistributeModal(false);
+          //   setSelectedProduct(null);
+          //   setTargetKeys([]);
+          //   setSelectedKeys([]);
+          //   distributeForm.resetFields();
+          // }}
+          // onOk={handleSubmitDistribute}
+          // width={800}
+          // okText="Phân phối xe"
+          // cancelText="Hủy"
+          // confirmLoading={loading}
+          // okButtonProps={{
+          //   disabled: targetKeys.length === 0
+          // }}
         >
           {selectedProduct && (
             <div>

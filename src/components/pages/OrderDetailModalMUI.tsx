@@ -20,6 +20,7 @@ import {
   Alert,
   Stack,
   Divider,
+  TextField,
 } from "@mui/material";
 import {
   Close as CloseIcon,
@@ -28,6 +29,8 @@ import {
   Print as PrintIcon,
   AttachMoney as AttachMoneyIcon,
   ShoppingCart as ShoppingCartIcon,
+  LocalShipping as LocalShippingIcon,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import dayjs from "dayjs";
 
@@ -66,6 +69,25 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
   const [contractViewerVisible, setContractViewerVisible] = useState(false);
   const [orderRequestModalVisible, setOrderRequestModalVisible] =
     useState(false);
+
+  // Delivery modal states
+  const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [deliveryFormData, setDeliveryFormData] = useState({
+    delivery_person_name: '',
+    delivery_person_phone: '',
+    delivery_person_id_card: '',
+    recipient_name: '',
+    recipient_phone: '',
+    recipient_relationship: 'Chính chủ',
+    delivery_notes: '',
+    actual_delivery_date: dayjs().format('YYYY-MM-DDTHH:mm')
+  });
+
+  // Complete order modal states
+  const [completeModalOpen, setCompleteModalOpen] = useState(false);
+  const [completeLoading, setCompleteLoading] = useState(false);
+  const [completionNotes, setCompletionNotes] = useState('');
 
   // Load order details
   const loadOrderDetail = useCallback(async () => {
@@ -144,7 +166,13 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       pending: "warning",
       confirmed: "info",
       halfPayment: "secondary",
+      deposit_paid: "warning",
       fullyPayment: "success",
+      fully_paid: "success",
+      waiting_vehicle_request: "warning",
+      vehicle_ready: "info",
+      delivered: "success",
+      completed: "success",
       closed: "default",
       cancelled: "error",
     };
@@ -157,11 +185,120 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       pending: "Chờ xác nhận",
       confirmed: "Đã xác nhận",
       halfPayment: "Đã đặt cọc",
+      deposit_paid: "Đã đặt cọc",
       fullyPayment: "Đã thanh toán",
+      fully_paid: "Đã thanh toán đủ",
+      waiting_vehicle_request: "Chờ yêu cầu xe",
+      vehicle_ready: "Xe sẵn sàng",
+      delivered: "Đã giao",
+      completed: "Hoàn thành",
       closed: "Đã đóng",
       cancelled: "Đã hủy",
     };
     return statusTexts[status as keyof typeof statusTexts] || status;
+  };
+
+  // Get status chip style with gradient background for MUI Chip
+  const getStatusChipStyle = (status: string) => {
+    const styleMap: { [key: string]: any } = {
+      pending: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
+      },
+      confirmed: {
+        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)',
+      },
+      halfPayment: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
+      },
+      deposit_paid: {
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
+      },
+      fullyPayment: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      fully_paid: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      waiting_vehicle_request: {
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
+      },
+      vehicle_ready: {
+        background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)',
+      },
+      delivered: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      completed: {
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
+      },
+      closed: {
+        background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)',
+      },
+      cancelled: {
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
+      },
+    };
+    return styleMap[status] || {};
+  };
+
+  // Delivery status text mapping
+  const getDeliveryStatusText = (status: string) => {
+    const deliveryStatusTexts = {
+      pending: "Chờ xác nhận",
+      scheduled: "Đã lên lịch",
+      in_transit: "Đang giao",
+      delivered: "Đã giao",
+      cancelled: "Đã hủy",
+    };
+    return deliveryStatusTexts[status as keyof typeof deliveryStatusTexts] || status;
   };
 
   // Format currency
@@ -209,6 +346,128 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
     loadOrderDetail();
     // Refresh parent component
     onRefresh?.();
+  };
+
+  // Handle delivery
+  const handleOpenDeliveryModal = () => {
+    if (order?.customer) {
+      setDeliveryFormData({
+        ...deliveryFormData,
+        recipient_name: order.customer.full_name || '',
+        recipient_phone: order.customer.phone || '',
+        recipient_relationship: 'Chính chủ'
+      });
+    }
+    setDeliveryModalOpen(true);
+  };
+
+  const handleCloseDeliveryModal = () => {
+    setDeliveryModalOpen(false);
+    setDeliveryFormData({
+      delivery_person_name: '',
+      delivery_person_phone: '',
+      delivery_person_id_card: '',
+      recipient_name: '',
+      recipient_phone: '',
+      recipient_relationship: 'Chính chủ',
+      delivery_notes: '',
+      actual_delivery_date: dayjs().format('YYYY-MM-DDTHH:mm')
+    });
+  };
+
+  const handleSubmitDelivery = async () => {
+    if (!order || !orderId) return;
+
+    // Validate required fields
+    if (!deliveryFormData.recipient_name || !deliveryFormData.recipient_phone) {
+      alert('Vui lòng nhập đầy đủ thông tin người nhận');
+      return;
+    }
+
+    setDeliveryLoading(true);
+    try {
+      const deliveryData = {
+        recipient_info: {
+          name: deliveryFormData.recipient_name,
+          phone: deliveryFormData.recipient_phone,
+          relationship: deliveryFormData.recipient_relationship
+        },
+        delivery_person: deliveryFormData.delivery_person_name ? {
+          name: deliveryFormData.delivery_person_name,
+          phone: deliveryFormData.delivery_person_phone || undefined,
+          id_card: deliveryFormData.delivery_person_id_card || undefined
+        } : undefined,
+        delivery_notes: deliveryFormData.delivery_notes || undefined,
+        actual_delivery_date: deliveryFormData.actual_delivery_date || undefined
+      };
+
+      const response = await orderService.deliverOrder(orderId, deliveryData);
+      
+      if (response.success) {
+        alert('Giao xe thành công!');
+        handleCloseDeliveryModal();
+        handleWorkflowSuccess(); // Reload order
+      } else {
+        alert(response.message || 'Có lỗi xảy ra khi giao xe');
+      }
+    } catch (err: any) {
+      console.error('Error delivering order:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Lỗi kết nối API';
+      alert(errorMessage);
+    } finally {
+      setDeliveryLoading(false);
+    }
+  };
+
+  // Handle complete order
+  const handleOpenCompleteModal = () => {
+    setCompleteModalOpen(true);
+  };
+
+  const handleCloseCompleteModal = () => {
+    setCompleteModalOpen(false);
+    setCompletionNotes('');
+  };
+
+  const handleSubmitComplete = async () => {
+    if (!order || !orderId) return;
+
+    // Kiểm tra điều kiện: phải giao xe ít nhất 1 ngày trước
+    const deliveryDate = order.delivery?.actual_date || order.delivery?.signed_at;
+    if (deliveryDate) {
+      const deliveryDateTime = dayjs(deliveryDate);
+      const now = dayjs();
+      const daysSinceDelivery = now.diff(deliveryDateTime, 'day');
+      
+      if (daysSinceDelivery < 1) {
+        const hoursSinceDelivery = now.diff(deliveryDateTime, 'hour');
+        const remainingHours = 24 - hoursSinceDelivery;
+        
+        alert(`Chưa thể hoàn tất đơn hàng. Đơn hàng chỉ có thể hoàn tất sau ít nhất 1 ngày kể từ khi giao xe.\n\nNgày giao xe: ${deliveryDateTime.format('DD/MM/YYYY HH:mm')}\nThời gian đã trôi qua: ${hoursSinceDelivery} giờ\nCòn lại: ${remainingHours} giờ`);
+        return;
+      }
+    }
+
+    setCompleteLoading(true);
+    try {
+      const response = await orderService.completeOrder(orderId, {
+        completion_notes: completionNotes || undefined
+      });
+      
+      if (response.success) {
+        alert('Hoàn tất đơn hàng thành công!');
+        handleCloseCompleteModal();
+        handleWorkflowSuccess(); // Reload order
+      } else {
+        alert(response.message || 'Có lỗi xảy ra khi hoàn tất đơn hàng');
+      }
+    } catch (err: any) {
+      console.error('Error completing order:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Lỗi kết nối API';
+      alert(errorMessage);
+    } finally {
+      setCompleteLoading(false);
+    }
   };
 
   // Debug logging - removed for production
@@ -342,7 +601,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Typography>
                         <Chip
                           label={getStatusText(order.status)}
-                          color={getStatusColor(order.status) as any}
+                          sx={getStatusChipStyle(order.status)}
                           size="small"
                         />
                       </Box>
@@ -432,12 +691,12 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Typography>
                         <Chip
                           label={
-                            order.contract?.signed_contract_url
+                            (order.contract?.signed_contract_urls && order.contract.signed_contract_urls.length > 0)
                               ? "Đã ký"
                               : "Chưa ký"
                           }
                           color={
-                            order.contract?.signed_contract_url
+                            (order.contract?.signed_contract_urls && order.contract.signed_contract_urls.length > 0)
                               ? "success"
                               : "error"
                           }
@@ -741,21 +1000,15 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                             Trạng thái giao hàng
                           </Typography>
                           <Chip
-                            label={
-                              order.delivery.status === "delivered"
-                                ? "Đã giao"
-                                : order.delivery.status === "in_transit"
-                                ? "Đang giao"
-                                : order.delivery.status === "scheduled"
-                                ? "Đã lên lịch"
-                                : order.delivery.status
-                            }
+                            label={getDeliveryStatusText(order.delivery.status)}
                             color={
                               order.delivery.status === "delivered"
                                 ? "success"
                                 : order.delivery.status === "in_transit"
                                 ? "info"
                                 : order.delivery.status === "scheduled"
+                                ? "warning"
+                                : order.delivery.status === "pending"
                                 ? "warning"
                                 : "default"
                             }
@@ -812,7 +1065,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
           <Button onClick={handleClose} variant="outlined">
             Đóng
           </Button>
-          {order && onEdit && (
+          {/* {order && onEdit && (
             <Button
               variant="contained"
               startIcon={<EditIcon />}
@@ -820,9 +1073,9 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
             >
               Chỉnh sửa
             </Button>
-          )}
+          )} */}
           {/* Workflow buttons based on order status */}
-          {order?.status === "pending" && (
+          {/* {order?.status === "pending" && (
             <Button
               variant="outlined"
               startIcon={<DescriptionIcon />}
@@ -830,20 +1083,18 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
             >
               Sinh hợp đồng
             </Button>
-          )}
-          {/* Upload button - hiện khi chưa có signed contract */}
-          {!order?.contract?.signed_contract_url && (
-            <Button
-              variant="outlined"
-              startIcon={<DescriptionIcon />}
-              onClick={handleUploadContract}
-              title={`Upload contract for order ${order?.code}`}
-            >
-              Upload hợp đồng
-            </Button>
-          )}
+          )} */}
+          {/* Upload button - luôn hiển thị để có thể upload nhiều hợp đồng */}
+          <Button
+            variant="outlined"
+            startIcon={<DescriptionIcon />}
+            onClick={handleUploadContract}
+            title={`Upload contract for order ${order?.code}`}
+          >
+            Upload hợp đồng
+          </Button>
           {/* Deposit button - hiện khi có signed contract và status phù hợp */}
-          {order?.contract?.signed_contract_url &&
+          {/* {((order?.contract?.signed_contract_urls?.length ?? 0) > 0) &&
             ["pending", "confirmed"].includes(order?.status || "") && (
               <Button
                 variant="outlined"
@@ -852,7 +1103,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
               >
                 Đặt cọc
               </Button>
-            )}
+            )} */}
           <Button
             variant="outlined"
             startIcon={<DescriptionIcon />}
@@ -860,16 +1111,192 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
           >
             Xem hợp đồng
           </Button>
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<ShoppingCartIcon />}
             onClick={handleOpenOrderRequest}
             color="primary"
           >
             Gửi yêu cầu đặt xe
-          </Button>
+          </Button> */}
           <Button variant="outlined" startIcon={<PrintIcon />}>
             In đơn hàng
+          </Button>
+          {/* Giao xe button - chỉ hiển thị khi order đã thanh toán đủ */}
+          {(order?.status === 'fully_paid' || order?.status === 'fullyPayment') && (
+            <Button 
+              variant="contained" 
+              color="primary"
+              startIcon={<LocalShippingIcon />}
+              onClick={handleOpenDeliveryModal}
+            >
+              Giao xe
+            </Button>
+          )}
+          {/* Hoàn tất đơn hàng button - chỉ hiển thị khi đã giao xe */}
+          {order?.status === 'delivered' && (
+            <Button 
+              variant="contained" 
+              color="success"
+              startIcon={<CheckCircleIcon />}
+              onClick={handleOpenCompleteModal}
+            >
+              Hoàn tất đơn hàng
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Delivery Modal */}
+      <Dialog 
+        open={deliveryModalOpen} 
+        onClose={handleCloseDeliveryModal}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Giao xe cho khách hàng</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                Thông tin người giao xe
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  label="Họ tên người giao"
+                  value={deliveryFormData.delivery_person_name}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_name: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  label="Số điện thoại"
+                  value={deliveryFormData.delivery_person_phone}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_phone: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  label="CMND/CCCD"
+                  value={deliveryFormData.delivery_person_id_card}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_id_card: e.target.value })}
+                  size="small"
+                />
+              </Box>
+            </Box>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                Thông tin người nhận xe (Bắt buộc)
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  required
+                  label="Họ tên người nhận"
+                  value={deliveryFormData.recipient_name}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_name: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  required
+                  label="Số điện thoại"
+                  value={deliveryFormData.recipient_phone}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_phone: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  label="Mối quan hệ"
+                  value={deliveryFormData.recipient_relationship}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_relationship: e.target.value })}
+                  size="small"
+                  placeholder="VD: Chính chủ, Người thân..."
+                />
+              </Box>
+            </Box>
+            
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                label="Ngày giờ giao xe"
+                type="datetime-local"
+                value={deliveryFormData.actual_delivery_date}
+                onChange={(e) => setDeliveryFormData({ ...deliveryFormData, actual_delivery_date: e.target.value })}
+                size="small"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Box>
+            
+            <Box>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Ghi chú giao xe"
+                value={deliveryFormData.delivery_notes}
+                onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_notes: e.target.value })}
+                size="small"
+                placeholder="Ghi chú về quá trình giao xe, tình trạng xe..."
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeliveryModal} disabled={deliveryLoading}>
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleSubmitDelivery} 
+            variant="contained" 
+            color="primary"
+            disabled={deliveryLoading}
+          >
+            {deliveryLoading ? <CircularProgress size={20} /> : 'Xác nhận giao xe'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Complete Order Modal */}
+      <Dialog 
+        open={completeModalOpen} 
+        onClose={handleCloseCompleteModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Hoàn tất đơn hàng</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Đơn hàng đã được giao xe thành công. Bạn có muốn hoàn tất đơn hàng không?
+            </Alert>
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Ghi chú hoàn tất"
+              value={completionNotes}
+              onChange={(e) => setCompletionNotes(e.target.value)}
+              size="small"
+              placeholder="Ghi chú về việc hoàn tất đơn hàng (tùy chọn)..."
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCompleteModal} disabled={completeLoading}>
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleSubmitComplete} 
+            variant="contained" 
+            color="success"
+            disabled={completeLoading}
+          >
+            {completeLoading ? <CircularProgress size={20} /> : 'Hoàn tất đơn hàng'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -6,18 +6,18 @@ import {
   Button,
   Space,
   Tag,
-  Modal,
   Input,
   Typography,
-  message,
   Statistic,
   Row,
   Col,
   Tooltip,
   Descriptions,
   Divider,
-  Select
+  Select,
+  Modal
 } from 'antd';
+import Swal from 'sweetalert2';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -29,6 +29,7 @@ import {
   DollarOutlined
 } from '@ant-design/icons';
 import { requestVehicleService, VehicleRequest } from '../../../services/requestVehicleService';
+import { get } from '../../../services/httpClient';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -46,6 +47,11 @@ const RequestManagement: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [rejectNotes, setRejectNotes] = useState('');
   const [deliveredNotes, setDeliveredNotes] = useState('');
+  const [dealershipInfo, setDealershipInfo] = useState<any>(null);
+  const [rejectLoading, setRejectLoading] = useState(false);
+  const [deliveredLoading, setDeliveredLoading] = useState(false);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [inProgressLoading, setInProgressLoading] = useState(false);
 
   useEffect(() => {
     fetchRequests();
@@ -68,95 +74,229 @@ const RequestManagement: React.FC = () => {
         }));
       }
     } catch (error: any) {
-      message.error('Lỗi khi tải danh sách yêu cầu: ' + (error?.message || 'Unknown error'));
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Lỗi khi tải danh sách yêu cầu: ' + (error?.message || 'Unknown error'),
+        confirmButtonText: 'Đóng'
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = async (request: VehicleRequest) => {
+    // Đóng modal detail trước khi hiển thị SweetAlert
+    setShowDetailModal(false);
+    setSelectedRequest(null);
+    setDealershipInfo(null);
+    
+    // Delay nhỏ để modal đóng hoàn toàn
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
     try {
-      Modal.confirm({
+      const result = await Swal.fire({
         title: 'Xác nhận duyệt yêu cầu',
-        content: `Bạn có chắc chắn muốn duyệt yêu cầu ${request._id}?`,
-        okText: 'Duyệt',
-        cancelText: 'Hủy',
-        onOk: async () => {
-          const response = await requestVehicleService.approveRequest(request._id);
-          if (response.success) {
-            message.success('Yêu cầu đã được duyệt!');
-            setShowDetailModal(false);
-            setSelectedRequest(null);
-            fetchRequests();
+        text: `Bạn có chắc chắn muốn duyệt yêu cầu ${request._id}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Duyệt',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#1890ff',
+        cancelButtonColor: '#d33',
+        showLoaderOnConfirm: true,
+        preConfirm: async () => {
+          setApproveLoading(true);
+          try {
+            const response = await requestVehicleService.approveRequest(request._id);
+            if (!response.success) {
+              throw new Error(response.message || 'Không thể duyệt yêu cầu');
+            }
+            return response;
+          } catch (error: any) {
+            Swal.showValidationMessage(error?.message || 'Lỗi khi duyệt yêu cầu');
+            throw error;
+          } finally {
+            setApproveLoading(false);
           }
         },
+        allowOutsideClick: () => !approveLoading
       });
+
+      if (result.isConfirmed) {
+        // Refresh data
+        await fetchRequests();
+        
+        // Hiển thị SweetAlert thành công
+        await Swal.fire({
+          icon: 'success',
+          title: 'Thành công!',
+          text: 'Yêu cầu đã được duyệt!',
+          confirmButtonText: 'Đóng',
+          timer: 2000,
+          timerProgressBar: true
+        });
+      }
     } catch (error: any) {
-      message.error('Lỗi khi duyệt yêu cầu: ' + (error?.message || 'Unknown error'));
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Lỗi khi duyệt yêu cầu: ' + (error?.message || 'Unknown error'),
+        confirmButtonText: 'Đóng'
+      });
+    } finally {
+      setApproveLoading(false);
     }
   };
 
   const handleReject = async () => {
     if (!selectedRequest) return;
 
+    setRejectLoading(true);
     try {
       const response = await requestVehicleService.rejectRequest(
         selectedRequest._id,
         rejectNotes
       );
       if (response.success) {
-        message.success('Yêu cầu đã bị từ chối!');
+        // Đóng tất cả modal trước khi hiển thị SweetAlert
         setShowRejectModal(false);
         setShowDetailModal(false);
         setRejectNotes('');
         setSelectedRequest(null);
-        fetchRequests();
+        setDealershipInfo(null);
+        
+        // Refresh data
+        await fetchRequests();
+        
+        // Hiển thị SweetAlert sau khi đóng modal
+        await Swal.fire({
+          icon: 'success',
+          title: 'Thành công!',
+          text: 'Yêu cầu đã bị từ chối!',
+          confirmButtonText: 'Đóng',
+          timer: 2000,
+          timerProgressBar: true
+        });
       }
     } catch (error: any) {
-      message.error('Lỗi khi từ chối yêu cầu: ' + (error?.message || 'Unknown error'));
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Lỗi khi từ chối yêu cầu: ' + (error?.message || 'Unknown error'),
+        confirmButtonText: 'Đóng'
+      });
+    } finally {
+      setRejectLoading(false);
     }
   };
 
   const handleInProgress = async (request: VehicleRequest) => {
+    // Đóng modal detail trước khi hiển thị SweetAlert
+    setShowDetailModal(false);
+    setSelectedRequest(null);
+    setDealershipInfo(null);
+    
+    // Delay nhỏ để modal đóng hoàn toàn
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
     try {
-      Modal.confirm({
+      const result = await Swal.fire({
         title: 'Xác nhận chuyển trạng thái',
-        content: `Chuyển yêu cầu ${request._id} sang "đang xử lý"?`,
-        okText: 'Xác nhận',
-        cancelText: 'Hủy',
-        onOk: async () => {
-          const response = await requestVehicleService.inProgressRequest(request._id);
-          if (response.success) {
-            message.success('Yêu cầu đã chuyển sang đang xử lý!');
-            setShowDetailModal(false);
-            setSelectedRequest(null);
-            fetchRequests();
+        text: `Chuyển yêu cầu ${request._id} sang "đang xử lý"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Xác nhận',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#1890ff',
+        cancelButtonColor: '#d33',
+        showLoaderOnConfirm: true,
+        preConfirm: async () => {
+          setInProgressLoading(true);
+          try {
+            const response = await requestVehicleService.inProgressRequest(request._id);
+            if (!response.success) {
+              throw new Error(response.message || 'Không thể chuyển trạng thái');
+            }
+            return response;
+          } catch (error: any) {
+            Swal.showValidationMessage(error?.message || 'Lỗi khi cập nhật trạng thái');
+            throw error;
+          } finally {
+            setInProgressLoading(false);
           }
         },
+        allowOutsideClick: () => !inProgressLoading
       });
+
+      if (result.isConfirmed) {
+        // Refresh data
+        await fetchRequests();
+        
+        // Hiển thị SweetAlert thành công
+        await Swal.fire({
+          icon: 'success',
+          title: 'Thành công!',
+          text: 'Yêu cầu đã chuyển sang đang xử lý!',
+          confirmButtonText: 'Đóng',
+          timer: 2000,
+          timerProgressBar: true
+        });
+      }
     } catch (error: any) {
-      message.error('Lỗi khi cập nhật trạng thái: ' + (error?.message || 'Unknown error'));
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Lỗi khi cập nhật trạng thái: ' + (error?.message || 'Unknown error'),
+        confirmButtonText: 'Đóng'
+      });
+    } finally {
+      setInProgressLoading(false);
     }
   };
 
   const handleDelivered = async () => {
     if (!selectedRequest) return;
 
+    setDeliveredLoading(true);
     try {
       const response = await requestVehicleService.deliveredRequest(
         selectedRequest._id,
         deliveredNotes
       );
       if (response.success) {
-        message.success('Yêu cầu đã được đánh dấu là đã giao hàng!');
+        // Đóng tất cả modal trước khi hiển thị SweetAlert
         setShowDeliveredModal(false);
         setShowDetailModal(false);
         setDeliveredNotes('');
+        const tempRequest = selectedRequest;
         setSelectedRequest(null);
-        fetchRequests();
+        setDealershipInfo(null);
+        
+        // Refresh data
+        await fetchRequests();
+        
+        // Hiển thị SweetAlert sau khi đóng modal
+        await Swal.fire({
+          icon: 'success',
+          title: 'Thành công!',
+          text: `Yêu cầu ${tempRequest._id} đã được đánh dấu là đã giao hàng!`,
+          confirmButtonText: 'Đóng',
+          timer: 2000,
+          timerProgressBar: true
+        });
+      } else {
+        throw new Error(response.message || 'Không thể cập nhật trạng thái');
       }
     } catch (error: any) {
-      message.error('Lỗi khi cập nhật trạng thái: ' + (error?.message || 'Unknown error'));
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Lỗi khi cập nhật trạng thái: ' + (error?.message || 'Unknown error'),
+        confirmButtonText: 'Đóng'
+      });
+    } finally {
+      setDeliveredLoading(false);
     }
   };
 
@@ -209,9 +349,27 @@ const RequestManagement: React.FC = () => {
     return 'N/A';
   };
 
-  const showRequestDetail = (request: VehicleRequest) => {
+  const showRequestDetail = async (request: VehicleRequest) => {
     setSelectedRequest(request);
     setShowDetailModal(true);
+    
+    // Fetch dealership info if dealership_id is a string
+    if (request.dealership_id && typeof request.dealership_id === 'string') {
+      try {
+        const response: any = await get(`/api/dealerships/${request.dealership_id}`);
+        // Handle both response structures: { success, data } or direct data
+        const dealershipData = response?.success ? response.data : response;
+        if (dealershipData) {
+          setDealershipInfo(dealershipData);
+        }
+      } catch (error) {
+        console.error('Error fetching dealership info:', error);
+        setDealershipInfo(null);
+      }
+    } else {
+      // If dealership_id is already an object, reset dealershipInfo
+      setDealershipInfo(null);
+    }
   };
 
   const columns = [
@@ -437,13 +595,13 @@ const RequestManagement: React.FC = () => {
               </Select>
             </Col>
             <Col>
-              <Button 
+              {/* <Button 
                 icon={<ReloadOutlined />} 
                 onClick={fetchRequests}
                 loading={loading}
               >
                 Làm mới
-              </Button>
+              </Button> */}
             </Col>
             <Col flex="auto" style={{ textAlign: 'right' }}>
               <Tag color="blue">Tổng: {filteredRequests.length} yêu cầu</Tag>
@@ -482,13 +640,17 @@ const RequestManagement: React.FC = () => {
           open={showRejectModal}
           onOk={handleReject}
           onCancel={() => {
-            setShowRejectModal(false);
-            setRejectNotes('');
-            setSelectedRequest(null);
+            if (!rejectLoading) {
+              setShowRejectModal(false);
+              setRejectNotes('');
+              setSelectedRequest(null);
+            }
           }}
           okText="Từ chối"
           cancelText="Hủy"
-          okButtonProps={{ danger: true }}
+          okButtonProps={{ danger: true, loading: rejectLoading }}
+          cancelButtonProps={{ disabled: rejectLoading }}
+          confirmLoading={rejectLoading}
         >
           <p>Lý do từ chối:</p>
           <TextArea
@@ -505,13 +667,18 @@ const RequestManagement: React.FC = () => {
           open={showDeliveredModal}
           onOk={handleDelivered}
           onCancel={() => {
-            setShowDeliveredModal(false);
-            setDeliveredNotes('');
-            setSelectedRequest(null);
+            if (!deliveredLoading) {
+              setShowDeliveredModal(false);
+              setDeliveredNotes('');
+              setSelectedRequest(null);
+            }
           }}
           okText="Xác nhận giao hàng"
           cancelText="Hủy"
           width={600}
+          okButtonProps={{ loading: deliveredLoading }}
+          cancelButtonProps={{ disabled: deliveredLoading }}
+          confirmLoading={deliveredLoading}
         >
           {selectedRequest && (
             <div className="mb-4">
@@ -550,6 +717,7 @@ const RequestManagement: React.FC = () => {
           onCancel={() => {
             setShowDetailModal(false);
             setSelectedRequest(null);
+            setDealershipInfo(null);
           }}
           footer={
             selectedRequest && (
@@ -570,7 +738,11 @@ const RequestManagement: React.FC = () => {
                         danger
                         icon={<CloseCircleOutlined />}
                         onClick={() => {
-                          setShowRejectModal(true);
+                          setShowDetailModal(false); // Đóng modal chi tiết trước
+                          // Delay nhỏ để tạo hiệu ứng mượt mà
+                          setTimeout(() => {
+                            setShowRejectModal(true); // Sau đó mở modal từ chối
+                          }, 150);
                         }}
                       >
                         Từ chối
@@ -600,7 +772,11 @@ const RequestManagement: React.FC = () => {
                       type="primary"
                       icon={<CheckCircleOutlined />}
                       onClick={() => {
-                        setShowDeliveredModal(true);
+                        setShowDetailModal(false); // Đóng modal chi tiết trước
+                        // Delay nhỏ để tạo hiệu ứng mượt mà
+                        setTimeout(() => {
+                          setShowDeliveredModal(true); // Sau đó mở modal đánh dấu đã giao
+                        }, 150);
                       }}
                     >
                       Đánh dấu đã giao
@@ -637,22 +813,44 @@ const RequestManagement: React.FC = () => {
               <Divider />
 
               <Descriptions title="Thông tin đại lý" bordered size="small" column={2}>
-                {typeof selectedRequest.dealership_id === 'object' && selectedRequest.dealership_id && (
-                  <>
-                    <Descriptions.Item label="Tên công ty" span={2}>
-                      {selectedRequest.dealership_id.company_name || selectedRequest.dealership_id.name || 'N/A'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Địa chỉ" span={2}>
-                      {formatAddress(selectedRequest.dealership_id.address)}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Điện thoại">
-                      {selectedRequest.dealership_id.phone || 'N/A'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Email">
-                      {selectedRequest.dealership_id.email || 'N/A'}
-                    </Descriptions.Item>
-                  </>
-                )}
+                {(() => {
+                  // Get dealership info - check if it's an object or use fetched info
+                  const dealership = typeof selectedRequest.dealership_id === 'object' && selectedRequest.dealership_id
+                    ? selectedRequest.dealership_id
+                    : dealershipInfo;
+                  
+                  if (!dealership) return null;
+                  
+                  // Get contact info - check contact object first (from backend structure)
+                  const phone = dealership.contact?.phone 
+                    || dealership.phone 
+                    || dealership.contact_phone 
+                    || (dealership.user && dealership.user.phone) 
+                    || 'N/A';
+                  
+                  const email = dealership.contact?.email 
+                    || dealership.email 
+                    || dealership.contact_email 
+                    || (dealership.user && dealership.user.email) 
+                    || 'N/A';
+                  
+                  return (
+                    <>
+                      <Descriptions.Item label="Tên công ty" span={2}>
+                        {dealership.company_name || dealership.name || 'N/A'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Địa chỉ" span={2}>
+                        {formatAddress(dealership.address)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Điện thoại">
+                        {phone}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Email">
+                        {email}
+                      </Descriptions.Item>
+                    </>
+                  );
+                })()}
               </Descriptions>
 
               <Divider />
@@ -669,11 +867,11 @@ const RequestManagement: React.FC = () => {
                     <Descriptions.Item label="Giá">
                       {selectedRequest.vehicle_id.price ? formatCurrency(selectedRequest.vehicle_id.price) : 'N/A'}
                     </Descriptions.Item>
-                    <Descriptions.Item label="Thương hiệu">
+                    {/* <Descriptions.Item label="Thương hiệu">
                       {typeof selectedRequest.vehicle_id.manufacturer_id === 'object' && selectedRequest.vehicle_id.manufacturer_id
                         ? selectedRequest.vehicle_id.manufacturer_id.name || 'N/A'
                         : 'N/A'}
-                    </Descriptions.Item>
+                    </Descriptions.Item> */}
                     <Descriptions.Item label="Mô tả" span={2}>
                       {selectedRequest.vehicle_id.description || 'N/A'}
                     </Descriptions.Item>

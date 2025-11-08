@@ -70,8 +70,10 @@ export const contractService = {
   },
 
   // Delete signed contract
-  async deleteSignedContract(orderId: string): Promise<ContractResponse> {
-    const response = await del(`/api/contracts/orders/${orderId}`);
+  async deleteSignedContract(orderId: string, signedContractUrl: string): Promise<ContractResponse> {
+    const response = await del(`/api/contracts/orders/${orderId}`, {
+      data: { signed_contract_url: signedContractUrl }
+    });
     return response.data;
   }
 };

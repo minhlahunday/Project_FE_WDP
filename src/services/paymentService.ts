@@ -65,32 +65,52 @@ export interface PaymentListResponse {
 // Bank Profile for Installment
 export interface BankProfile {
   _id: string;
-  customer_id: string;
   order_id: string;
+  customer_id: string;
+  dealership_id: string;
   bank_name: string;
-  account_number: string;
-  account_holder: string;
-  branch: string;
+  bank_code?: string;
+  loan_officer?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  loan_amount: number;
+  down_payment: number;
+  loan_term_months: number;
+  interest_rate: number;
+  monthly_payment: number;
+  status: 'pending' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'funded' | 'canceled';
+  submitted_at?: string;
+  reviewed_at?: string;
+  approved_at?: string;
+  funded_at?: string;
   documents: Array<{
     name: string;
     type: string;
     file_url: string;
     uploaded_at: string;
   }>;
-  status: 'pending' | 'approved' | 'rejected';
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateBankProfileRequest {
-  customer_id: string;
   order_id: string;
   bank_name: string;
-  account_number: string;
-  account_holder: string;
-  branch: string;
-  documents: Array<{
+  bank_code?: string;
+  loan_officer?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  loan_amount: number;
+  down_payment: number;
+  loan_term_months: number;
+  interest_rate: number;
+  monthly_payment: number;
+  documents?: Array<{
     name: string;
     type: string;
     file_url: string;
@@ -148,15 +168,15 @@ export const paymentService = {
     return post('/api/bank-profiles', bankData);
   },
 
-  async getBankProfileByOrder(orderId: string): Promise<{
+  async getBankProfileById(profileId: string): Promise<{
     success: boolean;
     message: string;
     data: BankProfile;
   }> {
-    return get(`/api/bank-profiles/order/${orderId}`);
+    return get(`/api/bank-profiles/${profileId}`);
   },
 
-  async updateBankProfileStatus(profileId: string, status: 'approved' | 'rejected', notes?: string): Promise<{
+  async updateBankProfileStatus(profileId: string, status: 'pending' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'funded' | 'canceled', notes?: string): Promise<{
     success: boolean;
     message: string;
     data: BankProfile;
@@ -165,15 +185,15 @@ export const paymentService = {
   },
 
   // Debt tracking APIs
-  async getDebtByOrder(orderId: string): Promise<{
+  async getCustomerDebtByOrder(orderId: string): Promise<{
     success: boolean;
     message: string;
     data: Debt;
   }> {
-    return get(`/api/debts/order/${orderId}`);
+    return get(`/api/debts/customers/order/${orderId}`);
   },
 
-  async getCustomerDebts(customerId: string): Promise<{
+  async getCustomerDebts(): Promise<{
     success: boolean;
     message: string;
     data: {
@@ -181,7 +201,31 @@ export const paymentService = {
       pagination: any;
     };
   }> {
-    return get(`/api/debts/customer/${customerId}`);
+    return get(`/api/debts/customers`);
+  },
+
+  // Additional Bank Profile APIs
+  async getBankProfiles(): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      data: BankProfile[];
+      pagination: any;
+    };
+  }> {
+    return get('/api/bank-profiles');
+  },
+
+  async updateBankProfile(profileId: string, updateData: Partial<CreateBankProfileRequest>): Promise<{
+    success: boolean;
+    message: string;
+    data: BankProfile;
+  }> {
+    return put(`/api/bank-profiles/${profileId}`, updateData);
+  },
+
+  async deleteBankProfile(profileId: string): Promise<{ success: boolean; message: string }> {
+    return del(`/api/bank-profiles/${profileId}`);
   },
 
   // Generate contract PDF (using existing API)
@@ -194,7 +238,7 @@ export const paymentService = {
       throw new Error('No authentication token found. Please login again.');
     }
     
-    const response = await fetch(`http://localhost:5000/api/contracts/orders/${orderId}/generate`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/contracts/orders/${orderId}/generate`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -232,20 +276,6 @@ export const paymentService = {
     }
     
     return response.blob();
-  },
-
-  // Payment statistics
-  async getPaymentStats(): Promise<{
-    success: boolean;
-    data: {
-      total_payments: number;
-      total_amount: number;
-      monthly_amount: number;
-      pending_payments: number;
-      completed_payments: number;
-    };
-  }> {
-    return get('/api/payments/stats');
   }
 };
 

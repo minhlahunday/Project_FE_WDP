@@ -88,6 +88,13 @@ export interface DebtResponse {
   };
 }
 
+// Some endpoints return the debt object at root of data without the "debt" key
+export interface DebtResponseFlexible {
+  success: boolean;
+  message: string;
+  data: Debt | { debt: Debt };
+}
+
 export interface DebtSearchParams {
   page?: number;
   limit?: number;
@@ -176,6 +183,38 @@ export const debtService = {
   // Get debt by ID
   async getDebtById(debtId: string): Promise<DebtResponse> {
     return get<DebtResponse>(`/api/debts/${debtId}`);
+  },
+
+  // ================= New endpoints aligned with backend swagger =================
+  // Get dealer-manufacturer debts list (alias)
+  async getDealerManufacturerDebts(params?: DebtSearchParams): Promise<DebtListResponse> {
+    return this.getManufacturerDebts(params);
+  },
+
+  // Get dealer-manufacturer debt by id
+  async getManufacturerDebtById(id: string): Promise<DebtResponseFlexible> {
+    return get<DebtResponseFlexible>(`/api/debts/manufacturers/${id}`);
+  },
+
+  // Get dealer-manufacturer debt by RequestVehicle (batch)
+  async getManufacturerDebtByRequest(requestId: string): Promise<DebtResponseFlexible> {
+    return get<DebtResponseFlexible>(`/api/debts/manufacturers/request/${requestId}`);
+  },
+
+  // Get debts of customers belonging to the logged-in dealer (DEALER_MANAGER only)
+  async getCustomerDebtsOfDealer(params?: DebtSearchParams): Promise<DebtListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.q) queryParams.append('q', params.q);
+    if (params?.status) queryParams.append('status', params.status);
+    const url = `/api/debts/customers-of-dealer${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return get<DebtListResponse>(url);
+  },
+
+  // Get customer debt by order id (DEALER_MANAGER only)
+  async getCustomerDebtByOrder(orderId: string): Promise<DebtResponseFlexible> {
+    return get<DebtResponseFlexible>(`/api/debts/customers/order/${orderId}`);
   },
 
   // Get debt statistics

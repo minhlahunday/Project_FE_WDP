@@ -71,21 +71,10 @@ export interface OrderStatusHistory {
 }
 
 export interface CreateOrderRequest {
-  customer_id: string;
-  payment_method?: "cash" | "installment";
-  notes?: string;
-  items: Array<{
-    vehicle_id: string;
-    quantity?: number;
-    discount?: number;
-    promotion_id?: string;
-    color?: string;
-    options?: string[];
-    accessories?: Array<{
-      accessory_id: string;
-      quantity: number;
-    }>;
-  }>;
+  quote_id: string; // BẮT BUỘC: Backend yêu cầu quote_id
+  notes?: string; // Optional: Ghi chú thêm cho order
+  // Backend tự động lấy customer_id, items, payment_method từ quote
+  // Không cần gửi các field này trong request
 }
 
 export interface OrderListResponse {
@@ -330,11 +319,30 @@ export const orderService = {
     return put<OrderResponse>(`/api/orders/${orderId}`, orderData);
   },
 
+  // Mark vehicle ready (change status from waiting_vehicle_request to vehicle_ready)
+  async markVehicleReady(orderId: string): Promise<OrderResponse> {
+    return patch<OrderResponse>(
+      `/api/orders/${orderId}/mark-vehicle-ready`,
+      {}
+    );
+  },
+
   // Delete order (if allowed)
   async deleteOrder(
     orderId: string
   ): Promise<{ success: boolean; message: string }> {
     return del(`/api/orders/${orderId}`);
+  },
+
+  // Cancel order with refund
+  async cancelOrder(
+    orderId: string,
+    cancelData: {
+      cancellation_reason: string;
+      refund_method?: "cash" | "bank" | "qr" | "card";
+    }
+  ): Promise<OrderResponse> {
+    return post<OrderResponse>(`/api/orders/${orderId}/cancel`, cancelData);
   },
 
   // Convert quote to order
@@ -460,7 +468,87 @@ export const orderService = {
     return del(`/api/order-request/${requestId}`);
   },
 
-  // Get order request history/timeline
+  // Pay deposit for order (first payment)
+  async payDeposit(
+    orderId: string,
+    depositData: {
+      deposit_amount: number;
+      payment_method: "cash" | "bank" | "qr" | "card";
+      notes?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      order: Order;
+      payment: any;
+      has_stock: boolean;
+      order_request?: any;
+      payment_method: string;
+      message: string;
+      next_step: string;
+    };
+  }> {
+    return post(`/api/orders/${orderId}/pay-deposit`, depositData);
+  },
+
+  // Pay final amount (remaining balance) - Backend tự tính số tiền còn lại
+  async payFinal(
+    orderId: string,
+    paymentData: {
+      payment_method: "cash" | "bank" | "qr" | "card";
+      notes?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      order: Order;
+      payment: any;
+      remaining_amount: number;
+    };
+  }> {
+    return post(`/api/orders/${orderId}/pay-final`, paymentData);
+  },
+
+  // Deliver vehicle to customer (change status from fully_paid to delivered)
+  async deliverOrder(
+    orderId: string,
+    deliveryData: {
+      delivery_person?: {
+        name?: string;
+        phone?: string;
+        id_card?: string;
+      };
+      recipient_info: {
+        name: string;
+        phone: string;
+        relationship?: string;
+      };
+      delivery_documents?: Array<{
+        name: string;
+        type: string;
+        file_url: string;
+      }>;
+      delivery_notes?: string;
+      actual_delivery_date?: string;
+    }
+  ): Promise<OrderResponse> {
+    return post<OrderResponse>(`/api/orders/${orderId}/deliver`, deliveryData);
+  },
+
+  // Complete order (change status from delivered to completed)
+  async completeOrder(
+    orderId: string,
+    completionData?: {
+      completion_notes?: string;
+    }
+  ): Promise<OrderResponse> {
+    return patch<OrderResponse>(
+      `/api/orders/${orderId}/complete`,
+      completionData || {}
+    );
+  },
   async getOrderRequestHistory(
     requestId: string
   ): Promise<OrderRequestHistoryResponse> {
