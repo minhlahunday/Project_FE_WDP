@@ -526,23 +526,23 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       open={visible}
       onCancel={handleClose}
       footer={null}
-      width={1540}
+      width={1200}
       centered
       destroyOnClose={false}
       styles={{
         body: { 
-          maxHeight: '90vh', 
+          maxHeight: '75vh', 
           overflowY: 'auto',
-          padding: '44px 55px'
+          padding: '32px 40px'
         }
       }}
       title={
         <Space align="center" size="middle">
           <div
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 16,
+              width: 48,
+              height: 48,
+              borderRadius: 12,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               display: 'flex',
               alignItems: 'center',
@@ -550,13 +550,13 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
             }}
           >
-            <FileTextOutlined style={{ color: '#fff', fontSize: 26 }} />
+            <FileTextOutlined style={{ color: '#fff', fontSize: 22 }} />
           </div>
           <div>
-            <Title level={3} style={{ margin: 0, fontSize: 22 }}>
+            <Title level={3} style={{ margin: 0, fontSize: 20 }}>
               Tạo báo giá
             </Title>
-            <Text type="secondary" style={{ fontSize: 15 }}>Tạo báo giá nhanh cho khách hàng</Text>
+            <Text type="secondary" style={{ fontSize: 14 }}>Tạo báo giá nhanh cho khách hàng</Text>
           </div>
         </Space>
       }
@@ -569,12 +569,12 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       >
         <Card
           style={{
-            marginBottom: 32,
-            borderRadius: 20,
+            marginBottom: 24,
+            borderRadius: 16,
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: '#fff',
             boxShadow: '0 8px 24px rgba(102, 126, 234, 0.35)',
-            padding: '20px 28px',
+            padding: '16px 24px',
             overflow: 'hidden'
           }}
         >
@@ -594,12 +594,12 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </Row>
         </Card>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 24, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 20, marginBottom: 16 }}>
           Thông tin khách hàng
         </Divider>
 
         <Form.Item
-          label={<span style={{ fontSize: 16, fontWeight: 500 }}>Khách hàng</span>}
+          label={<span style={{ fontSize: 14, fontWeight: 500 }}>Khách hàng</span>}
           name="customer_id"
           tooltip="Chọn khách hàng từ danh sách"
         >
@@ -612,23 +612,23 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           />
         </Form.Item>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           Chi tiết sản phẩm
         </Divider>
 
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item
-              label={<span style={{ fontSize: 16, fontWeight: 500 }}>Số lượng</span>}
+              label={<span style={{ fontSize: 14, fontWeight: 500 }}>Số lượng</span>}
               name="quantity"
               rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
             >
-              <InputNumber min={1} style={{ width: '100%', fontSize: 16 }} size="large" />
+              <InputNumber min={1} style={{ width: '100%', fontSize: 14 }} size="large" />
             </Form.Item>
           </Col>
 
           <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Màu sắc</span>} name="color">
+            <Form.Item label={<span style={{ fontSize: 14, fontWeight: 500 }}>Màu sắc</span>} name="color">
               <CustomSelect
                 options={colorSelectOptions}
                 placeholder="Chọn màu sắc"
@@ -645,7 +645,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Row gutter={24}>
           {/* <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Giảm giá (VNĐ)</span>} name="discountSelection">
+            <Form.Item label={<span style={{ fontSize: 14, fontWeight: 500 }}>Giảm giá (VNĐ)</span>} name="discountSelection">
               <CustomSelect
                 options={discountSelectOptions}
                 placeholder="Chọn giảm giá"
@@ -659,22 +659,24 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </Col> */}
 
           <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Khuyến mãi</span>} name="promotion_id">
+            <Form.Item label={<span style={{ fontSize: 14, fontWeight: 500 }}>Khuyến mãi</span>} name="promotion_id">
               <CustomSelect
                 options={promotionSelectOptions}
                 placeholder="Chọn khuyến mãi"
                 loading={referenceLoading}
                 allowClear
                 showSearch
+                listHeight={256}
+                popupMatchSelectWidth={false}
               />
             </Form.Item>
           </Col>
         </Row>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           <Space size="middle">
-            Tùy chọn bổ sung
-            <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>{optionsValue.length}</Tag>
+            Nội thất xe
+            <Tag color="blue" style={{ fontSize: 12, padding: '2px 10px' }}>{optionsValue.length}</Tag>
           </Space>
         </Divider>
 
@@ -691,7 +693,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                     >
                       <CustomSelect
                         options={vehicleOptionSelectOptions}
-                        placeholder="Chọn tùy chọn bổ sung"
+                        placeholder="Chọn nội thất xe"
                         loading={referenceLoading}
                         allowClear
                         showSearch
@@ -703,9 +705,9 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       {...restField}
                       name={[name, 'quantity']}
                       initialValue={1}
-                      rules={[{ type: 'number', min: 1, message: 'Ít nhất 1 tùy chọn' }]}
+                      rules={[{ type: 'number', min: 1, message: 'Ít nhất 1 nội thất' }]}
                     >
-                      <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="SL" />
+                      <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="Số lượng" />
                     </Form.Item>
                   </Col>
                   <Col xs={12} sm={4}>
@@ -715,7 +717,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       icon={<MinusCircleOutlined />}
                       onClick={() => remove(name)}
                       size="large"
-                      style={{ height: 48 }}
+                      style={{ height: 40 }}
                     />
                   </Col>
                 </Row>
@@ -727,18 +729,18 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 onClick={() => add({ option_id: undefined, quantity: 1 })}
                 block
                 size="large"
-                style={{ marginBottom: 24, height: 48, fontSize: 15 }}
+                style={{ marginBottom: 16, height: 44, fontSize: 14 }}
               >
-                Thêm tùy chọn
+                Thêm nội thất
               </Button>
             </>
           )}
         </Form.List>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           <Space size="middle">
             Phụ kiện
-            <Tag color="green" style={{ fontSize: 14, padding: '4px 12px' }}>{accessoriesValue.length}</Tag>
+            <Tag color="green" style={{ fontSize: 12, padding: '2px 10px' }}>{accessoriesValue.length}</Tag>
           </Space>
         </Divider>
 
@@ -769,7 +771,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       initialValue={1}
                       rules={[{ type: 'number', min: 1, message: 'Ít nhất 1 phụ kiện' }]}
                     >
-                      <InputNumber min={1} style={{ width: '100%' }} size="large" />
+                      <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="Số lượng" />
                     </Form.Item>
                   </Col>
                   <Col xs={12} sm={4}>
@@ -779,7 +781,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       icon={<MinusCircleOutlined />}
                       onClick={() => remove(name)}
                       size="large"
-                      style={{ height: 48 }}
+                      style={{ height: 40 }}
                     />
                   </Col>
                 </Row>
@@ -791,7 +793,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 onClick={() => add({ accessory_id: undefined, quantity: 1 })}
                 block
                 size="large"
-                style={{ marginBottom: 24, height: 48, fontSize: 15 }}
+                style={{ marginBottom: 16, height: 44, fontSize: 14 }}
               >
                 Thêm phụ kiện
               </Button>
@@ -799,34 +801,34 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           )}
         </Form.List>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           Ghi chú
         </Divider>
 
         <Form.Item name="notes">
           <TextArea 
-            rows={4} 
+            rows={3} 
             placeholder="Nhập ghi chú cho báo giá (ví dụ: hiệu lực 7 ngày, gồm 2 phụ kiện...)" 
-            style={{ fontSize: 15 }}
+            style={{ fontSize: 14 }}
             size="large"
           />
         </Form.Item>
 
         <Card
           style={{
-            borderRadius: 24,
-            marginTop: 40,
-            marginBottom: 40,
+            borderRadius: 20,
+            marginTop: 24,
+            marginBottom: 24,
             background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
             color: '#fff',
             boxShadow: '0 12px 32px rgba(240, 147, 251, 0.4)',
-            padding: '24px 32px',
+            padding: '20px 24px',
             overflow: 'hidden'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', gap: '16px' }}>
             <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                 Xe × SL
               </Text>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
@@ -834,8 +836,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               </div>
             </div>
             <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
-                Tùy chọn
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 6, fontWeight: 500 }}>
+                Nội thất
               </Text>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
                 +{formatCurrency(
@@ -849,7 +851,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               </div>
             </div>
             <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                 Phụ kiện
               </Text>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
@@ -864,7 +866,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               </div>
             </div>
           </div>
-          <Divider style={{ borderColor: 'rgba(255,255,255,0.35)', margin: '20px 0' }} />
+          <Divider style={{ borderColor: 'rgba(255,255,255,0.35)', margin: '16px 0' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '32px' }}>
             {/* <div style={{ flex: '0 0 auto' }}>
               <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 8, fontWeight: 500 }}>
@@ -875,19 +877,19 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               </div>
             </div> */}
             <div style={{ flex: '1 1 auto', textAlign: 'right', minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                 Tổng thanh toán
               </Text>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
                 {formatCurrency(totalAmount)}
               </div>
             </div>
           </div>
         </Card>
 
-        <Form.Item>
+        <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ width: '100%', justifyContent: 'flex-end' }} size="large">
-            <Button onClick={handleClose} size="large" style={{ fontSize: 15, height: 48, minWidth: 120 }}>
+            <Button onClick={handleClose} size="large" style={{ fontSize: 14, height: 44, minWidth: 100 }}>
               Hủy
             </Button>
             <Button 
@@ -896,7 +898,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               loading={submitting} 
               icon={<FilePdfOutlined />}
               size="large"
-              style={{ fontSize: 15, height: 48, minWidth: 180 }}
+              style={{ fontSize: 14, height: 44, minWidth: 160 }}
             >
               Tạo báo giá & PDF
             </Button>

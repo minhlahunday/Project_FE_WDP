@@ -259,7 +259,7 @@ export const DealerStockManagement: React.FC = () => {
           {/* Filters */}
           <Card sx={{ p: 2, mb: 3, backgroundColor: '#fafafa' }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={3}>
+              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
                   label="Tìm kiếm"
@@ -267,12 +267,13 @@ export const DealerStockManagement: React.FC = () => {
                   size="small"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Tìm theo tên, SKU, màu sắc..."
                   InputProps={{
                     startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={2}>
+              {/* <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Loại xe</InputLabel>
                   <Select
@@ -285,8 +286,8 @@ export const DealerStockManagement: React.FC = () => {
                     <MenuItem value="motorbike">Xe máy</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} md={2}>
+              </Grid> */}
+              {/* <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Màu sắc</InputLabel>
                   <Select
@@ -302,7 +303,7 @@ export const DealerStockManagement: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={2}>
+              <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Trạng thái</InputLabel>
                   <Select
@@ -316,16 +317,19 @@ export const DealerStockManagement: React.FC = () => {
                     <MenuItem value="reserved">Đã đặt</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} md={3}>
+              </Grid> */}
+              <Grid item xs={12} sm={6} md={2}>
                 <Stack direction="row" spacing={1}>
                   <Button
                     variant="contained"
                     startIcon={<SearchIcon />}
                     onClick={handleSearch}
-                    fullWidth
+                    sx={{ 
+                      minWidth: '100px',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
-                    Tìm kiếm
+                    TÌM KIẾM
                   </Button>
                   <Button
                     variant="outlined"
@@ -343,8 +347,12 @@ export const DealerStockManagement: React.FC = () => {
                       setSearchText('');
                       loadStocks(resetFilters);
                     }}
+                    sx={{ 
+                      minWidth: '90px',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
-                    Reset
+                    RESET
                   </Button>
                 </Stack>
               </Grid>
@@ -358,7 +366,7 @@ export const DealerStockManagement: React.FC = () => {
                 <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableCell sx={{ fontWeight: 'bold' }}>STT</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Tên xe</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>SKU</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Mã hàng</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Hãng sản xuất</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Giá</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }} align="center">Tổng số lượng</TableCell>
@@ -391,9 +399,11 @@ export const DealerStockManagement: React.FC = () => {
                         <Typography variant="body2" fontWeight="medium">
                           {stock.vehicle.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {stock.vehicle.model || stock.vehicle.category}
-                        </Typography>
+                        {stock.vehicle.model && (
+                          <Typography variant="caption" color="text.secondary">
+                            {stock.vehicle.model}
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" color="text.secondary">
@@ -506,7 +516,7 @@ export const DealerStockManagement: React.FC = () => {
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
-                        SKU:
+                        Mã hàng:
                       </Typography>
                       <Typography variant="body1">
                         {selectedStock.vehicle.sku}

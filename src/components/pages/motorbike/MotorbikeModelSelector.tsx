@@ -222,7 +222,7 @@ export const MotorbikeModelSelector: React.FC = () => {
                         <Eye className="h-4 w-4" />
                         <span>Chi tiết</span>
                       </button>
-                      <button
+                      {/* <button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/portal/motorbike-deposit?vehicleId=${v._id as string || v.id as string}`);
@@ -231,7 +231,7 @@ export const MotorbikeModelSelector: React.FC = () => {
                       >
                         <ShoppingCart className="h-4 w-4" />
                         <span>Đặt cọc</span>
-                      </button>
+                      </button> */}
                     </div>
 
                     {/* Select Button */}

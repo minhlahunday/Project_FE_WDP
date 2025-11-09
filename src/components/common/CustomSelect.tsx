@@ -27,6 +27,8 @@ interface CustomSelectProps {
   disabled?: boolean;
   loading?: boolean;
   showSearch?: boolean;
+  listHeight?: number;
+  popupMatchSelectWidth?: boolean;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -37,7 +39,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   allowClear = false,
   disabled = false,
   loading = false,
-  showSearch = false
+  showSearch = false,
+  listHeight = 288,
+  popupMatchSelectWidth = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,7 +118,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
-        <div className="absolute z-[10050] w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-hidden">
+        <div 
+          className="absolute z-[10050] mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl overflow-hidden"
+          style={{ 
+            width: popupMatchSelectWidth ? '100%' : 'auto',
+            minWidth: popupMatchSelectWidth ? undefined : '100%',
+            maxHeight: `${listHeight}px`
+          }}
+        >
           {/* Search Input */}
           {showSearch && (
             <div className="p-3 border-b border-gray-200 bg-gray-50">
@@ -131,7 +142,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           )}
 
           {/* Options List */}
-          <div className="max-h-72 overflow-y-auto">
+          <div className="overflow-y-auto" style={{ maxHeight: `${listHeight - (showSearch ? 72 : 0)}px` }}>
             {filteredOptions.length === 0 ? (
               <div className="px-4 py-6 text-center text-gray-500" style={{ fontSize: '15px' }}>
                 Không có kết quả

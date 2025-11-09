@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 
 // Base API URL - fallback to localhost:5000 if not set in environment
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://electric-vehicle-dealer.onrender.com/';
 
 console.log('HttpClient initialized with base URL:', API_BASE_URL);
 console.log('Environment mode:', import.meta.env.MODE);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -42,6 +43,7 @@ import {
   Cancel as CancelIcon,
   Close as CloseIcon,
   Refresh as RefreshIcon,
+  ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
 import { 
   Modal,
@@ -158,6 +160,7 @@ interface Quotation {
 }
 
 export const QuotationManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -193,10 +196,9 @@ export const QuotationManagement: React.FC = () => {
   // Stats
   const [stats, setStats] = useState({
     total: 0,
-    draft: 0,
-    sent: 0,
-    accepted: 0,
-    rejected: 0,
+    valid: 0,
+    expired: 0,
+    canceled: 0,
     converted: 0
   });
 
@@ -218,6 +220,11 @@ export const QuotationManagement: React.FC = () => {
 
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Handle navigate to quote-to-order page
+  const handleNavigateToConverter = () => {
+    navigate('/portal/quote-to-order');
   };
 
   useEffect(() => {
@@ -380,10 +387,9 @@ export const QuotationManagement: React.FC = () => {
   const calculateStats = (data: Quotation[]) => {
     const newStats = {
       total: data.length,
-      draft: data.filter(q => q.status === 'draft').length,
-      sent: data.filter(q => q.status === 'sent' || q.status === 'valid').length,
-      accepted: data.filter(q => q.status === 'accepted').length,
-      rejected: data.filter(q => q.status === 'rejected' || q.status === 'cancelled').length,
+      valid: data.filter(q => q.status === 'valid' || !q.status).length,
+      expired: data.filter(q => q.status === 'expired').length,
+      canceled: data.filter(q => q.status === 'canceled' || q.status === 'cancelled').length,
       converted: data.filter(q => q.status === 'converted').length
     };
     setStats(newStats);
@@ -907,29 +913,22 @@ export const QuotationManagement: React.FC = () => {
 
   const getStatusColor = (status: string): 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info' => {
     const colors: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info'> = {
-      draft: 'default',
-      sent: 'info',
-      accepted: 'success',
-      rejected: 'error',
-      expired: 'warning',
-      converted: 'primary',
       valid: 'success',
+      expired: 'warning',
+      canceled: 'error',
       cancelled: 'error',
-      canceled: 'error'
+      converted: 'info'
     };
     return colors[status] || 'default';
   };
 
   const getStatusText = (status: string) => {
     const texts: Record<string, string> = {
-      draft: 'Nháp',
-      sent: 'Đã gửi',
-      accepted: 'Đã chấp nhận',
-      rejected: 'Từ chối',
+      valid: 'Còn hiệu lực',
       expired: 'Hết hạn',
-      converted: 'Đã chuyển đơn',
-      valid: 'Hợp lệ',
-      cancelled: 'Đã hủy'
+      canceled: 'Đã hủy',
+      cancelled: 'Đã hủy',
+      converted: 'Đã chuyển đổi'
     };
     return texts[status] || status;
   };
@@ -1441,6 +1440,28 @@ export const QuotationManagement: React.FC = () => {
         width={900}
         footer={[
           <Button 
+            key="convert"
+            variant="contained"
+            startIcon={<ShoppingCartIcon />}
+            onClick={handleNavigateToConverter}
+            disabled={selectedQuotation?.status !== 'valid'}
+            style={{
+              borderRadius: 8,
+              height: 40,
+              minWidth: 180,
+              fontSize: 14,
+              fontWeight: 600,
+              marginRight: 8,
+              background: selectedQuotation?.status === 'valid' 
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : '#d9d9d9',
+              color: 'white',
+              border: 'none'
+            }}
+          >
+            Đến trang chuyển đổi
+          </Button>,
+          <Button 
             key="close" 
             onClick={() => setShowDetailModal(false)}
             style={{
@@ -1449,8 +1470,8 @@ export const QuotationManagement: React.FC = () => {
               minWidth: 120,
               fontSize: 14,
               fontWeight: 500,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
+              background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+              color: '#1a1a2e',
               border: 'none'
             }}
           >
@@ -1493,26 +1514,27 @@ export const QuotationManagement: React.FC = () => {
               }}
               labelStyle={{
                 background: 'linear-gradient(135deg, #fafbfc 0%, #f6f8fb 100%)',
-                fontWeight: 600,
+                fontWeight: 700,
                 color: '#1a1a2e',
-                fontSize: 13,
-                padding: '10px 14px'
+                fontSize: 14,
+                padding: '12px 16px'
               }}
               contentStyle={{
                 background: 'white',
-                fontSize: 13,
-                padding: '10px 14px',
-                color: '#2c3e50'
+                fontSize: 14,
+                padding: '12px 16px',
+                color: '#1a1a2e',
+                fontWeight: 500
               }}
             >
               <Descriptions.Item label="Mã báo giá" span={2}>
-                <Text strong style={{ fontSize: 14 }}>
+                <Text strong style={{ fontSize: 15, fontWeight: 600, color: '#1a1a2e' }}>
                   {selectedQuotation.code || selectedQuotation.quote_number || selectedQuotation._id}
                 </Text>
               </Descriptions.Item>
               
               <Descriptions.Item label="Trạng thái">
-                <Tag color={getStatusColor(selectedQuotation.status || 'valid')} style={{ fontSize: 13 }}>
+                <Tag color={getStatusColor(selectedQuotation.status || 'valid')} style={{ fontSize: 14, fontWeight: 600, padding: '4px 12px' }}>
                   {getStatusText(selectedQuotation.status || 'valid')}
                 </Tag>
               </Descriptions.Item>
@@ -1545,15 +1567,15 @@ export const QuotationManagement: React.FC = () => {
                         if (hasCreatorObject && createdByObj) {
                           return (
                             <>
-                              <Text strong>{createdByObj.full_name}</Text>
+                              <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{createdByObj.full_name}</Text>
                               {createdByObj.email && (
                                 <>
                                   <br />
-                                  <Text type="secondary">{createdByObj.email}</Text>
+                                  <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{createdByObj.email}</Text>
                                 </>
                               )}
                               {createdByObj.role && (
-                                <Tag color="blue" style={{ marginLeft: 8 }}>{createdByObj.role}</Tag>
+                                <Tag color="blue" style={{ marginLeft: 8, fontWeight: 600 }}>{createdByObj.role}</Tag>
                               )}
                             </>
                           );
@@ -1563,15 +1585,15 @@ export const QuotationManagement: React.FC = () => {
                         if (hasCreatorInfo && creatorInfo) {
                           return (
                             <>
-                              <Text strong>{creatorInfo.full_name}</Text>
+                              <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{creatorInfo.full_name}</Text>
                               {creatorInfo.email && (
                                 <>
                                   <br />
-                                  <Text type="secondary">{creatorInfo.email}</Text>
+                                  <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{creatorInfo.email}</Text>
                                 </>
                               )}
                               {creatorInfo.role && (
-                                <Tag color="blue" style={{ marginLeft: 8 }}>{creatorInfo.role}</Tag>
+                                <Tag color="blue" style={{ marginLeft: 8, fontWeight: 600 }}>{creatorInfo.role}</Tag>
                               )}
                             </>
                           );
@@ -1579,12 +1601,12 @@ export const QuotationManagement: React.FC = () => {
                         
                         // Check created_by_name
                         if (hasCreatorName) {
-                          return <Text strong>{selectedQuotation.created_by_name}</Text>;
+                          return <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.created_by_name}</Text>;
                         }
                         
                         // Check created_by as string ID
                         if (hasCreatorId && typeof selectedQuotation.created_by === 'string') {
-                          return <Text type="secondary">ID: {selectedQuotation.created_by}</Text>;
+                          return <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>ID: {selectedQuotation.created_by}</Text>;
                         }
                         
                         return null;
@@ -1611,15 +1633,15 @@ export const QuotationManagement: React.FC = () => {
                     if (typeof selectedQuotation.customer_id === 'object' && selectedQuotation.customer_id) {
                       return (
                         <>
-                          <Text strong>{selectedQuotation.customer_id.full_name || 'N/A'}</Text>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.customer_id.full_name || 'N/A'}</Text>
                           <br />
-                          <Text type="secondary"> {selectedQuotation.customer_id.email || 'N/A'}</Text>
+                          <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}> {selectedQuotation.customer_id.email || 'N/A'}</Text>
                           <br />
-                          <Text type="secondary"> {selectedQuotation.customer_id.phone || 'N/A'}</Text>
+                          <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}> {selectedQuotation.customer_id.phone || 'N/A'}</Text>
                           {selectedQuotation.customer_id.address && (
                             <>
                               <br />
-                              <Text type="secondary"> {selectedQuotation.customer_id.address}</Text>
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}> {selectedQuotation.customer_id.address}</Text>
                             </>
                           )}
                         </>
@@ -1630,23 +1652,23 @@ export const QuotationManagement: React.FC = () => {
                     if (customerInfo) {
                       return (
                         <>
-                          <Text strong>{customerInfo.full_name || 'N/A'}</Text>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{customerInfo.full_name || 'N/A'}</Text>
                           {customerInfo.email && (
                             <>
                               <br />
-                              <Text type="secondary"> {customerInfo.email}</Text>
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{customerInfo.email}</Text>
                             </>
                           )}
                           {customerInfo.phone && (
                             <>
                               <br />
-                              <Text type="secondary"> {customerInfo.phone}</Text>
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{customerInfo.phone}</Text>
                             </>
                           )}
                           {customerInfo.address && (
                             <>
                               <br />
-                              <Text type="secondary"> {customerInfo.address}</Text>
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{customerInfo.address}</Text>
                             </>
                           )}
                         </>
@@ -1655,11 +1677,11 @@ export const QuotationManagement: React.FC = () => {
                     
                     // Priority 3: Use customer_name if available
                     if (selectedQuotation.customer_name) {
-                      return <Text strong>{selectedQuotation.customer_name}</Text>;
+                      return <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.customer_name}</Text>;
                     }
                     
                     // Fallback: Show ID (should not happen if fetch was successful)
-                    return <Text type="secondary">Đang tải thông tin khách hàng...</Text>;
+                    return <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>Đang tải thông tin khách hàng...</Text>;
                   })()}
                 </div>
               </Descriptions.Item>
@@ -1671,9 +1693,9 @@ export const QuotationManagement: React.FC = () => {
                     if (typeof selectedQuotation.dealership_id === 'object' && selectedQuotation.dealership_id) {
                       return (
                         <>
-                          <Text strong>{selectedQuotation.dealership_id.company_name || 'N/A'}</Text>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.dealership_id.company_name || 'N/A'}</Text>
                           {selectedQuotation.dealership_id.code && (
-                            <Tag color="purple" style={{ marginLeft: 8 }}>{selectedQuotation.dealership_id.code}</Tag>
+                            <Tag color="purple" style={{ marginLeft: 8, fontWeight: 600 }}>{selectedQuotation.dealership_id.code}</Tag>
                           )}
                         </>
                       );
@@ -1683,9 +1705,9 @@ export const QuotationManagement: React.FC = () => {
                     if (dealershipInfo) {
                       return (
                         <>
-                          <Text strong>{dealershipInfo.company_name || 'N/A'}</Text>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{dealershipInfo.company_name || 'N/A'}</Text>
                           {dealershipInfo.code && (
-                            <Tag color="purple" style={{ marginLeft: 8 }}>{dealershipInfo.code}</Tag>
+                            <Tag color="purple" style={{ marginLeft: 8, fontWeight: 600 }}>{dealershipInfo.code}</Tag>
                           )}
                         </>
                       );
@@ -1693,29 +1715,29 @@ export const QuotationManagement: React.FC = () => {
                     
                     // Priority 3: Use dealership_name if available
                     if (selectedQuotation.dealership_name) {
-                      return <Text strong>{selectedQuotation.dealership_name}</Text>;
+                      return <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.dealership_name}</Text>;
                     }
                     
                     // Fallback: Show loading message (should not happen if fetch was successful)
-                    return <Text type="secondary">Đang tải thông tin đại lý...</Text>;
+                    return <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>Đang tải thông tin đại lý...</Text>;
                   })()}
                 </div>
               </Descriptions.Item>
 
-              {selectedQuotation.createdAt && (
+              {/* {selectedQuotation.createdAt && (
                 <Descriptions.Item label="Ngày tạo">
                   {formatDate(selectedQuotation.createdAt)}
                 </Descriptions.Item>
-              )}
-              {selectedQuotation.updatedAt && (
+              )} */}
+              {/* {selectedQuotation.updatedAt && (
                 <Descriptions.Item label="Ngày cập nhật">
                   {formatDate(selectedQuotation.updatedAt)}
                 </Descriptions.Item>
-              )}
+              )} */}
 
               {selectedQuotation.startDate && (
                 <Descriptions.Item label=" Ngày bắt đầu">
-                  <Text strong style={{ color: '#1890ff' }}>
+                  <Text strong style={{ color: '#1890ff', fontSize: 14, fontWeight: 600 }}>
                     {formatDate(selectedQuotation.startDate)}
                   </Text>
                 </Descriptions.Item>
@@ -1723,27 +1745,33 @@ export const QuotationManagement: React.FC = () => {
               {selectedQuotation.endDate && (
                 <Descriptions.Item label=" Ngày kết thúc">
                   <Text strong style={{ 
-                    color: new Date(selectedQuotation.endDate) < new Date() ? '#ff4d4f' : '#52c41a' 
+                    color: new Date(selectedQuotation.endDate) < new Date() ? '#ff4d4f' : '#52c41a',
+                    fontSize: 14,
+                    fontWeight: 600
                   }}>
                     {formatDate(selectedQuotation.endDate)}
                   </Text>
                   {new Date(selectedQuotation.endDate) < new Date() && (
-                    <Tag color="red" style={{ marginLeft: 8 }}>Đã hết hạn</Tag>
+                    <Tag color="red" style={{ marginLeft: 8, fontWeight: 600 }}>Đã hết hạn</Tag>
                   )}
                 </Descriptions.Item>
               )}
 
               {selectedQuotation.valid_until && (
                 <Descriptions.Item label="Hiệu lực đến">
-                  <Text strong style={{ color: new Date(selectedQuotation.valid_until) < new Date() ? '#ff4d4f' : '#52c41a' }}>
+                  <Text strong style={{ 
+                    color: new Date(selectedQuotation.valid_until) < new Date() ? '#ff4d4f' : '#52c41a',
+                    fontSize: 14,
+                    fontWeight: 600
+                  }}>
                     {formatDate(selectedQuotation.valid_until)}
                   </Text>
                 </Descriptions.Item>
               )}
 
-              <Descriptions.Item label="ID">
+              {/* <Descriptions.Item label="ID">
                 <Text code style={{ fontSize: 11 }}>{selectedQuotation._id}</Text>
-              </Descriptions.Item>
+              </Descriptions.Item> */}
               
               {/* {selectedQuotation.__v !== undefined && (
                 <Descriptions.Item label="Version">
@@ -1910,52 +1938,52 @@ export const QuotationManagement: React.FC = () => {
                 })()}
                 columns={[
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>STT</Text>,
+                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>STT</Text>,
                     dataIndex: 'stt',
                     key: 'stt',
                     width: 60,
                     align: 'center' as const,
-                    render: (text: number) => <Text>{text}</Text>
+                    render: (text: number) => <Text style={{ fontWeight: 600, color: '#1a1a2e' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Tên hàng hóa, dịch vụ</Text>,
+                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Tên hàng hóa, dịch vụ</Text>,
                     dataIndex: 'tenHangHoa',
                     key: 'tenHangHoa',
                     width: 300,
-                    render: (text: string) => <Text>{text}</Text>
+                    render: (text: string) => <Text style={{ fontWeight: 500, color: '#1a1a2e' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Đơn vị tính</Text>,
+                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Đơn vị tính</Text>,
                     dataIndex: 'donViTinh',
                     key: 'donViTinh',
                     width: 120,
                     align: 'center' as const,
-                    render: (text: string) => <Text>{text}</Text>
+                    render: (text: string) => <Text style={{ fontWeight: 500, color: '#1a1a2e' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Số lượng</Text>,
+                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Số lượng</Text>,
                     dataIndex: 'soLuong',
                     key: 'soLuong',
                     width: 100,
                     align: 'center' as const,
-                    render: (text: number) => <Text>{text}</Text>
+                    render: (text: number) => <Text style={{ fontWeight: 600, color: '#1a1a2e' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Đơn giá</Text>,
+                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Đơn giá</Text>,
                     dataIndex: 'donGia',
                     key: 'donGia',
                     width: 150,
                     align: 'right' as const,
                     render: (price: number) => (
-                      <Text>{new Intl.NumberFormat('vi-VN').format(price)}</Text>
+                      <Text style={{ fontWeight: 600, color: '#1a1a2e' }}>{new Intl.NumberFormat('vi-VN').format(price)}</Text>
                     )
                   },
                   {
                     title: (
                       <div>
-                        <Text strong style={{ color: '#1a1a2e' }}>Thành tiền</Text>
+                        <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Thành tiền</Text>
                         <br />
-                        <Text type="secondary" style={{ fontSize: 11, fontWeight: 'normal' }}>
+                        <Text type="secondary" style={{ fontSize: 11, fontWeight: 500 }}>
                           (Thành tiền = Số lượng × Đơn giá)
                         </Text>
                       </div>
@@ -1965,7 +1993,7 @@ export const QuotationManagement: React.FC = () => {
                     width: 150,
                     align: 'right' as const,
                     render: (amount: number) => (
-                      <Text>{new Intl.NumberFormat('vi-VN').format(amount)}</Text>
+                      <Text style={{ fontWeight: 700, color: '#52c41a', fontSize: 14 }}>{new Intl.NumberFormat('vi-VN').format(amount)}</Text>
                     )
                   }
                 ]}
@@ -1980,9 +2008,9 @@ export const QuotationManagement: React.FC = () => {
                     cell: (props: React.ThHTMLAttributes<HTMLTableCellElement> & { align?: string }) => (
                       <th {...props} style={{
                         ...props.style,
-                        background: '#e6f7ff',
-                        fontWeight: 600,
-                        padding: '12px 8px',
+                        background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)',
+                        fontWeight: 700,
+                        padding: '14px 10px',
                         textAlign: (props.align as 'left' | 'right' | 'center') || 'left'
                       }} />
                     )
@@ -1993,18 +2021,18 @@ export const QuotationManagement: React.FC = () => {
 
               {/* Total Row - Calculate from table data to match PDF */}
               <div style={{
-                padding: '16px 20px',
-                background: '#fafafa',
-                borderTop: '2px solid #e8eaed',
+                padding: '18px 24px',
+                background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                borderTop: '3px solid #1890ff',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <div style={{ flex: 1, textAlign: 'right', paddingRight: 20 }}>
-                  <Text strong style={{ fontSize: 15 }}>Tổng cộng:</Text>
+                <div style={{ flex: 1, textAlign: 'right', paddingRight: 24 }}>
+                  <Text strong style={{ fontSize: 16, fontWeight: 700, color: '#1a1a2e' }}>Tổng cộng:</Text>
                 </div>
                 <div style={{ width: 150, textAlign: 'right' }}>
-                  <Text strong style={{ fontSize: 16, color: '#ff4d4f' }}>
+                  <Text strong style={{ fontSize: 18, color: '#ff4d4f', fontWeight: 700 }}>
                     {new Intl.NumberFormat('vi-VN').format(
                       ((): number => {
                         // Calculate total from items exactly as displayed in table
@@ -2061,11 +2089,12 @@ export const QuotationManagement: React.FC = () => {
               <div style={{
                 marginTop: 16,
                 textAlign: 'center',
-                padding: '12px',
-                background: '#f8f9fa',
-                borderRadius: 8
+                padding: '14px',
+                background: 'linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%)',
+                borderRadius: 10,
+                border: '1px solid #ffa940'
               }}>
-                <Text style={{ fontSize: 13, color: '#666' }}>
+                <Text style={{ fontSize: 14, color: '#ad6800', fontWeight: 600 }}>
                   Báo giá có hiệu lực đến: {formatDate(selectedQuotation.valid_until || selectedQuotation.endDate || '')}
                 </Text>
               </div>
@@ -2074,10 +2103,10 @@ export const QuotationManagement: React.FC = () => {
             {selectedQuotation.notes && (
               <Card style={{ 
                 marginTop: 16, 
-                borderRadius: 10, 
+                borderRadius: 12, 
                 background: 'linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%)', 
-                border: '1px solid #ffd666',
-                boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)'
+                border: '2px solid #ffd666',
+                boxShadow: '0 4px 12px rgba(255, 193, 7, 0.2)'
               }}>
                 <div style={{
                   display: 'flex',
@@ -2085,22 +2114,11 @@ export const QuotationManagement: React.FC = () => {
                   gap: 10,
                   marginBottom: 12
                 }}>
-                  <div style={{
-                    width: 28,
-                    height: 28,
-                    background: '#ffd666',
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 14
-                  }}>
-                  </div>
-                  <Title level={5} style={{ margin: 0, color: '#ad6800', fontSize: 15 }}>
+                  <Title level={5} style={{ margin: 0, color: '#ad6800', fontSize: 16, fontWeight: 700 }}>
                     Ghi chú
                   </Title>
                 </div>
-                <Text style={{ fontSize: 13, lineHeight: 1.6, color: '#595959' }}>
+                <Text style={{ fontSize: 14, lineHeight: 1.7, color: '#262626', fontWeight: 500 }}>
                   {selectedQuotation.notes}
                 </Text>
               </Card>

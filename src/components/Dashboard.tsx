@@ -201,7 +201,7 @@ export const Dashboard: React.FC = () => {
                 }`}
               >
                 <span className="text-sm mb-2 uppercase tracking-wider">
-                  Scroll to explore
+                  Kéo xuống để khám phá
                 </span>
                 <div className="w-px h-16 bg-gradient-to-b from-white/70 to-transparent animate-pulse" />
               </div>

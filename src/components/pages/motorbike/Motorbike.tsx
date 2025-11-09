@@ -8,12 +8,75 @@ import { mockMotorbikes } from '../../../data/mockData';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export const Motorbike: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const compareTableRef = useRef<HTMLDivElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('motorbikes');
+  
+  // Helper function to calculate dealer stock from stocks array
+  const getDealerStock = useCallback((vehicle: unknown): number => {
+    try {
+      const v = vehicle as Record<string, unknown>;
+      
+      // Lấy dealership_id từ user hoặc JWT token
+      let dealerId: string | null = null;
+      
+      if (user?.dealership_id) {
+        dealerId = user.dealership_id;
+      } else {
+        // Fallback: lấy từ JWT token
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            dealerId = payload.dealership_id || null;
+          }
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+        }
+      }
+      
+      // Lấy stocks array từ vehicle
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return (v.stock as number) || 0; // Fallback to old stock field
+      }
+      
+      // Nếu không có dealerId, tính tổng tất cả (cho manufacturer/admin)
+      if (!dealerId) {
+        return stocks.reduce((total, stock) => {
+          const remainingQty = stock.remaining_quantity as number || 0;
+          return total + remainingQty;
+        }, 0);
+      }
+      
+      // Lọc stocks của dealer: owner_type === 'dealer', status === 'active', owner_id khớp
+      const dealerStocks = stocks.filter((stock) => {
+        return (
+          stock.owner_type === 'dealer' &&
+          stock.status === 'active' &&
+          stock.owner_id === dealerId
+        );
+      });
+      
+      // Tính tổng remaining_quantity
+      const totalStock = dealerStocks.reduce((sum, stock) => {
+        const remaining = stock.remaining_quantity as number || 0;
+        return sum + remaining;
+      }, 0);
+      
+      return totalStock;
+    } catch (error) {
+      console.error('Error calculating dealer stock:', error);
+      return 0;
+    }
+  }, [user]);
+  
   // Professional filter states based on API
   const [filters, setFilters] = useState({
     search: '',
@@ -651,7 +714,7 @@ export const Motorbike: React.FC = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Bike className="h-4 w-4 text-gray-500" />
-                            <span>{v.stock as number || 0} xe</span>
+                            <span>{getDealerStock(vehicle)} xe</span>
                           </div>
                         </div>
 
@@ -663,13 +726,13 @@ export const Motorbike: React.FC = () => {
                             <Eye className="h-4 w-4" />
                             <span>Chi tiết</span>
                           </button>
-                          <button
+                          {/* <button
                             onClick={() => handleDeposit(v._id as string || v.id as string)}
                             className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2"
                           >
                             <ShoppingCart className="h-4 w-4" />
                             <span>Đặt cọc</span>
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
@@ -793,7 +856,7 @@ export const Motorbike: React.FC = () => {
                         {compareList.map((vehicle) => {
                           const v = vehicle as Record<string, unknown>;
                           return (
-                            <td key={v._id as string || v.id as string} className="p-6 text-center text-gray-600">{v.stock as number || 0} xe</td>
+                            <td key={v._id as string || v.id as string} className="p-6 text-center text-gray-600">{getDealerStock(vehicle)} xe</td>
                           );
                         })}
                       </tr>

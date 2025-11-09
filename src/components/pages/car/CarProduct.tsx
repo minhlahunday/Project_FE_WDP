@@ -284,6 +284,27 @@ export const CarProduct: React.FC = () => {
     return [...new Set(allValues)];
   };
 
+  // Hàm tính tổng stock từ tất cả stocks (không phân biệt dealer/manufacturer)
+  const calculateTotalStock = useCallback((vehicle: unknown): number => {
+    try {
+      const v = vehicle as Record<string, unknown>;
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return (v.stock as number) || 0; // Fallback to old stock field
+      }
+      
+      // Sum up remaining_quantity from all stock entries
+      return stocks.reduce((total, stock) => {
+        const remainingQty = stock.remaining_quantity as number || 0;
+        return total + remainingQty;
+      }, 0);
+    } catch (error) {
+      console.error('Error calculating total stock:', error);
+      return 0;
+    }
+  }, []);
+
   // Hàm tính tổng stock của dealer từ stocks array
   const getDealerStock = useCallback((vehicle: unknown): number => {
     try {
@@ -708,7 +729,7 @@ export const CarProduct: React.FC = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Car className="h-4 w-4 text-gray-500" />
-                            <span>{getDealerStock(v)} xe</span>
+                            <span>{getDealerStock(vehicle)} xe</span>
                           </div>
 
                         </div>

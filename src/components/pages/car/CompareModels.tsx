@@ -90,6 +90,59 @@ export const CompareModels: React.FC = () => {
     }).format(price);
   };
 
+  const translateStatus = (status: string) => {
+    const statusMap: Record<string, string> = {
+      'available': 'Có sẵn',
+      'coming_soon': 'Sắp ra mắt',
+      'out_of_stock': 'Hết hàng',
+      'discontinued': 'Ngừng sản xuất',
+      'Có sẵn': 'Có sẵn',
+      'Sắp ra mắt': 'Sắp ra mắt',
+      'Hết hàng': 'Hết hàng',
+      'Ngừng sản xuất': 'Ngừng sản xuất'
+    };
+    return statusMap[status] || status || 'Không xác định';
+  };
+
+  const getColorCode = (colorName: string): string => {
+    const colorMap: Record<string, string> = {
+      // Vietnamese colors
+      'Đỏ': '#DC2626',
+      'Đen': '#000000',
+      'Trắng': '#FFFFFF',
+      'Xanh': '#2563EB',
+      'Xanh dương': '#2563EB',
+      'Xanh lam': '#3B82F6',
+      'Xanh lá': '#16A34A',
+      'Vàng': '#EAB308',
+      'Cam': '#F97316',
+      'Tím': '#9333EA',
+      'Hồng': '#EC4899',
+      'Xám': '#6B7280',
+      'Bạc': '#C0C0C0',
+      'Nâu': '#92400E',
+      'Be': '#D4C5B9',
+      
+      // English colors
+      'Red': '#DC2626',
+      'Black': '#000000',
+      'White': '#FFFFFF',
+      'Blue': '#2563EB',
+      'Green': '#16A34A',
+      'Yellow': '#EAB308',
+      'Orange': '#F97316',
+      'Purple': '#9333EA',
+      'Pink': '#EC4899',
+      'Gray': '#6B7280',
+      'Grey': '#6B7280',
+      'Silver': '#C0C0C0',
+      'Brown': '#92400E',
+      'Beige': '#D4C5B9'
+    };
+    
+    return colorMap[colorName] || '#9CA3AF'; // Default to gray if color not found
+  };
+
   const openModelSelector = (index: number) => {
     navigate('/portal/model-selector', { 
       state: { 
@@ -154,23 +207,64 @@ export const CompareModels: React.FC = () => {
         <div className="p-6 pt-0">
           <h3 className="text-2xl font-bold text-gray-900 mb-2">{v.name as string}</h3>
           <p className="text-sm text-gray-600 mb-2">
-            {v.version as string || 'Phiên bản chuẩn'} - {(v.color_options as string[])?.[0] || 'Màu chuẩn'}
+            {v.version as string || 'Phiên bản chuẩn'}
           </p>
+          
+          {/* Color Options */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs text-gray-500">Màu sắc:</span>
+            <div className="flex gap-1.5">
+              {((v.color_options as string[]) || []).slice(0, 5).map((color, idx) => (
+                <div 
+                  key={idx}
+                  className="w-6 h-6 rounded-full border-2 border-gray-300 shadow-sm"
+                  style={{ 
+                    backgroundColor: getColorCode(color),
+                    boxShadow: getColorCode(color) === '#FFFFFF' ? 'inset 0 0 0 1px rgba(0,0,0,0.1)' : 'none'
+                  }}
+                  title={color}
+                />
+              ))}
+              {((v.color_options as string[]) || []).length > 5 && (
+                <div className="w-6 h-6 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center">
+                  <span className="text-[10px] text-gray-600 font-medium">+{((v.color_options as string[]) || []).length - 5}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
           <p className="text-2xl font-bold text-green-600 mb-6">{formatPrice(v.price as number)}</p>
 
           {/* Specifications Grid */}
-          <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-            <div>
-              <span>{v.range_km as number || 0}km</span>
+          <div className="space-y-3 mb-6">
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Phạm vi hoạt động</span>
+              </div>
+              <span className="text-base font-bold text-blue-600">{v.range_km as number || 0} km</span>
             </div>
-            <div>
-              <span>{v.top_speed as number || 0}km/h</span>
+            
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Tốc độ tối đa</span>
+              </div>
+              <span className="text-base font-bold text-green-600">{v.top_speed as number || 0} km/h</span>
             </div>
-            <div>
-              <span>{v.charging_fast as number || 0}h</span>
-            </div>
-            <div>
-              <span>{v.stock as number || 0} xe</span>
+            
+            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Sạc nhanh</span>
+              </div>
+              <span className="text-base font-bold text-orange-600">{v.charging_fast as number || 0}h</span>
             </div>
           </div>
 
@@ -182,12 +276,12 @@ export const CompareModels: React.FC = () => {
             >
               Chi tiết
             </button>
-            <button
+            {/* <button
               onClick={() => navigate(`/portal/car-deposit?vehicleId=${v._id as string || v.id as string}`)}
               className="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
               Đặt cọc
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
@@ -325,14 +419,16 @@ export const CompareModels: React.FC = () => {
                       <td className="p-6 font-medium text-gray-900">Trạng thái</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
+                        const status = translateStatus(v.release_status as string);
                         return (
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              v.release_status === 'available' ? 'bg-green-100 text-green-800' :
-                              v.release_status === 'coming_soon' ? 'bg-yellow-100 text-yellow-800' :
+                              status === 'Có sẵn' ? 'bg-green-100 text-green-800' :
+                              status === 'Sắp ra mắt' ? 'bg-yellow-100 text-yellow-800' :
+                              status === 'Hết hàng' ? 'bg-red-100 text-red-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {v.release_status as string || 'Không xác định'}
+                              {status}
                             </span>
                           </td>
                         );
@@ -688,16 +784,23 @@ export const CompareModels: React.FC = () => {
                         const v = vehicle as Record<string, unknown>;
                         const colorOptions = v.color_options as string[] || [];
                         return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">
-                            <div className="space-y-1">
-                              {colorOptions.slice(0, 3).map((color, colorIndex) => (
-                                <div key={colorIndex} className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                                  {color}
+                          <td key={v._id as string || v.id as string || index} className="p-6 text-center">
+                            <div className="flex flex-wrap gap-2 justify-center items-center">
+                              {colorOptions.map((color, colorIndex) => (
+                                <div key={colorIndex} className="group relative">
+                                  <div 
+                                    className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-sm hover:scale-110 transition-transform cursor-pointer"
+                                    style={{ 
+                                      backgroundColor: getColorCode(color),
+                                      boxShadow: getColorCode(color) === '#FFFFFF' ? 'inset 0 0 0 1px rgba(0,0,0,0.1)' : 'none'
+                                    }}
+                                    title={color}
+                                  />
+                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    {color}
+                                  </div>
                                 </div>
                               ))}
-                              {colorOptions.length > 3 && (
-                                <div className="text-xs text-gray-500">+{colorOptions.length - 3} màu khác</div>
-                              )}
                             </div>
                           </td>
                         );
@@ -719,12 +822,12 @@ export const CompareModels: React.FC = () => {
                       >
                           Xem {v.name as string}
                       </button>
-                      <button
+                      {/* <button
                           onClick={() => navigate(`/portal/car-deposit?vehicleId=${v._id as string || v.id as string}`)}
                         className="flex-1 bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
                       >
                           Đặt {v.name as string}
-                      </button>
+                      </button> */}
                     </div>
                     );
                   })}

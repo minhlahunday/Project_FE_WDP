@@ -355,7 +355,7 @@ export const CarDetail: React.FC = () => {
                     fontWeight: 600,
                     fontSize: 14
                   }}>
-                    🔥 Mới nhất 2024
+                     Mới nhất 2024
                   </div>
         </div>
               </Col>
@@ -854,10 +854,6 @@ export const CarDetail: React.FC = () => {
                   }}>
                     {getVehicleProperty('name', 'VinFast VF3')} {getVehicleProperty('version', '')}
                   </Title>
-                  
-                  <Text style={{ color: '#64748b' }}>
-                    {getVehicleProperty('category', 'Xe điện thành phố')}
-                  </Text>
           </div>
               </Col>
             </Row>
