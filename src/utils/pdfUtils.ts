@@ -18,7 +18,7 @@ export interface QuotePDFData {
     quantity: number;
     unitPrice: number;
     accessories?: Array<{ name: string; quantity: number; price: number }>;
-    options?: Array<{ name: string; price: number }>;
+    options?: Array<{ name: string; quantity?: number; price: number }>;
     discount: number;
     finalAmount: number;
   }>;

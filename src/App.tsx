@@ -34,6 +34,7 @@ import { PromotionsDashboard } from "./components/PromotionsDashboard";
 import { SalesManagement } from "./components/pages/Dealerstaff/SalesManagementNew";
 import { QuotationManagement } from "./components/pages/Dealerstaff/QuotationManagement";
 import { CustomerManagement as DealerCustomerManagement } from "./components/pages/Dealerstaff/CustomerManagement";
+import { DealerStockManagement } from "./components/pages/Dealerstaff/DealerStockManagement";
 import TestAPI from "./components/pages/TestAPI";
 
 // Order Management Components
@@ -92,6 +93,7 @@ function AppContent() {
       <Route path="/portal/sales" element={<SalesManagement />} />
       <Route path="/portal/quotations" element={<QuotationManagement />} />
       <Route path="/portal/customers" element={<DealerCustomerManagement />} />
+      <Route path="/portal/dealer-stock" element={<DealerStockManagement />} />
 
       {/* Admin routes */}
 

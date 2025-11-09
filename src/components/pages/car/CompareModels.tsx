@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, X, Battery, Zap, Clock, Car } from 'lucide-react';
 import { Button } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
 // import { Vehicle } from '../../../types';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
@@ -117,7 +115,7 @@ export const CompareModels: React.FC = () => {
               className="w-full h-full flex flex-col justify-center items-center"
             >
               <div className={`w-20 h-20 ${index === 0 ? 'bg-black' : 'bg-gray-300'} rounded-full flex items-center justify-center mb-6 group-hover:${index === 0 ? 'bg-gray-800' : 'bg-gray-400'} transition-colors duration-150 shadow-lg`}>
-                <Plus className="h-10 w-10 text-white" />
+                <span className="text-white text-4xl font-light">+</span>
               </div>
               <span className="text-2xl font-light text-gray-900 group-hover:text-gray-700 transition-colors duration-150">
                 Chọn mẫu xe
@@ -137,9 +135,9 @@ export const CompareModels: React.FC = () => {
         <div className="flex justify-end p-4">
           <button
             onClick={() => removeModel(index)}
-            className="text-gray-400 hover:text-red-500 transition-colors"
+            className="text-gray-400 hover:text-red-500 transition-colors text-2xl font-light"
           >
-            <X className="h-6 w-6" />
+            ×
           </button>
         </div>
 
@@ -162,20 +160,16 @@ export const CompareModels: React.FC = () => {
 
           {/* Specifications Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-            <div className="flex items-center space-x-2">
-              <Battery className="h-4 w-4 text-blue-500" />
+            <div>
               <span>{v.range_km as number || 0}km</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Zap className="h-4 w-4 text-yellow-500" />
+            <div>
               <span>{v.top_speed as number || 0}km/h</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-red-500" />
+            <div>
               <span>{v.charging_fast as number || 0}h</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Car className="h-4 w-4 text-gray-500" />
+            <div>
               <span>{v.stock as number || 0} xe</span>
             </div>
           </div>
@@ -222,7 +216,6 @@ export const CompareModels: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <Button 
             type="default"
-            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(-1)}
             size="large"
             style={{
@@ -372,7 +365,7 @@ export const CompareModels: React.FC = () => {
 
                     {/* Battery & Charging */}
                     <tr className="hover:bg-gray-50 bg-green-50">
-                      <td className="p-6 font-bold text-green-900">🔋 PIN & SẠC</td>
+                      <td className="p-6 font-bold text-green-900">PIN & SẠC</td>
                       <td></td>
                       <td></td>
                     </tr>
@@ -442,7 +435,7 @@ export const CompareModels: React.FC = () => {
 
                     {/* Performance */}
                     <tr className="hover:bg-gray-50 bg-yellow-50">
-                      <td className="p-6 font-bold text-yellow-900">⚡ HIỆU SUẤT</td>
+                      <td className="p-6 font-bold text-yellow-900">HIỆU SUẤT</td>
                       <td></td>
                       <td></td>
                     </tr>
@@ -485,7 +478,7 @@ export const CompareModels: React.FC = () => {
 
                     {/* Dimensions & Weight */}
                     <tr className="hover:bg-gray-50 bg-purple-50">
-                      <td className="p-6 font-bold text-purple-900">📏 KÍCH THƯỚC & TRỌNG LƯỢNG</td>
+                      <td className="p-6 font-bold text-purple-900">KÍCH THƯỚC & TRỌNG LƯỢNG</td>
                       <td></td>
                       <td></td>
                     </tr>
@@ -569,7 +562,7 @@ export const CompareModels: React.FC = () => {
 
                     {/* Features */}
                     <tr className="hover:bg-gray-50 bg-indigo-50">
-                      <td className="p-6 font-bold text-indigo-900">🎯 TÍNH NĂNG</td>
+                      <td className="p-6 font-bold text-indigo-900">TÍNH NĂNG</td>
                       <td></td>
                       <td></td>
                     </tr>
@@ -744,14 +737,7 @@ export const CompareModels: React.FC = () => {
           {analysis && selectedModels.length === 2 && (
             <div className="mt-20 bg-white rounded-2xl shadow-xl overflow-hidden">
               <div className="bg-black p-8">
-                <div className="flex items-center justify-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-3xl font-bold text-white text-center">Phân tích chi tiết từ AI</h2>
-                </div>
+                <h2 className="text-3xl font-bold text-white text-center">Phân tích chi tiết từ AI</h2>
               </div>
 
               <div className="p-8">
@@ -835,20 +821,10 @@ export const CompareModels: React.FC = () => {
                 <div className="mt-8 p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-100">
                   <h3 className="text-xl font-bold text-amber-800 mb-4">Gợi ý lựa chọn</h3>
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center mt-1">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
+                    <div>
                       <p className="text-gray-700">Nếu bạn cần một chiếc xe đô thị với giá cả phải chăng, {(selectedModels[0] as Record<string, unknown>).name as string} là lựa chọn tốt.</p>
                     </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center mt-1">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
+                    <div>
                       <p className="text-gray-700">Nếu bạn cần một chiếc xe mạnh mẽ hơn với tầm hoạt động xa, {(selectedModels[1] as Record<string, unknown>).name as string} sẽ phù hợp hơn.</p>
                     </div>
                   </div>

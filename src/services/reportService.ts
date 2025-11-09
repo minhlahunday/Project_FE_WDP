@@ -89,17 +89,27 @@ export const reportService = {
         `/api/reports/top-selling?${queryParams.toString()}`
       );
 
+      console.log('📦 Raw top selling response:', JSON.stringify(response, null, 2));
+
       // Handle different response structures
       if (Array.isArray(response)) {
+        console.log('✅ Response is array, returning directly');
         return response;
       }
 
       const responseObj = response as TopSellingResponse;
       if (responseObj.data && Array.isArray(responseObj.data)) {
+        console.log('✅ Response has data array, returning response.data');
         return responseObj.data;
       }
 
-      console.warn('⚠️ Unexpected response structure for top-selling');
+      // Try to find data in nested structure
+      if ((response as any)?.data?.data && Array.isArray((response as any).data.data)) {
+        console.log('✅ Response has nested data.data array, returning response.data.data');
+        return (response as any).data.data;
+      }
+
+      console.warn('⚠️ Unexpected response structure for top-selling:', response);
       return [];
     } catch (error) {
       console.error('❌ Error fetching top selling:', error);
@@ -176,17 +186,27 @@ export const reportService = {
         `/api/reports/sales-by-staff?${queryParams.toString()}`
       );
 
+      console.log('📦 Raw sales by staff response:', JSON.stringify(response, null, 2));
+
       // Handle different response structures
       if (Array.isArray(response)) {
+        console.log('✅ Response is array, returning directly');
         return response;
       }
 
       const responseObj = response as SalesByStaffResponse;
       if (responseObj.data && Array.isArray(responseObj.data)) {
+        console.log('✅ Response has data array, returning response.data');
         return responseObj.data;
       }
 
-      console.warn('⚠️ Unexpected response structure for sales-by-staff');
+      // Try to find data in nested structure
+      if ((response as any)?.data?.data && Array.isArray((response as any).data.data)) {
+        console.log('✅ Response has nested data.data array, returning response.data.data');
+        return (response as any).data.data;
+      }
+
+      console.warn('⚠️ Unexpected response structure for sales-by-staff:', response);
       return [];
     } catch (error) {
       console.error('❌ Error fetching sales by staff:', error);

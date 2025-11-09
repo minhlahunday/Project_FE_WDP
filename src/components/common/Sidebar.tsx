@@ -143,6 +143,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       route: "/portal/customers",
     },
     {
+      key: "dealer-stock",
+      label: "Quản lý tồn kho",
+      icon: <Package className="w-4 h-4" />,
+      route: "/portal/dealer-stock",
+    },
+    {
       key: "test-drives",
       label: "Lịch lái thử",
       icon: <Calendar className="w-4 h-4" />,

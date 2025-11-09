@@ -49,7 +49,7 @@ interface QuoteFormValues {
   discountSelection?: string;
   promotion_id?: string;
   notes?: string;
-  options: Array<{ option_id?: string }>;
+  options: Array<{ option_id?: string; quantity?: number }>;
   accessories: Array<{ accessory_id?: string; quantity?: number }>;
 }
 
@@ -168,7 +168,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     const optionsTotal = (optionsValue || []).reduce((sum, option) => {
       if (!option?.option_id) return sum;
       const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
-      return sum + (optionData?.price || 0);
+      const quantity = option.quantity || 1;
+      return sum + ((optionData?.price || 0) * quantity);
     }, 0);
     
     // Tính tổng giá phụ kiện
@@ -386,7 +387,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       promotion_id: undefined,
       notes: undefined,
       customer_id: undefined,
-      options: [{ option_id: undefined }],
+      options: [{ option_id: undefined, quantity: 1 }],
       accessories: [{ accessory_id: undefined, quantity: 1 }]
     });
 
@@ -408,8 +409,18 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       setSubmitting(true);
 
       const sanitizedOptions = (values.options || [])
-        .map((option) => (option?.option_id ? { option_id: option.option_id } : null))
-        .filter((option): option is { option_id: string } => Boolean(option?.option_id));
+        .map((option) =>
+          option?.option_id
+            ? {
+                option_id: option.option_id,
+                quantity: option.quantity && option.quantity > 0 ? option.quantity : 1
+              }
+            : null
+        )
+        .filter(
+          (option): option is { option_id: string; quantity: number } =>
+            Boolean(option?.option_id)
+        );
 
       const sanitizedAccessories = (values.accessories || [])
         .map((accessory) =>
@@ -479,6 +490,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 const option = optionCatalog.find(o => normalizeOptionId(o) === opt.option_id);
                 return {
                   name: option?.name || 'Tùy chọn',
+                  quantity: opt.quantity || 1,
                   price: option?.price || 0
                 };
               }),
@@ -514,14 +526,14 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       open={visible}
       onCancel={handleClose}
       footer={null}
-      width={1400}
+      width={1540}
       centered
       destroyOnClose={false}
       styles={{
         body: { 
-          maxHeight: '85vh', 
+          maxHeight: '90vh', 
           overflowY: 'auto',
-          padding: '40px 50px'
+          padding: '44px 55px'
         }
       }}
       title={
@@ -671,7 +683,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             <>
               {fields.map(({ key, name, ...restField }) => (
                 <Row key={key} gutter={16} align="middle" style={{ marginBottom: 16 }}>
-                  <Col flex="auto">
+                  <Col xs={24} sm={14}>
                     <Form.Item
                       {...restField}
                       name={[name, 'option_id']}
@@ -686,7 +698,17 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       />
                     </Form.Item>
                   </Col>
-                  <Col>
+                  <Col xs={12} sm={6}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'quantity']}
+                      initialValue={1}
+                      rules={[{ type: 'number', min: 1, message: 'Ít nhất 1 tùy chọn' }]}
+                    >
+                      <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="SL" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={12} sm={4}>
                     <Button
                       type="text"
                       danger
@@ -702,7 +724,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
-                onClick={() => add({ option_id: undefined })}
+                onClick={() => add({ option_id: undefined, quantity: 1 })}
                 block
                 size="large"
                 style={{ marginBottom: 24, height: 48, fontSize: 15 }}
@@ -820,7 +842,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                   (optionsValue || []).reduce((sum, option) => {
                     if (!option?.option_id) return sum;
                     const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
-                    return sum + (optionData?.price || 0);
+                    const quantity = option.quantity || 1;
+                    return sum + ((optionData?.price || 0) * quantity);
                   }, 0)
                 )}
               </div>
