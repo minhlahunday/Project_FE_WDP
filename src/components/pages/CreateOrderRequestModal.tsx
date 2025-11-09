@@ -185,6 +185,10 @@ export const CreateOrderRequestModal: React.FC<
 
       await orderService.createOrderRequest(requestData);
 
+      // Close dialog immediately after API success
+      handleClose();
+      onSuccess();
+
       await Swal.fire({
         title: "Thành công!",
         text: "Yêu cầu đặt xe đã được tạo thành công.",
@@ -192,9 +196,6 @@ export const CreateOrderRequestModal: React.FC<
         confirmButtonText: "OK",
         confirmButtonColor: "#10b981",
       });
-
-      handleClose();
-      onSuccess();
 
       // Redirect to order requests page
       navigate("/portal/order-requests");
