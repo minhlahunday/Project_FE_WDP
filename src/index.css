@@ -1,9 +1,9 @@
+/* GitHub-style Sidebar */
+@import './styles/sidebar-github.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* GitHub-style Sidebar */
-@import './styles/sidebar-github.css';
 
 /* Ensure Ant Design Select dropdown appears above modal */
 .ant-select-dropdown {
