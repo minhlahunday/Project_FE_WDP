@@ -34,7 +34,7 @@ import {
   InputLabel,
   Chip,
   Stack,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -52,7 +52,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Pending as PendingIcon,
   Cancel as CancelIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 import { mockVehicles, mockMotorbikes } from "../../../data/mockData";
 import { Customer } from "../../../types";
 import { useNavigate } from "react-router-dom";
@@ -99,11 +99,11 @@ export const CustomerManagement: React.FC = () => {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error' | 'warning' | 'info';
+    severity: "success" | "error" | "warning" | "info";
   }>({
     open: false,
-    message: '',
-    severity: 'info'
+    message: "",
+    severity: "info",
   });
 
   // Pagination
@@ -111,7 +111,10 @@ export const CustomerManagement: React.FC = () => {
   const [pageSize] = useState(10);
 
   // Helper function to show snackbar
-  const showSnackbarMessage = (message: string, severity: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+  const showSnackbarMessage = (
+    message: string,
+    severity: "success" | "error" | "warning" | "info" = "info"
+  ) => {
     setSnackbar({ open: true, message, severity });
   };
 
@@ -146,7 +149,7 @@ export const CustomerManagement: React.FC = () => {
     } catch (err) {
       const errorMessage = "Không thể tải danh sách khách hàng";
       setError(errorMessage);
-      showSnackbarMessage(errorMessage, 'error');
+      showSnackbarMessage(errorMessage, "error");
       console.error("Error loading customers:", err);
     } finally {
       setLoading(false);
@@ -168,7 +171,9 @@ export const CustomerManagement: React.FC = () => {
     try {
       const payments = await customerService.getCustomerPayments(customerId);
       // Handle both array and object with data property
-      const paymentData = Array.isArray(payments) ? payments : (payments as any)?.data || [];
+      const paymentData = Array.isArray(payments)
+        ? payments
+        : (payments as any)?.data || [];
       setSelectedCustomerPayments(paymentData);
     } catch (err) {
       console.error("Error loading customer payments:", err);
@@ -238,14 +243,14 @@ export const CustomerManagement: React.FC = () => {
 
       // Reload customers
       await loadCustomers();
-      showSnackbarMessage("Tạo khách hàng thành công", 'success');
+      showSnackbarMessage("Tạo khách hàng thành công", "success");
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.message ||
         err?.message ||
         "Không thể tạo khách hàng mới";
       setError(errorMessage);
-      showSnackbarMessage(errorMessage, 'error');
+      showSnackbarMessage(errorMessage, "error");
       console.error("Error creating customer:", err);
     } finally {
       setCreating(false);
@@ -313,14 +318,14 @@ export const CustomerManagement: React.FC = () => {
 
       // Reload customers
       await loadCustomers();
-      showSnackbarMessage("Cập nhật khách hàng thành công", 'success');
+      showSnackbarMessage("Cập nhật khách hàng thành công", "success");
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.message ||
         err?.message ||
         "Không thể cập nhật thông tin khách hàng";
       setError(errorMessage);
-      showSnackbarMessage(errorMessage, 'error');
+      showSnackbarMessage(errorMessage, "error");
       console.error("Error updating customer:", err);
     } finally {
       setUpdating(false);
@@ -339,7 +344,10 @@ export const CustomerManagement: React.FC = () => {
   };
 
   // Pagination
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
     setCurrentPage(value);
   };
 
@@ -349,12 +357,17 @@ export const CustomerManagement: React.FC = () => {
   const paginatedCustomers = customers.slice(startIndex, endIndex);
 
   return (
-    <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
+    <Box sx={{ p: 3, bgcolor: "grey.50", minHeight: "100vh" }}>
       <Card>
         <CardContent>
           <Box sx={{ mb: 3 }}>
             {/* Header */}
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              mb={3}
+            >
               <Box display="flex" alignItems="center" gap={1}>
                 <PersonIcon color="primary" sx={{ fontSize: 32 }} />
                 <Typography variant="h4" component="h1" fontWeight="bold">
@@ -369,8 +382,8 @@ export const CustomerManagement: React.FC = () => {
                   setShowCreateModal(true);
                 }}
                 sx={{
-                  bgcolor: 'primary.main',
-                  '&:hover': { bgcolor: 'primary.dark' }
+                  bgcolor: "primary.main",
+                  "&:hover": { bgcolor: "primary.dark" },
                 }}
               >
                 Thêm khách hàng
@@ -378,7 +391,13 @@ export const CustomerManagement: React.FC = () => {
             </Box>
 
             {/* Tabs and Search */}
-            <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} alignItems="center" mb={3}>
+            <Box
+              display="flex"
+              flexDirection={{ xs: "column", md: "row" }}
+              gap={2}
+              alignItems="center"
+              mb={3}
+            >
               {/* Tabs */}
               <Box display="flex" gap={1}>
                 <Button
@@ -387,9 +406,9 @@ export const CustomerManagement: React.FC = () => {
                   sx={{
                     minWidth: 150,
                     ...(activeTab === "all" && {
-                      bgcolor: 'primary.main',
-                      '&:hover': { bgcolor: 'primary.dark' }
-                    })
+                      bgcolor: "primary.main",
+                      "&:hover": { bgcolor: "primary.dark" },
+                    }),
                   }}
                 >
                   Tất cả ({customers.length})
@@ -400,9 +419,9 @@ export const CustomerManagement: React.FC = () => {
                   sx={{
                     minWidth: 150,
                     ...(activeTab === "yours" && {
-                      bgcolor: 'secondary.main',
-                      '&:hover': { bgcolor: 'secondary.dark' }
-                    })
+                      bgcolor: "secondary.main",
+                      "&:hover": { bgcolor: "secondary.dark" },
+                    }),
                   }}
                 >
                   Của tôi ({customers.length})
@@ -412,7 +431,10 @@ export const CustomerManagement: React.FC = () => {
               {/* Search Box */}
               <Box flex={1} minWidth={{ xs: 200, md: 300 }}>
                 <div className="relative">
-                  <label htmlFor="search-input" className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label
+                    htmlFor="search-input"
+                    className="block text-sm font-semibold text-gray-700 mb-2"
+                  >
                     Tìm kiếm
                   </label>
                   <div className="relative">
@@ -422,7 +444,7 @@ export const CustomerManagement: React.FC = () => {
                       placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                       className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium transition-all duration-200 hover:border-gray-300"
                     />
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -454,9 +476,18 @@ export const CustomerManagement: React.FC = () => {
 
             {/* Loading State */}
             {loading ? (
-              <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={10}>
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                py={10}
+              >
                 <CircularProgress size={60} />
-                <Typography variant="body1" sx={{ mt: 3, color: 'text.secondary' }}>
+                <Typography
+                  variant="body1"
+                  sx={{ mt: 3, color: "text.secondary" }}
+                >
                   Đang tải danh sách khách hàng...
                 </Typography>
               </Box>
@@ -466,7 +497,14 @@ export const CustomerManagement: React.FC = () => {
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
                     <TableHead>
-                      <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: 'grey.100' } }}>
+                      <TableRow
+                        sx={{
+                          "& th": {
+                            fontWeight: "bold",
+                            backgroundColor: "grey.100",
+                          },
+                        }}
+                      >
                         <TableCell>Khách hàng</TableCell>
                         <TableCell>Email</TableCell>
                         <TableCell>Số điện thoại</TableCell>
@@ -488,8 +526,15 @@ export const CustomerManagement: React.FC = () => {
                           <TableRow key={customer.id} hover>
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
-                                <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                                  {customer.name?.charAt(0).toUpperCase() || '?'}
+                                <Avatar
+                                  sx={{
+                                    bgcolor: "primary.main",
+                                    width: 32,
+                                    height: 32,
+                                  }}
+                                >
+                                  {customer.name?.charAt(0).toUpperCase() ||
+                                    "?"}
                                 </Avatar>
                                 <Typography variant="body2" fontWeight="medium">
                                   {customer.name || "N/A"}
@@ -498,7 +543,9 @@ export const CustomerManagement: React.FC = () => {
                             </TableCell>
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
-                                <EmailIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <EmailIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
                                 <Typography variant="body2">
                                   {customer.email || "N/A"}
                                 </Typography>
@@ -506,7 +553,9 @@ export const CustomerManagement: React.FC = () => {
                             </TableCell>
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
-                                <PhoneIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <PhoneIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
                                 <Typography variant="body2">
                                   {customer.phone || "N/A"}
                                 </Typography>
@@ -514,19 +563,34 @@ export const CustomerManagement: React.FC = () => {
                             </TableCell>
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
-                                <LocationOnIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                <Typography variant="body2" sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <LocationOnIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    maxWidth: 200,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
                                   {customer.address || "N/A"}
                                 </Typography>
                               </Box>
                             </TableCell>
                             <TableCell align="right">
-                              <Box display="flex" gap={1} justifyContent="flex-end">
+                              <Box
+                                display="flex"
+                                gap={1}
+                                justifyContent="flex-end"
+                              >
                                 <Tooltip title="Xem chi tiết">
                                   <IconButton
                                     size="small"
-                                    onClick={() => setSelectedCustomer(customer)}
-                                    sx={{ color: 'primary.main' }}
+                                    onClick={() =>
+                                      setSelectedCustomer(customer)
+                                    }
+                                    sx={{ color: "primary.main" }}
                                   >
                                     <VisibilityIcon fontSize="small" />
                                   </IconButton>
@@ -535,7 +599,7 @@ export const CustomerManagement: React.FC = () => {
                                   <IconButton
                                     size="small"
                                     onClick={() => handleEditCustomer(customer)}
-                                    sx={{ color: 'info.main' }}
+                                    sx={{ color: "info.main" }}
                                   >
                                     <EditIcon fontSize="small" />
                                   </IconButton>
@@ -548,7 +612,7 @@ export const CustomerManagement: React.FC = () => {
                                       loadCustomerPayments(customer.id);
                                       setShowPaymentsModal(true);
                                     }}
-                                    sx={{ color: 'success.main' }}
+                                    sx={{ color: "success.main" }}
                                   >
                                     <CreditCardIcon fontSize="small" />
                                   </IconButton>
@@ -585,9 +649,13 @@ export const CustomerManagement: React.FC = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
@@ -602,7 +670,15 @@ export const CustomerManagement: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ bgcolor: 'success.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{
+            bgcolor: "success.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box display="flex" alignItems="center" gap={1}>
             <AddIcon />
             <Typography variant="h6" component="span">
@@ -614,7 +690,7 @@ export const CustomerManagement: React.FC = () => {
               setShowCreateModal(false);
               resetForm();
             }}
-            sx={{ color: 'white' }}
+            sx={{ color: "white" }}
           >
             <CloseIcon />
           </IconButton>
@@ -627,7 +703,11 @@ export const CustomerManagement: React.FC = () => {
           )}
           <form onSubmit={handleCreateCustomer} id="create-customer-form">
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Box display="flex" gap={2} flexDirection={{ xs: 'column', md: 'row' }}>
+              <Box
+                display="flex"
+                gap={2}
+                flexDirection={{ xs: "column", md: "row" }}
+              >
                 <TextField
                   fullWidth
                   label="Họ và tên"
@@ -732,7 +812,15 @@ export const CustomerManagement: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{
+            bgcolor: "primary.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box display="flex" alignItems="center" gap={1}>
             <EditIcon />
             <Typography variant="h6" component="span">
@@ -745,7 +833,7 @@ export const CustomerManagement: React.FC = () => {
               setSelectedCustomer(null);
               resetForm();
             }}
-            sx={{ color: 'white' }}
+            sx={{ color: "white" }}
           >
             <CloseIcon />
           </IconButton>
@@ -758,7 +846,11 @@ export const CustomerManagement: React.FC = () => {
           )}
           <form onSubmit={handleUpdateCustomer} id="edit-customer-form">
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Box display="flex" gap={2} flexDirection={{ xs: 'column', md: 'row' }}>
+              <Box
+                display="flex"
+                gap={2}
+                flexDirection={{ xs: "column", md: "row" }}
+              >
                 <TextField
                   fullWidth
                   label="Họ và tên"
@@ -846,23 +938,39 @@ export const CustomerManagement: React.FC = () => {
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle sx={{ bgcolor: 'secondary.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{
+            bgcolor: "secondary.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box display="flex" alignItems="center" gap={1}>
             <VisibilityIcon />
             <Typography variant="h6" component="span">
               Thông tin chi tiết khách hàng
             </Typography>
           </Box>
-          <IconButton onClick={() => setSelectedCustomer(null)} sx={{ color: 'white' }}>
+          <IconButton
+            onClick={() => setSelectedCustomer(null)}
+            sx={{ color: "white" }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent>
           {selectedCustomer && (
-            <Box display="flex" gap={3} sx={{ mt: 1 }} flexDirection={{ xs: 'column', lg: 'row' }}>
+            <Box
+              display="flex"
+              gap={3}
+              sx={{ mt: 1 }}
+              flexDirection={{ xs: "column", lg: "row" }}
+            >
               {/* Customer Info */}
-              <Box flex={{ xs: '1', lg: '0 0 33%' }}>
-                <Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+              <Box flex={{ xs: "1", lg: "0 0 33%" }}>
+                <Card variant="outlined" sx={{ bgcolor: "grey.50" }}>
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={1} mb={2}>
                       <PersonIcon color="secondary" />
@@ -900,7 +1008,7 @@ export const CustomerManagement: React.FC = () => {
                           Địa chỉ
                         </Typography>
                         <Typography variant="body1" fontWeight="medium">
-                          {selectedCustomer.address || 'N/A'}
+                          {selectedCustomer.address || "N/A"}
                         </Typography>
                       </Box>
                     </Stack>
@@ -909,7 +1017,6 @@ export const CustomerManagement: React.FC = () => {
               </Box>
 
               {/* Activity History */}
-             
             </Box>
           )}
         </DialogContent>
@@ -925,14 +1032,25 @@ export const CustomerManagement: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ bgcolor: 'info.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{
+            bgcolor: "info.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box display="flex" alignItems="center" gap={1}>
             <EventIcon />
             <Typography variant="h6" component="span">
               Đặt lịch cho khách hàng
             </Typography>
           </Box>
-          <IconButton onClick={() => setShowScheduleModal(false)} sx={{ color: 'white' }}>
+          <IconButton
+            onClick={() => setShowScheduleModal(false)}
+            sx={{ color: "white" }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -955,8 +1073,16 @@ export const CustomerManagement: React.FC = () => {
                     })
                   }
                 >
-                  <FormControlLabel value="car" control={<Radio />} label="Ô tô điện" />
-                  <FormControlLabel value="motorbike" control={<Radio />} label="Xe máy điện" />
+                  <FormControlLabel
+                    value="car"
+                    control={<Radio />}
+                    label="Ô tô điện"
+                  />
+                  <FormControlLabel
+                    value="motorbike"
+                    control={<Radio />}
+                    label="Xe máy điện"
+                  />
                 </RadioGroup>
               </FormControl>
 
@@ -1017,7 +1143,15 @@ export const CustomerManagement: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ bgcolor: 'warning.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{
+            bgcolor: "warning.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box display="flex" alignItems="center" gap={1}>
             <CreditCardIcon />
             <Box>
@@ -1037,28 +1171,29 @@ export const CustomerManagement: React.FC = () => {
               setSelectedCustomerPayments([]);
               setSelectedCustomerForPayments(null);
             }}
-            sx={{ color: 'white' }}
+            sx={{ color: "white" }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          {!selectedCustomerPayments || selectedCustomerPayments.length === 0 ? (
+          {!selectedCustomerPayments ||
+          selectedCustomerPayments.length === 0 ? (
             <Box textAlign="center" py={8}>
               <Box
                 sx={{
                   width: 96,
                   height: 96,
-                  borderRadius: '50%',
-                  bgcolor: 'warning.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mx: 'auto',
+                  borderRadius: "50%",
+                  bgcolor: "warning.light",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
                   mb: 2,
                 }}
               >
-                <CreditCardIcon sx={{ fontSize: 48, color: 'warning.main' }} />
+                <CreditCardIcon sx={{ fontSize: 48, color: "warning.main" }} />
               </Box>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Chưa có thanh toán nào
@@ -1072,7 +1207,11 @@ export const CustomerManagement: React.FC = () => {
               {selectedCustomerPayments.map((payment, index) => (
                 <Card key={index} variant="outlined">
                   <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                    >
                       <Box flex={1}>
                         <Box display="flex" alignItems="center" gap={1} mb={2}>
                           <CreditCardIcon color="warning" />
@@ -1080,9 +1219,17 @@ export const CustomerManagement: React.FC = () => {
                             Thanh toán #{payment?.id || index + 1}
                           </Typography>
                         </Box>
-                        <Box display="flex" gap={2} sx={{ ml: 4 }} flexDirection={{ xs: 'column', sm: 'row' }}>
+                        <Box
+                          display="flex"
+                          gap={2}
+                          sx={{ ml: 4 }}
+                          flexDirection={{ xs: "column", sm: "row" }}
+                        >
                           <Box flex={1}>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               Ngày thanh toán
                             </Typography>
                             <Typography variant="body2" fontWeight="medium">
@@ -1090,7 +1237,10 @@ export const CustomerManagement: React.FC = () => {
                             </Typography>
                           </Box>
                           <Box flex={1}>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               Phương thức
                             </Typography>
                             <Typography variant="body2" fontWeight="medium">
@@ -1107,37 +1257,16 @@ export const CustomerManagement: React.FC = () => {
                         )}
                       </Box>
                       <Box textAlign="right" ml={2}>
-                        <Typography variant="h5" fontWeight="bold" color="success.main" gutterBottom>
+                        <Typography
+                          variant="h5"
+                          fontWeight="bold"
+                          color="success.main"
+                          gutterBottom
+                        >
                           {payment?.amount
                             ? `${payment.amount.toLocaleString()} ₫`
                             : "N/A"}
                         </Typography>
-                        <Chip
-                          label={
-                            payment?.status === "completed"
-                              ? "Hoàn thành"
-                              : payment?.status === "pending"
-                              ? "Đang xử lý"
-                              : "Thất bại"
-                          }
-                          color={
-                            payment?.status === "completed"
-                              ? "success"
-                              : payment?.status === "pending"
-                              ? "warning"
-                              : "error"
-                          }
-                          icon={
-                            payment?.status === "completed" ? (
-                              <CheckCircleIcon />
-                            ) : payment?.status === "pending" ? (
-                              <PendingIcon />
-                            ) : (
-                              <CancelIcon />
-                            )
-                          }
-                          size="small"
-                        />
                       </Box>
                     </Box>
                   </CardContent>
