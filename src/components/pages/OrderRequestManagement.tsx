@@ -86,6 +86,7 @@ export const OrderRequestManagement: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = useState<OrderRequest | null>(
     null
   );
+
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // History states
@@ -97,6 +98,8 @@ export const OrderRequestManagement: React.FC = () => {
   const statusOptions = [
     { value: "pending", label: "Chờ duyệt", color: "warning" },
     { value: "approved", label: "Đã duyệt", color: "success" },
+    { value: "vehicle_ready", label: "Xe đã sẵn sàng", color: "success" },
+    { value: "delivered", label: "Đã giao", color: "success" },
     { value: "rejected", label: "Đã từ chối", color: "error" },
     {
       value: "waiting_vehicle_request",
@@ -104,7 +107,7 @@ export const OrderRequestManagement: React.FC = () => {
       color: "info",
     },
     { value: "completed", label: "Hoàn thành", color: "success" },
-    { value: "cancelled", label: "Đã hủy", color: "error" },
+    { value: "canceled", label: "Đã hủy", color: "error" },
   ];
 
   const getStatusChip = (status: string) => {
@@ -678,7 +681,7 @@ export const OrderRequestManagement: React.FC = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Mã yêu cầu</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Nhân viên</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Số lượng xe</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Loại xe</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Ngày tạo</TableCell>
                   <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
@@ -773,20 +776,6 @@ export const OrderRequestManagement: React.FC = () => {
                                 </Tooltip>
                               </>
                             )}
-
-                          {((user?.role === "dealer_staff" &&
-                            request.status === "pending") ||
-                            user?.role === "dealer_manager") && (
-                            <Tooltip title="Xóa">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDeleteRequest(request)}
-                                sx={{ color: "#ef4444" }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
                         </Stack>
                       </TableCell>
                     </TableRow>
