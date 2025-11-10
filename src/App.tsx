@@ -44,6 +44,7 @@ import { QuoteToOrderPageMUI } from "./components/pages/QuoteToOrderPageMUI";
 import { PaymentManagementPage } from "./components/pages/PaymentManagementPage";
 import DebtManagement from "./components/pages/DebtManagement";
 import { OrderRequestManagement } from "./components/pages/OrderRequestManagement";
+import { DealerRequestManagement } from "./components/pages/DealerRequestManagement";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -119,6 +120,10 @@ function AppContent() {
         path="/portal/order-requests"
         element={<OrderRequestManagement />}
       />
+      <Route
+        path="/portal/dealer-requests"
+        element={<DealerRequestManagement />}
+      />
       <Route path="/portal/quote-to-order" element={<QuoteToOrderPageMUI />} />
       <Route path="/portal/payments" element={<PaymentManagementPage />} />
       <Route path="/portal/debt-management" element={<DebtManagement />} />
@@ -144,10 +149,7 @@ function AppContent() {
         path="/evm/promotion-management"
         element={<PromotionManagement />}
       />
-      <Route
-        path="/evm/request-management"
-        element={<RequestManagement />}
-      />
+      <Route path="/evm/request-management" element={<RequestManagement />} />
       <Route
         path="/evm/manufacturer-debt-management"
         element={<ManufacturerDebtManagement />}
