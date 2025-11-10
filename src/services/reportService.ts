@@ -10,6 +10,7 @@ export interface TopSellingProduct {
 
 export interface DealerStock {
   _id: string;
+  dealership_id?: string;
   dealership_name: string;
   total_stock?: number;
   totalVehicles?: number;
@@ -64,6 +65,34 @@ export interface SalesByDealershipResponse {
   success?: boolean;
   message?: string;
   data?: SalesByDealership[];
+}
+
+export interface SalesReport {
+  _id: string | { vehicle?: string; dealership?: string };
+  order_id: string;
+  dealership_id?: string;
+  dealership_name: string;
+  vehicle_id?: string;
+  vehicle_name: string;
+  customer_id?: string;
+  customer_name?: string;
+  staff_id?: string;
+  staff_name?: string;
+  quantity?: number;
+  totalQuantity?: number;
+  total_quantity?: number;
+  unit_price?: number;
+  total_amount?: number;
+  totalRevenue?: number;
+  sale_date?: string;
+  status?: string;
+  payment_status?: string;
+}
+
+export interface SalesReportResponse {
+  success?: boolean;
+  message?: string;
+  data?: SalesReport[] | { data: SalesReport[] };
 }
 
 export const reportService = {
@@ -330,6 +359,58 @@ export const reportService = {
       return [];
     } catch (error) {
       console.error('❌ Error fetching sales by dealership:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all sales report data
+   * @param startDate - Start date (YYYY-MM-DD)
+   * @param endDate - End date (YYYY-MM-DD)
+   */
+  async getSalesReport(
+    startDate: string,
+    endDate: string
+  ): Promise<SalesReport[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('startDate', startDate);
+      queryParams.append('endDate', endDate);
+
+      console.log(`📡 Fetching sales report from /api/reports/sales?${queryParams.toString()}`);
+      const response = await get<SalesReportResponse | SalesReport[]>(
+        `/api/reports/sales?${queryParams.toString()}`
+      );
+
+      console.log('📦 Raw sales report response:', JSON.stringify(response, null, 2));
+
+      // Handle different response structures
+      if (Array.isArray(response)) {
+        console.log('✅ Response is array, returning directly');
+        return response;
+      }
+
+      const responseObj = response as SalesReportResponse;
+      
+      // Handle { success, data: [...] }
+      if (responseObj.data && Array.isArray(responseObj.data)) {
+        console.log('✅ Response has data array, returning response.data');
+        return responseObj.data;
+      }
+
+      // Handle { success, data: { data: [...] } }
+      if (responseObj.data && typeof responseObj.data === 'object' && 'data' in responseObj.data) {
+        const nestedData = (responseObj.data as { data: SalesReport[] }).data;
+        if (Array.isArray(nestedData)) {
+          console.log('✅ Response has nested data.data array, returning response.data.data');
+          return nestedData;
+        }
+      }
+
+      console.warn('⚠️ Unexpected response structure for sales report:', response);
+      return [];
+    } catch (error) {
+      console.error('❌ Error fetching sales report:', error);
       throw error;
     }
   },

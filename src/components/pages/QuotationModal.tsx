@@ -814,77 +814,129 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           />
         </Form.Item>
 
+        {/* Bảng tổng tiền */}
         <Card
           style={{
-            borderRadius: 20,
+            borderRadius: 12,
             marginTop: 24,
             marginBottom: 24,
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            color: '#fff',
-            boxShadow: '0 12px 32px rgba(240, 147, 251, 0.4)',
-            padding: '20px 24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             overflow: 'hidden'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', gap: '16px' }}>
-            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 6, fontWeight: 500 }}>
-                Xe × SL
-              </Text>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
-                {formatCurrency((vehiclePrice || 0) * quantityValue)}
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 6, fontWeight: 500 }}>
-                Nội thất
-              </Text>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
-                +{formatCurrency(
-                  (optionsValue || []).reduce((sum, option) => {
-                    if (!option?.option_id) return sum;
-                    const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
-                    const quantity = option.quantity || 1;
-                    return sum + ((optionData?.price || 0) * quantity);
-                  }, 0)
-                )}
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 6, fontWeight: 500 }}>
-                Phụ kiện
-              </Text>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
-                +{formatCurrency(
-                  (accessoriesValue || []).reduce((sum, accessory) => {
-                    if (!accessory?.accessory_id) return sum;
-                    const accessoryData = accessoryCatalog.find(a => normalizeAccessoryId(a) === accessory.accessory_id);
-                    const quantity = accessory.quantity || 1;
-                    return sum + ((accessoryData?.price || 0) * quantity);
-                  }, 0)
-                )}
-              </div>
-            </div>
-          </div>
-          <Divider style={{ borderColor: 'rgba(255,255,255,0.35)', margin: '16px 0' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '32px' }}>
-            {/* <div style={{ flex: '0 0 auto' }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 8, fontWeight: 500 }}>
-                Giảm giá
-              </Text>
-              <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
-                -{formatCurrency(discountValue)}
-              </div>
-            </div> */}
-            <div style={{ flex: '1 1 auto', textAlign: 'right', minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 6, fontWeight: 500 }}>
-                Tổng thanh toán
-              </Text>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
-                {formatCurrency(totalAmount)}
-              </div>
-            </div>
-          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#fafafa', borderBottom: '2px solid #d9d9d9' }}>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  STT
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Tên hàng hóa, dịch vụ
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Đơn vị tính
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Số lượng
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Đơn giá
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Thành tiền
+                  <div style={{ fontSize: 11, fontWeight: 400, marginTop: 2, color: '#8c8c8c' }}>
+                    (Thành tiền = Số lượng × Đơn giá)
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Xe */}
+              <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <td style={{ padding: '12px 16px', fontSize: 14, color: '#595959' }}>1</td>
+                <td style={{ padding: '12px 16px', fontSize: 14, color: '#262626' }}>
+                  {vehicleName || 'Xe điện'}
+                  {form.getFieldValue('color') && (
+                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 4 }}>
+                      (Màu {form.getFieldValue('color')})
+                    </Text>
+                  )}
+                </td>
+                <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Chiếc</td>
+                <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#262626', fontWeight: 500 }}>
+                  {quantityValue}
+                </td>
+                <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#595959' }}>
+                  {formatCurrency(vehiclePrice || 0)}
+                </td>
+                <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#262626', fontWeight: 600 }}>
+                  {formatCurrency((vehiclePrice || 0) * quantityValue)}
+                </td>
+              </tr>
+
+              {/* Nội thất */}
+              {(optionsValue || []).filter(opt => opt?.option_id).map((option, index) => {
+                const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
+                const quantity = option.quantity || 1;
+                const price = optionData?.price || 0;
+                return (
+                  <tr key={`option-${index}`} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? '#fafafa' : '#fff' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#595959' }}>{index + 2}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#262626' }}>
+                      {optionData?.name || 'Nội thất'}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Bộ</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#262626', fontWeight: 500 }}>
+                      {quantity}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#595959' }}>
+                      {formatCurrency(price)}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#262626', fontWeight: 600 }}>
+                      {formatCurrency(price * quantity)}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Phụ kiện */}
+              {(accessoriesValue || []).filter(acc => acc?.accessory_id).map((accessory, index) => {
+                const accessoryData = accessoryCatalog.find(a => normalizeAccessoryId(a) === accessory.accessory_id);
+                const quantity = accessory.quantity || 1;
+                const price = accessoryData?.price || 0;
+                const rowNum = 2 + (optionsValue || []).filter(opt => opt?.option_id).length + index;
+                const isEven = (rowNum - 1) % 2 === 0;
+                return (
+                  <tr key={`accessory-${index}`} style={{ borderBottom: '1px solid #f0f0f0', background: isEven ? '#fafafa' : '#fff' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#595959' }}>{rowNum}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#262626' }}>
+                      {accessoryData?.name || 'Phụ kiện'}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Chiếc</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#262626', fontWeight: 500 }}>
+                      {quantity}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#595959' }}>
+                      {formatCurrency(price)}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#262626', fontWeight: 600 }}>
+                      {formatCurrency(price * quantity)}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Dòng tổng cộng */}
+              <tr style={{ borderTop: '2px solid #d9d9d9', background: '#fafafa' }}>
+                <td colSpan={5} style={{ padding: '14px 16px', textAlign: 'right', fontSize: 15, fontWeight: 700, color: '#262626' }}>
+                  Tổng cộng:
+                </td>
+                <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#262626' }}>
+                  {formatCurrency(totalAmount)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </Card>
 
         <Form.Item style={{ marginBottom: 0 }}>

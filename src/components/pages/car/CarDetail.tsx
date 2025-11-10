@@ -323,11 +323,32 @@ export const CarDetail: React.FC = () => {
           <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 40px', width: '100%', zIndex: 2 }}>
             <Row gutter={[64, 64]} align="middle">
               <Col xs={24} lg={14}>
-                <div style={{ position: 'relative', textAlign: 'center' }}>
-                  {/* Car Showcase */}
+                <div style={{ position: 'relative', textAlign: 'center', overflow: 'hidden', borderRadius: '20px' }}>
+                  {/* Ribbon chéo - Mới 2024 */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 25,
+                    right: -40,
+                    background: 'linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%)',
+                    color: '#fff',
+                    padding: '12px 70px',
+                    transform: 'rotate(45deg)',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    letterSpacing: '2px',
+                    boxShadow: '0 4px 15px rgba(255, 107, 53, 0.6)',
+                    zIndex: 100,
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                  }}>
+                    Mới 2024
+                  </div>
+
+                  {/* Car Showcase - Ảnh to hơn */}
                   <div style={{
                     position: 'relative',
-                    padding: '60px 0',
+                    padding: '40px 20px',
                     filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.3))'
                   }}>
                     <Image
@@ -335,28 +356,13 @@ export const CarDetail: React.FC = () => {
                       alt={getVehicleProperty('model', 'Car') as string}
                       style={{ 
                         width: '100%',
-                        maxWidth: 700,
-                        height: 'auto'
+                        maxWidth: 850,
+                        height: 'auto',
+                        transform: 'scale(1.1)'
                       }}
                       preview={false}
           />
         </div>
-
-                  {/* Floating Badge */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 40,
-                    right: 40,
-                    background: 'rgba(255,255,255,0.9)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: 20,
-                    padding: '8px 16px',
-                    color: '#1f2937',
-                    fontWeight: 600,
-                    fontSize: 14
-                  }}>
-                     Mới nhất 2024
-                  </div>
         </div>
               </Col>
               

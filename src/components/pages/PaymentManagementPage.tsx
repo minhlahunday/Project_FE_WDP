@@ -70,16 +70,27 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
       }
       
       if (response.success) {
-        console.log('Orders fetched successfully:', response.data.data.length, 'orders');
-        setOrders(response.data.data);
+        console.log('Full API response:', response);
+        
+        // Handle different response structures
+        let ordersData: Order[] = [];
+        if (response.data?.data && Array.isArray(response.data.data)) {
+          ordersData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          ordersData = response.data;
+        }
+        
+        console.log('Orders fetched successfully:', ordersData.length, 'orders');
+        console.log('Orders data:', ordersData);
+        setOrders(ordersData);
       } else {
         console.error('Failed to fetch orders:', response.message);
         message.error('Lỗi khi tải danh sách đơn hàng: ' + response.message);
         setOrders([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching orders:', error);
-      const errorMessage = error?.response?.data?.message || error.message || 'Lỗi khi tải danh sách đơn hàng';
+      const errorMessage = (error as Error)?.message || 'Lỗi khi tải danh sách đơn hàng';
       message.error(errorMessage);
       setOrders([]);
     } finally {
@@ -112,9 +123,9 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
       await generateContractPDF(contractData);
       
       message.success('Hợp đồng đã được tạo và tải xuống thành công!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating contract:', error);
-      const errorMessage = error?.message || 'Lỗi khi tạo hợp đồng';
+      const errorMessage = (error as Error)?.message || 'Lỗi khi tạo hợp đồng';
       message.error(errorMessage);
     } finally {
       setGeneratingContract(null);
@@ -148,15 +159,20 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
 
   const filteredOrders = orders.filter(order => {
     // Filter out deleted orders (is_deleted: true) - hiển thị với status cancelled
-    const isDeleted = (order as any).is_deleted;
+    const isDeleted = (order as unknown as Record<string, unknown>).is_deleted;
     if (isDeleted) {
       // Map is_deleted thành status cancelled để hiển thị
-      (order as any).status = 'cancelled';
+      (order as unknown as Record<string, unknown>).status = 'cancelled';
     }
     
-    // First, check if order belongs to user's dealership
-    const userDealershipId = user?.dealership_id || user?.dealerId;
-    const belongsToUserDealership = order.dealership_id === userDealershipId;
+    // For staff: API /yourself already filters by staff, so don't need dealership check
+    // For manager: need to filter by dealership
+    let belongsToUserDealership = true;
+    if (user?.role === 'dealer_manager') {
+      const userDealershipId = user?.dealership_id || user?.dealerId;
+      belongsToUserDealership = order.dealership_id === userDealershipId;
+    }
+    // For staff: skip dealership check since /yourself API already filters
     
     // Then apply other filters
     const matchesSearch = !searchText || 
@@ -403,12 +419,22 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
     {
       title: 'Khách hàng',
       key: 'customerName',
-      render: (_: any, record: Order) => (record as any).customer_id?.full_name || (record as any).customer?.full_name || 'N/A',
+      render: (_: unknown, record: Order) => {
+        const orderRecord = record as unknown as Record<string, unknown>;
+        const customerId = orderRecord.customer_id as Record<string, unknown> | undefined;
+        const customer = orderRecord.customer as Record<string, unknown> | undefined;
+        return customerId?.full_name || customer?.full_name || 'N/A';
+      },
     },
     {
       title: 'Số điện thoại',
       key: 'customerPhone',
-      render: (_: any, record: Order) => (record as any).customer_id?.phone || (record as any).customer?.phone || 'N/A',
+      render: (_: unknown, record: Order) => {
+        const orderRecord = record as unknown as Record<string, unknown>;
+        const customerId = orderRecord.customer_id as Record<string, unknown> | undefined;
+        const customer = orderRecord.customer as Record<string, unknown> | undefined;
+        return customerId?.phone || customer?.phone || 'N/A';
+      },
     },
     {
       title: 'Tổng tiền',
@@ -425,7 +451,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
     {
       title: 'Còn lại',
       key: 'remaining',
-      render: (_: any, record: Order) => {
+      render: (_: unknown, record: Order) => {
         const remaining = record.final_amount - record.paid_amount;
         return `${remaining.toLocaleString('vi-VN')} VNĐ`;
       },
@@ -433,7 +459,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
     {
       title: 'Trạng thái thanh toán',
       key: 'paymentStatus',
-      render: (_: any, record: Order) => getPaymentStatusTag(record),
+      render: (_: unknown, record: Order) => getPaymentStatusTag(record),
     },
     {
       title: 'Trạng thái đơn hàng',
@@ -450,7 +476,7 @@ export const PaymentManagementPage: React.FC<PaymentManagementPageProps> = () =>
     {
       title: 'Hành động',
       key: 'actions',
-      render: (_: any, record: Order) => (
+      render: (_: unknown, record: Order) => (
         <Space>
           <Button
             type="primary"

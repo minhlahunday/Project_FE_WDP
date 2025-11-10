@@ -1820,25 +1820,24 @@ export const QuotationManagement: React.FC = () => {
               marginTop: 24,
               marginBottom: 16,
               padding: '14px 18px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)'
+              background: '#fafafa',
+              borderRadius: 8,
+              borderLeft: '4px solid #1890ff'
             }}>
-              <Title level={5} style={{ margin: 0, color: 'white', fontSize: 16, fontWeight: 600 }}>
-                CHI TIẾT BÁO GIÁ
+              <Title level={5} style={{ margin: 0, color: '#262626', fontSize: 16, fontWeight: 600 }}>
+                Chi tiết báo giá
               </Title>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                {selectedQuotation.code}
+              </Text>
             </div>
 
             {/* Table Section */}
             <div style={{ 
               background: 'white', 
-              borderRadius: 12, 
+              borderRadius: 8, 
               overflow: 'hidden',
-              border: '1px solid #e8eaed',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              border: '1px solid #d9d9d9'
             }}>
               <AntTable
                 dataSource={(() => {
@@ -1946,52 +1945,52 @@ export const QuotationManagement: React.FC = () => {
                 })()}
                 columns={[
                   {
-                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>STT</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>STT</Text>,
                     dataIndex: 'stt',
                     key: 'stt',
                     width: 60,
                     align: 'center' as const,
-                    render: (text: number) => <Text style={{ fontWeight: 600, color: '#1a1a2e' }}>{text}</Text>
+                    render: (text: number) => <Text style={{ fontSize: 13, color: '#595959' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Tên hàng hóa, dịch vụ</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Tên hàng hóa, dịch vụ</Text>,
                     dataIndex: 'tenHangHoa',
                     key: 'tenHangHoa',
                     width: 300,
-                    render: (text: string) => <Text style={{ fontWeight: 500, color: '#1a1a2e' }}>{text}</Text>
+                    render: (text: string) => <Text style={{ fontSize: 13, color: '#262626' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Đơn vị tính</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Đơn vị tính</Text>,
                     dataIndex: 'donViTinh',
                     key: 'donViTinh',
-                    width: 120,
-                    align: 'center' as const,
-                    render: (text: string) => <Text style={{ fontWeight: 500, color: '#1a1a2e' }}>{text}</Text>
-                  },
-                  {
-                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Số lượng</Text>,
-                    dataIndex: 'soLuong',
-                    key: 'soLuong',
                     width: 100,
                     align: 'center' as const,
-                    render: (text: number) => <Text style={{ fontWeight: 600, color: '#1a1a2e' }}>{text}</Text>
+                    render: (text: string) => <Text style={{ fontSize: 13, color: '#595959' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Đơn giá</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Số lượng</Text>,
+                    dataIndex: 'soLuong',
+                    key: 'soLuong',
+                    width: 80,
+                    align: 'center' as const,
+                    render: (text: number) => <Text style={{ fontSize: 13, color: '#262626' }}>{text}</Text>
+                  },
+                  {
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Đơn giá</Text>,
                     dataIndex: 'donGia',
                     key: 'donGia',
-                    width: 150,
+                    width: 120,
                     align: 'right' as const,
                     render: (price: number) => (
-                      <Text style={{ fontWeight: 600, color: '#1a1a2e' }}>{new Intl.NumberFormat('vi-VN').format(price)}</Text>
+                      <Text style={{ fontSize: 13, color: '#595959' }}>{new Intl.NumberFormat('vi-VN').format(price)} ₫</Text>
                     )
                   },
                   {
                     title: (
                       <div>
-                        <Text strong style={{ color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>Thành tiền</Text>
+                        <Text strong style={{ color: '#262626', fontSize: 13 }}>Thành tiền</Text>
                         <br />
-                        <Text type="secondary" style={{ fontSize: 11, fontWeight: 500 }}>
+                        <Text type="secondary" style={{ fontSize: 11, fontWeight: 400 }}>
                           (Thành tiền = Số lượng × Đơn giá)
                         </Text>
                       </div>
@@ -2001,47 +2000,45 @@ export const QuotationManagement: React.FC = () => {
                     width: 150,
                     align: 'right' as const,
                     render: (amount: number) => (
-                      <Text style={{ fontWeight: 700, color: '#52c41a', fontSize: 14 }}>{new Intl.NumberFormat('vi-VN').format(amount)}</Text>
+                      <Text style={{ fontSize: 13, color: '#262626' }}>{new Intl.NumberFormat('vi-VN').format(amount)} ₫</Text>
                     )
                   }
                 ]}
                 pagination={false}
-                size="medium"
+                size="small"
                 bordered
                 style={{
                   background: 'white'
                 }}
                 components={{
                   header: {
-                    cell: (props: React.ThHTMLAttributes<HTMLTableCellElement> & { align?: string }) => (
-                      <th {...props} style={{
-                        ...props.style,
-                        background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)',
-                        fontWeight: 700,
-                        padding: '14px 10px',
-                        textAlign: (props.align as 'left' | 'right' | 'center') || 'left'
+                    cell: (props: React.HTMLAttributes<HTMLTableCellElement>) => (
+                      <th {...props} style={{ 
+                        ...props.style, 
+                        backgroundColor: '#fafafa',
+                        borderBottom: '2px solid #d9d9d9',
+                        color: '#262626',
+                        fontWeight: 600
                       }} />
                     )
                   }
                 }}
-                rowClassName={() => 'quotation-detail-row'}
+                rowClassName={() => ''}
               />
 
-              {/* Total Row - Calculate from table data to match PDF */}
+              {/* Total Row */}
               <div style={{
-                padding: '18px 24px',
-                background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-                borderTop: '3px solid #1890ff',
+                padding: '12px 16px',
+                background: '#fafafa',
+                borderTop: '2px solid #d9d9d9',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: 24
               }}>
-                <div style={{ flex: 1, textAlign: 'right', paddingRight: 24 }}>
-                  <Text strong style={{ fontSize: 16, fontWeight: 700, color: '#1a1a2e' }}>Tổng cộng:</Text>
-                </div>
-                <div style={{ width: 150, textAlign: 'right' }}>
-                  <Text strong style={{ fontSize: 18, color: '#ff4d4f', fontWeight: 700 }}>
-                    {new Intl.NumberFormat('vi-VN').format(
+                <Text strong style={{ fontSize: 14, color: '#262626' }}>Tổng cộng tiền thanh toán:</Text>
+                <Text strong style={{ fontSize: 16, color: '#cf1322', minWidth: 150, textAlign: 'right' }}>
+                  {new Intl.NumberFormat('vi-VN').format(
                       ((): number => {
                         // Calculate total from items exactly as displayed in table
                         let total = 0;
@@ -2086,9 +2083,8 @@ export const QuotationManagement: React.FC = () => {
                         console.log('💰 Final calculated total:', total);
                         return total;
                       })()
-                    )}
+                    )} ₫
                   </Text>
-                </div>
               </div>
             </div>
 
