@@ -2104,30 +2104,6 @@ export const QuotationManagement: React.FC = () => {
               </div>
             )}
 
-            {selectedQuotation.notes && (
-              <Card style={{ 
-                marginTop: 16, 
-                borderRadius: 12, 
-                background: 'linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%)', 
-                border: '2px solid #ffd666',
-                boxShadow: '0 4px 12px rgba(255, 193, 7, 0.2)'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: 12
-                }}>
-                  <Title level={5} style={{ margin: 0, color: '#ad6800', fontSize: 16, fontWeight: 700 }}>
-                    Ghi chú
-                  </Title>
-                </div>
-                <Text style={{ fontSize: 14, lineHeight: 1.7, color: '#262626', fontWeight: 500 }}>
-                  {selectedQuotation.notes}
-                </Text>
-              </Card>
-            )}
-
             {/* API Raw Data Summary */}
             <Card 
               style={{ 
