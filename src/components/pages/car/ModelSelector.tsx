@@ -620,7 +620,7 @@ export const ModelSelector: React.FC = () => {
                         <p className="text-2xl font-bold text-green-600 mb-4">Từ {formatPrice(v.price as number)}</p>
 
                         {/* Specifications Grid */}
-                        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                        {/* <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                           <div className="flex items-center space-x-2">
                             <Battery className="h-4 w-4 text-blue-500" />
                             <span>{v.range_km as number}km</span>
@@ -637,7 +637,7 @@ export const ModelSelector: React.FC = () => {
                             <Car className="h-4 w-4 text-gray-500" />
                             <span>{String(v.stock as number || 0)} xe</span>
                           </div>
-                        </div>
+                        </div> */}
 
                         {/* Action Buttons */}
                         <div className="flex space-x-2">
@@ -651,7 +651,7 @@ export const ModelSelector: React.FC = () => {
                             <Eye className="h-4 w-4" />
                             <span>Chi tiết</span>
                           </button>
-                          <button
+                          {/* <button
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/portal/car-deposit?vehicleId=${vehicleId}`);
@@ -660,7 +660,7 @@ export const ModelSelector: React.FC = () => {
                           >
                             <ShoppingCart className="h-4 w-4" />
                             <span>Đặt cọc</span>
-                          </button>
+                          </button> */}
                         </div>
 
                         {/* Add to Comparison Info */}

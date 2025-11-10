@@ -8,9 +8,11 @@ import { mockVehicles } from '../../../data/mockData';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export const CarProduct: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const compareTableRef = useRef<HTMLDivElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('vehicles');
@@ -281,6 +283,84 @@ export const CarProduct: React.FC = () => {
     });
     return [...new Set(allValues)];
   };
+
+  // Hàm tính tổng stock từ tất cả stocks (không phân biệt dealer/manufacturer)
+  const calculateTotalStock = useCallback((vehicle: unknown): number => {
+    try {
+      const v = vehicle as Record<string, unknown>;
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return (v.stock as number) || 0; // Fallback to old stock field
+      }
+      
+      // Sum up remaining_quantity from all stock entries
+      return stocks.reduce((total, stock) => {
+        const remainingQty = stock.remaining_quantity as number || 0;
+        return total + remainingQty;
+      }, 0);
+    } catch (error) {
+      console.error('Error calculating total stock:', error);
+      return 0;
+    }
+  }, []);
+
+  // Hàm tính tổng stock của dealer từ stocks array
+  const getDealerStock = useCallback((vehicle: unknown): number => {
+    try {
+      const v = vehicle as Record<string, unknown>;
+      
+      // Lấy dealership_id từ user hoặc JWT token
+      let dealerId: string | null = null;
+      
+      if (user?.dealership_id) {
+        dealerId = user.dealership_id;
+      } else {
+        // Fallback: lấy từ JWT token
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            dealerId = payload.dealership_id || null;
+          }
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+        }
+      }
+      
+      // Nếu không có dealerId, return 0
+      if (!dealerId) {
+        return 0;
+      }
+      
+      // Lấy stocks array từ vehicle
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return 0;
+      }
+      
+      // Lọc stocks của dealer: owner_type === 'dealer', status === 'active', owner_id khớp
+      const dealerStocks = stocks.filter((stock) => {
+        return (
+          stock.owner_type === 'dealer' &&
+          stock.status === 'active' &&
+          stock.owner_id === dealerId
+        );
+      });
+      
+      // Tính tổng remaining_quantity
+      const totalStock = dealerStocks.reduce((sum, stock) => {
+        const remaining = stock.remaining_quantity as number | undefined;
+        return sum + (remaining || 0);
+      }, 0);
+      
+      return totalStock;
+    } catch (error) {
+      console.error('Error calculating dealer stock:', error);
+      return 0;
+    }
+  }, [user]);
 
   const resetFilters = () => {
     setFilters({
@@ -649,7 +729,7 @@ export const CarProduct: React.FC = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Car className="h-4 w-4 text-gray-500" />
-                            <span>{v.stock as number || 0} xe</span>
+                            <span>{getDealerStock(vehicle)} xe</span>
                           </div>
 
                         </div>
@@ -791,7 +871,7 @@ export const CarProduct: React.FC = () => {
                       {compareList.map((vehicle) => {
                         const v = vehicle as Record<string, unknown>;
                         return (
-                          <td key={v._id as string || v.id as string} className="p-6 text-center text-gray-600">{v.stock as number || 0} xe</td>
+                          <td key={v._id as string || v.id as string} className="p-6 text-center text-gray-600">{getDealerStock(vehicle)} xe</td>
                         );
                       })}
                     </tr>

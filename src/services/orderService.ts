@@ -190,6 +190,13 @@ export interface OrderRequestSearchParams {
   endDate?: string;
 }
 
+export interface DealerVehicleRequestSearchParams {
+  page?: number;
+  limit?: number;
+  status?: "pending" | "approved" | "rejected";
+  vehicle_id?: string;
+}
+
 // Order Request History Interfaces
 export interface OrderRequestHistoryEvent {
   _id: string;
@@ -413,6 +420,23 @@ export const orderService = {
     if (params?.endDate) queryParams.append("endDate", params.endDate);
 
     const url = `/api/order-request${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    return get<OrderRequestListResponse>(url);
+  },
+
+  // Get dealer vehicle requests (for dealer manager to view requests from dealers)
+  async getDealerVehicleRequests(
+    params?: DealerVehicleRequestSearchParams
+  ): Promise<OrderRequestListResponse> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.vehicle_id) queryParams.append("vehicle_id", params.vehicle_id);
+
+    const url = `/api/request-vehicles/for-dealer${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
     return get<OrderRequestListResponse>(url);

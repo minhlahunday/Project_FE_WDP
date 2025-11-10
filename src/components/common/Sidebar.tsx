@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const handleResize = () => {
       const desktop = window.innerWidth >= 1024;
       setIsDesktop(desktop);
-      
+
       // Auto close sidebar on mobile when route changes
       if (!desktop && isOpen) {
         onClose();
@@ -62,34 +62,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [isOpen, onClose]);
 
   // Handle click outside to close sidebar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (!isOpen || !sidebarRef.current) return;
-      
+
       const target = event.target as HTMLElement;
-      
+
       // Don't close if clicking inside sidebar
       if (sidebarRef.current.contains(target)) return;
-      
+
       // Don't close if clicking on toggle buttons
       if (target.closest('[data-testid="sidebar-toggle"]')) return;
-      
+
       // Close sidebar
       onClose();
     };
 
     // Add listener when sidebar is open
     if (isOpen) {
-      document.addEventListener('click', handleClickOutside, true);
+      document.addEventListener("click", handleClickOutside, true);
     }
 
     return () => {
-      document.removeEventListener('click', handleClickOutside, true);
+      document.removeEventListener("click", handleClickOutside, true);
     };
   }, [isOpen, onClose]);
 
@@ -119,6 +119,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       route: "/portal/order-requests",
     },
     {
+      key: "dealer-requests",
+      label: "Yêu cầu từ nhân viên",
+      icon: <FileSignature className="w-4 h-4" />,
+      route: "/portal/dealer-requests",
+    },
+    {
       key: "quotations",
       label: "Quản lý báo giá",
       icon: <FileText className="w-4 h-4" />,
@@ -141,6 +147,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Quản lý khách hàng",
       icon: <Users className="w-4 h-4" />,
       route: "/portal/customers",
+    },
+    {
+      key: "dealer-stock",
+      label: "Quản lý tồn kho",
+      icon: <Package className="w-4 h-4" />,
+      route: "/portal/dealer-stock",
     },
     {
       key: "test-drives",
@@ -248,7 +260,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <Receipt className="w-4 h-4" />,
       route: "/evm/manufacturer-debt-management",
     },
-    
   ];
 
   const getMenuItems = () => {
@@ -264,7 +275,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = getMenuItems();
 
   // Filter menu items based on search
-  const filteredMenuItems = menuItems.filter(item =>
+  const filteredMenuItems = menuItems.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -283,7 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       navigate(item.route);
     }
     onSectionChange(item.key);
-    
+
     // Close sidebar on mobile after navigation
     if (!isDesktop) {
       onClose();
@@ -317,9 +328,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Container */}
       <div
         ref={sidebarRef}
-        className={`github-sidebar ${isOpen ? 'github-sidebar-open' : 'github-sidebar-closed'}`}
+        className={`github-sidebar ${
+          isOpen ? "github-sidebar-open" : "github-sidebar-closed"
+        }`}
         style={{
-          transform: (isOpen || isDesktop) ? 'translateX(0)' : 'translateX(-100%)',
+          transform:
+            isOpen || isDesktop ? "translateX(0)" : "translateX(-100%)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -330,11 +344,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Car className="w-6 h-6" />
             </div>
             <div className="github-sidebar-title">
-              <h1 className="text-sm font-semibold text-gray-900">VinFast EVM</h1>
+              <h1 className="text-sm font-semibold text-gray-900">
+                VinFast EVM
+              </h1>
               <p className="text-xs text-gray-600">{getRoleDisplayName()}</p>
             </div>
           </div>
-          
+
           {/* Toggle Button */}
           <button
             onClick={isOpen ? onClose : onOpen}
@@ -369,14 +385,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ? "EVM Operations"
                 : "Portal Features"}
             </h3>
-            
+
             <ul className="github-sidebar-menu">
               {filteredMenuItems.map((item) => (
                 <li key={item.key}>
                   <button
                     onClick={() => handleMenuItemClick(item)}
                     className={`github-sidebar-menu-item ${
-                      activeSection === item.key ? 'github-sidebar-menu-item-active' : ''
+                      activeSection === item.key
+                        ? "github-sidebar-menu-item-active"
+                        : ""
                     }`}
                   >
                     <span className="github-sidebar-menu-icon">

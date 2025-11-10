@@ -1,37 +1,80 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Table, 
-  Tag, 
-  Button, 
-  Input, 
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Card,
+  CardContent,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Chip,
+  Pagination,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Tooltip,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Snackbar,
+  Alert,
+  Divider,
+  Stack,
+  Grid,
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
+  Delete as DeleteIcon,
+  Description as FileTextIcon,
+  Send as SendIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  Close as CloseIcon,
+  Refresh as RefreshIcon,
+  ShoppingCart as ShoppingCartIcon,
+} from '@mui/icons-material';
+import { 
   Modal,
-  Descriptions,
   message,
   Spin,
+  Descriptions,
+  Tag,
   Row,
   Col,
   Statistic,
-  Tooltip
+  Typography as AntTypography,
+  Table as AntTable,
 } from 'antd';
-import { 
-  SearchOutlined, 
-  EyeOutlined, 
+
+const { Text, Title } = AntTypography;
+import {
   FileTextOutlined,
   DollarOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  ExclamationCircleOutlined,
+  EyeOutlined,
   DeleteOutlined,
-  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { authService } from '../../../services/authService';
 import { accessoryService, Accessory } from '../../../services/accessoryService';
 import { optionService, VehicleOption } from '../../../services/optionService';
+import { customerService } from '../../../services/customerService';
 import '../../../styles/quotation-management.css';
 
-const { Title, Text } = Typography;
 
 interface Quotation {
   _id: string;
@@ -66,6 +109,7 @@ interface Quotation {
     options?: Array<{
       option_id?: string;
       name?: string;
+      quantity?: number;
       price?: number;
       amount?: number;
       value?: number;
@@ -116,6 +160,7 @@ interface Quotation {
 }
 
 export const QuotationManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -129,6 +174,19 @@ export const QuotationManagement: React.FC = () => {
     email?: string;
     role?: string;
   } | null>(null);
+  const [customerInfo, setCustomerInfo] = useState<{
+    full_name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  } | null>(null);
+  const [dealershipInfo, setDealershipInfo] = useState<{
+    company_name: string;
+    code?: string;
+    address?: string;
+  } | null>(null);
+  // Cache customer names for table display
+  const [customerNamesMap, setCustomerNamesMap] = useState<Record<string, string>>({});
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,12 +196,38 @@ export const QuotationManagement: React.FC = () => {
   // Stats
   const [stats, setStats] = useState({
     total: 0,
-    draft: 0,
-    sent: 0,
-    accepted: 0,
-    rejected: 0,
+    valid: 0,
+    expired: 0,
+    canceled: 0,
+    invalid: 0,
+    used: 0,
     converted: 0
   });
+
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
+
+  // Helper function to show snackbar
+  const showSnackbarMessage = (msg: string, severity: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setSnackbar({ open: true, message: msg, severity });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Handle navigate to quote-to-order page
+  const handleNavigateToConverter = () => {
+    navigate('/portal/quote-to-order');
+  };
 
   useEffect(() => {
     loadQuotations();
@@ -179,13 +263,15 @@ export const QuotationManagement: React.FC = () => {
       console.log('📊 Response.data:', response?.data);
       
       // Handle response structure from API
+      let loadedQuotations: Quotation[] = [];
+      
       if (response?.data) {
         // Case 1: data is an object with quotes array
         if (!Array.isArray(response.data) && 'quotes' in response.data && Array.isArray(response.data.quotes)) {
           console.log('📦 Case 1: data.quotes array found');
           console.log('📋 First quote sample:', response.data.quotes[0]);
-          setQuotations(response.data.quotes);
-          calculateStats(response.data.quotes);
+          loadedQuotations = response.data.quotes;
+          calculateStats(loadedQuotations);
           
           // Set pagination info
           if (response.data.pagination) {
@@ -195,9 +281,9 @@ export const QuotationManagement: React.FC = () => {
         // Case 2: data is directly an array of quotations
         else if (Array.isArray(response.data)) {
           console.log('📦 Case 2: data is array');
-          setQuotations(response.data);
-          calculateStats(response.data);
-          setTotalItems(response.data.length);
+          loadedQuotations = response.data;
+          calculateStats(loadedQuotations);
+          setTotalItems(loadedQuotations.length);
         }
         // Case 3: Unknown structure - try to find array in data
         else {
@@ -223,8 +309,8 @@ export const QuotationManagement: React.FC = () => {
           if (foundQuotes) {
             console.log('📋 Found quotes sample:', foundQuotes[0]);
             console.log('📊 Total quotes found:', foundQuotes.length);
-            setQuotations(foundQuotes);
-            calculateStats(foundQuotes);
+            loadedQuotations = foundQuotes;
+            calculateStats(loadedQuotations);
             
             // Try to find pagination info
             const pagination = dataObj.pagination as { total?: number } | undefined;
@@ -232,20 +318,53 @@ export const QuotationManagement: React.FC = () => {
               setTotalItems(pagination.total);
               console.log('📄 Pagination total:', pagination.total);
             } else {
-              setTotalItems(foundQuotes.length);
+              setTotalItems(loadedQuotations.length);
             }
           } else {
             console.error('❌ Could not find quotations array in response');
             console.error('📊 Available keys:', Object.keys(dataObj));
             setQuotations([]);
             setTotalItems(0);
+            return;
           }
         }
       } else {
         console.warn('⚠️ No data in response:', response);
         setQuotations([]);
         setTotalItems(0);
+        return;
       }
+
+      // Fetch customer names for quotations with string customer_id
+      const customerIdsToFetch = new Set<string>();
+      loadedQuotations.forEach(quote => {
+        if (typeof quote.customer_id === 'string' && !customerNamesMap[quote.customer_id]) {
+          customerIdsToFetch.add(quote.customer_id);
+        }
+      });
+
+      if (customerIdsToFetch.size > 0) {
+        console.log('🔍 Fetching customer names for', customerIdsToFetch.size, 'customers');
+        const newCustomerNamesMap = { ...customerNamesMap };
+        
+        // Fetch customer info in parallel
+        await Promise.allSettled(
+          Array.from(customerIdsToFetch).map(async (customerId) => {
+            try {
+              const customer = await customerService.getCustomerById(customerId);
+              newCustomerNamesMap[customerId] = customer.name || 'N/A';
+              console.log(`✅ Fetched customer name for ${customerId}:`, newCustomerNamesMap[customerId]);
+            } catch (error) {
+              console.error(`❌ Error fetching customer ${customerId}:`, error);
+              newCustomerNamesMap[customerId] = 'N/A';
+            }
+          })
+        );
+        
+        setCustomerNamesMap(newCustomerNamesMap);
+      }
+
+      setQuotations(loadedQuotations);
     } catch (error) {
       console.error(' Error loading quotations:', error);
       message.error('Không thể tải danh sách báo giá');
@@ -270,10 +389,11 @@ export const QuotationManagement: React.FC = () => {
   const calculateStats = (data: Quotation[]) => {
     const newStats = {
       total: data.length,
-      draft: data.filter(q => q.status === 'draft').length,
-      sent: data.filter(q => q.status === 'sent' || q.status === 'valid').length,
-      accepted: data.filter(q => q.status === 'accepted').length,
-      rejected: data.filter(q => q.status === 'rejected' || q.status === 'cancelled').length,
+      valid: data.filter(q => q.status === 'valid' || !q.status).length,
+      expired: data.filter(q => q.status === 'expired').length,
+      canceled: data.filter(q => q.status === 'canceled' || q.status === 'cancelled').length,
+      invalid: data.filter(q => q.status === 'invalid').length,
+      used: data.filter(q => q.status === 'used').length,
       converted: data.filter(q => q.status === 'converted').length
     };
     setStats(newStats);
@@ -322,40 +442,94 @@ export const QuotationManagement: React.FC = () => {
       
       // Enrich with catalog prices if missing
       const enrichedData = { ...detailData };
+      console.log('📦 Raw quotation data from API:', JSON.stringify(detailData, null, 2));
+      
       if (enrichedData.items) {
+        console.log('📦 Raw items:', enrichedData.items);
+        enrichedData.items.forEach((item, itemIndex) => {
+          console.log(`📦 Item ${itemIndex}:`, {
+            vehicle: item.vehicle_name,
+            accessories: item.accessories,
+            options: item.options
+          });
+        });
+        
         enrichedData.items = enrichedData.items.map(item => {
           const enrichedItem = { ...item };
           
           // Enrich accessories with catalog prices
           if (enrichedItem.accessories && enrichedItem.accessories.length > 0) {
+            console.log('🔍 Processing accessories for item:', enrichedItem.vehicle_name, 'Accessories:', enrichedItem.accessories);
             enrichedItem.accessories = enrichedItem.accessories.map(acc => {
               const accObj = acc as Record<string, unknown>;
+              // Preserve quantity - check explicitly for undefined/null, not just falsy
+              // quantity can be 0 (though unlikely), so we need to check for undefined/null specifically
+              const rawQuantity = acc.quantity;
+              const accQuantity = (rawQuantity !== undefined && rawQuantity !== null && rawQuantity > 0) ? rawQuantity : 1;
+              
+              console.log('🔍 Accessory before enrich:', { 
+                accessory_id: acc.accessory_id, 
+                name: acc.name, 
+                rawQuantity: rawQuantity,
+                processedQuantity: accQuantity,
+                price: accObj.price,
+                unit_price: accObj.unit_price,
+                fullAccessory: acc
+              });
+              
               // If no price, try to find in catalog
               if (!accObj.price && !accObj.unit_price && acc.accessory_id) {
                 const catalogAcc = accessoriesCatalog.find(a => a._id === acc.accessory_id);
                 if (catalogAcc?.price) {
-                  console.log('💰 Found accessory price from catalog:', acc.accessory_id, catalogAcc.price);
-                  return { ...acc, unit_price: catalogAcc.price, price: catalogAcc.price };
+                  console.log('💰 Found accessory price from catalog:', acc.accessory_id, catalogAcc.price, 'Quantity:', accQuantity);
+                  return { 
+                    ...acc, 
+                    unit_price: catalogAcc.price, 
+                    price: catalogAcc.price, 
+                    quantity: accQuantity 
+                  };
                 }
               }
-              return acc;
+              // Ensure quantity is preserved - always return with quantity
+              const enrichedAcc = { ...acc, quantity: accQuantity };
+              console.log('✅ Accessory after enrich:', enrichedAcc);
+              return enrichedAcc;
             });
+            console.log('✅ Accessories after enrich:', enrichedItem.accessories);
           }
           
           // Enrich options with catalog prices
           if (enrichedItem.options && enrichedItem.options.length > 0) {
+            console.log('🔍 Processing options for item:', enrichedItem.vehicle_name, 'Options:', enrichedItem.options);
             enrichedItem.options = enrichedItem.options.map(opt => {
               const optObj = opt as Record<string, unknown>;
+              // Preserve quantity - check explicitly for undefined/null, not just falsy
+              const rawQuantity = opt.quantity;
+              const optQuantity = (rawQuantity !== undefined && rawQuantity !== null && rawQuantity > 0) ? rawQuantity : 1;
+              
+              console.log('🔍 Option before enrich:', { 
+                option_id: opt.option_id, 
+                name: opt.name, 
+                rawQuantity: rawQuantity,
+                processedQuantity: optQuantity,
+                price: optObj.price,
+                fullOption: opt
+              });
+              
               // If no price, try to find in catalog
               if (!optObj.price && opt.option_id) {
                 const catalogOpt = optionsCatalog.find(o => o._id === opt.option_id);
                 if (catalogOpt?.price) {
-                  console.log('💰 Found option price from catalog:', opt.option_id, catalogOpt.price);
-                  return { ...opt, price: catalogOpt.price };
+                  console.log('💰 Found option price from catalog:', opt.option_id, catalogOpt.price, 'Quantity:', optQuantity);
+                  return { ...opt, price: catalogOpt.price, quantity: optQuantity };
                 }
               }
-              return opt;
+              // Ensure quantity is set even if price exists - always return with quantity
+              const enrichedOpt = { ...opt, quantity: optQuantity };
+              console.log('✅ Option after enrich:', enrichedOpt);
+              return enrichedOpt;
             });
+            console.log('✅ Options after enrich:', enrichedItem.options);
           }
           
           return enrichedItem;
@@ -393,14 +567,87 @@ export const QuotationManagement: React.FC = () => {
         }
       }
       
+      // Fetch customer info if customer_id is a string ID
+      let customerData = null;
+      if (enrichedData.customer_id) {
+        if (typeof enrichedData.customer_id === 'object' && enrichedData.customer_id !== null) {
+          // Already populated
+          customerData = {
+            full_name: enrichedData.customer_id.full_name,
+            email: enrichedData.customer_id.email,
+            phone: enrichedData.customer_id.phone,
+            address: enrichedData.customer_id.address
+          };
+          console.log('✅ Customer info from populated data:', customerData);
+        } else if (typeof enrichedData.customer_id === 'string') {
+          // Need to fetch
+          try {
+            console.log('🔍 Fetching customer info for ID:', enrichedData.customer_id);
+            const customer = await customerService.getCustomerById(enrichedData.customer_id);
+            customerData = {
+              full_name: customer.name || '',
+              email: customer.email || '',
+              phone: customer.phone || '',
+              address: customer.address || ''
+            };
+            console.log('✅ Customer info fetched:', customerData);
+          } catch (error) {
+            console.error('❌ Error fetching customer info:', error);
+          }
+        }
+      }
+      
+      // Fetch dealership info if dealership_id is a string ID
+      let dealershipData = null;
+      if (enrichedData.dealership_id) {
+        if (typeof enrichedData.dealership_id === 'object' && enrichedData.dealership_id !== null) {
+          // Already populated
+          dealershipData = {
+            company_name: enrichedData.dealership_id.company_name || '',
+            code: enrichedData.dealership_id.code,
+            address: ''
+          };
+          console.log('✅ Dealership info from populated data:', dealershipData);
+        } else if (typeof enrichedData.dealership_id === 'string') {
+          // Need to fetch
+          try {
+            console.log('🔍 Fetching dealership info for ID:', enrichedData.dealership_id);
+            const dealerResponse = await authService.getDealerById(enrichedData.dealership_id);
+            if (dealerResponse.success && dealerResponse.data) {
+              const dealer = dealerResponse.data as Record<string, unknown>;
+              dealershipData = {
+                company_name: (dealer.company_name as string) || (dealer.name as string) || '',
+                code: dealer.code as string,
+                address: (dealer.address as string) || ''
+              };
+              console.log('✅ Dealership info fetched:', dealershipData);
+            }
+          } catch (error) {
+            console.error('❌ Error fetching dealership info:', error);
+          }
+        }
+      }
+      
       console.log('📋 Setting quotation detail (enriched):', enrichedData);
-      console.log('📊 Items with prices:', enrichedData.items?.map(item => ({
+      console.log('📊 Items with prices and quantities:', enrichedData.items?.map(item => ({
         vehicle: item.vehicle_name,
-        accessories: item.accessories?.map(acc => ({ name: acc.name, price: (acc as Record<string, unknown>).price || (acc as Record<string, unknown>).unit_price })),
-        options: item.options?.map(opt => ({ name: opt.name, price: (opt as Record<string, unknown>).price }))
+        accessories: item.accessories?.map(acc => ({ 
+          name: acc.name, 
+          accessory_id: acc.accessory_id,
+          quantity: acc.quantity || 1,
+          price: (acc as Record<string, unknown>).price || (acc as Record<string, unknown>).unit_price 
+        })),
+        options: item.options?.map(opt => ({ 
+          name: opt.name, 
+          option_id: opt.option_id,
+          quantity: opt.quantity || 1,
+          price: (opt as Record<string, unknown>).price 
+        }))
       })));
       setSelectedQuotation(enrichedData);
       setCreatorInfo(creatorData);
+      setCustomerInfo(customerData);
+      setDealershipInfo(dealershipData);
       setShowDetailModal(true);
     } catch (error) {
       console.error('❌ Error fetching quotation detail:', error);
@@ -408,6 +655,8 @@ export const QuotationManagement: React.FC = () => {
       // Fallback: show current data
       setSelectedQuotation(quotation);
       setCreatorInfo(null);
+      setCustomerInfo(null);
+      setDealershipInfo(null);
       setShowDetailModal(true);
     } finally {
       setLoading(false);
@@ -666,30 +915,28 @@ export const QuotationManagement: React.FC = () => {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: 'default',
-      sent: 'blue',
-      accepted: 'green',
-      rejected: 'red',
-      expired: 'orange',
-      converted: 'purple',
-      valid: 'cyan',
-      cancelled: 'volcano'
+  const getStatusColor = (status: string): 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info' => {
+    const colors: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info'> = {
+      valid: 'success',
+      expired: 'warning',
+      canceled: 'error',
+      cancelled: 'error',
+      invalid: 'default',
+      used: 'info',
+      converted: 'info'
     };
     return colors[status] || 'default';
   };
 
   const getStatusText = (status: string) => {
     const texts: Record<string, string> = {
-      draft: 'Nháp',
-      sent: 'Đã gửi',
-      accepted: 'Đã chấp nhận',
-      rejected: 'Từ chối',
+      valid: 'Còn hiệu lực',
       expired: 'Hết hạn',
-      converted: 'Đã chuyển đơn',
-      valid: 'Hợp lệ',
-      cancelled: 'Đã hủy'
+      canceled: 'Đã hủy',
+      cancelled: 'Đã hủy',
+      invalid: 'Không hợp lệ',
+      used: 'Đã sử dụng',
+      converted: 'Đã chuyển đổi'
     };
     return texts[status] || status;
   };
@@ -910,7 +1157,7 @@ export const QuotationManagement: React.FC = () => {
             <Button
               type="primary"
               icon={<EyeOutlined />}
-              size="middle"
+              size="medium"
               onClick={() => handleViewDetail(record)}
               style={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -933,7 +1180,7 @@ export const QuotationManagement: React.FC = () => {
               <Button
                 danger
                 icon={<DeleteOutlined />}
-                size="middle"
+                size="medium"
                 onClick={() => handleDeleteQuotation(record)}
                 disabled={!canCancel}
                 style={{
@@ -954,230 +1201,211 @@ export const QuotationManagement: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-6">
-      <div className="w-full mx-auto">
-            {/* Header Section with Gradient */}
-            <div className="mb-8">
-              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h1 className="text-4xl font-bold text-white mb-2">
-                      Quản lý báo giá
-                    </h1>
-                    <p className="text-blue-100 text-lg">
-                      Quản lý và theo dõi báo giá cho khách hàng
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
+      <Card>
+        <CardContent>
+          <Box sx={{ mb: 3 }}>
+            <Box display="flex" alignItems="center" gap={1} mb={3}>
+              <FileTextIcon color="primary" sx={{ fontSize: 32 }} />
+              <Typography variant="h4" component="h1" fontWeight="bold">
+                Quản lý báo giá
+              </Typography>
+            </Box>
 
-            {/* Stats Cards */}
-            <Row gutter={[16, 16]} className="mb-6">
-              <Col xs={24} sm={12} lg={4}>
-                <Card 
-                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white'
-                  }}
-                  bodyStyle={{ padding: '20px' }}
-                >
-                  <Statistic
-                    title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Tổng báo giá</span>}
-                    value={stats.total}
-                    prefix={<FileTextOutlined style={{ color: 'white', fontSize: 18 }} />}
-                    valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={4}>
-                <Card 
-                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #13c2c2 0%, #0891b2 100%)',
-                    color: 'white'
-                  }}
-                  bodyStyle={{ padding: '20px' }}
-                >
-                  <Statistic
-                    title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Đã gửi</span>}
-                    value={stats.sent}
-                    prefix={<ClockCircleOutlined style={{ color: 'white', fontSize: 18 }} />}
-                    valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={4}>
-                <Card 
-                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
-                    color: 'white'
-                  }}
-                  bodyStyle={{ padding: '20px' }}
-                >
-                  <Statistic
-                    title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Đã chấp nhận</span>}
-                    value={stats.accepted}
-                    prefix={<CheckCircleOutlined style={{ color: 'white', fontSize: 18 }} />}
-                    valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={4}>
-                <Card 
-                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%)',
-                    color: 'white'
-                  }}
-                  bodyStyle={{ padding: '20px' }}
-                >
-                  <Statistic
-                    title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Từ chối</span>}
-                    value={stats.rejected}
-                    prefix={<CloseCircleOutlined style={{ color: 'white', fontSize: 18 }} />}
-                    valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={4}>
-                <Card 
-                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)',
-                    color: 'white'
-                  }}
-                  bodyStyle={{ padding: '20px' }}
-                >
-                  <Statistic
-                    title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Đã chuyển đơn</span>}
-                    value={stats.converted}
-                    prefix={<DollarOutlined style={{ color: 'white', fontSize: 18 }} />}
-                    valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={4}>
-                <Card 
-                  className="shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #8c8c8c 0%, #595959 100%)',
-                    color: 'white'
-                  }}
-                  bodyStyle={{ padding: '20px' }}
-                >
-                  <Statistic
-                    title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Nháp</span>}
-                    value={stats.draft}
-                    prefix={<FileTextOutlined style={{ color: 'white', fontSize: 18 }} />}
-                    valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
-                  />
-                </Card>
-              </Col>
-            </Row>
 
-            {/* Search Bar */}
-            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-              <div className="flex flex-col gap-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <SearchOutlined className="text-blue-600" />
-                  Tìm kiếm báo giá
-                </h3>
-                <div className="flex gap-3 flex-col md:flex-row">
-                  <Input
-                    placeholder="Nhập mã báo giá hoặc ghi chú để tìm kiếm..."
-                    prefix={<SearchOutlined style={{ color: '#667eea' }} />}
-                    size="large"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    onPressEnter={handleSearch}
-                    allowClear
-                    onClear={handleSearchClear}
-                    className="flex-1"
-                    style={{ 
-                      borderRadius: 10,
-                      border: '2px solid #e5e7eb'
-                    }}
-                  />
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<SearchOutlined />}
-                    onClick={handleSearch}
-                    loading={loading}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
-                    style={{ 
-                      minWidth: 120,
-                      height: 44,
-                      borderRadius: 10
-                    }}
-                  >
+            {/* Filter Section */}
+            <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} alignItems="center" mb={3}>
+              {/* Search Box */}
+              <Box flex={1} minWidth={{ xs: 200, md: 300 }}>
+                <div className="relative">
+                  <label htmlFor="search-input" className="block text-sm font-semibold text-gray-700 mb-2">
                     Tìm kiếm
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div>
-                    <h2 className="text-2xl font-bold text-white mb-1">
-                      Danh sách báo giá
-                    </h2>
-                    <p className="text-blue-100">
-                      {totalItems > 0 ? `Tổng cộng ${totalItems} báo giá` : 'Không có dữ liệu'}
-                    </p>
-                  </div>
-                  {searchQuery && (
-                    <div className="bg-white bg-opacity-20 backdrop-blur-sm px-4 py-2 rounded-full border border-white border-opacity-30">
-                      <span className="text-white text-sm font-medium">
-                         "{searchQuery}"
-                      </span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="search-input"
+                      type="text"
+                      placeholder="Tìm kiếm theo mã, tên khách hàng..."
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium transition-all duration-200 hover:border-gray-300"
+                    />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <SearchIcon className="w-5 h-5 text-gray-400" />
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-              <Spin spinning={loading}>
-                <div style={{ padding: '0', overflowX: 'auto' }}>
-                  <Table
-                    columns={columns}
-                    dataSource={quotations}
-                    rowKey="_id"
-                    pagination={{
-                      current: currentPage,
-                      pageSize: pageSize,
-                      total: totalItems,
-                      showSizeChanger: true,
-                      showQuickJumper: true,
-                      showTotal: (total, range) => (
-                        <Text style={{ fontSize: 13, fontWeight: 500, color: '#667eea' }}>
-                          Hiển thị {range[0]}-{range[1]} trong tổng số {total} báo giá
-                        </Text>
-                      ),
-                      pageSizeOptions: ['10', '20', '50', '100'],
-                      style: { padding: '12px 20px' },
-                      responsive: true
-                    }}
-                    onChange={handleTableChange}
-                    scroll={{ x: 1200 }}
-                    className="quotation-table"
-                    style={{
-                      borderRadius: 0
-                    }}
-                    rowClassName={(_record, index) => 
-                      index % 2 === 0 ? '' : 'bg-[#fafaff]'
-                    }
-                  />
-                </div>
-              </Spin>
-            </div>
-          </div>
+              </Box>
+              
+              {/* Action Buttons */}
+              <Box display="flex" gap={2} className="mt-6">
+                <button
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <SearchIcon className="w-5 h-5" />
+                  Tìm kiếm
+                </button>
+              </Box>
+            </Box>
 
-      {/* Detail Modal */}
+            {loading ? (
+              <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                <CircularProgress />
+              </Box>
+            ) : (
+              <>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: 'grey.100' } }}>
+                        <TableCell>Mã báo giá</TableCell>
+                        <TableCell>Khách hàng</TableCell>
+                        <TableCell>Xe</TableCell>
+                        <TableCell align="right">Tổng tiền</TableCell>
+                        <TableCell>Ngày tạo</TableCell>
+                        <TableCell>Trạng thái</TableCell>
+                        <TableCell align="center">Hành động</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {quotations.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center">
+                            <Typography color="text.secondary" py={2}>
+                              Không tìm thấy báo giá nào
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        quotations.map((quote) => {
+                          const currentStatus = quote.status || 'valid';
+                          const isAlreadyCanceled = currentStatus === 'cancelled' || currentStatus === 'canceled';
+                          const validUntil = quote.valid_until || quote.endDate;
+                          const isExpired = validUntil && new Date(validUntil) < new Date();
+                          const canCancel = !isAlreadyCanceled && !isExpired;
+                          
+                          // Get customer name
+                          let customerName = 'N/A';
+                          if (quote.customer_name) {
+                            customerName = quote.customer_name;
+                          } else if (typeof quote.customer_id === 'object' && quote.customer_id) {
+                            customerName = quote.customer_id.full_name || 'N/A';
+                          } else if (typeof quote.customer_id === 'string') {
+                            // Use cached customer name
+                            customerName = customerNamesMap[quote.customer_id] || 'Đang tải...';
+                          }
+                          
+                          // Get total amount
+                          let totalAmount = quote.final_amount || quote.total_amount || 0;
+                          if (!totalAmount && quote.items && quote.items.length > 0) {
+                            totalAmount = quote.items.reduce((sum, item) => sum + (item.final_amount || item.vehicle_price * item.quantity), 0);
+                          }
+                          
+                          // Get vehicles
+                          const vehicleNames = quote.items?.slice(0, 2).map(item => item.vehicle_name || 'N/A').join(', ') || 'N/A';
+                          
+                          return (
+                            <TableRow key={quote._id} hover>
+                              <TableCell>
+                                <Typography variant="body2" sx={{ fontFamily: 'monospace' }} color="primary">
+                                  {quote.code || quote._id}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{customerName}</Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{vehicleNames}</Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography variant="body2" fontWeight="medium">
+                                  {formatPrice(totalAmount)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2">
+                                  {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={getStatusText(currentStatus)} 
+                                  color={getStatusColor(currentStatus)}
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                <Box display="flex" gap={1} justifyContent="center">
+                                  <Button 
+                                    variant="contained"
+                                    size="small"
+                                    startIcon={<VisibilityIcon sx={{ fontSize: 16 }} />}
+                                    onClick={() => handleViewDetail(quote)}
+                                    sx={{ 
+                                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                      '&:hover': {
+                                        background: 'linear-gradient(135deg, #5568d3 0%, #6a3f91 100%)',
+                                      }
+                                    }}
+                                  >
+                                    Xem
+                                  </Button>
+                                  <Tooltip title={isAlreadyCanceled ? 'Báo giá đã bị hủy' : isExpired ? 'Báo giá đã hết hạn' : 'Hủy báo giá'}>
+                                    <span>
+                                      <IconButton
+                                        color="error"
+                                        size="small"
+                                        onClick={() => handleDeleteQuotation(quote)}
+                                        disabled={!canCancel}
+                                      >
+                                        <DeleteIcon />
+                                      </IconButton>
+                                    </span>
+                                  </Tooltip>
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {/* Pagination */}
+                {totalItems > 0 && (
+                  <Box display="flex" justifyContent="center" mt={3} mb={1}>
+                    <Pagination
+                      count={Math.ceil(totalItems / pageSize)}
+                      page={currentPage}
+                      onChange={(_event, page) => {
+                        setCurrentPage(page);
+                        handleTableChange({ current: page, pageSize });
+                      }}
+                      color="primary"
+                      showFirstButton
+                      showLastButton
+                    />
+                  </Box>
+                )}
+
+                {totalItems > 0 && (
+                  <Box mt={1}>
+                    <Typography variant="body2" color="text.secondary" textAlign="center">
+                      Hiển thị {quotations.length} trong tổng số {totalItems} báo giá
+                    </Typography>
+                  </Box>
+                )}
+              </>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Detail Modal - Keep using Ant Design Modal for now */}
       <Modal
         title={
           <div style={{ 
@@ -1214,9 +1442,33 @@ export const QuotationManagement: React.FC = () => {
         onCancel={() => {
           setShowDetailModal(false);
           setCreatorInfo(null);
+          setCustomerInfo(null);
+          setDealershipInfo(null);
         }}
         width={900}
         footer={[
+          <Button 
+            key="convert"
+            variant="contained"
+            startIcon={<ShoppingCartIcon />}
+            onClick={handleNavigateToConverter}
+            disabled={selectedQuotation?.status !== 'valid'}
+            style={{
+              borderRadius: 8,
+              height: 40,
+              minWidth: 180,
+              fontSize: 14,
+              fontWeight: 600,
+              marginRight: 8,
+              background: selectedQuotation?.status === 'valid' 
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : '#d9d9d9',
+              color: 'white',
+              border: 'none'
+            }}
+          >
+            Đến trang chuyển đổi
+          </Button>,
           <Button 
             key="close" 
             onClick={() => setShowDetailModal(false)}
@@ -1226,8 +1478,8 @@ export const QuotationManagement: React.FC = () => {
               minWidth: 120,
               fontSize: 14,
               fontWeight: 500,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
+              background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+              color: '#1a1a2e',
               border: 'none'
             }}
           >
@@ -1270,34 +1522,35 @@ export const QuotationManagement: React.FC = () => {
               }}
               labelStyle={{
                 background: 'linear-gradient(135deg, #fafbfc 0%, #f6f8fb 100%)',
-                fontWeight: 600,
+                fontWeight: 700,
                 color: '#1a1a2e',
-                fontSize: 13,
-                padding: '10px 14px'
+                fontSize: 14,
+                padding: '12px 16px'
               }}
               contentStyle={{
                 background: 'white',
-                fontSize: 13,
-                padding: '10px 14px',
-                color: '#2c3e50'
+                fontSize: 14,
+                padding: '12px 16px',
+                color: '#1a1a2e',
+                fontWeight: 500
               }}
             >
               <Descriptions.Item label="Mã báo giá" span={2}>
-                <Text strong style={{ fontSize: 14 }}>
+                <Text strong style={{ fontSize: 15, fontWeight: 600, color: '#1a1a2e' }}>
                   {selectedQuotation.code || selectedQuotation.quote_number || selectedQuotation._id}
                 </Text>
               </Descriptions.Item>
               
               <Descriptions.Item label="Trạng thái">
-                <Tag color={getStatusColor(selectedQuotation.status || 'valid')} style={{ fontSize: 13 }}>
+                <Tag color={getStatusColor(selectedQuotation.status || 'valid')} style={{ fontSize: 14, fontWeight: 600, padding: '4px 12px' }}>
                   {getStatusText(selectedQuotation.status || 'valid')}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Hoạt động">
+              {/* <Descriptions.Item label="Hoạt động">
                 <Tag color={selectedQuotation.isActive !== false ? 'success' : 'default'}>
                   {selectedQuotation.isActive !== false ? 'Active' : 'Inactive'}
                 </Tag>
-              </Descriptions.Item>
+              </Descriptions.Item> */}
 
               {(() => {
                 // Check if we have any creator info to display
@@ -1322,15 +1575,15 @@ export const QuotationManagement: React.FC = () => {
                         if (hasCreatorObject && createdByObj) {
                           return (
                             <>
-                              <Text strong>{createdByObj.full_name}</Text>
+                              <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{createdByObj.full_name}</Text>
                               {createdByObj.email && (
                                 <>
                                   <br />
-                                  <Text type="secondary">{createdByObj.email}</Text>
+                                  <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{createdByObj.email}</Text>
                                 </>
                               )}
                               {createdByObj.role && (
-                                <Tag color="blue" style={{ marginLeft: 8 }}>{createdByObj.role}</Tag>
+                                <Tag color="blue" style={{ marginLeft: 8, fontWeight: 600 }}>{createdByObj.role}</Tag>
                               )}
                             </>
                           );
@@ -1340,15 +1593,15 @@ export const QuotationManagement: React.FC = () => {
                         if (hasCreatorInfo && creatorInfo) {
                           return (
                             <>
-                              <Text strong>{creatorInfo.full_name}</Text>
+                              <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{creatorInfo.full_name}</Text>
                               {creatorInfo.email && (
                                 <>
                                   <br />
-                                  <Text type="secondary">{creatorInfo.email}</Text>
+                                  <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{creatorInfo.email}</Text>
                                 </>
                               )}
                               {creatorInfo.role && (
-                                <Tag color="blue" style={{ marginLeft: 8 }}>{creatorInfo.role}</Tag>
+                                <Tag color="blue" style={{ marginLeft: 8, fontWeight: 600 }}>{creatorInfo.role}</Tag>
                               )}
                             </>
                           );
@@ -1356,12 +1609,12 @@ export const QuotationManagement: React.FC = () => {
                         
                         // Check created_by_name
                         if (hasCreatorName) {
-                          return <Text strong>{selectedQuotation.created_by_name}</Text>;
+                          return <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.created_by_name}</Text>;
                         }
                         
                         // Check created_by as string ID
                         if (hasCreatorId && typeof selectedQuotation.created_by === 'string') {
-                          return <Text type="secondary">ID: {selectedQuotation.created_by}</Text>;
+                          return <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>ID: {selectedQuotation.created_by}</Text>;
                         }
                         
                         return null;
@@ -1383,55 +1636,116 @@ export const QuotationManagement: React.FC = () => {
 
               <Descriptions.Item label="Khách hàng" span={2}>
                 <div>
-                  {typeof selectedQuotation.customer_id === 'object' && selectedQuotation.customer_id ? (
-                    <>
-                      <Text strong>{selectedQuotation.customer_id.full_name || 'N/A'}</Text>
-                      <br />
-                      <Text type="secondary"> {selectedQuotation.customer_id.email || 'N/A'}</Text>
-                      <br />
-                      <Text type="secondary"> {selectedQuotation.customer_id.phone || 'N/A'}</Text>
-                      {selectedQuotation.customer_id.address && (
+                  {(() => {
+                    // Priority 1: Use populated customer_id object
+                    if (typeof selectedQuotation.customer_id === 'object' && selectedQuotation.customer_id) {
+                      return (
                         <>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.customer_id.full_name || 'N/A'}</Text>
                           <br />
-                          <Text type="secondary"> {selectedQuotation.customer_id.address}</Text>
+                          <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}> {selectedQuotation.customer_id.email || 'N/A'}</Text>
+                          <br />
+                          <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}> {selectedQuotation.customer_id.phone || 'N/A'}</Text>
+                          {selectedQuotation.customer_id.address && (
+                            <>
+                              <br />
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}> {selectedQuotation.customer_id.address}</Text>
+                            </>
+                          )}
                         </>
-                      )}
-                    </>
-                  ) : (
-                    <Text>{selectedQuotation.customer_name || `ID: ${selectedQuotation.customer_id}`}</Text>
-                  )}
+                      );
+                    }
+                    
+                    // Priority 2: Use fetched customerInfo
+                    if (customerInfo) {
+                      return (
+                        <>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{customerInfo.full_name || 'N/A'}</Text>
+                          {customerInfo.email && (
+                            <>
+                              <br />
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{customerInfo.email}</Text>
+                            </>
+                          )}
+                          {customerInfo.phone && (
+                            <>
+                              <br />
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{customerInfo.phone}</Text>
+                            </>
+                          )}
+                          {customerInfo.address && (
+                            <>
+                              <br />
+                              <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>{customerInfo.address}</Text>
+                            </>
+                          )}
+                        </>
+                      );
+                    }
+                    
+                    // Priority 3: Use customer_name if available
+                    if (selectedQuotation.customer_name) {
+                      return <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.customer_name}</Text>;
+                    }
+                    
+                    // Fallback: Show ID (should not happen if fetch was successful)
+                    return <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>Đang tải thông tin khách hàng...</Text>;
+                  })()}
                 </div>
               </Descriptions.Item>
 
               <Descriptions.Item label="Đại lý" span={2}>
                 <div>
-                  {typeof selectedQuotation.dealership_id === 'object' && selectedQuotation.dealership_id ? (
-                    <>
-                      <Text strong>{selectedQuotation.dealership_id.company_name || 'N/A'}</Text>
-                      {selectedQuotation.dealership_id.code && (
-                        <Tag color="purple" style={{ marginLeft: 8 }}>{selectedQuotation.dealership_id.code}</Tag>
-                      )}
-                    </>
-                  ) : (
-                    <Text>{selectedQuotation.dealership_name || selectedQuotation.dealership_id || 'N/A'}</Text>
-                  )}
+                  {(() => {
+                    // Priority 1: Use populated dealership_id object
+                    if (typeof selectedQuotation.dealership_id === 'object' && selectedQuotation.dealership_id) {
+                      return (
+                        <>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.dealership_id.company_name || 'N/A'}</Text>
+                          {selectedQuotation.dealership_id.code && (
+                            <Tag color="purple" style={{ marginLeft: 8, fontWeight: 600 }}>{selectedQuotation.dealership_id.code}</Tag>
+                          )}
+                        </>
+                      );
+                    }
+                    
+                    // Priority 2: Use fetched dealershipInfo
+                    if (dealershipInfo) {
+                      return (
+                        <>
+                          <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{dealershipInfo.company_name || 'N/A'}</Text>
+                          {dealershipInfo.code && (
+                            <Tag color="purple" style={{ marginLeft: 8, fontWeight: 600 }}>{dealershipInfo.code}</Tag>
+                          )}
+                        </>
+                      );
+                    }
+                    
+                    // Priority 3: Use dealership_name if available
+                    if (selectedQuotation.dealership_name) {
+                      return <Text strong style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{selectedQuotation.dealership_name}</Text>;
+                    }
+                    
+                    // Fallback: Show loading message (should not happen if fetch was successful)
+                    return <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>Đang tải thông tin đại lý...</Text>;
+                  })()}
                 </div>
               </Descriptions.Item>
 
-              {selectedQuotation.createdAt && (
+              {/* {selectedQuotation.createdAt && (
                 <Descriptions.Item label="Ngày tạo">
                   {formatDate(selectedQuotation.createdAt)}
                 </Descriptions.Item>
-              )}
-              {selectedQuotation.updatedAt && (
+              )} */}
+              {/* {selectedQuotation.updatedAt && (
                 <Descriptions.Item label="Ngày cập nhật">
                   {formatDate(selectedQuotation.updatedAt)}
                 </Descriptions.Item>
-              )}
+              )} */}
 
               {selectedQuotation.startDate && (
                 <Descriptions.Item label=" Ngày bắt đầu">
-                  <Text strong style={{ color: '#1890ff' }}>
+                  <Text strong style={{ color: '#1890ff', fontSize: 14, fontWeight: 600 }}>
                     {formatDate(selectedQuotation.startDate)}
                   </Text>
                 </Descriptions.Item>
@@ -1439,33 +1753,39 @@ export const QuotationManagement: React.FC = () => {
               {selectedQuotation.endDate && (
                 <Descriptions.Item label=" Ngày kết thúc">
                   <Text strong style={{ 
-                    color: new Date(selectedQuotation.endDate) < new Date() ? '#ff4d4f' : '#52c41a' 
+                    color: new Date(selectedQuotation.endDate) < new Date() ? '#ff4d4f' : '#52c41a',
+                    fontSize: 14,
+                    fontWeight: 600
                   }}>
                     {formatDate(selectedQuotation.endDate)}
                   </Text>
                   {new Date(selectedQuotation.endDate) < new Date() && (
-                    <Tag color="red" style={{ marginLeft: 8 }}>Đã hết hạn</Tag>
+                    <Tag color="red" style={{ marginLeft: 8, fontWeight: 600 }}>Đã hết hạn</Tag>
                   )}
                 </Descriptions.Item>
               )}
 
               {selectedQuotation.valid_until && (
                 <Descriptions.Item label="Hiệu lực đến">
-                  <Text strong style={{ color: new Date(selectedQuotation.valid_until) < new Date() ? '#ff4d4f' : '#52c41a' }}>
+                  <Text strong style={{ 
+                    color: new Date(selectedQuotation.valid_until) < new Date() ? '#ff4d4f' : '#52c41a',
+                    fontSize: 14,
+                    fontWeight: 600
+                  }}>
                     {formatDate(selectedQuotation.valid_until)}
                   </Text>
                 </Descriptions.Item>
               )}
 
-              <Descriptions.Item label="ID">
+              {/* <Descriptions.Item label="ID">
                 <Text code style={{ fontSize: 11 }}>{selectedQuotation._id}</Text>
-              </Descriptions.Item>
+              </Descriptions.Item> */}
               
-              {selectedQuotation.__v !== undefined && (
+              {/* {selectedQuotation.__v !== undefined && (
                 <Descriptions.Item label="Version">
                   <Tag color="default">v{selectedQuotation.__v}</Tag>
                 </Descriptions.Item>
-              )}
+              )} */}
 
               {selectedQuotation.sent_at && (
                 <>
@@ -1500,27 +1820,26 @@ export const QuotationManagement: React.FC = () => {
               marginTop: 24,
               marginBottom: 16,
               padding: '14px 18px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)'
+              background: '#fafafa',
+              borderRadius: 8,
+              borderLeft: '4px solid #1890ff'
             }}>
-              <Title level={5} style={{ margin: 0, color: 'white', fontSize: 16, fontWeight: 600 }}>
-                CHI TIẾT BÁO GIÁ
+              <Title level={5} style={{ margin: 0, color: '#262626', fontSize: 16, fontWeight: 600 }}>
+                Chi tiết báo giá
               </Title>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                {selectedQuotation.code}
+              </Text>
             </div>
 
             {/* Table Section */}
             <div style={{ 
               background: 'white', 
-              borderRadius: 12, 
+              borderRadius: 8, 
               overflow: 'hidden',
-              border: '1px solid #e8eaed',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              border: '1px solid #d9d9d9'
             }}>
-              <Table
+              <AntTable
                 dataSource={(() => {
                   const tableData: Array<{
                     key: string;
@@ -1564,12 +1883,20 @@ export const QuotationManagement: React.FC = () => {
 
                     // Add accessories
                     if (item.accessories && item.accessories.length > 0) {
-                      item.accessories.forEach((acc) => {
+                      console.log('🔍 Processing accessories for table - Item:', item.vehicle_name, 'Accessories count:', item.accessories.length);
+                      item.accessories.forEach((acc, accIndex) => {
                         const accObj = acc as Record<string, unknown>;
                         const accPrice = getPrice(accObj);
-                        const accQuantity = acc.quantity || 1;
+                        const accQuantity = (acc.quantity !== undefined && acc.quantity !== null) ? acc.quantity : 1;
                         
-                        console.log('🔍 Accessory data:', acc, 'Price:', accPrice);
+                        console.log(`🔍 Accessory ${accIndex}:`, {
+                          accessory_id: acc.accessory_id,
+                          name: acc.name,
+                          quantity: acc.quantity,
+                          rawQuantity: accQuantity,
+                          price: accPrice,
+                          calculatedTotal: accPrice * accQuantity
+                        });
                         
                         tableData.push({
                           key: `accessory-${stt}`,
@@ -1585,20 +1912,29 @@ export const QuotationManagement: React.FC = () => {
 
                     // Add options
                     if (item.options && item.options.length > 0) {
-                      item.options.forEach((opt) => {
+                      console.log('🔍 Processing options for table - Item:', item.vehicle_name, 'Options count:', item.options.length);
+                      item.options.forEach((opt, optIndex) => {
                         const optObj = opt as Record<string, unknown>;
                         const optPrice = getPrice(optObj);
+                        const optQuantity = (opt.quantity !== undefined && opt.quantity !== null) ? opt.quantity : 1;
                         
-                        console.log('🔍 Option data:', opt, 'Price:', optPrice);
+                        console.log(`🔍 Option ${optIndex}:`, {
+                          option_id: opt.option_id,
+                          name: opt.name,
+                          quantity: opt.quantity,
+                          rawQuantity: optQuantity,
+                          price: optPrice,
+                          calculatedTotal: optPrice * optQuantity
+                        });
                         
                         tableData.push({
                           key: `option-${stt}`,
                           stt: stt++,
                           tenHangHoa: opt.name || opt.option_id || 'Tùy chọn',
                           donViTinh: 'Bộ',
-                          soLuong: 1,
+                          soLuong: optQuantity,
                           donGia: optPrice,
-                          thanhTien: optPrice
+                          thanhTien: optPrice * optQuantity
                         });
                       });
                     }
@@ -1609,52 +1945,52 @@ export const QuotationManagement: React.FC = () => {
                 })()}
                 columns={[
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>STT</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>STT</Text>,
                     dataIndex: 'stt',
                     key: 'stt',
                     width: 60,
                     align: 'center' as const,
-                    render: (text: number) => <Text>{text}</Text>
+                    render: (text: number) => <Text style={{ fontSize: 13, color: '#595959' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Tên hàng hóa, dịch vụ</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Tên hàng hóa, dịch vụ</Text>,
                     dataIndex: 'tenHangHoa',
                     key: 'tenHangHoa',
                     width: 300,
-                    render: (text: string) => <Text>{text}</Text>
+                    render: (text: string) => <Text style={{ fontSize: 13, color: '#262626' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Đơn vị tính</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Đơn vị tính</Text>,
                     dataIndex: 'donViTinh',
                     key: 'donViTinh',
-                    width: 120,
-                    align: 'center' as const,
-                    render: (text: string) => <Text>{text}</Text>
-                  },
-                  {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Số lượng</Text>,
-                    dataIndex: 'soLuong',
-                    key: 'soLuong',
                     width: 100,
                     align: 'center' as const,
-                    render: (text: number) => <Text>{text}</Text>
+                    render: (text: string) => <Text style={{ fontSize: 13, color: '#595959' }}>{text}</Text>
                   },
                   {
-                    title: <Text strong style={{ color: '#1a1a2e' }}>Đơn giá</Text>,
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Số lượng</Text>,
+                    dataIndex: 'soLuong',
+                    key: 'soLuong',
+                    width: 80,
+                    align: 'center' as const,
+                    render: (text: number) => <Text style={{ fontSize: 13, color: '#262626' }}>{text}</Text>
+                  },
+                  {
+                    title: <Text strong style={{ color: '#262626', fontSize: 13 }}>Đơn giá</Text>,
                     dataIndex: 'donGia',
                     key: 'donGia',
-                    width: 150,
+                    width: 120,
                     align: 'right' as const,
                     render: (price: number) => (
-                      <Text>{new Intl.NumberFormat('vi-VN').format(price)}</Text>
+                      <Text style={{ fontSize: 13, color: '#595959' }}>{new Intl.NumberFormat('vi-VN').format(price)} ₫</Text>
                     )
                   },
                   {
                     title: (
                       <div>
-                        <Text strong style={{ color: '#1a1a2e' }}>Thành tiền</Text>
+                        <Text strong style={{ color: '#262626', fontSize: 13 }}>Thành tiền</Text>
                         <br />
-                        <Text type="secondary" style={{ fontSize: 11, fontWeight: 'normal' }}>
+                        <Text type="secondary" style={{ fontSize: 11, fontWeight: 400 }}>
                           (Thành tiền = Số lượng × Đơn giá)
                         </Text>
                       </div>
@@ -1664,82 +2000,91 @@ export const QuotationManagement: React.FC = () => {
                     width: 150,
                     align: 'right' as const,
                     render: (amount: number) => (
-                      <Text>{new Intl.NumberFormat('vi-VN').format(amount)}</Text>
+                      <Text style={{ fontSize: 13, color: '#262626' }}>{new Intl.NumberFormat('vi-VN').format(amount)} ₫</Text>
                     )
                   }
                 ]}
                 pagination={false}
-                size="middle"
+                size="small"
                 bordered
                 style={{
                   background: 'white'
                 }}
                 components={{
                   header: {
-                    cell: (props: React.ThHTMLAttributes<HTMLTableCellElement> & { align?: string }) => (
-                      <th {...props} style={{
-                        ...props.style,
-                        background: '#e6f7ff',
-                        fontWeight: 600,
-                        padding: '12px 8px',
-                        textAlign: (props.align as 'left' | 'right' | 'center') || 'left'
+                    cell: (props: React.HTMLAttributes<HTMLTableCellElement>) => (
+                      <th {...props} style={{ 
+                        ...props.style, 
+                        backgroundColor: '#fafafa',
+                        borderBottom: '2px solid #d9d9d9',
+                        color: '#262626',
+                        fontWeight: 600
                       }} />
                     )
                   }
                 }}
-                rowClassName={() => 'quotation-detail-row'}
+                rowClassName={() => ''}
               />
 
               {/* Total Row */}
               <div style={{
-                padding: '16px 20px',
+                padding: '12px 16px',
                 background: '#fafafa',
-                borderTop: '2px solid #e8eaed',
+                borderTop: '2px solid #d9d9d9',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: 24
               }}>
-                <div style={{ flex: 1, textAlign: 'right', paddingRight: 20 }}>
-                  <Text strong style={{ fontSize: 15 }}>Tổng cộng:</Text>
-                </div>
-                <div style={{ width: 150, textAlign: 'right' }}>
-                  <Text strong style={{ fontSize: 16, color: '#ff4d4f' }}>
-                    {new Intl.NumberFormat('vi-VN').format(
-                      selectedQuotation.items.reduce((total, item) => {
-                        let itemTotal = (item.vehicle_price || item.unit_price || 0) * item.quantity;
-                        
-                        // Helper to get price from various fields
-                        const getPrice = (obj: Record<string, unknown>): number => {
-                          const price = obj.price || obj.unit_price || obj.amount || obj.value || obj.cost;
-                          if (typeof price === 'number') return price > 0 ? price : 0;
-                          if (typeof price === 'string') {
-                            const parsed = parseFloat(price);
-                            return !isNaN(parsed) && parsed > 0 ? parsed : 0;
+                <Text strong style={{ fontSize: 14, color: '#262626' }}>Tổng cộng tiền thanh toán:</Text>
+                <Text strong style={{ fontSize: 16, color: '#cf1322', minWidth: 150, textAlign: 'right' }}>
+                  {new Intl.NumberFormat('vi-VN').format(
+                      ((): number => {
+                        // Calculate total from items exactly as displayed in table
+                        let total = 0;
+                        selectedQuotation.items.forEach((item) => {
+                          // Vehicle total
+                          const vehiclePrice = item.vehicle_price || item.unit_price || 0;
+                          total += vehiclePrice * item.quantity;
+                          
+                          // Helper to get price from various fields
+                          const getPrice = (obj: Record<string, unknown>): number => {
+                            const price = obj.price || obj.unit_price || obj.amount || obj.value || obj.cost;
+                            if (typeof price === 'number') return price > 0 ? price : 0;
+                            if (typeof price === 'string') {
+                              const parsed = parseFloat(price);
+                              return !isNaN(parsed) && parsed > 0 ? parsed : 0;
+                            }
+                            return 0;
+                          };
+                          
+                          // Add accessories with quantity
+                          if (item.accessories && item.accessories.length > 0) {
+                            item.accessories.forEach(acc => {
+                              const accObj = acc as Record<string, unknown>;
+                              const accPrice = getPrice(accObj);
+                              const accQuantity = (acc.quantity !== undefined && acc.quantity !== null) ? acc.quantity : 1;
+                              console.log('💰 Calculating accessory total:', acc.name, 'Price:', accPrice, 'Quantity:', accQuantity, 'Total:', accPrice * accQuantity);
+                              total += accPrice * accQuantity;
+                            });
                           }
-                          return 0;
-                        };
-                        
-                        // Add accessories
-                        if (item.accessories) {
-                          item.accessories.forEach(acc => {
-                            const accObj = acc as Record<string, unknown>;
-                            const accPrice = getPrice(accObj);
-                            const accQuantity = acc.quantity || 1;
-                            itemTotal += accPrice * accQuantity;
-                          });
-                        }
-                        // Add options
-                        if (item.options) {
-                          item.options.forEach(opt => {
-                            const optObj = opt as Record<string, unknown>;
-                            itemTotal += getPrice(optObj);
-                          });
-                        }
-                        return total + itemTotal;
-                      }, 0)
-                    )}
+                          
+                          // Add options with quantity
+                          if (item.options && item.options.length > 0) {
+                            item.options.forEach(opt => {
+                              const optObj = opt as Record<string, unknown>;
+                              const optPrice = getPrice(optObj);
+                              const optQuantity = (opt.quantity !== undefined && opt.quantity !== null) ? opt.quantity : 1;
+                              console.log('💰 Calculating option total:', opt.name, 'Price:', optPrice, 'Quantity:', optQuantity, 'Total:', optPrice * optQuantity);
+                              total += optPrice * optQuantity;
+                            });
+                          }
+                        });
+                        console.log('💰 Final calculated total:', total);
+                        return total;
+                      })()
+                    )} ₫
                   </Text>
-                </div>
               </div>
             </div>
 
@@ -1748,135 +2093,15 @@ export const QuotationManagement: React.FC = () => {
               <div style={{
                 marginTop: 16,
                 textAlign: 'center',
-                padding: '12px',
-                background: '#f8f9fa',
-                borderRadius: 8
+                padding: '14px',
+                background: 'linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%)',
+                borderRadius: 10,
+                border: '1px solid #ffa940'
               }}>
-                <Text style={{ fontSize: 13, color: '#666' }}>
+                <Text style={{ fontSize: 14, color: '#ad6800', fontWeight: 600 }}>
                   Báo giá có hiệu lực đến: {formatDate(selectedQuotation.valid_until || selectedQuotation.endDate || '')}
                 </Text>
               </div>
-            )}
-
-            <div style={{ 
-              marginTop: 20, 
-              padding: '16px 20px', 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: 12,
-              color: 'white',
-              boxShadow: '0 6px 16px rgba(102, 126, 234, 0.3)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: -30,
-                right: -30,
-                width: 120,
-                height: 120,
-                background: 'rgba(255,255,255,0.08)',
-                borderRadius: '50%',
-                filter: 'blur(40px)'
-              }} />
-              {selectedQuotation.total_amount && selectedQuotation.total_amount > 0 && (
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15 }}>Tổng giá trị:</Text>
-                  </Col>
-                  <Col span={12} style={{ textAlign: 'right' }}>
-                    <Text strong style={{ color: 'white', fontSize: 16 }}>
-                      {formatPrice(selectedQuotation.total_amount)}
-                    </Text>
-                  </Col>
-                </Row>
-              )}
-              
-              {selectedQuotation.discount_amount && selectedQuotation.discount_amount > 0 && (
-                <Row gutter={16} style={{ marginTop: 12 }}>
-                  <Col span={12}>
-                    <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15 }}>Giảm giá:</Text>
-                  </Col>
-                  <Col span={12} style={{ textAlign: 'right' }}>
-                    <Text strong style={{ color: '#52c41a', fontSize: 16, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                      -{formatPrice(selectedQuotation.discount_amount)}
-                    </Text>
-                  </Col>
-                </Row>
-              )}
-
-              {selectedQuotation.tax_amount && selectedQuotation.tax_amount > 0 && (
-                <Row gutter={16} style={{ marginTop: 12 }}>
-                  <Col span={12}>
-                    <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15 }}>Thuế:</Text>
-                  </Col>
-                  <Col span={12} style={{ textAlign: 'right' }}>
-                    <Text strong style={{ color: '#ffd666', fontSize: 16 }}>
-                      +{formatPrice(selectedQuotation.tax_amount)}
-                    </Text>
-                  </Col>
-                </Row>
-              )}
-
-              <Row gutter={16} style={{ 
-                marginTop: 12, 
-                paddingTop: 12, 
-                borderTop: '2px solid rgba(255,255,255,0.3)',
-                position: 'relative'
-              }}>
-                <Col span={12}>
-                  <Title level={5} style={{ margin: 0, color: 'white', fontSize: 16, fontWeight: 600 }}>
-                    Tổng cộng:
-                  </Title>
-                </Col>
-                <Col span={12} style={{ textAlign: 'right' }}>
-                  <Title level={3} style={{ 
-                    margin: 0, 
-                    color: 'white', 
-                    textShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                    fontSize: 24,
-                    fontWeight: 700
-                  }}>
-                    {formatPrice(selectedQuotation.final_amount || 
-                      (selectedQuotation.items?.reduce((sum, item) => sum + (item.final_amount || 0), 0) || 0)
-                    )}
-                  </Title>
-                </Col>
-              </Row>
-            </div>
-
-            {selectedQuotation.notes && (
-              <Card style={{ 
-                marginTop: 16, 
-                borderRadius: 10, 
-                background: 'linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%)', 
-                border: '1px solid #ffd666',
-                boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: 12
-                }}>
-                  <div style={{
-                    width: 28,
-                    height: 28,
-                    background: '#ffd666',
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 14
-                  }}>
-                  </div>
-                  <Title level={5} style={{ margin: 0, color: '#ad6800', fontSize: 15 }}>
-                    Ghi chú
-                  </Title>
-                </div>
-                <Text style={{ fontSize: 13, lineHeight: 1.6, color: '#595959' }}>
-                  {selectedQuotation.notes}
-                </Text>
-              </Card>
             )}
 
             {/* API Raw Data Summary */}
@@ -2025,7 +2250,19 @@ export const QuotationManagement: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 

@@ -11,6 +11,11 @@ import {
   IconButton,
   Alert,
   Stack,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import Swal from "sweetalert2";
@@ -21,6 +26,17 @@ import {
   CreateOrderRequestData,
   OrderRequestItem,
 } from "../../services/orderService";
+import { authService } from "../../services/authService";
+
+interface VehicleOption {
+  _id: string;
+  name: string;
+  category: string;
+  price: number;
+  sku: string;
+  manufacturer_name: string;
+  color_options: string[];
+}
 
 interface CreateOrderRequestModalProps {
   open: boolean;
@@ -41,6 +57,10 @@ export const CreateOrderRequestModal: React.FC<
     { vehicle_id: "", color: "", quantity: 1 },
   ]);
 
+  // Vehicle selection states
+  const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
+  const [vehicleLoading, setVehicleLoading] = useState(false);
+
   // Update items when initialItems changes
   React.useEffect(() => {
     if (open && initialItems && initialItems.length > 0) {
@@ -58,6 +78,63 @@ export const CreateOrderRequestModal: React.FC<
       setNotes("");
     }
   }, [open, initialNotes]);
+
+  // Load vehicles when modal opens
+  React.useEffect(() => {
+    if (open) {
+      loadVehicles();
+    }
+  }, [open]);
+
+  const loadVehicles = async () => {
+    try {
+      setVehicleLoading(true);
+      setError(null);
+
+      console.log("🚀 Loading vehicles for order request modal...");
+      const response = await authService.getVehicles({
+        page: 1,
+        limit: 100, // Get all vehicles
+      });
+
+      if (response.success && response.data) {
+        const responseData = response.data as Record<string, unknown>;
+        console.log("✅ Vehicles loaded successfully:", responseData.data);
+        const vehiclesData = responseData.data as unknown[];
+
+        // Transform vehicle data to our format
+        const transformedVehicles: VehicleOption[] = vehiclesData.map(
+          (vehicle) => {
+            const v = vehicle as Record<string, unknown>;
+            const manufacturer = v.manufacturer_id as Record<string, unknown>;
+            return {
+              _id: v._id as string,
+              name: v.name as string,
+              category: v.category as string,
+              price: v.price as number,
+              sku: v.sku as string,
+              manufacturer_name:
+                (manufacturer?.name as string) || "Unknown Manufacturer",
+              color_options: (v.color_options as string[]) || [],
+            };
+          }
+        );
+
+        setVehicles(transformedVehicles);
+        console.log(
+          `📋 Transformed ${transformedVehicles.length} vehicles for selection`
+        );
+      } else {
+        console.error("❌ Failed to load vehicles:", response.message);
+        setError("Không thể tải danh sách xe");
+      }
+    } catch (err) {
+      console.error("❌ Error loading vehicles:", err);
+      setError("Lỗi khi tải danh sách xe");
+    } finally {
+      setVehicleLoading(false);
+    }
+  };
 
   const handleAddItem = () => {
     setItems([...items, { vehicle_id: "", color: "", quantity: 1 }]);
@@ -82,9 +159,11 @@ export const CreateOrderRequestModal: React.FC<
 
   const handleSubmit = async () => {
     // Validate form
-    const validItems = items.filter((item) => item.vehicle_id.trim() !== "");
+    const validItems = items.filter(
+      (item) => item.vehicle_id && item.vehicle_id.trim() !== ""
+    );
     if (validItems.length === 0) {
-      setError("Vui lòng thêm ít nhất một xe");
+      setError("Vui lòng chọn ít nhất một xe");
       return;
     }
 
@@ -106,6 +185,10 @@ export const CreateOrderRequestModal: React.FC<
 
       await orderService.createOrderRequest(requestData);
 
+      // Close dialog immediately after API success
+      handleClose();
+      onSuccess();
+
       await Swal.fire({
         title: "Thành công!",
         text: "Yêu cầu đặt xe đã được tạo thành công.",
@@ -114,16 +197,14 @@ export const CreateOrderRequestModal: React.FC<
         confirmButtonColor: "#10b981",
       });
 
-      handleClose();
-      onSuccess();
-
       // Redirect to order requests page
       navigate("/portal/order-requests");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating order request:", error);
-      setError(
-        error.response?.data?.message || "Có lỗi xảy ra khi tạo yêu cầu"
-      );
+      const errorObj = error as Record<string, unknown>;
+      const response = errorObj.response as Record<string, unknown>;
+      const data = response?.data as Record<string, unknown>;
+      setError((data?.message as string) || "Có lỗi xảy ra khi tạo yêu cầu");
     } finally {
       setLoading(false);
     }
@@ -135,7 +216,30 @@ export const CreateOrderRequestModal: React.FC<
     onClose();
   };
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      sx={{
+        zIndex: "9999 !important", // Much higher zIndex with !important
+        "& .MuiDialog-paper": {
+          zIndex: "10000 !important",
+          position: "relative !important",
+        },
+        "& .MuiBackdrop-root": {
+          zIndex: "9998 !important",
+        },
+      }}
+      BackdropProps={{
+        sx: {
+          zIndex: "9998 !important",
+          backgroundColor: "rgba(0, 0, 0, 0.5) !important",
+        },
+      }}
+      disablePortal={false}
+      keepMounted={false}
+    >
       <DialogTitle>Tạo yêu cầu đặt xe mới</DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 2 }}>
@@ -180,27 +284,155 @@ export const CreateOrderRequestModal: React.FC<
               )}
 
               <Stack spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Mã xe / Tên xe"
-                  value={item.vehicle_name || ""}
-                  // onChange={(e) =>
-                  //   handleItemChange(index, "vehicle_id", e.target.value)
-                  // }
-                  required
-                  placeholder="Nhập mã xe hoặc tên xe"
-                />
+                {vehicleLoading ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                ) : (
+                  <Box>
+                    <FormControl fullWidth required>
+                      <InputLabel>Chọn xe</InputLabel>
+                      <Select
+                        value={item.vehicle_id || ""}
+                        label="Chọn xe"
+                        displayEmpty
+                        onChange={(e) => {
+                          const selectedVehicle = vehicles.find(
+                            (v) => v._id === e.target.value
+                          );
+
+                          // Update all fields in one go to avoid state batching issues
+                          const updatedItems = items.map((item, i) => {
+                            if (i === index) {
+                              return {
+                                ...item,
+                                vehicle_id: e.target.value,
+                                vehicle_name: selectedVehicle?.name || "",
+                                color:
+                                  selectedVehicle?.color_options?.[0] ||
+                                  item.color ||
+                                  "",
+                              };
+                            }
+                            return item;
+                          });
+
+                          setItems(updatedItems);
+                        }}
+                        renderValue={(selected) => {
+                          if (!selected || selected === "") {
+                            return "Chọn xe";
+                          }
+
+                          const selectedVehicle = vehicles.find(
+                            (v) => v._id === selected
+                          );
+
+                          if (selectedVehicle) {
+                            return `${selectedVehicle.name} - ${selectedVehicle.manufacturer_name}`;
+                          }
+
+                          return "Chọn xe";
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              zIndex: 10001,
+                              maxHeight: 300,
+                            },
+                          },
+                          MenuListProps: {
+                            sx: {
+                              zIndex: 10001,
+                            },
+                          },
+                        }}
+                      >
+                        <MenuItem value="">
+                          <em>Chọn xe</em>
+                        </MenuItem>
+                        {vehicles.map((vehicle) => (
+                          <MenuItem key={vehicle._id} value={vehicle._id}>
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 500 }}
+                              >
+                                {vehicle.name} - {vehicle.manufacturer_name}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                display="block"
+                              >
+                                {vehicle.category.toUpperCase()} •{" "}
+                                {vehicle.price.toLocaleString()} VNĐ
+                              </Typography>
+                              {vehicle.color_options.length > 0 && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  display="block"
+                                >
+                                  Màu: {vehicle.color_options.join(", ")}
+                                </Typography>
+                              )}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                )}
 
                 <Box sx={{ display: "flex", gap: 2 }}>
-                  <TextField
-                    label="Màu sắc"
-                    value={item.color || ""}
-                    onChange={(e) =>
-                      handleItemChange(index, "color", e.target.value)
+                  {(() => {
+                    const selectedVehicle = vehicles.find(
+                      (v) => v._id === item.vehicle_id
+                    );
+                    if (
+                      selectedVehicle &&
+                      selectedVehicle.color_options.length > 0
+                    ) {
+                      return (
+                        <FormControl sx={{ flex: 1 }}>
+                          <InputLabel>Màu sắc</InputLabel>
+                          <Select
+                            value={item.color || ""}
+                            label="Màu sắc"
+                            onChange={(e) =>
+                              handleItemChange(index, "color", e.target.value)
+                            }
+                            MenuProps={{
+                              PaperProps: {
+                                sx: {
+                                  zIndex: 10001,
+                                  maxHeight: 300,
+                                },
+                              },
+                            }}
+                          >
+                            {selectedVehicle.color_options.map((color) => (
+                              <MenuItem key={color} value={color}>
+                                {color}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      );
                     }
-                    placeholder="Ví dụ: Đỏ, Xanh..."
-                    sx={{ flex: 1 }}
-                  />
+                    return (
+                      <TextField
+                        label="Màu sắc"
+                        value={item.color || ""}
+                        onChange={(e) =>
+                          handleItemChange(index, "color", e.target.value)
+                        }
+                        placeholder="Nhập màu sắc..."
+                        sx={{ flex: 1 }}
+                      />
+                    );
+                  })()}
 
                   <TextField
                     label="Số lượng"
@@ -222,14 +454,14 @@ export const CreateOrderRequestModal: React.FC<
             </Box>
           ))}
 
-          {/* <Button
+          <Button
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={handleAddItem}
             sx={{ mb: 3 }}
           >
             Thêm xe
-          </Button> */}
+          </Button>
 
           <TextField
             fullWidth

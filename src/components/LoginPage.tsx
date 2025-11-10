@@ -149,7 +149,7 @@ export function LoginPage() {
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-white mb-8">
-                PLEASE LOG IN
+                Vui lòng đăng nhập để tiếp tục
               </h2>
             </div>
 
@@ -168,7 +168,7 @@ export function LoginPage() {
                 />
                 {formSubmitted && !email && (
                   <p className="mt-1 text-sm text-red-400">
-                    Please enter your email
+                    Vui lòng nhập email
                   </p>
                 )}
               </div>
@@ -200,7 +200,7 @@ export function LoginPage() {
                 </div>
                 {formSubmitted && !password && (
                   <p className="mt-1 text-sm text-red-400">
-                    Please enter your password
+                    Vui lòng nhập mật khẩu
                   </p>
                 )}
               </div>
@@ -232,10 +232,10 @@ export function LoginPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    <span>LOGGING IN...</span>
+                    <span>ĐANG ĐĂNG NHẬP...</span>
                   </>
                 ) : (
-                  <span>LOG IN</span>
+                  <span>ĐĂNG NHẬP</span>
                 )}
               </button>
 
@@ -267,7 +267,7 @@ export function LoginPage() {
                     htmlFor="remember-me"
                     className="ml-2 block text-sm text-gray-400"
                   >
-                    Remember me
+                    Ghi nhớ tôi
                   </label>
                 </div>
                 <div className="text-sm">
@@ -277,7 +277,7 @@ export function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-8 space-y-3 border-t border-gray-700 pt-6">
+              {/* <div className="mt-8 space-y-3 border-t border-gray-700 pt-6">
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -320,7 +320,7 @@ export function LoginPage() {
                     Dealer Manager
                   </button>
                 </div>
-              </div>
+              </div> */}
             </form>
           </div>
         </div>

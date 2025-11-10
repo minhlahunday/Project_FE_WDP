@@ -49,7 +49,7 @@ interface QuoteFormValues {
   discountSelection?: string;
   promotion_id?: string;
   notes?: string;
-  options: Array<{ option_id?: string }>;
+  options: Array<{ option_id?: string; quantity?: number }>;
   accessories: Array<{ accessory_id?: string; quantity?: number }>;
 }
 
@@ -168,7 +168,8 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
     const optionsTotal = (optionsValue || []).reduce((sum, option) => {
       if (!option?.option_id) return sum;
       const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
-      return sum + (optionData?.price || 0);
+      const quantity = option.quantity || 1;
+      return sum + ((optionData?.price || 0) * quantity);
     }, 0);
     
     // Tính tổng giá phụ kiện
@@ -386,7 +387,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       promotion_id: undefined,
       notes: undefined,
       customer_id: undefined,
-      options: [{ option_id: undefined }],
+      options: [{ option_id: undefined, quantity: 1 }],
       accessories: [{ accessory_id: undefined, quantity: 1 }]
     });
 
@@ -408,8 +409,18 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       setSubmitting(true);
 
       const sanitizedOptions = (values.options || [])
-        .map((option) => (option?.option_id ? { option_id: option.option_id } : null))
-        .filter((option): option is { option_id: string } => Boolean(option?.option_id));
+        .map((option) =>
+          option?.option_id
+            ? {
+                option_id: option.option_id,
+                quantity: option.quantity && option.quantity > 0 ? option.quantity : 1
+              }
+            : null
+        )
+        .filter(
+          (option): option is { option_id: string; quantity: number } =>
+            Boolean(option?.option_id)
+        );
 
       const sanitizedAccessories = (values.accessories || [])
         .map((accessory) =>
@@ -479,6 +490,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 const option = optionCatalog.find(o => normalizeOptionId(o) === opt.option_id);
                 return {
                   name: option?.name || 'Tùy chọn',
+                  quantity: opt.quantity || 1,
                   price: option?.price || 0
                 };
               }),
@@ -514,23 +526,23 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       open={visible}
       onCancel={handleClose}
       footer={null}
-      width={1400}
+      width={1200}
       centered
       destroyOnClose={false}
       styles={{
         body: { 
-          maxHeight: '85vh', 
+          maxHeight: '75vh', 
           overflowY: 'auto',
-          padding: '40px 50px'
+          padding: '32px 40px'
         }
       }}
       title={
         <Space align="center" size="middle">
           <div
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 16,
+              width: 48,
+              height: 48,
+              borderRadius: 12,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               display: 'flex',
               alignItems: 'center',
@@ -538,13 +550,13 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
             }}
           >
-            <FileTextOutlined style={{ color: '#fff', fontSize: 26 }} />
+            <FileTextOutlined style={{ color: '#fff', fontSize: 22 }} />
           </div>
           <div>
-            <Title level={3} style={{ margin: 0, fontSize: 22 }}>
+            <Title level={3} style={{ margin: 0, fontSize: 20 }}>
               Tạo báo giá
             </Title>
-            <Text type="secondary" style={{ fontSize: 15 }}>Tạo báo giá nhanh cho khách hàng</Text>
+            <Text type="secondary" style={{ fontSize: 14 }}>Tạo báo giá nhanh cho khách hàng</Text>
           </div>
         </Space>
       }
@@ -557,12 +569,12 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
       >
         <Card
           style={{
-            marginBottom: 32,
-            borderRadius: 20,
+            marginBottom: 24,
+            borderRadius: 16,
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: '#fff',
             boxShadow: '0 8px 24px rgba(102, 126, 234, 0.35)',
-            padding: '20px 28px',
+            padding: '16px 24px',
             overflow: 'hidden'
           }}
         >
@@ -582,12 +594,12 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </Row>
         </Card>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 24, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 20, marginBottom: 16 }}>
           Thông tin khách hàng
         </Divider>
 
         <Form.Item
-          label={<span style={{ fontSize: 16, fontWeight: 500 }}>Khách hàng</span>}
+          label={<span style={{ fontSize: 14, fontWeight: 500 }}>Khách hàng</span>}
           name="customer_id"
           tooltip="Chọn khách hàng từ danh sách"
         >
@@ -600,23 +612,23 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           />
         </Form.Item>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           Chi tiết sản phẩm
         </Divider>
 
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item
-              label={<span style={{ fontSize: 16, fontWeight: 500 }}>Số lượng</span>}
+              label={<span style={{ fontSize: 14, fontWeight: 500 }}>Số lượng</span>}
               name="quantity"
               rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
             >
-              <InputNumber min={1} style={{ width: '100%', fontSize: 16 }} size="large" />
+              <InputNumber min={1} style={{ width: '100%', fontSize: 14 }} size="large" />
             </Form.Item>
           </Col>
 
           <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Màu sắc</span>} name="color">
+            <Form.Item label={<span style={{ fontSize: 14, fontWeight: 500 }}>Màu sắc</span>} name="color">
               <CustomSelect
                 options={colorSelectOptions}
                 placeholder="Chọn màu sắc"
@@ -633,7 +645,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
 
         <Row gutter={24}>
           {/* <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Giảm giá (VNĐ)</span>} name="discountSelection">
+            <Form.Item label={<span style={{ fontSize: 14, fontWeight: 500 }}>Giảm giá (VNĐ)</span>} name="discountSelection">
               <CustomSelect
                 options={discountSelectOptions}
                 placeholder="Chọn giảm giá"
@@ -647,22 +659,24 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           </Col> */}
 
           <Col span={12}>
-            <Form.Item label={<span style={{ fontSize: 16, fontWeight: 500 }}>Khuyến mãi</span>} name="promotion_id">
+            <Form.Item label={<span style={{ fontSize: 14, fontWeight: 500 }}>Khuyến mãi</span>} name="promotion_id">
               <CustomSelect
                 options={promotionSelectOptions}
                 placeholder="Chọn khuyến mãi"
                 loading={referenceLoading}
                 allowClear
                 showSearch
+                listHeight={256}
+                popupMatchSelectWidth={false}
               />
             </Form.Item>
           </Col>
         </Row>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           <Space size="middle">
-            Tùy chọn bổ sung
-            <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>{optionsValue.length}</Tag>
+            Nội thất xe
+            <Tag color="blue" style={{ fontSize: 12, padding: '2px 10px' }}>{optionsValue.length}</Tag>
           </Space>
         </Divider>
 
@@ -671,7 +685,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
             <>
               {fields.map(({ key, name, ...restField }) => (
                 <Row key={key} gutter={16} align="middle" style={{ marginBottom: 16 }}>
-                  <Col flex="auto">
+                  <Col xs={24} sm={14}>
                     <Form.Item
                       {...restField}
                       name={[name, 'option_id']}
@@ -679,21 +693,31 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                     >
                       <CustomSelect
                         options={vehicleOptionSelectOptions}
-                        placeholder="Chọn tùy chọn bổ sung"
+                        placeholder="Chọn nội thất xe"
                         loading={referenceLoading}
                         allowClear
                         showSearch
                       />
                     </Form.Item>
                   </Col>
-                  <Col>
+                  <Col xs={12} sm={6}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'quantity']}
+                      initialValue={1}
+                      rules={[{ type: 'number', min: 1, message: 'Ít nhất 1 nội thất' }]}
+                    >
+                      <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="Số lượng" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={12} sm={4}>
                     <Button
                       type="text"
                       danger
                       icon={<MinusCircleOutlined />}
                       onClick={() => remove(name)}
                       size="large"
-                      style={{ height: 48 }}
+                      style={{ height: 40 }}
                     />
                   </Col>
                 </Row>
@@ -702,21 +726,21 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
-                onClick={() => add({ option_id: undefined })}
+                onClick={() => add({ option_id: undefined, quantity: 1 })}
                 block
                 size="large"
-                style={{ marginBottom: 24, height: 48, fontSize: 15 }}
+                style={{ marginBottom: 16, height: 44, fontSize: 14 }}
               >
-                Thêm tùy chọn
+                Thêm nội thất
               </Button>
             </>
           )}
         </Form.List>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           <Space size="middle">
             Phụ kiện
-            <Tag color="green" style={{ fontSize: 14, padding: '4px 12px' }}>{accessoriesValue.length}</Tag>
+            <Tag color="green" style={{ fontSize: 12, padding: '2px 10px' }}>{accessoriesValue.length}</Tag>
           </Space>
         </Divider>
 
@@ -747,7 +771,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       initialValue={1}
                       rules={[{ type: 'number', min: 1, message: 'Ít nhất 1 phụ kiện' }]}
                     >
-                      <InputNumber min={1} style={{ width: '100%' }} size="large" />
+                      <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="Số lượng" />
                     </Form.Item>
                   </Col>
                   <Col xs={12} sm={4}>
@@ -757,7 +781,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                       icon={<MinusCircleOutlined />}
                       onClick={() => remove(name)}
                       size="large"
-                      style={{ height: 48 }}
+                      style={{ height: 40 }}
                     />
                   </Col>
                 </Row>
@@ -769,7 +793,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                 onClick={() => add({ accessory_id: undefined, quantity: 1 })}
                 block
                 size="large"
-                style={{ marginBottom: 24, height: 48, fontSize: 15 }}
+                style={{ marginBottom: 16, height: 44, fontSize: 14 }}
               >
                 Thêm phụ kiện
               </Button>
@@ -777,94 +801,147 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
           )}
         </Form.List>
 
-        <Divider orientation="left" style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 24 }}>
+        <Divider orientation="left" style={{ fontSize: 16, fontWeight: 600, marginTop: 24, marginBottom: 16 }}>
           Ghi chú
         </Divider>
 
         <Form.Item name="notes">
           <TextArea 
-            rows={4} 
+            rows={3} 
             placeholder="Nhập ghi chú cho báo giá (ví dụ: hiệu lực 7 ngày, gồm 2 phụ kiện...)" 
-            style={{ fontSize: 15 }}
+            style={{ fontSize: 14 }}
             size="large"
           />
         </Form.Item>
 
+        {/* Bảng tổng tiền */}
         <Card
           style={{
-            borderRadius: 24,
-            marginTop: 40,
-            marginBottom: 40,
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            color: '#fff',
-            boxShadow: '0 12px 32px rgba(240, 147, 251, 0.4)',
-            padding: '24px 32px',
+            borderRadius: 12,
+            marginTop: 24,
+            marginBottom: 24,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             overflow: 'hidden'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
-            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
-                Xe × SL
-              </Text>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
-                {formatCurrency((vehiclePrice || 0) * quantityValue)}
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
-                Tùy chọn
-              </Text>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
-                +{formatCurrency(
-                  (optionsValue || []).reduce((sum, option) => {
-                    if (!option?.option_id) return sum;
-                    const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
-                    return sum + (optionData?.price || 0);
-                  }, 0)
-                )}
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 13, display: 'block', marginBottom: 8, fontWeight: 500 }}>
-                Phụ kiện
-              </Text>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 2px' }}>
-                +{formatCurrency(
-                  (accessoriesValue || []).reduce((sum, accessory) => {
-                    if (!accessory?.accessory_id) return sum;
-                    const accessoryData = accessoryCatalog.find(a => normalizeAccessoryId(a) === accessory.accessory_id);
-                    const quantity = accessory.quantity || 1;
-                    return sum + ((accessoryData?.price || 0) * quantity);
-                  }, 0)
-                )}
-              </div>
-            </div>
-          </div>
-          <Divider style={{ borderColor: 'rgba(255,255,255,0.35)', margin: '20px 0' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '32px' }}>
-            {/* <div style={{ flex: '0 0 auto' }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 8, fontWeight: 500 }}>
-                Giảm giá
-              </Text>
-              <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
-                -{formatCurrency(discountValue)}
-              </div>
-            </div> */}
-            <div style={{ flex: '1 1 auto', textAlign: 'right', minWidth: 0 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.95)', fontSize: 14, display: 'block', marginBottom: 8, fontWeight: 500 }}>
-                Tổng thanh toán
-              </Text>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
-                {formatCurrency(totalAmount)}
-              </div>
-            </div>
-          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#fafafa', borderBottom: '2px solid #d9d9d9' }}>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  STT
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Tên hàng hóa, dịch vụ
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Đơn vị tính
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Số lượng
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Đơn giá
+                </th>
+                <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 14, color: '#262626' }}>
+                  Thành tiền
+                  <div style={{ fontSize: 11, fontWeight: 400, marginTop: 2, color: '#8c8c8c' }}>
+                    (Thành tiền = Số lượng × Đơn giá)
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Xe */}
+              <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <td style={{ padding: '12px 16px', fontSize: 14, color: '#595959' }}>1</td>
+                <td style={{ padding: '12px 16px', fontSize: 14, color: '#262626' }}>
+                  {vehicleName || 'Xe điện'}
+                  {form.getFieldValue('color') && (
+                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 4 }}>
+                      (Màu {form.getFieldValue('color')})
+                    </Text>
+                  )}
+                </td>
+                <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Chiếc</td>
+                <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#262626', fontWeight: 500 }}>
+                  {quantityValue}
+                </td>
+                <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#595959' }}>
+                  {formatCurrency(vehiclePrice || 0)}
+                </td>
+                <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#262626', fontWeight: 600 }}>
+                  {formatCurrency((vehiclePrice || 0) * quantityValue)}
+                </td>
+              </tr>
+
+              {/* Nội thất */}
+              {(optionsValue || []).filter(opt => opt?.option_id).map((option, index) => {
+                const optionData = optionCatalog.find(o => normalizeOptionId(o) === option.option_id);
+                const quantity = option.quantity || 1;
+                const price = optionData?.price || 0;
+                return (
+                  <tr key={`option-${index}`} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? '#fafafa' : '#fff' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#595959' }}>{index + 2}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#262626' }}>
+                      {optionData?.name || 'Nội thất'}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Bộ</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#262626', fontWeight: 500 }}>
+                      {quantity}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#595959' }}>
+                      {formatCurrency(price)}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#262626', fontWeight: 600 }}>
+                      {formatCurrency(price * quantity)}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Phụ kiện */}
+              {(accessoriesValue || []).filter(acc => acc?.accessory_id).map((accessory, index) => {
+                const accessoryData = accessoryCatalog.find(a => normalizeAccessoryId(a) === accessory.accessory_id);
+                const quantity = accessory.quantity || 1;
+                const price = accessoryData?.price || 0;
+                const rowNum = 2 + (optionsValue || []).filter(opt => opt?.option_id).length + index;
+                const isEven = (rowNum - 1) % 2 === 0;
+                return (
+                  <tr key={`accessory-${index}`} style={{ borderBottom: '1px solid #f0f0f0', background: isEven ? '#fafafa' : '#fff' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#595959' }}>{rowNum}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: '#262626' }}>
+                      {accessoryData?.name || 'Phụ kiện'}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Chiếc</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#262626', fontWeight: 500 }}>
+                      {quantity}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#595959' }}>
+                      {formatCurrency(price)}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 14, color: '#262626', fontWeight: 600 }}>
+                      {formatCurrency(price * quantity)}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Dòng tổng cộng */}
+              <tr style={{ borderTop: '2px solid #d9d9d9', background: '#fafafa' }}>
+                <td colSpan={5} style={{ padding: '14px 16px', textAlign: 'right', fontSize: 15, fontWeight: 700, color: '#262626' }}>
+                  Tổng cộng:
+                </td>
+                <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#262626' }}>
+                  {formatCurrency(totalAmount)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </Card>
 
-        <Form.Item>
+        <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ width: '100%', justifyContent: 'flex-end' }} size="large">
-            <Button onClick={handleClose} size="large" style={{ fontSize: 15, height: 48, minWidth: 120 }}>
+            <Button onClick={handleClose} size="large" style={{ fontSize: 14, height: 44, minWidth: 100 }}>
               Hủy
             </Button>
             <Button 
@@ -873,7 +950,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
               loading={submitting} 
               icon={<FilePdfOutlined />}
               size="large"
-              style={{ fontSize: 15, height: 48, minWidth: 180 }}
+              style={{ fontSize: 14, height: 44, minWidth: 160 }}
             >
               Tạo báo giá & PDF
             </Button>

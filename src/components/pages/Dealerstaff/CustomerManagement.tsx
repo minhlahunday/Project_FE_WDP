@@ -1,22 +1,58 @@
 import React, { useState, useEffect } from "react";
 import {
-  Plus,
-  Search,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  MessageSquare,
-  Edit,
-  Eye,
-  Loader2,
-  CreditCard,
-  X,
-  AlertCircle,
-  User,
-  ShoppingCart,
-  MessageCircle,
-} from "lucide-react";
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Pagination,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Snackbar,
+  Alert,
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
+  Select,
+  MenuItem,
+  InputLabel,
+  Chip,
+  Stack,
+} from "@mui/material";
+import {
+  Search as SearchIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Visibility as VisibilityIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  LocationOn as LocationOnIcon,
+  CreditCard as CreditCardIcon,
+  Person as PersonIcon,
+  Close as CloseIcon,
+  Event as EventIcon,
+  ShoppingCart as ShoppingCartIcon,
+  Message as MessageIcon,
+  CheckCircle as CheckCircleIcon,
+  Pending as PendingIcon,
+  Cancel as CancelIcon,
+} from "@mui/icons-material";
 import { mockVehicles, mockMotorbikes } from "../../../data/mockData";
 import { Customer } from "../../../types";
 import { useNavigate } from "react-router-dom";
@@ -31,8 +67,6 @@ export const CustomerManagement: React.FC = () => {
     null
   );
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [selectedCustomerForSchedule, setSelectedCustomerForSchedule] =
-    useState<Customer | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -61,9 +95,37 @@ export const CustomerManagement: React.FC = () => {
     notes: "",
   });
 
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // Helper function to show snackbar
+  const showSnackbarMessage = (
+    message: string,
+    severity: "success" | "error" | "warning" | "info" = "info"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   const allVehicles = [...mockVehicles, ...mockMotorbikes];
 
   useEffect(() => {
+    setCurrentPage(1);
     loadCustomers();
   }, [activeTab]);
 
@@ -85,7 +147,9 @@ export const CustomerManagement: React.FC = () => {
 
       setCustomers(customerData || []);
     } catch (err) {
-      setError("Không thể tải danh sách khách hàng");
+      const errorMessage = "Không thể tải danh sách khách hàng";
+      setError(errorMessage);
+      showSnackbarMessage(errorMessage, "error");
       console.error("Error loading customers:", err);
     } finally {
       setLoading(false);
@@ -95,6 +159,7 @@ export const CustomerManagement: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchTerm !== undefined) {
+        setCurrentPage(1);
         loadCustomers();
       }
     }, 500);
@@ -105,27 +170,24 @@ export const CustomerManagement: React.FC = () => {
   const loadCustomerPayments = async (customerId: string) => {
     try {
       const payments = await customerService.getCustomerPayments(customerId);
-      setSelectedCustomerPayments(payments?.data || []);
+      // Handle both array and object with data property
+      const paymentData = Array.isArray(payments)
+        ? payments
+        : (payments as any)?.data || [];
+      setSelectedCustomerPayments(paymentData);
     } catch (err) {
       console.error("Error loading customer payments:", err);
       setSelectedCustomerPayments([]);
     }
   };
 
-  const filteredCustomers = customers;
-
-  const handleScheduleClick = (customer: Customer) => {
-    setSelectedCustomerForSchedule(customer);
-    setShowScheduleModal(true);
-  };
-
   const handleScheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (scheduleForm.vehicleId) {
+    if (scheduleForm.vehicleId && selectedCustomer) {
       const vehicle = allVehicles.find((v) => v.id === scheduleForm.vehicleId);
       if (vehicle) {
         navigate(
-          `/portal/test-drive?vehicleId=${scheduleForm.vehicleId}&customerId=${selectedCustomerForSchedule?.id}`
+          `/portal/test-drive?vehicleId=${scheduleForm.vehicleId}&customerId=${selectedCustomer.id}`
         );
       }
     }
@@ -181,12 +243,14 @@ export const CustomerManagement: React.FC = () => {
 
       // Reload customers
       await loadCustomers();
+      showSnackbarMessage("Tạo khách hàng thành công", "success");
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.message ||
         err?.message ||
         "Không thể tạo khách hàng mới";
       setError(errorMessage);
+      showSnackbarMessage(errorMessage, "error");
       console.error("Error creating customer:", err);
     } finally {
       setCreating(false);
@@ -254,12 +318,14 @@ export const CustomerManagement: React.FC = () => {
 
       // Reload customers
       await loadCustomers();
+      showSnackbarMessage("Cập nhật khách hàng thành công", "success");
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.message ||
         err?.message ||
         "Không thể cập nhật thông tin khách hàng";
       setError(errorMessage);
+      showSnackbarMessage(errorMessage, "error");
       console.error("Error updating customer:", err);
     } finally {
       setUpdating(false);
@@ -271,902 +337,1390 @@ export const CustomerManagement: React.FC = () => {
     setError(null);
   };
 
+  // Handle search
+  const handleSearch = () => {
+    setCurrentPage(1);
+    loadCustomers();
+  };
+
+  // Pagination
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setCurrentPage(value);
+  };
+
+  // Calculate pagination
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedCustomers = customers.slice(startIndex, endIndex);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-6">
-      {/* Header Section with Gradient */}
-      <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Quản lý khách hàng</h1>
-              <p className="text-blue-100 text-lg">Quản lý và theo dõi thông tin khách hàng của bạn</p>
-            </div>
-            <button
-              onClick={() => {
-                resetForm();
-                setShowCreateModal(true);
-              }}
-              className="bg-white hover:bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+    <Box sx={{ p: 3, bgcolor: "grey.50", minHeight: "100vh" }}>
+      <Card>
+        <CardContent>
+          <Box sx={{ mb: 3 }}>
+            {/* Header */}
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              mb={3}
             >
-              <Plus className="h-5 w-5" />
-              <span>Thêm khách hàng</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs & Search Bar */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setActiveTab("all")}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                activeTab === "all"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <span>Tất cả khách hàng</span>
-                <span className="bg-white bg-opacity-30 px-2 py-1 rounded-full text-xs">
-                  {activeTab === "all" ? customers.length : ""}
-                </span>
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab("yours")}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                activeTab === "yours"
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg transform scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <span>Khách hàng của tôi</span>
-                <span className="bg-white bg-opacity-30 px-2 py-1 rounded-full text-xs">
-                  {activeTab === "yours" ? customers.length : ""}
-                </span>
-              </div>
-            </button>
-          </div>
-          
-          <div className="relative flex-1 md:max-w-md">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 text-red-700 px-6 py-4 rounded-xl shadow-md">
-          <div className="flex items-center">
-            <svg className="h-5 w-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            {error}
-          </div>
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading ? (
-        <div className="flex flex-col justify-center items-center py-20">
-          <div className="relative">
-            <div className="w-20 h-20 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-            <Loader2 className="h-10 w-10 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-          </div>
-          <span className="mt-6 text-gray-600 font-medium text-lg">
-            Đang tải danh sách khách hàng...
-          </span>
-        </div>
-      ) : (
-        <>
-          {/* Customer Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCustomers.map((customer) => (
-              <div
-                key={customer.id}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100"
+              <Box display="flex" alignItems="center" gap={1}>
+                <PersonIcon color="primary" sx={{ fontSize: 32 }} />
+                <Typography variant="h4" component="h1" fontWeight="bold">
+                  Quản lý khách hàng
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  resetForm();
+                  setShowCreateModal(true);
+                }}
+                sx={{
+                  bgcolor: "primary.main",
+                  "&:hover": { bgcolor: "primary.dark" },
+                }}
               >
-                {/* Gradient Header */}
-                <div className="bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
-                  
-                  <div className="relative flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-white mb-3 truncate">
-                        {customer?.name || "N/A"}
-                      </h3>
-                      <div className="space-y-2 text-sm text-white text-opacity-95">
-                        <div className="flex items-center space-x-2">
-                          <Mail className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">{customer.email || "N/A"}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Phone className="h-4 w-4 flex-shrink-0" />
-                          <span>{customer.phone || "N/A"}</span>
-                        </div>
-                        <div className="flex items-start space-x-2">
-                          <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                          <span className="line-clamp-2">{customer.address || "N/A"}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col space-y-2 ml-3">
-                      <button
-                        onClick={() => setSelectedCustomer(customer)}
-                        className="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white p-2.5 rounded-lg transition-all duration-200 transform hover:scale-110"
-                        title="Xem chi tiết"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditCustomer(customer)}
-                        className="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white p-2.5 rounded-lg transition-all duration-200 transform hover:scale-110"
-                        title="Chỉnh sửa"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedCustomerForPayments(customer);
-                          loadCustomerPayments(customer.id);
-                          setShowPaymentsModal(true);
-                        }}
-                        className="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white p-2.5 rounded-lg transition-all duration-200 transform hover:scale-110"
-                        title="Xem thanh toán"
-                      >
-                        <CreditCard className="h-4 w-4" />
-                      </button>
+                Thêm khách hàng
+              </Button>
+            </Box>
+
+            {/* Tabs and Search */}
+            <Box
+              display="flex"
+              flexDirection={{ xs: "column", md: "row" }}
+              gap={2}
+              alignItems="center"
+              mb={3}
+            >
+              {/* Tabs */}
+              <Box display="flex" gap={1}>
+                <Button
+                  variant={activeTab === "all" ? "contained" : "outlined"}
+                  onClick={() => setActiveTab("all")}
+                  sx={{
+                    minWidth: 150,
+                    ...(activeTab === "all" && {
+                      bgcolor: "primary.main",
+                      "&:hover": { bgcolor: "primary.dark" },
+                    }),
+                  }}
+                >
+                  Tất cả ({customers.length})
+                </Button>
+                <Button
+                  variant={activeTab === "yours" ? "contained" : "outlined"}
+                  onClick={() => setActiveTab("yours")}
+                  sx={{
+                    minWidth: 150,
+                    ...(activeTab === "yours" && {
+                      bgcolor: "secondary.main",
+                      "&:hover": { bgcolor: "secondary.dark" },
+                    }),
+                  }}
+                >
+                  Của tôi ({customers.length})
+                </Button>
+              </Box>
+
+              {/* Search Box */}
+              <Box flex={1} minWidth={{ xs: 200, md: 300 }}>
+                <div className="relative">
+                  <label
+                    htmlFor="search-input"
+                    className="block text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    Tìm kiếm
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="search-input"
+                      type="text"
+                      placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium transition-all duration-200 hover:border-gray-300"
+                    />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <SearchIcon className="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
                 </div>
+              </Box>
 
-                {/* Stats Section */}
-                <div className="p-6">
-                  {/* <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3">
-                      <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                        {customer.orders?.length || 0}
-                      </p>
-                      <p className="text-xs text-gray-600 font-medium">Đơn hàng</p>
-                    </div>
-                    <div className="text-center bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3">
-                      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        {customer.testDrives?.length || 0}
-                      </p>
-                      <p className="text-xs text-gray-600 font-medium">Lái thử</p>
-                    </div>
-                    <div className="text-center bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-3">
-                      <p className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">VIP</p>
-                      <p className="text-xs text-gray-600 font-medium">Hạng</p>
-                    </div>
-                  </div> */}
+              {/* Search Button */}
+              <Box display="flex" gap={2} className="mt-6">
+                <button
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <SearchIcon className="w-5 h-5" />
+                  Tìm kiếm
+                </button>
+              </Box>
+            </Box>
 
-                  {/* Action Buttons */}
-                  {/* <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => handleScheduleClick(customer)}
-                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                    >
-                      <Calendar className="h-4 w-4" />
-                      <span>Đặt lịch</span>
-                    </button>
-                    <button className="bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 px-4 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>Nhắn tin</span>
-                    </button>
-                  </div> */}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+            {/* Error Message */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {error}
+              </Alert>
+            )}
+
+            {/* Loading State */}
+            {loading ? (
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                py={10}
+              >
+                <CircularProgress size={60} />
+                <Typography
+                  variant="body1"
+                  sx={{ mt: 3, color: "text.secondary" }}
+                >
+                  Đang tải danh sách khách hàng...
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                {/* Customer Table */}
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow
+                        sx={{
+                          "& th": {
+                            fontWeight: "bold",
+                            backgroundColor: "grey.100",
+                          },
+                        }}
+                      >
+                        <TableCell>Khách hàng</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Số điện thoại</TableCell>
+                        <TableCell>Địa chỉ</TableCell>
+                        <TableCell align="right">Thao tác</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedCustomers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Không có khách hàng nào
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedCustomers.map((customer) => (
+                          <TableRow key={customer.id} hover>
+                            <TableCell>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Avatar
+                                  sx={{
+                                    bgcolor: "primary.main",
+                                    width: 32,
+                                    height: 32,
+                                  }}
+                                >
+                                  {customer.name?.charAt(0).toUpperCase() ||
+                                    "?"}
+                                </Avatar>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {customer.name || "N/A"}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <EmailIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
+                                <Typography variant="body2">
+                                  {customer.email || "N/A"}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <PhoneIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
+                                <Typography variant="body2">
+                                  {customer.phone || "N/A"}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <LocationOnIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    maxWidth: 200,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  {customer.address || "N/A"}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Box
+                                display="flex"
+                                gap={1}
+                                justifyContent="flex-end"
+                              >
+                                <Tooltip title="Xem chi tiết">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      setSelectedCustomer(customer)
+                                    }
+                                    sx={{ color: "primary.main" }}
+                                  >
+                                    <VisibilityIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Chỉnh sửa">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleEditCustomer(customer)}
+                                    sx={{ color: "info.main" }}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Xem thanh toán">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      setSelectedCustomerForPayments(customer);
+                                      loadCustomerPayments(customer.id);
+                                      setShowPaymentsModal(true);
+                                    }}
+                                    sx={{ color: "success.main" }}
+                                  >
+                                    <CreditCardIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {/* Pagination */}
+                {customers.length > pageSize && (
+                  <Box display="flex" justifyContent="center" mt={3}>
+                    <Pagination
+                      count={Math.ceil(customers.length / pageSize)}
+                      page={currentPage}
+                      onChange={handlePageChange}
+                      color="primary"
+                      size="large"
+                    />
+                  </Box>
+                )}
+              </>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
       {/* Create Customer Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl transform transition-all">
-            {/* Modal Header with Gradient */}
-            <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 p-6 rounded-t-2xl">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
-                    <Plus className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Thêm khách hàng mới
-                    </h2>
-                    <p className="text-green-100 text-sm">Điền thông tin khách hàng bên dưới</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
-                >
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {error && (
-                <div className="mb-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg shadow-md">
-                  <div className="flex items-center">
-                    <svg className="h-5 w-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                    {error}
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleCreateCustomer} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <span className="text-red-500 mr-1">*</span>
-                      Họ và tên
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={customerForm.name}
-                      onChange={(e) =>
-                        setCustomerForm({ ...customerForm, name: e.target.value })
-                      }
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
-                      placeholder="Nhập họ và tên"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <span className="text-red-500 mr-1">*</span>
-                      Số điện thoại
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={customerForm.phone}
-                      onChange={(e) =>
-                        setCustomerForm({
-                          ...customerForm,
-                          phone: e.target.value,
-                        })
-                      }
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
-                      placeholder="Nhập số điện thoại"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span className="text-red-500 mr-1">*</span>
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={customerForm.email}
-                    onChange={(e) =>
-                      setCustomerForm({
-                        ...customerForm,
-                        email: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
-                    placeholder="Nhập email"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Địa chỉ
-                  </label>
-                  <textarea
-                    value={customerForm.address}
-                    onChange={(e) =>
-                      setCustomerForm({
-                        ...customerForm,
-                        address: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
-                    rows={3}
-                    placeholder="Nhập địa chỉ"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Ghi chú
-                  </label>
-                  <textarea
-                    value={customerForm.notes}
-                    onChange={(e) =>
-                      setCustomerForm({
-                        ...customerForm,
-                        notes: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:border-gray-300"
-                    rows={2}
-                    placeholder="Ghi chú về khách hàng"
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      resetForm();
-                    }}
-                    className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                    disabled={creating}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={creating}
-                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                  >
-                    {creating && <Loader2 className="h-5 w-5 animate-spin" />}
-                    <span>{creating ? "Đang tạo..." : "Thêm khách hàng"}</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          resetForm();
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: "success.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <AddIcon />
+            <Typography variant="h6" component="span">
+              Thêm khách hàng mới
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={() => {
+              setShowCreateModal(false);
+              resetForm();
+            }}
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <form onSubmit={handleCreateCustomer} id="create-customer-form">
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Box
+                display="flex"
+                gap={2}
+                flexDirection={{ xs: "column", md: "row" }}
+              >
+                <TextField
+                  fullWidth
+                  label="Họ và tên"
+                  required
+                  value={customerForm.name}
+                  onChange={(e) =>
+                    setCustomerForm({ ...customerForm, name: e.target.value })
+                  }
+                  placeholder="Nhập họ và tên"
+                />
+                <TextField
+                  fullWidth
+                  label="Số điện thoại"
+                  required
+                  type="tel"
+                  value={customerForm.phone}
+                  onChange={(e) =>
+                    setCustomerForm({
+                      ...customerForm,
+                      phone: e.target.value,
+                    })
+                  }
+                  placeholder="Nhập số điện thoại"
+                />
+              </Box>
+              <TextField
+                fullWidth
+                label="Email"
+                required
+                type="email"
+                value={customerForm.email}
+                onChange={(e) =>
+                  setCustomerForm({
+                    ...customerForm,
+                    email: e.target.value,
+                  })
+                }
+                placeholder="Nhập email"
+              />
+              <TextField
+                fullWidth
+                label="Địa chỉ"
+                multiline
+                rows={3}
+                value={customerForm.address}
+                onChange={(e) =>
+                  setCustomerForm({
+                    ...customerForm,
+                    address: e.target.value,
+                  })
+                }
+                placeholder="Nhập địa chỉ"
+              />
+              <TextField
+                fullWidth
+                label="Ghi chú"
+                multiline
+                rows={2}
+                value={customerForm.notes}
+                onChange={(e) =>
+                  setCustomerForm({
+                    ...customerForm,
+                    notes: e.target.value,
+                  })
+                }
+                placeholder="Ghi chú về khách hàng"
+              />
+            </Stack>
+          </form>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => {
+              setShowCreateModal(false);
+              resetForm();
+            }}
+            disabled={creating}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            form="create-customer-form"
+            variant="contained"
+            color="success"
+            disabled={creating}
+            startIcon={creating ? <CircularProgress size={20} /> : <AddIcon />}
+          >
+            {creating ? "Đang tạo..." : "Thêm khách hàng"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Edit Customer Modal */}
-      {showEditModal && selectedCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 p-6 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
-                    <Edit className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Chỉnh sửa khách hàng
-                    </h2>
-                    <p className="text-blue-100 text-sm mt-1">
-                      Cập nhật thông tin khách hàng
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedCustomer(null);
-                    resetForm();
-                  }}
-                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {error && (
-                <div className="mb-5 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-lg flex items-start shadow-sm">
-                  <AlertCircle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-red-700 font-medium">{error}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleUpdateCustomer} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <span className="text-red-500 mr-1">*</span>
-                      Họ và tên
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={customerForm.name}
-                      onChange={(e) =>
-                        setCustomerForm({ ...customerForm, name: e.target.value })
-                      }
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
-                      placeholder="Nhập họ và tên"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <span className="text-red-500 mr-1">*</span>
-                      Số điện thoại
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={customerForm.phone}
-                      onChange={(e) =>
-                        setCustomerForm({
-                          ...customerForm,
-                          phone: e.target.value,
-                        })
-                      }
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
-                      placeholder="Nhập số điện thoại"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span className="text-red-500 mr-1">*</span>
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={customerForm.email}
-                    onChange={(e) =>
-                      setCustomerForm({
-                        ...customerForm,
-                        email: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
-                    placeholder="Nhập email"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Địa chỉ
-                  </label>
-                  <textarea
-                    value={customerForm.address}
-                    onChange={(e) =>
-                      setCustomerForm({
-                        ...customerForm,
-                        address: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
-                    rows={3}
-                    placeholder="Nhập địa chỉ"
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setSelectedCustomer(null);
-                      resetForm();
-                    }}
-                    className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                    disabled={updating}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updating}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                  >
-                    {updating && <Loader2 className="h-5 w-5 animate-spin" />}
-                    <span>{updating ? "Đang cập nhật..." : "Cập nhật"}</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedCustomer(null);
+          resetForm();
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: "primary.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <EditIcon />
+            <Typography variant="h6" component="span">
+              Chỉnh sửa khách hàng
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={() => {
+              setShowEditModal(false);
+              setSelectedCustomer(null);
+              resetForm();
+            }}
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <form onSubmit={handleUpdateCustomer} id="edit-customer-form">
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Box
+                display="flex"
+                gap={2}
+                flexDirection={{ xs: "column", md: "row" }}
+              >
+                <TextField
+                  fullWidth
+                  label="Họ và tên"
+                  required
+                  value={customerForm.name}
+                  onChange={(e) =>
+                    setCustomerForm({ ...customerForm, name: e.target.value })
+                  }
+                  placeholder="Nhập họ và tên"
+                />
+                <TextField
+                  fullWidth
+                  label="Số điện thoại"
+                  required
+                  type="tel"
+                  value={customerForm.phone}
+                  onChange={(e) =>
+                    setCustomerForm({
+                      ...customerForm,
+                      phone: e.target.value,
+                    })
+                  }
+                  placeholder="Nhập số điện thoại"
+                />
+              </Box>
+              <TextField
+                fullWidth
+                label="Email"
+                required
+                type="email"
+                value={customerForm.email}
+                onChange={(e) =>
+                  setCustomerForm({
+                    ...customerForm,
+                    email: e.target.value,
+                  })
+                }
+                placeholder="Nhập email"
+              />
+              <TextField
+                fullWidth
+                label="Địa chỉ"
+                multiline
+                rows={3}
+                value={customerForm.address}
+                onChange={(e) =>
+                  setCustomerForm({
+                    ...customerForm,
+                    address: e.target.value,
+                  })
+                }
+                placeholder="Nhập địa chỉ"
+              />
+            </Stack>
+          </form>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => {
+              setShowEditModal(false);
+              setSelectedCustomer(null);
+              resetForm();
+            }}
+            disabled={updating}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            form="edit-customer-form"
+            variant="contained"
+            color="primary"
+            disabled={updating}
+            startIcon={updating ? <CircularProgress size={20} /> : <EditIcon />}
+          >
+            {updating ? "Đang cập nhật..." : "Cập nhật"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Customer Detail Modal */}
-      {selectedCustomer && !showEditModal && !showPaymentsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 p-6 rounded-t-2xl sticky top-0 z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
-                    <Eye className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Thông tin chi tiết khách hàng
-                    </h2>
-                    <p className="text-purple-100 text-sm mt-1">
-                      Xem thông tin và lịch sử hoạt động
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSelectedCustomer(null)}
-                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
+      <Dialog
+        open={!!selectedCustomer && !showEditModal && !showPaymentsModal}
+        onClose={() => setSelectedCustomer(null)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: "secondary.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <VisibilityIcon />
+            <Typography variant="h6" component="span">
+              Thông tin chi tiết khách hàng
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={() => setSelectedCustomer(null)}
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          {selectedCustomer && (
+            <Box>
+              {/* Header Profile Section */}
+              <Box
+                sx={{
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  p: 4,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -20,
+                    right: -20,
+                    width: 120,
+                    height: 120,
+                    borderRadius: "50%",
+                    bgcolor: "rgba(255,255,255,0.1)",
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: -30,
+                    left: -30,
+                    width: 80,
+                    height: 80,
+                    borderRadius: "50%",
+                    bgcolor: "rgba(255,255,255,0.05)",
+                  }}
+                />
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={3}
+                  sx={{ position: "relative", zIndex: 1 }}
                 >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
+                  <Avatar
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      color: "white",
+                      fontSize: "2rem",
+                      fontWeight: "bold",
+                      border: "3px solid rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    {selectedCustomer.name?.charAt(0).toUpperCase() || "?"}
+                  </Avatar>
+                  <Box flex={1}>
+                    <Typography variant="h5" fontWeight="600" gutterBottom>
+                      {selectedCustomer.name || "N/A"}
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1} mb={1}>
+                      <EmailIcon sx={{ fontSize: 16, opacity: 0.8 }} />
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        {selectedCustomer.email || "N/A"}
+                      </Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <PhoneIcon sx={{ fontSize: 16, opacity: 0.8 }} />
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        {selectedCustomer.phone || "N/A"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Customer Info */}
-                <div className="lg:col-span-1">
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-100 shadow-sm">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <User className="h-5 w-5 text-purple-600" />
-                      <h3 className="text-lg font-bold text-gray-900">
-                        Thông tin cá nhân
-                      </h3>
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Họ và tên</p>
-                        <p className="font-semibold text-gray-900">{selectedCustomer.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Email</p>
-                        <p className="font-semibold text-gray-900">{selectedCustomer.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Số điện thoại</p>
-                        <p className="font-semibold text-gray-900">{selectedCustomer.phone}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Địa chỉ</p>
-                        <p className="font-semibold text-gray-900">
-                          {selectedCustomer.address}
-                        </p>
-                      </div>
-                    </div>
+              {/* Content Section */}
+              <Box sx={{ p: 3 }}>
+                <Box
+                  display="flex"
+                  gap={3}
+                  flexDirection={{ xs: "column", lg: "row" }}
+                >
+                  {/* Left Column - Personal Info */}
+                  <Box flex={{ xs: "1", lg: "0 0 50%" }}>
+                    <Card
+                      sx={{
+                        height: "100%",
+                        background:
+                          "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+                        border: "none",
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box display="flex" alignItems="center" gap={1} mb={2}>
+                          <Box
+                            sx={{
+                              p: 1,
+                              borderRadius: 1.5,
+                              bgcolor: "primary.main",
+                              color: "white",
+                            }}
+                          >
+                            <PersonIcon sx={{ fontSize: 20 }} />
+                          </Box>
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight="600"
+                            color="primary.main"
+                          >
+                            Thông tin cá nhân
+                          </Typography>
+                        </Box>
+                        <Stack spacing={2}>
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 1.5,
+                              bgcolor: "white",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              mb={0.5}
+                            >
+                              <PersonIcon
+                                sx={{ fontSize: 16, color: "primary.main" }}
+                              />
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight="500"
+                                textTransform="uppercase"
+                                letterSpacing={0.5}
+                              >
+                                Họ và tên
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight="500"
+                              color="text.primary"
+                            >
+                              {selectedCustomer.name || "Chưa cập nhật"}
+                            </Typography>
+                          </Box>
 
-                    {/* <button className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
-                      <Edit className="h-5 w-5" />
-                      <span>Chỉnh sửa thông tin</span>
-                    </button> */}
-                  </div>
-                </div>
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 1.5,
+                              bgcolor: "white",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              mb={0.5}
+                            >
+                              <EmailIcon
+                                sx={{ fontSize: 16, color: "info.main" }}
+                              />
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight="500"
+                                textTransform="uppercase"
+                                letterSpacing={0.5}
+                              >
+                                Email
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight="500"
+                              color="text.primary"
+                            >
+                              {selectedCustomer.email || "Chưa cập nhật"}
+                            </Typography>
+                          </Box>
 
-                {/* Activity History */}
-                <div className="lg:col-span-2">
-                  <div className="space-y-5">
-                    {/* Test Drives */}
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border-2 border-blue-100 shadow-sm">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <Calendar className="h-5 w-5 text-blue-600" />
-                        <h3 className="text-lg font-bold text-gray-900">
-                          Lịch sử lái thử
-                        </h3>
-                      </div>
-                      <div className="bg-white rounded-lg p-4">
-                        <p className="text-gray-600 text-center py-6">
-                          Chưa có lịch lái thử nào
-                        </p>
-                        <button className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
-                          <Plus className="h-5 w-5" />
-                          <span>Đặt lịch lái thử mới</span>
-                        </button>
-                      </div>
-                    </div>
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 1.5,
+                              bgcolor: "white",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              mb={0.5}
+                            >
+                              <PhoneIcon
+                                sx={{ fontSize: 16, color: "success.main" }}
+                              />
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight="500"
+                                textTransform="uppercase"
+                                letterSpacing={0.5}
+                              >
+                                Số điện thoại
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight="500"
+                              color="text.primary"
+                            >
+                              {selectedCustomer.phone || "Chưa cập nhật"}
+                            </Typography>
+                          </Box>
 
-                    {/* Orders */}
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border-2 border-green-100 shadow-sm">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <ShoppingCart className="h-5 w-5 text-green-600" />
-                        <h3 className="text-lg font-bold text-gray-900">
-                          Lịch sử đơn hàng
-                        </h3>
-                      </div>
-                      <div className="bg-white rounded-lg p-4">
-                        <p className="text-gray-600 text-center py-6">
-                          Chưa có đơn hàng nào
-                        </p>
-                        <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
-                          <Plus className="h-5 w-5" />
-                          <span>Tạo đơn hàng mới</span>
-                        </button>
-                      </div>
-                    </div>
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 1.5,
+                              bgcolor: "white",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              mb={0.5}
+                            >
+                              <LocationOnIcon
+                                sx={{ fontSize: 16, color: "warning.main" }}
+                              />
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight="500"
+                                textTransform="uppercase"
+                                letterSpacing={0.5}
+                              >
+                                Địa chỉ
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight="500"
+                              color="text.primary"
+                            >
+                              {selectedCustomer.address || "Chưa cập nhật"}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  </Box>
 
-                    {/* Feedback */}
-                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border-2 border-amber-100 shadow-sm">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <MessageCircle className="h-5 w-5 text-amber-600" />
-                        <h3 className="text-lg font-bold text-gray-900">
-                          Phản hồi & Khiếu nại
-                        </h3>
-                      </div>
-                      <div className="bg-white rounded-lg p-4">
-                        <p className="text-gray-600 text-center py-6">
-                          Chưa có phản hồi nào
-                        </p>
-                        <button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
-                          <Plus className="h-5 w-5" />
-                          <span>Ghi nhận phản hồi</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                  {/* Right Column - Status & Notes */}
+                  <Box flex={{ xs: "1", lg: "0 0 50%" }}>
+                    <Stack spacing={2}>
+                      {/* Status Card */}
+                      <Card
+                        sx={{
+                          background:
+                            "linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%)",
+                          border: "1px solid",
+                          borderColor: "success.light",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        }}
+                      >
+                        <CardContent sx={{ p: 2.5 }}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            mb={1.5}
+                          >
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: 1.5,
+                                bgcolor: "success.main",
+                                color: "white",
+                              }}
+                            >
+                              <VisibilityIcon sx={{ fontSize: 20 }} />
+                            </Box>
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight="600"
+                              color="success.dark"
+                            >
+                              Trạng thái khách hàng
+                            </Typography>
+                          </Box>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: "success.main",
+                              }}
+                            />
+                            <Typography
+                              variant="body2"
+                              fontWeight="500"
+                              color="success.dark"
+                            >
+                              Đang hoạt động
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+
+                      {/* Notes Card */}
+                      <Card
+                        sx={{
+                          background:
+                            "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+                          border: "1px solid",
+                          borderColor: "grey.300",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                          flex: 1,
+                        }}
+                      >
+                        <CardContent sx={{ p: 2.5 }}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            mb={1.5}
+                          >
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: 1.5,
+                                bgcolor: "primary.main",
+                                color: "white",
+                              }}
+                            >
+                              <EditIcon sx={{ fontSize: 20 }} />
+                            </Box>
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight="600"
+                              color="primary.main"
+                            >
+                              Ghi chú
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 1.5,
+                              bgcolor: "white",
+                              border: "1px solid",
+                              borderColor: "grey.200",
+                              minHeight: 100,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              fontStyle="italic"
+                            >
+                              Chưa có ghi chú nào cho khách hàng này
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+
+                      {/* Quick Actions */}
+                      <Card
+                        sx={{
+                          background:
+                            "linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)",
+                          border: "1px solid",
+                          borderColor: "warning.light",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        }}
+                      >
+                        <CardContent sx={{ p: 2.5 }}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            mb={1.5}
+                          >
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: 1.5,
+                                bgcolor: "warning.main",
+                                color: "white",
+                              }}
+                            >
+                              <CreditCardIcon sx={{ fontSize: 20 }} />
+                            </Box>
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight="600"
+                              color="warning.dark"
+                            >
+                              Thao tác nhanh
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            mb={1}
+                          >
+                            Sử dụng các nút bên dưới để thực hiện các thao tác
+                            nhanh
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Stack>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions
+          sx={{
+            p: 3,
+            bgcolor: "grey.50",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            display: "flex",
+            gap: 2,
+            justifyContent: "space-between",
+          }}
+        >
+          <Box display="flex" gap={1}>
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => {
+                if (selectedCustomer) {
+                  handleEditCustomer(selectedCustomer);
+                }
+              }}
+              sx={{
+                borderColor: "primary.main",
+                color: "primary.main",
+                "&:hover": {
+                  bgcolor: "primary.light",
+                  color: "white",
+                },
+              }}
+            >
+              Chỉnh sửa
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<CreditCardIcon />}
+              onClick={() => {
+                if (selectedCustomer) {
+                  setSelectedCustomerForPayments(selectedCustomer);
+                  loadCustomerPayments(selectedCustomer.id);
+                  setShowPaymentsModal(true);
+                  setSelectedCustomer(null);
+                }
+              }}
+              sx={{
+                borderColor: "success.main",
+                color: "success.main",
+                "&:hover": {
+                  bgcolor: "success.light",
+                  color: "white",
+                },
+              }}
+            >
+              Xem thanh toán
+            </Button>
+          </Box>
+          <Button
+            onClick={() => setSelectedCustomer(null)}
+            variant="contained"
+            sx={{
+              bgcolor: "grey.600",
+              "&:hover": { bgcolor: "grey.700" },
+            }}
+          >
+            Đóng
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add Schedule Modal */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 p-6 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
-                    <Calendar className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Đặt lịch cho khách hàng
-                    </h2>
-                    <p className="text-cyan-100 text-sm mt-1">
-                      Chọn xe để đặt lịch lái thử
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowScheduleModal(false)}
-                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
+      <Dialog
+        open={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: "info.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <EventIcon />
+            <Typography variant="h6" component="span">
+              Đặt lịch cho khách hàng
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={() => setShowScheduleModal(false)}
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleScheduleSubmit} id="schedule-form">
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              {/* Vehicle Type Selection */}
+              <FormControl component="fieldset">
+                <FormLabel component="legend" required>
+                  Loại xe
+                </FormLabel>
+                <RadioGroup
+                  row
+                  value={scheduleForm.vehicleType}
+                  onChange={(e) =>
+                    setScheduleForm({
+                      ...scheduleForm,
+                      vehicleType: e.target.value,
+                      vehicleId: "",
+                    })
+                  }
                 >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
+                  <FormControlLabel
+                    value="car"
+                    control={<Radio />}
+                    label="Ô tô điện"
+                  />
+                  <FormControlLabel
+                    value="motorbike"
+                    control={<Radio />}
+                    label="Xe máy điện"
+                  />
+                </RadioGroup>
+              </FormControl>
 
-            <div className="p-6">
-              <form onSubmit={handleScheduleSubmit} className="space-y-5">
-                {/* Vehicle Type Selection */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                    <span className="text-red-500 mr-1">*</span>
-                    Loại xe
-                  </label>
-                  <div className="flex space-x-4">
-                    <label className="flex-1">
-                      <input
-                        type="radio"
-                        name="vehicleType"
-                        value="car"
-                        checked={scheduleForm.vehicleType === "car"}
-                        onChange={(e) =>
-                          setScheduleForm({
-                            ...scheduleForm,
-                            vehicleType: e.target.value,
-                            vehicleId: "",
-                          })
-                        }
-                        className="peer sr-only"
-                      />
-                      <div className="cursor-pointer border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-cyan-500 peer-checked:bg-cyan-50 hover:border-gray-300 transition-all duration-200">
-                        <span className="font-semibold text-gray-700">Ô tô điện</span>
-                      </div>
-                    </label>
-                    <label className="flex-1">
-                      <input
-                        type="radio"
-                        name="vehicleType"
-                        value="motorbike"
-                        checked={scheduleForm.vehicleType === "motorbike"}
-                        onChange={(e) =>
-                          setScheduleForm({
-                            ...scheduleForm,
-                            vehicleType: e.target.value,
-                            vehicleId: "",
-                          })
-                        }
-                        className="peer sr-only"
-                      />
-                      <div className="cursor-pointer border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-cyan-500 peer-checked:bg-cyan-50 hover:border-gray-300 transition-all duration-200">
-                        <span className="font-semibold text-gray-700">Xe máy điện</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Vehicle Selection */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span className="text-red-500 mr-1">*</span>
-                    Chọn xe
-                  </label>
-                  <select
-                    required
-                    value={scheduleForm.vehicleId}
-                    onChange={(e) =>
-                      setScheduleForm({
-                        ...scheduleForm,
-                        vehicleId: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200 hover:border-gray-300"
-                  >
-                    <option value="">Chọn xe</option>
-                    {scheduleForm.vehicleType === "car"
-                      ? mockVehicles.map((vehicle) => (
-                          <option key={vehicle.id} value={vehicle.id}>
-                            {vehicle.model} - {vehicle.version}
-                          </option>
-                        ))
-                      : mockMotorbikes.map((vehicle) => (
-                          <option key={vehicle.id} value={vehicle.id}>
-                            {vehicle.model} - {vehicle.version}
-                          </option>
-                        ))}
-                  </select>
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => setShowScheduleModal(false)}
-                    className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                  >
-                    Tiếp tục
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+              {/* Vehicle Selection */}
+              <FormControl fullWidth required>
+                <InputLabel>Chọn xe</InputLabel>
+                <Select
+                  value={scheduleForm.vehicleId}
+                  onChange={(e) =>
+                    setScheduleForm({
+                      ...scheduleForm,
+                      vehicleId: e.target.value,
+                    })
+                  }
+                  label="Chọn xe"
+                >
+                  <MenuItem value="">
+                    <em>Chọn xe</em>
+                  </MenuItem>
+                  {scheduleForm.vehicleType === "car"
+                    ? mockVehicles.map((vehicle) => (
+                        <MenuItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.model} - {vehicle.version}
+                        </MenuItem>
+                      ))
+                    : mockMotorbikes.map((vehicle) => (
+                        <MenuItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.model} - {vehicle.version}
+                        </MenuItem>
+                      ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          </form>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowScheduleModal(false)}>Hủy</Button>
+          <Button
+            type="submit"
+            form="schedule-form"
+            variant="contained"
+            color="info"
+            startIcon={<EventIcon />}
+          >
+            Tiếp tục
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Customer Payments Modal */}
-      {showPaymentsModal && selectedCustomerForPayments && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-6 rounded-t-2xl sticky top-0 z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-3 rounded-xl">
-                    <CreditCard className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Lịch sử thanh toán
-                    </h2>
-                    <p className="text-amber-100 text-sm mt-1">
-                      {selectedCustomerForPayments.name}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowPaymentsModal(false);
-                    setSelectedCustomerPayments([]);
-                    setSelectedCustomerForPayments(null);
-                  }}
-                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all duration-200"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {!selectedCustomerPayments ||
-              selectedCustomerPayments.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                    <CreditCard className="h-12 w-12 text-amber-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    Chưa có thanh toán nào
-                  </h3>
-                  <p className="text-gray-500">
-                    Khách hàng này chưa có giao dịch thanh toán nào trong hệ
-                    thống.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {(selectedCustomerPayments || []).map((payment, index) => (
-                    <div
-                      key={index}
-                      className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 rounded-xl p-5 hover:shadow-lg transition-all duration-200"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-3">
-                            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-2 rounded-lg">
-                              <CreditCard className="h-5 w-5 text-white" />
-                            </div>
-                            <h4 className="font-bold text-gray-900 text-lg">
-                              Thanh toán #{payment?.id || index + 1}
-                            </h4>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 ml-11">
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Ngày thanh toán</p>
-                              <p className="text-sm font-semibold text-gray-700">
-                                {payment?.date || "N/A"}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Phương thức</p>
-                              <p className="text-sm font-semibold text-gray-700">
-                                {payment?.method || "N/A"}
-                              </p>
-                            </div>
-                          </div>
-                          {payment?.description && (
-                            <p className="text-sm text-gray-600 mt-3 ml-11">
-                              {payment.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right ml-4">
-                          <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-                            {payment?.amount
-                              ? `${payment.amount.toLocaleString()} ₫`
-                              : "N/A"}
-                          </p>
-                          <span
-                            className={`inline-flex px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm ${
-                              payment?.status === "completed"
-                                ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
-                                : payment?.status === "pending"
-                                ? "bg-gradient-to-r from-yellow-500 to-amber-600 text-white"
-                                : "bg-gradient-to-r from-red-500 to-rose-600 text-white"
-                            }`}
-                          >
-                            {payment?.status === "completed"
-                              ? "✓ Hoàn thành"
-                              : payment?.status === "pending"
-                              ? "⏳ Đang xử lý"
-                              : "✗ Thất bại"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      <Dialog
+        open={showPaymentsModal}
+        onClose={() => {
+          setShowPaymentsModal(false);
+          setSelectedCustomerPayments([]);
+          setSelectedCustomerForPayments(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: "warning.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <CreditCardIcon />
+            <Box>
+              <Typography variant="h6" component="span">
+                Lịch sử thanh toán
+              </Typography>
+              {selectedCustomerForPayments && (
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  {selectedCustomerForPayments.name}
+                </Typography>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </Box>
+          </Box>
+          <IconButton
+            onClick={() => {
+              setShowPaymentsModal(false);
+              setSelectedCustomerPayments([]);
+              setSelectedCustomerForPayments(null);
+            }}
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {!selectedCustomerPayments ||
+          selectedCustomerPayments.length === 0 ? (
+            <Box textAlign="center" py={8}>
+              <Box
+                sx={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: "50%",
+                  bgcolor: "warning.light",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
+                  mb: 2,
+                }}
+              >
+                <CreditCardIcon sx={{ fontSize: 48, color: "warning.main" }} />
+              </Box>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Chưa có thanh toán nào
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Khách hàng này chưa có giao dịch thanh toán nào trong hệ thống.
+              </Typography>
+            </Box>
+          ) : (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              {selectedCustomerPayments.map((payment, index) => (
+                <Card key={index} variant="outlined">
+                  <CardContent>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                    >
+                      <Box flex={1}>
+                        <Box display="flex" alignItems="center" gap={1} mb={2}>
+                          <CreditCardIcon color="warning" />
+                          <Typography variant="h6" fontWeight="bold">
+                            Thanh toán #{payment?.id || index + 1}
+                          </Typography>
+                        </Box>
+                        <Box
+                          display="flex"
+                          gap={2}
+                          sx={{ ml: 4 }}
+                          flexDirection={{ xs: "column", sm: "row" }}
+                        >
+                          <Box flex={1}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Ngày thanh toán
+                            </Typography>
+                            <Typography variant="body2" fontWeight="medium">
+                              {payment?.date || "N/A"}
+                            </Typography>
+                          </Box>
+                          <Box flex={1}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Phương thức
+                            </Typography>
+                            <Typography variant="body2" fontWeight="medium">
+                              {payment?.method || "N/A"}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        {payment?.description && (
+                          <Box sx={{ ml: 4, mt: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              {payment.description}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                      <Box textAlign="right" ml={2}>
+                        <Typography
+                          variant="h5"
+                          fontWeight="bold"
+                          color="success.main"
+                          gutterBottom
+                        >
+                          {payment?.amount
+                            ? `${payment.amount.toLocaleString()} ₫`
+                            : "N/A"}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => {
+              setShowPaymentsModal(false);
+              setSelectedCustomerPayments([]);
+              setSelectedCustomerForPayments(null);
+            }}
+          >
+            Đóng
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };

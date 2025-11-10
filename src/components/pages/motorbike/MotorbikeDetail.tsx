@@ -52,6 +52,7 @@ import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
 import { QuotationModal } from '../QuotationModal';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -59,6 +60,7 @@ const { useBreakpoint } = Grid;
 
 export const MotorbikeDetail: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams();
   const [vehicle, setVehicle] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,68 @@ export const MotorbikeDetail: React.FC = () => {
     if (!vehicle) return defaultValue;
     const vehicleObj = vehicle as Record<string, unknown>;
     return vehicleObj[property] || defaultValue;
+  };
+
+  // Helper function to calculate dealer stock from stocks array
+  const getDealerStock = (): number => {
+    if (!vehicle) return 0;
+    
+    try {
+      const v = vehicle as Record<string, unknown>;
+      
+      // Lấy dealership_id từ user hoặc JWT token
+      let dealerId: string | null = null;
+      
+      if (user?.dealership_id) {
+        dealerId = user.dealership_id;
+      } else {
+        // Fallback: lấy từ JWT token
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            dealerId = payload.dealership_id || null;
+          }
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+        }
+      }
+      
+      // Lấy stocks array từ vehicle
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return (v.stock as number) || 0; // Fallback to old stock field
+      }
+      
+      // Nếu không có dealerId, tính tổng tất cả (cho manufacturer/admin)
+      if (!dealerId) {
+        return stocks.reduce((total, stock) => {
+          const remainingQty = stock.remaining_quantity as number || 0;
+          return total + remainingQty;
+        }, 0);
+      }
+      
+      // Lọc stocks của dealer: owner_type === 'dealer', status === 'active', owner_id khớp
+      const dealerStocks = stocks.filter((stock) => {
+        return (
+          stock.owner_type === 'dealer' &&
+          stock.status === 'active' &&
+          stock.owner_id === dealerId
+        );
+      });
+      
+      // Tính tổng remaining_quantity
+      const totalStock = dealerStocks.reduce((sum, stock) => {
+        const remaining = stock.remaining_quantity as number || 0;
+        return sum + remaining;
+      }, 0);
+      
+      return totalStock;
+    } catch (error) {
+      console.error('Error calculating dealer stock:', error);
+      return 0;
+    }
   };
 
   const handleTestDrive = (vehicleId: string) => {
@@ -368,7 +432,7 @@ export const MotorbikeDetail: React.FC = () => {
                       <Col span={12}>
                         <div className="bg-blue-50 p-3 rounded-lg text-center">
                           <AlertCircle className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-                          <Text strong className="block text-sm">{getVehicleProperty('stock', '0')}</Text>
+                          <Text strong className="block text-sm">{getDealerStock()}</Text>
                           <Text type="secondary" className="text-xs">Tồn kho</Text>
                   </div>
                       </Col>
@@ -407,7 +471,7 @@ export const MotorbikeDetail: React.FC = () => {
                   {/* Stock Status */}
                   <div className="mb-6">
                     <Badge 
-                      count={`${getVehicleProperty('stock', '0')} xe có sẵn`} 
+                      count={`${getDealerStock()} xe có sẵn`} 
                       style={{ backgroundColor: '#52c41a' }}
                       className="w-full"
                     />
@@ -415,7 +479,7 @@ export const MotorbikeDetail: React.FC = () => {
 
                   {/* Action Buttons */}
                   <Space direction="vertical" className="w-full" size="middle">
-                    <Button
+                    {/* <Button
                       type="primary"
                       size="large"
                       block
@@ -424,7 +488,7 @@ export const MotorbikeDetail: React.FC = () => {
                       className="bg-black hover:bg-gray-800 border-black h-12"
                     >
                       Đặt cọc ngay
-                    </Button>
+                    </Button> */}
                     <Button
                       size="large"
                       block
@@ -483,10 +547,10 @@ export const MotorbikeDetail: React.FC = () => {
                     <Col xs={24} md={12}>
                       <Title level={4}>Thông tin bổ sung</Title>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 text-center">
+                        {/* <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 text-center">
                           <div className="text-lg font-bold text-gray-800 mb-1">{getVehicleProperty('battery_type', 'N/A') as string}</div>
                           <p className="text-gray-600 text-sm font-medium">Loại pin</p>
-                        </div>
+                        </div> */}
                         <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 text-center">
                           <div className="text-lg font-bold text-blue-600 mb-1">{getVehicleProperty('charging_slow', '0')}h</div>
                           <p className="text-gray-600 text-sm font-medium">Sạc chậm</p>
@@ -541,8 +605,8 @@ export const MotorbikeDetail: React.FC = () => {
                     </Descriptions.Item>
                     <Descriptions.Item label="Tình trạng kho">
                       <Badge 
-                        status={Number(getVehicleProperty('stock', 0)) > 0 ? 'success' : 'error'}
-                        text={`${getVehicleProperty('stock', '0')} xe`}
+                        status={getDealerStock() > 0 ? 'success' : 'error'}
+                        text={`${getDealerStock()} xe`}
                       />
                     </Descriptions.Item>
                   </Descriptions>
@@ -568,18 +632,18 @@ export const MotorbikeDetail: React.FC = () => {
             <div className="mt-8 mb-10 bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white text-center shadow-xl">
               <Title level={2} className="text-white mb-4">Sẵn sàng trải nghiệm {getVehicleProperty('model', 'xe máy điện') as string}?</Title>
               <Paragraph className="text-blue-100 mb-6 text-lg">
-                Đặt lịch lái thử hoặc đặt cọc ngay hôm nay để nhận ưu đãi đặc biệt
+                Đặt lịch lái thử hoặc tạo báo giá ngay hôm nay để nhận ưu đãi đặc biệt
               </Paragraph>
               
               <Space size="large" wrap>
-                <Button
+                {/* <Button
                   type="primary"
                   size="large"
                   onClick={() => handleDeposit(id || '')}
                   className="bg-white text-blue-700 border-none hover:bg-blue-50 h-12 px-8 font-semibold"
                 >
                   Đặt cọc ngay
-                </Button>
+                </Button> */}
                 <Button
                   size="large"
                   onClick={() => handleTestDrive(id || '')}

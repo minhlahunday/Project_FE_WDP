@@ -8,6 +8,17 @@ import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService } from '../../../services/authService';
 
+// Helper function to translate status from English to Vietnamese
+const translateStatus = (status: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'available': 'Có sẵn',
+    'coming_soon': 'Sắp ra mắt',
+    'discontinued': 'Ngừng sản xuất',
+    'out_of_stock': 'Hết hàng'
+  };
+  return statusMap[status] || status;
+};
+
 export const CompareMotorbikes: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -322,14 +333,15 @@ export const CompareMotorbikes: React.FC = () => {
                       <td className="p-6 font-medium text-gray-900">Trạng thái</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
+                        const status = v.release_status as string;
                         return (
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              v.release_status === 'available' ? 'bg-green-100 text-green-800' :
-                              v.release_status === 'coming_soon' ? 'bg-yellow-100 text-yellow-800' :
+                              status === 'available' ? 'bg-green-100 text-green-800' :
+                              status === 'coming_soon' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {v.release_status as string}
+                              {translateStatus(status)}
                             </span>
                           </td>
                         );
@@ -362,7 +374,7 @@ export const CompareMotorbikes: React.FC = () => {
 
                     {/* Battery & Charging */}
                     <tr className="hover:bg-gray-50 bg-green-50">
-                      <td className="p-6 font-bold text-green-900">🔋 PIN & SẠC</td>
+                      <td className="p-6 font-bold text-green-900"> PIN & SẠC</td>
                       <td></td>
                       <td></td>
                     </tr>
@@ -432,7 +444,7 @@ export const CompareMotorbikes: React.FC = () => {
 
                     {/* Performance */}
                     <tr className="hover:bg-gray-50 bg-yellow-50">
-                      <td className="p-6 font-bold text-yellow-900">⚡ HIỆU SUẤT</td>
+                      <td className="p-6 font-bold text-yellow-900"> HIỆU SUẤT</td>
                       <td></td>
                       <td></td>
                     </tr>
@@ -475,11 +487,11 @@ export const CompareMotorbikes: React.FC = () => {
 
                     {/* Dimensions & Weight */}
                     <tr className="hover:bg-gray-50 bg-purple-50">
-                      <td className="p-6 font-bold text-purple-900">📏 KÍCH THƯỚC & TRỌNG LƯỢNG</td>
+                      <td className="p-6 font-bold text-purple-900"> KÍCH THƯỚC & TRỌNG LƯỢNG</td>
                       <td></td>
                       <td></td>
                     </tr>
-                    <tr className="hover:bg-gray-50">
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Chiều dài</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -488,8 +500,8 @@ export const CompareMotorbikes: React.FC = () => {
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">{dimensions?.length as number || 0} mm</td>
                         );
                       })}
-                    </tr>
-                    <tr className="hover:bg-gray-50">
+                    </tr> */}
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Chiều rộng</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -498,8 +510,8 @@ export const CompareMotorbikes: React.FC = () => {
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">{dimensions?.width as number || 0} mm</td>
                         );
                       })}
-                    </tr>
-                    <tr className="hover:bg-gray-50">
+                    </tr> */}
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Chiều cao</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -508,7 +520,7 @@ export const CompareMotorbikes: React.FC = () => {
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">{dimensions?.height as number || 0} mm</td>
                         );
                       })}
-                    </tr>
+                    </tr> */}
                     {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Chiều dài cơ sở</td>
                       {selectedModels.map((vehicle, index) => {
@@ -558,12 +570,12 @@ export const CompareMotorbikes: React.FC = () => {
                     </tr> */}
 
                     {/* Features */}
-                    <tr className="hover:bg-gray-50 bg-indigo-50">
-                      <td className="p-6 font-bold text-indigo-900">🎯 TÍNH NĂNG</td>
+                    {/* <tr className="hover:bg-gray-50 bg-indigo-50">
+                      <td className="p-6 font-bold text-indigo-900"> TÍNH NĂNG</td>
                       <td></td>
                       <td></td>
-                    </tr>
-                    <tr className="hover:bg-gray-50">
+                    </tr> */}
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Kích thước lốp</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -571,8 +583,8 @@ export const CompareMotorbikes: React.FC = () => {
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">{v.tire_size as string}</td>
                         );
                       })}
-                    </tr>
-                    <tr className="hover:bg-gray-50">
+                    </tr> */}
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Loại cốp</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -580,8 +592,8 @@ export const CompareMotorbikes: React.FC = () => {
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">{v.trunk_type as string}</td>
                         );
                       })}
-                    </tr>
-                    <tr className="hover:bg-gray-50">
+                    </tr> */}
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Chế độ lái</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -592,8 +604,8 @@ export const CompareMotorbikes: React.FC = () => {
                           </td>
                         );
                       })}
-                    </tr>
-                    <tr className="hover:bg-gray-50">
+                    </tr> */}
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Phiên bản phần mềm</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -601,7 +613,7 @@ export const CompareMotorbikes: React.FC = () => {
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">{v.software_version as string || 'Chưa có'}</td>
                         );
                       })}
-                    </tr>
+                    </tr> */}
                     <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Cập nhật OTA</td>
                       {selectedModels.map((vehicle, index) => {
@@ -716,12 +728,12 @@ export const CompareMotorbikes: React.FC = () => {
                       >
                           Xem {v.name as string}
                       </button>
-                      <button
+                      {/* <button
                           onClick={() => navigate(`/portal/motorbike-deposit?vehicleId=${v._id as string || v.id as string}`)}
                         className="flex-1 bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
                       >
                           Đặt {v.name as string}
-                      </button>
+                      </button> */}
                     </div>
                     );
                   })}

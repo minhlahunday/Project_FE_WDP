@@ -34,6 +34,7 @@ import { PromotionsDashboard } from "./components/PromotionsDashboard";
 import { SalesManagement } from "./components/pages/Dealerstaff/SalesManagementNew";
 import { QuotationManagement } from "./components/pages/Dealerstaff/QuotationManagement";
 import { CustomerManagement as DealerCustomerManagement } from "./components/pages/Dealerstaff/CustomerManagement";
+import { DealerStockManagement } from "./components/pages/Dealerstaff/DealerStockManagement";
 import TestAPI from "./components/pages/TestAPI";
 
 // Order Management Components
@@ -43,6 +44,7 @@ import { QuoteToOrderPageMUI } from "./components/pages/QuoteToOrderPageMUI";
 import { PaymentManagementPage } from "./components/pages/PaymentManagementPage";
 import DebtManagement from "./components/pages/DebtManagement";
 import { OrderRequestManagement } from "./components/pages/OrderRequestManagement";
+import { DealerRequestManagement } from "./components/pages/DealerRequestManagement";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -92,6 +94,7 @@ function AppContent() {
       <Route path="/portal/sales" element={<SalesManagement />} />
       <Route path="/portal/quotations" element={<QuotationManagement />} />
       <Route path="/portal/customers" element={<DealerCustomerManagement />} />
+      <Route path="/portal/dealer-stock" element={<DealerStockManagement />} />
 
       {/* Admin routes */}
 
@@ -116,6 +119,10 @@ function AppContent() {
       <Route
         path="/portal/order-requests"
         element={<OrderRequestManagement />}
+      />
+      <Route
+        path="/portal/dealer-requests"
+        element={<DealerRequestManagement />}
       />
       <Route path="/portal/quote-to-order" element={<QuoteToOrderPageMUI />} />
       <Route path="/portal/payments" element={<PaymentManagementPage />} />
@@ -142,10 +149,7 @@ function AppContent() {
         path="/evm/promotion-management"
         element={<PromotionManagement />}
       />
-      <Route
-        path="/evm/request-management"
-        element={<RequestManagement />}
-      />
+      <Route path="/evm/request-management" element={<RequestManagement />} />
       <Route
         path="/evm/manufacturer-debt-management"
         element={<ManufacturerDebtManagement />}

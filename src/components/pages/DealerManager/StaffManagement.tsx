@@ -1,25 +1,61 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  UserCheck, 
-  UserX, 
-  X, 
-  Eye, 
-  Users as UsersIcon, 
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  Settings,
-  Shield,
-  Info,
-  Camera,
-  Users,
-  Mail,
-  Phone
-} from 'lucide-react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Chip,
+  Pagination,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Tooltip,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Snackbar,
+  Alert,
+  Avatar,
+  Stack,
+  Divider,
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  LocationOn as LocationOnIcon,
+  Close as CloseIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  Block as BlockIcon,
+  LockOpen as LockOpenIcon,
+  People as PeopleIcon,
+  AccessTime as AccessTimeIcon,
+  Settings as SettingsIcon,
+  Shield as ShieldIcon,
+  Info as InfoIcon,
+  CameraAlt as CameraAltIcon,
+  Business as BusinessIcon,
+  CalendarToday as CalendarTodayIcon,
+} from '@mui/icons-material';
 import { Header } from '../../common/Header';
 import { Sidebar } from '../../common/Sidebar';
 import { authService, CreateUserRequest, UpdateUserRequest, UserFilters } from '../../../services/authService';
@@ -70,8 +106,6 @@ export const StaffManagement: React.FC = () => {
     avatar: null as File | null
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,6 +115,26 @@ export const StaffManagement: React.FC = () => {
 
   // Roles state
   const [availableRoles, setAvailableRoles] = useState<{ value: string; label: string }[]>([]);
+
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
+
+  // Helper function to show snackbar (memoized to prevent infinite loops)
+  const showSnackbarMessage = useCallback((message: string, severity: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
+
+  const handleSnackbarClose = useCallback(() => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  }, []);
 
   // Load roles from API
   const loadRoles = useCallback(async () => {
@@ -192,7 +246,7 @@ export const StaffManagement: React.FC = () => {
         
         if (!Array.isArray(usersArray)) {
           console.error('❌ Users data is not an array:', usersArray);
-          setError('Dữ liệu users từ API không đúng định dạng');
+          showSnackbarMessage('Dữ liệu users từ API không đúng định dạng', 'error');
           return;
         }
         
@@ -219,11 +273,11 @@ export const StaffManagement: React.FC = () => {
         setTotalUsers(paginationData.totalRecords as number || 0);
       } else {
         console.log('❌ API response failed:', response);
-        setError(response.message || 'Không thể tải danh sách nhân viên');
+        showSnackbarMessage(response.message || 'Không thể tải danh sách nhân viên', 'error');
       }
     } catch (err: unknown) {
       console.error('❌ Error loading users:', err);
-      setError((err as Error).message || 'Có lỗi xảy ra khi tải danh sách nhân viên');
+      showSnackbarMessage((err as Error).message || 'Có lỗi xảy ra khi tải danh sách nhân viên', 'error');
     } finally {
       setLoading(false);
     }
@@ -246,15 +300,18 @@ export const StaffManagement: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: 'Active', color: 'bg-green-100 text-green-800' },
-      inactive: { label: 'Block', color: 'bg-red-100 text-red-800' },
+      active: { label: 'Hoạt động', color: 'success' as const },
+      inactive: { label: 'Bị khóa', color: 'error' as const },
+      pending: { label: 'Chờ duyệt', color: 'warning' as const },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig];
+    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, color: 'default' as const };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
-        {config.label}
-      </span>
+      <Chip 
+        label={config.label} 
+        color={config.color}
+        size="small"
+      />
     );
   };
 
@@ -270,8 +327,6 @@ export const StaffManagement: React.FC = () => {
       manufacturerId: '',
       avatar: null
     });
-    setError(null);
-    setSuccess(null);
     setShowAddModal(true);
   };
 
@@ -288,8 +343,6 @@ export const StaffManagement: React.FC = () => {
       manufacturerId: '', // Dealer Manager không thể thay đổi manufacturer
       avatar: null
     });
-    setError(null);
-    setSuccess(null);
     setShowEditModal(true);
   };
 
@@ -347,24 +400,22 @@ export const StaffManagement: React.FC = () => {
         setDetailStaff(updatedStaff);
       } else {
         console.log('❌ Failed to load staff detail:', result.message);
-        setError(result.message || 'Không thể tải thông tin chi tiết');
+        showSnackbarMessage(result.message || 'Không thể tải thông tin chi tiết', 'error');
       }
     } catch (error) {
       console.error('❌ Error loading staff detail:', error);
-      setError('Có lỗi xảy ra khi tải thông tin chi tiết');
+      showSnackbarMessage('Có lỗi xảy ra khi tải thông tin chi tiết', 'error');
     }
   };
 
   const handleSaveNewStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       // Validate required fields
       if (!newStaff.roleId) {
-        setError('Vui lòng chọn vai trò cho nhân viên');
+        showSnackbarMessage('Vui lòng chọn vai trò cho nhân viên', 'error');
         setLoading(false);
         return;
       }
@@ -391,7 +442,7 @@ export const StaffManagement: React.FC = () => {
       const result = await authService.createUser(createData);
 
       if (result.success) {
-        setSuccess('Tạo nhân viên thành công!');
+        showSnackbarMessage('Tạo nhân viên thành công!', 'success');
         
         // Reload users list
         await loadUsers();
@@ -409,17 +460,14 @@ export const StaffManagement: React.FC = () => {
           avatar: null
         });
         
-        // Đóng modal sau 2 giây
-        setTimeout(() => {
-          setShowAddModal(false);
-          setSuccess(null);
-        }, 2000);
+        // Đóng modal
+        setShowAddModal(false);
       } else {
-        setError(result.message);
+        showSnackbarMessage(result.message || 'Không thể tạo nhân viên', 'error');
       }
     } catch (err: unknown) {
       console.error('❌ Error creating user:', err);
-      setError((err as Error).message || 'Có lỗi xảy ra khi tạo nhân viên');
+      showSnackbarMessage((err as Error).message || 'Có lỗi xảy ra khi tạo nhân viên', 'error');
     } finally {
       setLoading(false);
     }
@@ -430,8 +478,6 @@ export const StaffManagement: React.FC = () => {
     if (!editingStaff) return;
     
     setLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       // Chuẩn bị dữ liệu cho API update
@@ -451,7 +497,7 @@ export const StaffManagement: React.FC = () => {
       const result = await authService.updateUser(editingStaff.id, updateData);
 
       if (result.success) {
-        setSuccess('Cập nhật nhân viên thành công!');
+        showSnackbarMessage('Cập nhật nhân viên thành công!', 'success');
         
         // Reload users list
         await loadUsers();
@@ -469,24 +515,21 @@ export const StaffManagement: React.FC = () => {
           avatar: null
         });
         
-        // Đóng modal sau 2 giây
-        setTimeout(() => {
-          setShowEditModal(false);
-          setEditingStaff(null);
-          setSuccess(null);
-        }, 2000);
+        // Đóng modal
+        setShowEditModal(false);
+        setEditingStaff(null);
       } else {
-        setError(result.message);
+        showSnackbarMessage(result.message || 'Không thể cập nhật nhân viên', 'error');
       }
     } catch (err: unknown) {
       console.error('❌ Error updating user:', err);
-      setError((err as Error).message || 'Có lỗi xảy ra khi cập nhật nhân viên');
+      showSnackbarMessage((err as Error).message || 'Có lỗi xảy ra khi cập nhật nhân viên', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
     if (type === 'file') {
@@ -503,6 +546,29 @@ export const StaffManagement: React.FC = () => {
     }
   };
 
+  const handleTextFieldChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewStaff(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
+
+  const handleEditTextFieldChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (editingStaff) {
+      setEditingStaff(prev => ({
+        ...prev!,
+        [field]: e.target.value
+      }));
+    }
+  };
+
+  const handleSelectChange = (field: string) => (e: { target: { value: unknown } }) => {
+    setNewStaff(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
+
   const handleDeleteStaff = async (staffId: string) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
       setLoading(true);
@@ -510,13 +576,13 @@ export const StaffManagement: React.FC = () => {
         const result = await authService.deleteUser(staffId);
         
         if (result.success) {
-          setSuccess('Xóa nhân viên thành công!');
+          showSnackbarMessage('Xóa nhân viên thành công!', 'success');
           await loadUsers(); // Reload the list
         } else {
-          setError(result.message);
+          showSnackbarMessage(result.message || 'Không thể xóa nhân viên', 'error');
         }
       } catch (err: unknown) {
-        setError((err as Error).message || 'Có lỗi xảy ra khi xóa nhân viên');
+        showSnackbarMessage((err as Error).message || 'Có lỗi xảy ra khi xóa nhân viên', 'error');
       } finally {
         setLoading(false);
       }
@@ -537,8 +603,17 @@ export const StaffManagement: React.FC = () => {
     // Có thể implement navigation logic ở đây nếu cần
   };
 
+  const handleSearch = () => {
+    setCurrentPage(1);
+    loadUsers();
+  };
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Sidebar */}
       <Sidebar
         activeSection="staff-management"
@@ -549,1401 +624,870 @@ export const StaffManagement: React.FC = () => {
       />
       
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${
-        sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
-      }`}>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          ml: { lg: sidebarOpen ? '280px' : '70px' },
+          transition: 'margin-left 0.3s',
+        }}
+      >
         {/* Header */}
-        <div className="fixed top-0 right-0 left-0 z-30 lg:left-16">
-          <div className={`transition-all duration-300 ${
-            sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
-          }`}>
-            <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-          </div>
-        </div>
+        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto pt-16">
-          <div className="p-6 pt-0">
-            {/* Page Header */}
-            <div className="mb-6">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl shadow-xl p-8 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-4xl font-bold mb-2">Quản lý nhân viên</h1>
-                    <p className="text-indigo-100 text-lg">Quản lý thông tin nhân viên trong đại lý của bạn</p>
-                  </div>
-                  <div className="hidden md:flex items-center space-x-3">
-                    <button
-                      onClick={handleAddStaff}
-                      className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 shadow-lg transition-all duration-200 hover:scale-105"
-                    >
-                      <Plus className="h-5 w-5" />
-                      <span>Thêm nhân viên</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <Box sx={{ flex: 1, overflowY: 'auto', p: 3, pt: 2 }}>
+          {/* Page Header */}
+          <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                <Box>
+                  <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 1 }}>
+                    Quản lý nhân viên
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                    Quản lý thông tin nhân viên trong đại lý của bạn
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddStaff}
+                  sx={{
+                    bgcolor: 'white',
+                    color: '#667eea',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    },
+                  }}
+                >
+                  Thêm nhân viên
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
 
-            {/* Search Bar */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-              <div className="flex items-center space-x-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
+          {/* Search Bar */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Box sx={{ position: 'relative', flex: 1 }}>
+                  <SearchIcon
+                    sx={{
+                      position: 'absolute',
+                      left: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'text.secondary',
+                    }}
+                  />
+                  <TextField
+                    fullWidth
                     placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-lg"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        pl: 5,
+                      },
+                    }}
                   />
-                </div>
-                <button className="md:hidden bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-4 rounded-xl font-semibold flex items-center space-x-2 shadow-lg transition-all duration-200">
-                  <Plus className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
+                </Box>
+                <Button
+                  variant="contained"
+                  startIcon={<SearchIcon />}
+                  onClick={handleSearch}
+                  sx={{ minWidth: 120 }}
+                >
+                  Tìm kiếm
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 text-sm font-medium mb-1">Tổng nhân viên</p>
-                    <p className="text-4xl font-bold">{totalUsers}</p>
-                  </div>
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
-                    <Users className="h-8 w-8" />
-                  </div>
-                </div>
-              </div>
+          {/* Stats Cards */}
+          <Stack direction="row" spacing={3} sx={{ mb: 3, flexWrap: 'wrap' }}>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
+              <Card sx={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
+                        Tổng nhân viên
+                      </Typography>
+                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                        {totalUsers}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
+                      <PeopleIcon sx={{ fontSize: 32 }} />
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
+              <Card sx={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
+                        Đang hoạt động
+                      </Typography>
+                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                        {staffList.filter(s => s.status === 'active').length}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
+                      <CheckCircleIcon sx={{ fontSize: 32 }} />
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
+              <Card sx={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
+                        Bị khóa
+                      </Typography>
+                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                        {staffList.filter(s => s.status === 'inactive').length}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
+                      <BlockIcon sx={{ fontSize: 32 }} />
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
+              <Card sx={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
+                        Chờ duyệt
+                      </Typography>
+                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                        {staffList.filter(s => s.status === 'pending').length}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
+                      <AccessTimeIcon sx={{ fontSize: 32 }} />
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Stack>
 
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100 text-sm font-medium mb-1">Đang hoạt động</p>
-                    <p className="text-4xl font-bold">
-                      {staffList.filter(s => s.status === 'active').length}
-                    </p>
-                  </div>
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
-                    <UserCheck className="h-8 w-8" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-red-100 text-sm font-medium mb-1">Bị khóa</p>
-                    <p className="text-4xl font-bold">
-                      {staffList.filter(s => s.status === 'inactive').length}
-                    </p>
-                  </div>
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
-                    <UserX className="h-8 w-8" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-amber-100 text-sm font-medium mb-1">Chờ duyệt</p>
-                    <p className="text-4xl font-bold">
-                      {staffList.filter(s => s.status === 'pending').length}
-                    </p>
-                  </div>
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-xl">
-                    <Clock className="h-8 w-8" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Staff Table */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-1">Danh sách nhân viên</h3>
-                    <p className="text-gray-600">Tổng cộng {filteredStaff.length} nhân viên</p>
-                  </div>
-                  <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-xl shadow-sm">
-                    <Settings className="h-5 w-5 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-600">Bộ lọc</span>
-                  </div>
-                </div>
-              </div>
-                
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b-2 border-indigo-100">
-                    <tr>
-                      <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                        Nhân viên
-                      </th>
-                      {/* <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                        Vị trí
-                      </th> */}
-                      <th className="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                        Trạng thái
-                      </th>
-                      <th className="px-8 py-5 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
-                        Thao tác
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {filteredStaff.map((staff) => (
-                      <tr key={staff.id} className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200">
-                        <td className="px-8 py-6">
-                          <div className="flex items-center">
-                            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 flex items-center justify-center shadow-lg">
-                              <span className="text-lg font-bold text-white">
-                                {staff.fullName?.charAt(0) || '?'}
-                              </span>
-                            </div>
-                            <div className="ml-5">
-                              <div className="text-lg font-bold text-gray-900">{staff.fullName}</div>
-                              <div className="text-sm text-gray-600 flex items-center mt-1">
-                                <Mail className="h-4 w-4 mr-1" />
-                                {staff.email}
-                              </div>
-                              <div className="text-sm text-gray-500 flex items-center mt-1">
-                                <Phone className="h-4 w-4 mr-1" />
-                                {staff.phone}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        {/* <td className="px-8 py-6">
-                          <div className="flex items-center">
-                            <Shield className="h-5 w-5 text-indigo-500 mr-2" />
-                            <span className="text-sm font-semibold text-gray-700">{staff.position || 'N/A'}</span>
-                          </div>
-                        </td> */}
-                        <td className="px-8 py-6">
-                          {getStatusBadge(staff.status)}
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="flex items-center justify-center space-x-2">
-                            <button
-                              onClick={() => handleViewStaffDetail(staff)}
-                              className="bg-green-100 text-green-600 hover:bg-green-200 p-3 rounded-xl transition-all duration-200 group"
-                              title="Xem chi tiết"
-                            >
-                              <Eye className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                            </button>
-                            <button
-                              onClick={() => handleEditStaff(staff)}
-                              className="bg-blue-100 text-blue-600 hover:bg-blue-200 p-3 rounded-xl transition-all duration-200 group"
-                              title="Chỉnh sửa"
-                            >
-                              <Edit2 className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                            </button>
-                            <button
-                              onClick={() => handleToggleStatus(staff.id)}
-                              className={`${staff.status === 'active' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'} p-3 rounded-xl transition-all duration-200 group`}
-                              title={staff.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                            >
-                              {staff.status === 'active' ? <UserX className="h-5 w-5 group-hover:scale-110 transition-transform" /> : <UserCheck className="h-5 w-5 group-hover:scale-110 transition-transform" />}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteStaff(staff.id)}
-                              className="bg-red-100 text-red-600 hover:bg-red-200 p-3 rounded-xl transition-all duration-200 group"
-                              title="Xóa nhân viên"
-                            >
-                              <Trash2 className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {filteredStaff.length === 0 && !loading && (
-                  <div className="text-center py-16">
-                    <UsersIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">Không tìm thấy nhân viên nào.</p>
-                    <p className="text-gray-400 text-sm">Hãy thử thay đổi bộ lọc hoặc thêm nhân viên mới.</p>
-                </div>
-              )}
+          {/* Staff Table */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                    Danh sách nhân viên
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Tổng cộng {filteredStaff.length} nhân viên
+                  </Typography>
+                </Box>
+              </Box>
               
-              {loading && (
-                  <div className="text-center py-16">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                    <p className="text-gray-500 text-lg">Đang tải...</p>
-                </div>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+                  <CircularProgress />
+                </Box>
+              ) : filteredStaff.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 8 }}>
+                  <PeopleIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    Không tìm thấy nhân viên nào
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Hãy thử thay đổi bộ lọc hoặc thêm nhân viên mới
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Nhân viên</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Trạng thái</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Thao tác</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredStaff.map((staff) => (
+                        <TableRow key={staff.id} hover>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Avatar
+                                sx={{
+                                  bgcolor: 'primary.main',
+                                  width: 56,
+                                  height: 56,
+                                }}
+                              >
+                                {staff.fullName?.charAt(0) || '?'}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                  {staff.fullName}
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                  <EmailIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                  <Typography variant="body2" color="text.secondary">
+                                    {staff.email}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                  <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                  <Typography variant="body2" color="text.secondary">
+                                    {staff.phone}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(staff.status)}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                              <Tooltip title="Xem chi tiết">
+                                <IconButton
+                                  size="small"
+                                  color="success"
+                                  onClick={() => handleViewStaffDetail(staff)}
+                                >
+                                  <VisibilityIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Chỉnh sửa">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => handleEditStaff(staff)}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={staff.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}>
+                                <IconButton
+                                  size="small"
+                                  color={staff.status === 'active' ? 'error' : 'success'}
+                                  onClick={() => handleToggleStatus(staff.id)}
+                                >
+                                  {staff.status === 'active' ? <BlockIcon /> : <LockOpenIcon />}
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Xóa nhân viên">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeleteStaff(staff.id)}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-              {/* Enhanced Pagination */}
-            {totalPages > 1 && (
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                      <span className="font-medium">Hiển thị</span> {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalUsers)} <span className="font-medium">trong tổng số</span> {totalUsers} <span className="font-medium">nhân viên</span>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-150 font-medium"
-                  >
-                    Trước
-                  </button>
-                  
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const page = i + 1;
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all duration-150 ${
-                          currentPage === page
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                            : 'border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                  
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-150 font-medium"
-                  >
-                    Sau
-                  </button>
-                    </div>
-                </div>
-              </div>
-            )}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Hiển thị {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalUsers)} trong tổng số {totalUsers} nhân viên
+                  </Typography>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    showFirstButton
+                    showLastButton
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+        </Box>
+      </Box>
 
-      {/* Enhanced Add Staff Modal - Redesigned to match Admin style */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-6 rounded-t-2xl">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-bold">Thêm nhân viên mới</h2>
-                  <p className="text-blue-100 mt-1">Tạo tài khoản cho nhân viên mới</p>
-                </div>
-              <button
+      {/* Add Staff Modal */}
+      <Dialog
+        open={showAddModal}
+        onClose={() => !loading && setShowAddModal(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { maxHeight: '90vh' }
+        }}
+      >
+        <DialogTitle sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+                Thêm nhân viên mới
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
+                Tạo tài khoản cho nhân viên mới
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={() => setShowAddModal(false)}
+              disabled={loading}
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Box 
+            component="form" 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSaveNewStaff(e);
+            }} 
+            sx={{ mt: 2 }}
+          >
+            <Stack spacing={3}>
+              {/* Personal Information */}
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PersonIcon color="primary" />
+                  Thông tin cá nhân
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Họ và tên"
+                      required
+                      name="fullName"
+                      value={newStaff.fullName}
+                      onChange={handleTextFieldChange('fullName')}
+                      disabled={loading}
+                      placeholder="Nhập họ và tên đầy đủ"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Số điện thoại"
+                      required
+                      type="tel"
+                      name="phone"
+                      value={newStaff.phone}
+                      onChange={handleTextFieldChange('phone')}
+                      disabled={loading}
+                      placeholder="0XXXXXXXXX"
+                    />
+                  </Stack>
+                  <TextField
+                    fullWidth
+                    label="Địa chỉ"
+                    name="address"
+                    value={newStaff.address}
+                    onChange={handleTextFieldChange('address')}
+                    disabled={loading}
+                    placeholder="Nhập địa chỉ liên hệ"
+                  />
+                </Stack>
+              </Box>
+
+              <Divider />
+
+              {/* Account Information */}
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <SettingsIcon color="primary" />
+                  Thông tin tài khoản
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      required
+                      type="email"
+                      name="email"
+                      value={newStaff.email}
+                      onChange={handleTextFieldChange('email')}
+                      disabled={loading}
+                      placeholder="example@company.com"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Mật khẩu"
+                      required
+                      type="password"
+                      name="password"
+                      value={newStaff.password}
+                      onChange={handleTextFieldChange('password')}
+                      disabled={loading}
+                      placeholder="Tối thiểu 6 ký tự"
+                      inputProps={{ minLength: 6 }}
+                      helperText="Mật khẩu phải có ít nhất 6 ký tự"
+                    />
+                  </Stack>
+                  <FormControl fullWidth required>
+                    <InputLabel>Vai trò</InputLabel>
+                    <Select
+                      name="roleId"
+                      value={newStaff.roleId}
+                      onChange={(e) => setNewStaff({ ...newStaff, roleId: e.target.value as string })}
+                      disabled={loading}
+                      label="Vai trò"
+                    >
+                      <MenuItem value="">-- Chọn vai trò --</MenuItem>
+                      {getAvailableRoles().map((role) => (
+                        <MenuItem key={role.value} value={role.value}>
+                          {role.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Stack>
+              </Box>
+
+              <Divider />
+
+              {/* Organization Info */}
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <BusinessIcon color="primary" />
+                  Thông tin tổ chức
+                </Typography>
+                <TextField
+                  fullWidth
+                  label="Đại lý"
+                  value="Tự động từ Manager hiện tại"
+                  disabled
+                  helperText="Hệ thống tự động lấy từ tài khoản Manager hiện tại"
+                  InputProps={{
+                    endAdornment: <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+                  }}
+                />
+              </Box>
+            </Stack>
+            <DialogActions sx={{ p: 2, pt: 3, mt: 2 }}>
+              <Button
                 onClick={() => setShowAddModal(false)}
-                  className="text-white hover:text-gray-200 hover:bg-white/20 p-2 rounded-full transition-all duration-150 focus:outline-none"
                 disabled={loading}
+                color="inherit"
               >
-                <X className="h-6 w-6" />
-              </button>
-              </div>
-            </div>
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                variant="contained"
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AddIcon />}
+              >
+                {loading ? 'Đang xử lý...' : 'Thêm nhân viên'}
+              </Button>
+            </DialogActions>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
-            {/* Form Content */}
-            <div className="p-8">
-              {/* Alert Messages */}
-            {error && (
-                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <AlertCircle className="h-5 w-5 text-red-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{error}</p>
-                    </div>
-                  </div>
-              </div>
-            )}
-
-            {success && (
-                <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{success}</p>
-                    </div>
-                  </div>
-              </div>
-            )}
-
-              <form onSubmit={handleSaveNewStaff} className="space-y-8">
-                {/* Personal Information Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                      <Users className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin cá nhân</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Họ và tên <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  required
-                  value={newStaff.fullName}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Nhập họ và tên đầy đủ"
-                />
-              </div>
-
-              <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Số điện thoại <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        required
-                        value={newStaff.phone}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="0XXXXXXXXX"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Địa chỉ (Tùy chọn)
-                      </label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={newStaff.address}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Nhập địa chỉ liên hệ"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Account Information Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-green-100 p-2 rounded-lg mr-3">
-                      <Settings className="h-5 w-5 text-green-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin tài khoản</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={newStaff.email}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="example@company.com"
-                />
-              </div>
-
-              <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Mật khẩu <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="password"
-                        name="password"
-                        required
-                        value={newStaff.password}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Tối thiểu 6 ký tự"
-                        minLength={6}
-                      />
-                      <p className="mt-1 text-xs text-gray-500">Mật khẩu phải có ít nhất 6 ký tự</p>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Vai trò <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="roleId"
-                        required
-                        value={newStaff.roleId}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                      >
-                        <option value="">-- Chọn vai trò --</option>
-                        {getAvailableRoles().map((role) => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="mt-1 text-xs text-gray-500">Chọn vai trò cho nhân viên mới</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Permissions & Organization Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-purple-100 p-2 rounded-lg mr-3">
-                      <Shield className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Phân quyền & Tổ chức</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Trạng thái vai trò
-                      </label>
-                      <div className={`border rounded-lg p-4 ${newStaff.roleId ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-                        <div className="flex items-center">
-                          {newStaff.roleId ? (
-                            <>
-                              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                              <span className="text-sm text-green-700">
-                                Đã chọn: {getAvailableRoles().find(role => role.value === newStaff.roleId)?.label || 'Không xác định'}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Info className="h-5 w-5 text-blue-500 mr-2" />
-                              <span className="text-sm text-blue-700">
-                                Vui lòng chọn vai trò cho nhân viên
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Đại lý
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value="Tự động từ Manager hiện tại"
-                          disabled
-                          className="block w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 shadow-sm"
-                        />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        </div>
-                      </div>
-                      <p className="mt-1 text-xs text-gray-500">
-                        ⚡ Hệ thống tự động lấy từ tài khoản Manager hiện tại
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Information */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-orange-100 p-2 rounded-lg mr-3">
-                      <Camera className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin bổ sung</h3>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Avatar
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300">
-                        <svg className="h-full w-full text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          name="avatar"
-                          accept="image/*"
-                          onChange={handleInputChange}
-                          disabled={loading}
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Form Actions */}
-                <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
+      {/* Edit Staff Modal */}
+      <Dialog
+        open={showEditModal && !!editingStaff}
+        onClose={() => {
+          if (!loading) {
+            setShowEditModal(false);
+            setEditingStaff(null);
+          }
+        }}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { maxHeight: '90vh' }
+        }}
+      >
+        <DialogTitle sx={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+                Chỉnh sửa nhân viên
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
+                Cập nhật thông tin nhân viên
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={() => {
+                setShowEditModal(false);
+                setEditingStaff(null);
+              }}
+              disabled={loading}
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Box 
+            component="form" 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSaveEditStaff(e);
+            }} 
+            sx={{ mt: 2 }}
+          >
+            <Stack spacing={3}>
+              {/* Personal Information */}
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PersonIcon color="primary" />
+                  Thông tin cá nhân
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Họ và tên"
+                      required
+                      name="fullName"
+                      value={editingStaff?.fullName || ''}
+                      onChange={handleEditTextFieldChange('fullName')}
+                      disabled={loading}
+                      placeholder="Nhập họ và tên đầy đủ"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Số điện thoại"
+                      required
+                      type="tel"
+                      name="phone"
+                      value={editingStaff?.phone || ''}
+                      onChange={handleEditTextFieldChange('phone')}
+                      disabled={loading}
+                      placeholder="0XXXXXXXXX"
+                    />
+                  </Stack>
+                  <TextField
+                    fullWidth
+                    label="Địa chỉ"
+                    name="address"
+                    value={editingStaff?.address || ''}
+                    onChange={handleEditTextFieldChange('address')}
                     disabled={loading}
-                    className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 font-medium disabled:opacity-50"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-lg hover:from-blue-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none"
-                  >
-                    {loading ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-r-transparent mr-2"></div>
-                        Đang xử lý...
-                      </div>
-                    ) : (
-                      'Thêm nhân viên'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+                    placeholder="Nhập địa chỉ liên hệ"
+                  />
+                </Stack>
+              </Box>
 
-      {/* Enhanced Edit Staff Modal - Redesigned to match Admin style */}
-      {showEditModal && editingStaff && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white p-6 rounded-t-2xl">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-bold">Chỉnh sửa nhân viên</h2>
-                  <p className="text-green-100 mt-1">Cập nhật thông tin nhân viên</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingStaff(null);
+              <Divider />
+
+              {/* Account Information */}
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <SettingsIcon color="primary" />
+                  Thông tin tài khoản
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      required
+                      type="email"
+                      name="email"
+                      value={editingStaff?.email || ''}
+                      onChange={handleEditTextFieldChange('email')}
+                      disabled={loading}
+                      placeholder="example@company.com"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Mật khẩu mới"
+                      type="password"
+                      name="password"
+                      value={editingStaff?.password || ''}
+                      onChange={handleEditTextFieldChange('password')}
+                      disabled={loading}
+                      placeholder="Để trống nếu không muốn thay đổi"
+                      inputProps={{ minLength: 6 }}
+                      helperText="Để trống nếu không muốn thay đổi mật khẩu"
+                    />
+                  </Stack>
+                </Stack>
+              </Box>
+
+              <Divider />
+
+              {/* Organization Info */}
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <BusinessIcon color="primary" />
+                  Thông tin tổ chức
+                </Typography>
+                <TextField
+                  fullWidth
+                  label="Đại lý"
+                  value="Tự động từ Manager hiện tại"
+                  disabled
+                  helperText="Hệ thống tự động lấy từ tài khoản Manager hiện tại"
+                  InputProps={{
+                    endAdornment: <CheckCircleIcon color="success" sx={{ mr: 1 }} />
                   }}
-                  className="text-white hover:text-gray-200 hover:bg-white/20 p-2 rounded-full transition-all duration-150 focus:outline-none"
-                  disabled={loading}
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            {/* Form Content */}
-            <div className="p-8">
-              {/* Alert Messages */}
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <AlertCircle className="h-5 w-5 text-red-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {success && (
-                <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{success}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleSaveEditStaff} className="space-y-8">
-                {/* Personal Information Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                      <Users className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin cá nhân</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Họ và tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="fullName"
-                        required
-                        value={newStaff.fullName}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Nhập họ và tên đầy đủ"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Số điện thoại <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  required
-                  value={newStaff.phone}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="0XXXXXXXXX"
                 />
-              </div>
+              </Box>
+            </Stack>
+            <DialogActions sx={{ p: 2, pt: 3, mt: 2 }}>
+              <Button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingStaff(null);
+                }}
+                disabled={loading}
+                color="inherit"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                variant="contained"
+                color="success"
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <EditIcon />}
+              >
+                {loading ? 'Đang xử lý...' : 'Cập nhật nhân viên'}
+              </Button>
+            </DialogActions>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Địa chỉ (Tùy chọn)
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={newStaff.address}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Nhập địa chỉ liên hệ"
-                />
-                    </div>
-                  </div>
-              </div>
+      {/* Staff Detail Modal */}
+      <Dialog
+        open={showDetailModal && !!detailStaff}
+        onClose={() => {
+          setShowDetailModal(false);
+          setDetailStaff(null);
+        }}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: { maxHeight: '90vh' }
+        }}
+      >
+        <DialogTitle sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+                Thông tin chi tiết nhân viên
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
+                Xem thông tin đầy đủ của nhân viên
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={() => {
+                setShowDetailModal(false);
+                setDetailStaff(null);
+              }}
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {detailStaff && (
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              {/* Profile Section */}
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <Avatar
+                      src={detailStaff.avatar}
+                      sx={{
+                        width: 96,
+                        height: 96,
+                        bgcolor: 'primary.main',
+                        fontSize: 40,
+                      }}
+                    >
+                      {detailStaff.fullName?.charAt(0) || '?'}
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+                        {detailStaff.fullName || 'Đang tải...'}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                        {detailStaff.position || 'Đang tải...'}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        {getStatusBadge(detailStaff.status || 'active')}
+                        <Typography variant="body2" color="text.secondary">
+                          Tham gia từ: {detailStaff.startDate || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
 
-                {/* Account Information Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-green-100 p-2 rounded-lg mr-3">
-                      <Settings className="h-5 w-5 text-green-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin tài khoản</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        required
-                        value={newStaff.email}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="example@company.com"
-                      />
-                    </div>
+              {/* Contact Information */}
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <InfoIcon color="primary" />
+                    Thông tin liên hệ
+                  </Typography>
+                  <Stack spacing={3}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} flexWrap="wrap">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' } }}>
+                        <EmailIcon color="primary" />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Email
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                            {detailStaff.email || 'Đang tải...'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' } }}>
+                        <PhoneIcon color="primary" />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Số điện thoại
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                            {detailStaff.phone || 'Đang tải...'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' } }}>
+                        <LocationOnIcon color="primary" />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Địa chỉ
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                            {detailStaff.address || 'Chưa cập nhật'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' } }}>
+                        <ShieldIcon color="primary" />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Vai trò
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                            {detailStaff.roleName || detailStaff.position || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Mật khẩu <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  value={newStaff.password}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Tối thiểu 6 ký tự"
-                  minLength={6}
-                />
-                      <p className="mt-1 text-xs text-gray-500">Mật khẩu phải có ít nhất 6 ký tự</p>
-              </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Vai trò <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="roleId"
-                  required
-                  value={newStaff.roleId}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                >
-                        <option value="">-- Chọn vai trò --</option>
-                  {getAvailableRoles().map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
-                </select>
-                      <p className="mt-1 text-xs text-gray-500">Chọn vai trò cho nhân viên mới</p>
-                    </div>
-                  </div>
-              </div>
-
-                {/* Permissions & Organization Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-purple-100 p-2 rounded-lg mr-3">
-                      <Shield className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Phân quyền & Tổ chức</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Trạng thái vai trò
-                </label>
-                      <div className={`border rounded-lg p-4 ${newStaff.roleId ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-                        <div className="flex items-center">
-                          {newStaff.roleId ? (
-                            <>
-                              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                              <span className="text-sm text-green-700">
-                                Đã chọn: {getAvailableRoles().find(role => role.value === newStaff.roleId)?.label || 'Không xác định'}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Info className="h-5 w-5 text-blue-500 mr-2" />
-                              <span className="text-sm text-blue-700">
-                                Vui lòng chọn vai trò cho nhân viên
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+              {/* Organization Information */}
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <BusinessIcon color="primary" />
+                    Thông tin tổ chức
+                  </Typography>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} flexWrap="wrap">
+                    <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 16px)' } }}>
+                      <Typography variant="caption" color="text.secondary">
                         Đại lý
-                      </label>
-                      <div className="relative">
-                <input
-                  type="text"
-                          value="Tự động từ Manager hiện tại"
-                          disabled
-                          className="block w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 shadow-sm"
-                        />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        </div>
-                      </div>
-                      <p className="mt-1 text-xs text-gray-500">
-                        ⚡ Hệ thống tự động lấy từ tài khoản Manager hiện tại
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mt: 0.5 }}>
+                        {detailStaff.dealershipName || 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 16px)' } }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Ngày tham gia
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mt: 0.5 }}>
+                        {detailStaff.createdAt ? new Date(detailStaff.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 16px)' } }}>
+                      <Typography variant="caption" color="text.secondary">
+                        ID Nhân viên
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: 'grey.100', p: 1, borderRadius: 1, mt: 0.5 }}>
+                        {detailStaff.id || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 1 }}>
+          <Button
+            onClick={() => {
+              setShowDetailModal(false);
+              setDetailStaff(null);
+            }}
+            color="inherit"
+          >
+            Đóng
+          </Button>
+          <Button
+            onClick={() => {
+              if (detailStaff) {
+                setShowDetailModal(false);
+                setDetailStaff(null);
+                handleEditStaff(detailStaff);
+              }
+            }}
+            variant="contained"
+            startIcon={<EditIcon />}
+          >
+            Chỉnh sửa nhân viên
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-                {/* Additional Information */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-orange-100 p-2 rounded-lg mr-3">
-                      <Camera className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin bổ sung</h3>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Avatar
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300">
-                        <svg className="h-full w-full text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          name="avatar"
-                          accept="image/*"
-                  onChange={handleInputChange}
-                  disabled={loading}
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200"
-                />
-                        <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                      </div>
-                    </div>
-                  </div>
-              </div>
-
-                {/* Form Actions */}
-                <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    disabled={loading}
-                    className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 font-medium disabled:opacity-50"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-lg hover:from-blue-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none"
-                  >
-                    {loading ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-r-transparent mr-2"></div>
-                        Đang xử lý...
-                      </div>
-                    ) : (
-                      'Thêm nhân viên'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Enhanced Edit Staff Modal - Redesigned to match Admin style */}
-      {showEditModal && editingStaff && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white p-6 rounded-t-2xl">
-              <div className="flex justify-between items-center">
-              <div>
-                  <h2 className="text-2xl font-bold">Chỉnh sửa nhân viên</h2>
-                  <p className="text-green-100 mt-1">Cập nhật thông tin nhân viên</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingStaff(null);
-                  }}
-                  className="text-white hover:text-gray-200 hover:bg-white/20 p-2 rounded-full transition-all duration-150 focus:outline-none"
-                  disabled={loading}
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            {/* Form Content */}
-            <div className="p-8">
-              {/* Alert Messages */}
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <AlertCircle className="h-5 w-5 text-red-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {success && (
-                <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{success}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleSaveEditStaff} className="space-y-8">
-                {/* Personal Information Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                      <Users className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin cá nhân</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Họ và tên <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                        name="fullName"
-                        required
-                        value={newStaff.fullName}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Nhập họ và tên đầy đủ"
-                />
-              </div>
-
-              <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Số điện thoại <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        required
-                        value={newStaff.phone}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="0XXXXXXXXX"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Địa chỉ (Tùy chọn)
-                      </label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={newStaff.address}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Nhập địa chỉ liên hệ"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Account Information Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-green-100 p-2 rounded-lg mr-3">
-                      <Settings className="h-5 w-5 text-green-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin tài khoản</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        required
-                        value={newStaff.email}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="example@company.com"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Mật khẩu mới
-                      </label>
-                      <input
-                        type="password"
-                        name="password"
-                        value={newStaff.password}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="Để trống nếu không muốn thay đổi"
-                        minLength={6}
-                      />
-                      <p className="mt-1 text-xs text-gray-500">Để trống nếu không muốn thay đổi mật khẩu</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Permissions & Organization Section */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-purple-100 p-2 rounded-lg mr-3">
-                      <Shield className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Phân quyền & Tổ chức</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Trạng thái vai trò
-                      </label>
-                      <div className={`border rounded-lg p-4 ${newStaff.roleId ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-                        <div className="flex items-center">
-                          {newStaff.roleId ? (
-                            <>
-                              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                              <span className="text-sm text-green-700">
-                                Đã chọn: {getAvailableRoles().find(role => role.value === newStaff.roleId)?.label || 'Không xác định'}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Info className="h-5 w-5 text-blue-500 mr-2" />
-                              <span className="text-sm text-blue-700">
-                                Vui lòng chọn vai trò cho nhân viên
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Đại lý
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value="Tự động từ Manager hiện tại"
-                          disabled
-                          className="block w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 shadow-sm"
-                        />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        </div>
-                      </div>
-                      <p className="mt-1 text-xs text-gray-500">
-                        ⚡ Hệ thống tự động lấy từ tài khoản Manager hiện tại
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Information */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-orange-100 p-2 rounded-lg mr-3">
-                      <Camera className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin bổ sung</h3>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Avatar
-                </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300">
-                        {editingStaff.avatar ? (
-                          <img 
-                            src={editingStaff.avatar} 
-                            alt={editingStaff.fullName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
-                            <span className="text-3xl font-bold text-white">
-                              {editingStaff.fullName?.charAt(0) || '?'}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                <input
-                  type="file"
-                  name="avatar"
-                  accept="image/*"
-                  onChange={handleInputChange}
-                  disabled={loading}
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all duration-200"
-                />
-                        <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                      </div>
-                    </div>
-                  </div>
-              </div>
-
-                {/* Form Actions */}
-                <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditingStaff(null);
-                    }}
-                  disabled={loading}
-                    className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium disabled:opacity-50"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                    className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg hover:from-green-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none"
-                >
-                  {loading ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-r-transparent mr-2"></div>
-                      Đang xử lý...
-                      </div>
-                  ) : (
-                      'Cập nhật nhân viên'
-                  )}
-                </button>
-              </div>
-            </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Enhanced Staff Detail Modal - Redesigned to match modern style */}
-      {showDetailModal && detailStaff && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-6 rounded-t-2xl">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-bold">Thông tin chi tiết nhân viên</h2>
-                  <p className="text-indigo-100 mt-1">Xem thông tin đầy đủ của nhân viên</p>
-    </div>
-                <button
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setDetailStaff(null);
-                  }}
-                  className="text-white hover:text-gray-200 hover:bg-white/20 p-2 rounded-full transition-all duration-150 focus:outline-none"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-8">
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <AlertCircle className="h-5 w-5 text-red-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-8">
-                {/* Profile Section */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-indigo-100 p-2 rounded-lg mr-3">
-                      <Users className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Hồ sơ nhân viên</h3>
-                  </div>
-                  
-                  <div className="flex items-start space-x-6">
-                    <div className="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
-                      {detailStaff.avatar ? (
-                        <img 
-                          src={detailStaff.avatar} 
-                          alt={detailStaff.fullName}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-3xl font-bold text-white">
-                          {detailStaff.fullName?.charAt(0) || '?'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-2xl font-bold text-gray-900 mb-2">{detailStaff?.fullName || 'Đang tải...'}</h4>
-                      <p className="text-lg text-gray-600 mb-3">{detailStaff?.position || 'Đang tải...'}</p>
-                      <div className="flex items-center space-x-4">
-                        {getStatusBadge(detailStaff?.status || 'active')}
-                        <span className="text-sm text-gray-500">
-                          Tham gia từ: {detailStaff?.startDate || 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                      <Info className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin liên hệ</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <svg className="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Email</p>
-                          <p className="font-medium text-gray-900">{detailStaff?.email || 'Đang tải...'}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                          <svg className="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Số điện thoại</p>
-                          <p className="font-medium text-gray-900">{detailStaff?.phone || 'Đang tải...'}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                          <svg className="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Địa chỉ</p>
-                          <p className="font-medium text-gray-900">{detailStaff?.address || 'Chưa cập nhật'}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                          <Shield className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Vai trò</p>
-                          <p className="font-medium text-gray-900">{detailStaff?.roleName || detailStaff?.position || 'N/A'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Organization Information */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-green-100 p-2 rounded-lg mr-3">
-                      <Settings className="h-5 w-5 text-green-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Thông tin tổ chức</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                          <svg className="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Đại lý</p>
-                          <p className="font-medium text-gray-900">{detailStaff?.dealershipName || 'N/A'}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center">
-                          <svg className="h-5 w-5 text-pink-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Ngày tham gia</p>
-                          <p className="font-medium text-gray-900">{detailStaff?.createdAt ? new Date(detailStaff.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                          <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">ID Nhân viên</p>
-                          <p className="font-medium text-gray-900 text-xs font-mono bg-gray-100 px-2 py-1 rounded">{detailStaff?.id || 'N/A'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      setDetailStaff(null);
-                    }}
-                    className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 font-medium"
-                  >
-                    Đóng
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      setDetailStaff(null);
-                      handleEditStaff(detailStaff);
-                    }}
-                    className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-lg hover:from-indigo-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    <Edit2 className="h-5 w-5 mr-2 inline" />
-                    Chỉnh sửa nhân viên
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-          </div>
-        </main>
-      </div>
-    </div>
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };

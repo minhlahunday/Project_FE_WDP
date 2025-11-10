@@ -106,19 +106,42 @@ export const loginUser = async (credentials: LoginRequest): Promise<{ accessToke
     console.error('Error object:', error);
     
     if (error && typeof error === 'object') {
-      console.error('Error.response:', (error as any).response);
-      console.error('Error.message:', (error as any).message);
-      console.error('Error.status:', (error as any).status);
+      const apiError = error as any;
+      console.error('Error.response:', apiError.response);
+      console.error('Error.message:', apiError.message);
+      console.error('Error.status:', apiError.status);
+      console.error('Error.code:', apiError.code);
+      
+      // Extract error message from response
+      let errorMessage = 'Đăng nhập thất bại';
+      
+      if (apiError.response) {
+        const responseData = apiError.response.data;
+        if (responseData?.message) {
+          errorMessage = responseData.message;
+        } else if (responseData?.error) {
+          errorMessage = typeof responseData.error === 'string' 
+            ? responseData.error 
+            : 'Đăng nhập thất bại';
+        } else if (apiError.response.status === 401) {
+          errorMessage = 'Email hoặc mật khẩu không chính xác';
+        } else if (apiError.response.status === 404) {
+          errorMessage = 'Không tìm thấy API đăng nhập. Vui lòng kiểm tra kết nối đến server.';
+        } else if (apiError.response.status === 500) {
+          errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+        }
+      } else if (apiError.message) {
+        if (apiError.code === 'ECONNREFUSED' || apiError.code === 'ERR_NETWORK') {
+          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và đảm bảo server đang chạy.';
+        } else {
+          errorMessage = apiError.message;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
     
-    // Nếu không kết nối được backend, thử dùng mock data
-    console.log('🔄 Backend không khả dụng, thử sử dụng mock data...');
-    try {
-      return await mockLoginUser(credentials);
-    } catch (mockError) {
-      console.error('❌ Mock login cũng thất bại:', mockError);
-      throw error; // Throw original error
-    }
+    throw new Error('Đăng nhập thất bại. Vui lòng thử lại.');
   }
 };
 
