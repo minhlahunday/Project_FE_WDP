@@ -367,7 +367,7 @@ export const DealerRequestManagement: React.FC = () => {
 
     try {
       setLoading(true);
-      await orderService.approveOrderRequest(request._id);
+      await orderService.approveOrderRequest(request.code);
 
       await Swal.fire({
         title: "Thành công!",
@@ -420,7 +420,7 @@ export const DealerRequestManagement: React.FC = () => {
 
     try {
       setLoading(true);
-      await orderService.rejectOrderRequest(request._id, reason);
+      await orderService.rejectOrderRequest(request.code, reason);
 
       await Swal.fire({
         title: "Thành công!",
