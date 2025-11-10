@@ -93,6 +93,8 @@ export const DealerRequestManagement: React.FC = () => {
     { value: "pending", label: "Chờ duyệt", color: "warning" },
     { value: "approved", label: "Đã duyệt", color: "success" },
     { value: "rejected", label: "Đã từ chối", color: "error" },
+    { value: "in_progress", label: "Đang xử lý", color: "info" },
+    { value: "delivered", label: "Đã giao", color: "primary" },
   ];
 
   const getStatusChip = (status: string) => {
@@ -115,6 +117,10 @@ export const DealerRequestManagement: React.FC = () => {
         return "success";
       case "rejected":
         return "error";
+      case "in_progress":
+        return "info";
+      case "delivered":
+        return "primary";
       default:
         return "grey";
     }
@@ -153,28 +159,29 @@ export const DealerRequestManagement: React.FC = () => {
 
           if (response.data) {
             if (response.data.data && Array.isArray(response.data.data)) {
-              // Map API response to our interface
+              // Map new API response format to our interface
               requestsData = response.data.data.map((item: any) => ({
                 _id: item._id,
-                code: item.code,
-                dealer_staff_id: item.requested_by?._id || item.dealer_staff_id,
-                requested_by: item.requested_by
+                code: item.order_request_id || item._id, // Use order_request_id as code if available
+                dealer_staff_id: item.dealership_id?._id,
+                requested_by: item.dealership_id
                   ? {
-                      _id: item.requested_by._id,
-                      full_name: item.requested_by.full_name,
-                      email: item.requested_by.email,
+                      _id: item.dealership_id._id,
+                      full_name: item.dealership_id.company_name,
+                      email: item.dealership_id.company_name, // Using company name as fallback
                     }
                   : undefined,
-                items:
-                  item.items?.map((vehicleItem: any) => ({
-                    vehicle_id: vehicleItem.vehicle_id,
-                    vehicle_name: vehicleItem.vehicle_name,
-                    manufacturer_id: vehicleItem.manufacturer_id,
-                    color: vehicleItem.color,
-                    quantity: vehicleItem.quantity,
-                    notes: vehicleItem.notes,
-                    _id: vehicleItem._id,
-                  })) || [],
+                items: [
+                  {
+                    vehicle_id: item.vehicle_id?._id || item.vehicle_id,
+                    vehicle_name: item.vehicle_id?.name || "N/A",
+                    manufacturer_id: item.vehicle_id?.manufacturer_id,
+                    color: item.color,
+                    quantity: item.quantity,
+                    notes: item.notes,
+                    _id: item._id,
+                  },
+                ],
                 notes: item.notes,
                 status: item.status,
                 createdAt: item.createdAt,
@@ -182,16 +189,16 @@ export const DealerRequestManagement: React.FC = () => {
                 approved_by: item.approved_by,
                 rejected_by: item.rejected_by,
                 approved_at: item.approved_at,
-                dealership_id: item.dealership_id,
+                dealership_id: item.dealership_id?._id,
                 is_deleted: item.is_deleted,
                 order_id: item.order_id,
                 __v: item.__v,
                 // Keep for backward compatibility
-                dealer_staff: item.requested_by
+                dealer_staff: item.dealership_id
                   ? {
-                      _id: item.requested_by._id,
-                      full_name: item.requested_by.full_name,
-                      email: item.requested_by.email,
+                      _id: item.dealership_id._id,
+                      full_name: item.dealership_id.company_name,
+                      email: item.dealership_id.company_name,
                     }
                   : undefined,
               }));
@@ -477,62 +484,12 @@ export const DealerRequestManagement: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Search and Filters */}
-      <Card sx={{ p: 3, mb: 4, boxShadow: 3 }}>
-        <Stack spacing={3}>
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Trạng thái</InputLabel>
-              <Select
-                value={selectedStatus}
-                label="Trạng thái"
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                {statusOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              label="Mã xe"
-              placeholder="Nhập mã xe..."
-              value={selectedVehicleId}
-              onChange={(e) => setSelectedVehicleId(e.target.value)}
-              sx={{ minWidth: 200 }}
-            />
-          </Box>
-
-          <Stack direction="row" spacing={2}>
-            <Button
-              variant="contained"
-              onClick={handleSearch}
-              startIcon={<SearchIcon />}
-              sx={{ minWidth: 120 }}
-            >
-              Tìm kiếm
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleReset}
-              startIcon={<RefreshIcon />}
-            >
-              Đặt lại
-            </Button>
-          </Stack>
-        </Stack>
-      </Card>
-
       {/* Data Table */}
       <Card sx={{ boxShadow: 3 }}>
         <TableContainer component={Paper}>
           <Table>
             <TableHead sx={{ bgcolor: "#f5f5f5" }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Mã yêu cầu</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Đại lý</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Loại xe</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Số lượng</TableCell>
@@ -559,11 +516,6 @@ export const DealerRequestManagement: React.FC = () => {
               ) : (
                 orderRequests.map((request) => (
                   <TableRow key={request._id} hover>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                        {request.code}
-                      </Typography>
-                    </TableCell>
                     <TableCell>
                       <Typography variant="body2">
                         {request.requested_by?.full_name ||
