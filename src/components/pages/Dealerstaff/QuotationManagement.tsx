@@ -199,6 +199,8 @@ export const QuotationManagement: React.FC = () => {
     valid: 0,
     expired: 0,
     canceled: 0,
+    invalid: 0,
+    used: 0,
     converted: 0
   });
 
@@ -390,6 +392,8 @@ export const QuotationManagement: React.FC = () => {
       valid: data.filter(q => q.status === 'valid' || !q.status).length,
       expired: data.filter(q => q.status === 'expired').length,
       canceled: data.filter(q => q.status === 'canceled' || q.status === 'cancelled').length,
+      invalid: data.filter(q => q.status === 'invalid').length,
+      used: data.filter(q => q.status === 'used').length,
       converted: data.filter(q => q.status === 'converted').length
     };
     setStats(newStats);
@@ -917,6 +921,8 @@ export const QuotationManagement: React.FC = () => {
       expired: 'warning',
       canceled: 'error',
       cancelled: 'error',
+      invalid: 'default',
+      used: 'info',
       converted: 'info'
     };
     return colors[status] || 'default';
@@ -928,6 +934,8 @@ export const QuotationManagement: React.FC = () => {
       expired: 'Hết hạn',
       canceled: 'Đã hủy',
       cancelled: 'Đã hủy',
+      invalid: 'Không hợp lệ',
+      used: 'Đã sử dụng',
       converted: 'Đã chuyển đổi'
     };
     return texts[status] || status;

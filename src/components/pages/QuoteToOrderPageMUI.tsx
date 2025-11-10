@@ -60,6 +60,9 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
             valid: 'success',
             expired: 'warning',
             canceled: 'error',
+            cancelled: 'error',
+            invalid: 'default',
+            used: 'info',
             converted: 'info',
         };
         return statusColors[status as keyof typeof statusColors] || 'default';
@@ -70,6 +73,9 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
             valid: 'Còn hiệu lực',
             expired: 'Hết hạn',
             canceled: 'Đã hủy',
+            cancelled: 'Đã hủy',
+            invalid: 'Không hợp lệ',
+            used: 'Đã sử dụng',
             converted: 'Đã chuyển đổi',
         };
         return statusTexts[status as keyof typeof statusTexts] || status;
@@ -318,6 +324,8 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
                                              <option value="valid">Còn hiệu lực</option>
                                              <option value="expired">Hết hạn</option>
                                              <option value="canceled">Đã hủy</option>
+                                             <option value="invalid">Không hợp lệ</option>
+                                             <option value="used">Đã sử dụng</option>
                                              <option value="converted">Đã chuyển đổi</option>
                                          </select>
                                          {/* Custom dropdown arrow */}
