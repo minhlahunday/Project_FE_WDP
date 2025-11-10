@@ -171,11 +171,32 @@ export const OrderManagement: React.FC = () => {
         let paginationData: any = {};
 
         if (response && response.success) {
-            // Logic xử lý response tương tự như AntD component
+            // Logic xử lý response - hỗ trợ cả 2 format: có pagination object hoặc pagination fields trực tiếp
             if (response.data) {
                 if (response.data.data && Array.isArray(response.data.data)) {
                   ordersData = response.data.data;
-                  paginationData = response.data.pagination || {};
+                  console.log('📦 Raw orders data from API:', ordersData.length, 'orders');
+                  // Hỗ trợ cả format có pagination object và format có totalRecords/totalPages trực tiếp
+                  if (response.data.pagination) {
+                    paginationData = response.data.pagination;
+                    console.log('📊 Using pagination object:', paginationData);
+                  } else {
+                    // Format mới: totalRecords, totalPages, page, limit trực tiếp trong data
+                    const dataAny = response.data as any;
+                    paginationData = {
+                      total: dataAny.totalRecords || dataAny.total || 0,
+                      page: dataAny.page || 1,
+                      limit: dataAny.limit || 10,
+                      pages: dataAny.totalPages || dataAny.pages || 1
+                    };
+                    console.log('📊 Using direct pagination fields:', paginationData);
+                    console.log('📊 API response.data:', {
+                      totalRecords: dataAny.totalRecords,
+                      totalPages: dataAny.totalPages,
+                      page: dataAny.page,
+                      limit: dataAny.limit
+                    });
+                  }
                 } else if (Array.isArray(response.data)) {
                   ordersData = response.data;
                   paginationData = { total: response.data.length, page: 1 };
@@ -223,17 +244,41 @@ export const OrderManagement: React.FC = () => {
             return order;
           });
 
+          // Debug: Log user info and orders before filtering
+          console.log('👤 User info:', {
+            id: user?.id,
+            role: user?.role,
+            dealership_id: user?.dealership_id,
+            dealerId: user?.dealerId
+          });
+          console.log('📦 Orders before filtering:', ordersWithCancelledStatus.length);
+          if (ordersWithCancelledStatus.length > 0) {
+            console.log('📦 Sample order:', {
+              code: ordersWithCancelledStatus[0].code,
+              dealership_id: ordersWithCancelledStatus[0].dealership_id,
+              salesperson_id: ordersWithCancelledStatus[0].salesperson_id,
+              dealership_id_type: typeof ordersWithCancelledStatus[0].dealership_id,
+              salesperson_id_type: typeof ordersWithCancelledStatus[0].salesperson_id
+            });
+          }
+
           // Filter orders based on user role
           let filteredOrders = ordersWithCancelledStatus;
           if (user?.role === 'dealer_manager') {
             // Manager: filter by dealership
             const userDealershipId = user?.dealership_id || user?.dealerId;
+            console.log('🔍 Manager filtering by dealership_id:', userDealershipId);
             filteredOrders = ordersWithCancelledStatus.filter(order => {
-              const belongsToUserDealership = order.dealership_id === userDealershipId;
+              // Xử lý cả trường hợp dealership_id là object hoặc string
+              const orderDealershipId = typeof order.dealership_id === 'object' && order.dealership_id !== null
+                ? (order.dealership_id as any)?._id || (order.dealership_id as any)?.id
+                : order.dealership_id;
+              const belongsToUserDealership = orderDealershipId === userDealershipId;
               if (!belongsToUserDealership) {
                 console.log('🚫 Manager filtering out order from different dealership:', {
                   order_code: order.code,
-                  order_dealership_id: order.dealership_id,
+                  order_dealership_id: orderDealershipId,
+                  order_dealership_id_raw: order.dealership_id,
                   user_dealership_id: userDealershipId
                 });
               }
@@ -241,26 +286,27 @@ export const OrderManagement: React.FC = () => {
             });
             console.log(`🔍 Manager filtering: ${ordersWithCancelledStatus.length} → ${filteredOrders.length} orders`);
           } else if (user?.role === 'dealer_staff') {
-            // Staff: validate that orders belong to them (extra safety check)
-            const userId = user?.id;
-            filteredOrders = ordersWithCancelledStatus.filter(order => {
-              const belongsToUser = order.salesperson_id === userId;
-              if (!belongsToUser) {
-                console.log('🚫 Staff filtering out order not assigned to them:', {
-                  order_code: order.code,
-                  order_salesperson_id: order.salesperson_id,
-                  user_id: userId
-                });
-              }
-              return belongsToUser;
-            });
-            console.log(`🔍 Staff validation: ${ordersWithCancelledStatus.length} → ${filteredOrders.length} orders`);
+            // Staff: API /api/orders/yourself đã filter rồi, không cần filter thêm
+            // Chỉ log để debug
+            console.log('🔍 Staff: API đã filter, không filter thêm. Orders count:', ordersWithCancelledStatus.length);
+            filteredOrders = ordersWithCancelledStatus; // Không filter, dùng trực tiếp từ API
+          } else {
+            // Admin hoặc các role khác: không filter, hiển thị tất cả
+            console.log('🔍 No filtering applied for role:', user?.role);
           }
 
           setOrders(filteredOrders);
+          // Sử dụng totalRecords từ API nếu có, nếu không thì dùng số lượng orders đã filter
+          const totalFromAPI = paginationData.total || (response.data as any)?.totalRecords || filteredOrders.length;
+          console.log('📊 Setting pagination:', {
+            total: totalFromAPI,
+            current: paginationData.page || 1,
+            filteredOrdersCount: filteredOrders.length,
+            rawOrdersCount: ordersData.length
+          });
           setPagination(prev => ({
             ...prev,
-            total: paginationData.total || filteredOrders.length,
+            total: totalFromAPI,
             current: paginationData.page || 1,
           }));
 
@@ -1135,7 +1181,7 @@ export const OrderManagement: React.FC = () => {
                             )}
                             
                             {/* 3. Chỉnh sửa đơn hàng - Disabled nếu cancelled */}
-                            {(() => {
+                            {/* {(() => {
                               const isCancelled = order.status === 'cancelled' || (order as any).is_deleted;
                               return (
                                 <Tooltip title={isCancelled ? 'Không thể chỉnh sửa đơn hàng đã bị hủy' : 'Chỉnh sửa đơn hàng'}>
@@ -1149,7 +1195,7 @@ export const OrderManagement: React.FC = () => {
                                   </IconButton>
                                 </Tooltip>
                               );
-                            })()}
+                            })()} */}
                             
                             {/* 4. Đặt cọc - Chỉ hiển thị cho confirmed orders */}
                             {order.status === 'confirmed' && (
@@ -1167,9 +1213,57 @@ export const OrderManagement: React.FC = () => {
                             </Tooltip>
                             )}
                             
-                            {/* 5. Đánh dấu xe sẵn sàng - Chỉ hiển thị cho waiting_vehicle_request */}
-                            {order.status === 'waiting_vehicle_request' && (
-                            <Tooltip title="Đánh dấu xe sẵn sàng">
+                            {/* 5. Đánh dấu xe sẵn sàng - Hiển thị cho:
+                                 - deposit_paid (xe có sẵn trong kho)
+                                 - waiting_vehicle_request VÀ request-vehicle đã delivered */}
+                            {(() => {
+                              // Trường hợp 1: Xe có sẵn trong kho (deposit_paid)
+                              if (order.status === 'deposit_paid') {
+                                return true;
+                              }
+                              
+                              // Trường hợp 2: Xe đặt hàng (waiting_vehicle_request) VÀ request-vehicle đã delivered
+                              if (order.status === 'waiting_vehicle_request') {
+                                // Kiểm tra xem order có order_request_id không
+                                const orderRequest = (order as any).order_request;
+                                const orderRequestId = (order as any).order_request_id;
+                                
+                                // Nếu có populated order_request, kiểm tra xem có request_vehicle không
+                                if (orderRequest) {
+                                  // OrderRequest có thể có request_vehicle_id hoặc request_vehicles array
+                                  const requestVehicles = (orderRequest as any).request_vehicles || [];
+                                  const requestVehicleId = (orderRequest as any).request_vehicle_id;
+                                  
+                                  // Nếu có request_vehicles array, kiểm tra xem có request nào đã delivered không
+                                  if (Array.isArray(requestVehicles) && requestVehicles.length > 0) {
+                                    // Kiểm tra xem có request_vehicle nào đã delivered không
+                                    return requestVehicles.some((rv: any) => rv.status === 'delivered');
+                                  } else if (requestVehicleId) {
+                                    // Có request_vehicle_id nhưng chưa populated, tạm thời không hiển thị
+                                    // Cần fetch thông tin request-vehicle để kiểm tra status
+                                    return false;
+                                  }
+                                  
+                                  // Nếu không có request_vehicle, không hiển thị
+                                  return false;
+                                } else if (orderRequestId) {
+                                  // Có order_request_id nhưng chưa populated, tạm thời không hiển thị
+                                  // Cần fetch thông tin order_request và request_vehicle để kiểm tra status
+                                  return false;
+                                }
+                                
+                                // Không có order_request, không hiển thị
+                                return false;
+                              }
+                              
+                              // Các trường hợp khác, không hiển thị
+                              return false;
+                            })() && (
+                            <Tooltip title={
+                              order.status === 'deposit_paid' 
+                                ? "Đánh dấu xe sẵn sàng (Xe có sẵn trong kho)"
+                                : "Đánh dấu xe sẵn sàng (Xe đã về đến đại lý)"
+                            }>
                                 <IconButton
                                 onClick={() => handleMarkReady(order)}
                                 size="small"

@@ -148,6 +148,23 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* SweetAlert2 z-index cao hơn modal để hiển thị ở ngoài */
+.swal2-container {
+  z-index: 99999 !important;
+}
+
+.swal2-container-custom {
+  z-index: 99999 !important;
+}
+
+.swal2-popup {
+  z-index: 99999 !important;
+}
+
+.swal2-backdrop-show {
+  z-index: 99998 !important;
+}
+
 /* Ferrari-style button animations */
 .ferrari-button {
   position: relative;

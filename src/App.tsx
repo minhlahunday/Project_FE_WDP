@@ -39,7 +39,6 @@ import TestAPI from "./components/pages/TestAPI";
 
 // Order Management Components
 import { OrderManagement } from "./components/pages/OrderManagement";
-import { OrderDetailMUI } from "./components/pages/OrderDetailMUI";
 import { QuoteToOrderPageMUI } from "./components/pages/QuoteToOrderPageMUI";
 import { PaymentManagementPage } from "./components/pages/PaymentManagementPage";
 import DebtManagement from "./components/pages/DebtManagement";
@@ -115,7 +114,6 @@ function AppContent() {
 
       {/* Order Management Routes */}
       <Route path="/portal/orders" element={<OrderManagement />} />
-      <Route path="/portal/orders/:orderId" element={<OrderDetailMUI />} />
       <Route
         path="/portal/order-requests"
         element={<OrderRequestManagement />}

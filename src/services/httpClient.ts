@@ -148,7 +148,15 @@ export const patch = <T = any>(url: string, data?: any, config?: AxiosRequestCon
 };
 
 export const del = <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
-  return request<T>({ ...config, method: 'DELETE', url });
+  // DELETE request có thể có data trong body hoặc query params
+  // Nếu có data trong config, truyền vào request body
+  const { data, ...restConfig } = config || {};
+  return request<T>({ 
+    ...restConfig, 
+    method: 'DELETE', 
+    url,
+    data // Truyền data vào request body nếu có
+  });
 };
 
 export default httpClient;
