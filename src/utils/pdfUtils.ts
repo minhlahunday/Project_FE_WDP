@@ -459,17 +459,17 @@ export const generateContractPDF = async (data: ContractPDFData): Promise<void> 
     </tr>
     <tr>
       <td>
-        <p>Tên đại lý: ${data.dealershipName}</p>
-        <p>Địa chỉ: ${data.dealershipAddress}</p>
-        <p>Điện thoại: ${data.dealershipPhone}</p>
-        <p>MST: ${data.dealershipTaxCode}</p>
-        <p>Người đại diện: ${data.representative}</p>
+        <p>Tên đại lý: ${data.dealershipName || 'N/A'}</p>
+        <p>Địa chỉ: ${data.dealershipAddress && data.dealershipAddress !== 'N/A' ? data.dealershipAddress : 'N/A'}</p>
+        <p>Điện thoại: ${data.dealershipPhone && data.dealershipPhone !== 'N/A' ? data.dealershipPhone : 'N/A'}</p>
+        <p>MST: ${data.dealershipTaxCode && data.dealershipTaxCode !== 'N/A' ? data.dealershipTaxCode : 'N/A'}</p>
+        <p>Người đại diện: ${data.representative || 'N/A'}</p>
       </td>
       <td>
-        <p>Họ và tên: ${data.customerName}</p>
-        <p>Địa chỉ: ${data.customerAddress}</p>
-        <p>Điện thoại: ${data.customerPhone}</p>
-        <p>Email: ${data.customerEmail}</p>
+        <p>Họ và tên: ${data.customerName && data.customerName !== 'N/A' ? data.customerName : 'N/A'}</p>
+        <p>Địa chỉ: ${data.customerAddress && data.customerAddress !== 'N/A' ? data.customerAddress : 'N/A'}</p>
+        <p>Điện thoại: ${data.customerPhone && data.customerPhone !== 'N/A' ? data.customerPhone : 'N/A'}</p>
+        <p>Email: ${data.customerEmail && data.customerEmail !== 'N/A' ? data.customerEmail : 'N/A'}</p>
       </td>
     </tr>
   </table>
@@ -582,7 +582,7 @@ export const generateContractPDF = async (data: ContractPDFData): Promise<void> 
 
   <div class="section-title">ĐIỀU 3: NHẬN XE</div>
   <div class="article-content">
-    <p>Xe sẽ được giao tại địa chỉ đại lý: ${data.dealershipAddress}</p>
+    <p>Xe sẽ được giao tại địa chỉ đại lý: ${data.deliveryAddress && data.deliveryAddress !== 'N/A' ? data.deliveryAddress : (data.dealershipAddress && data.dealershipAddress !== 'N/A' ? data.dealershipAddress : 'Theo thỏa thuận')}</p>
     <p>Hoặc giao xe đến địa chỉ của khách hàng theo thỏa thuận.</p>
     <p>Ngày giao xe dự kiến: ${data.deliveryDate ? formatDate(data.deliveryDate) : 'Theo thỏa thuận.'}</p>
     <p>Khách hàng chịu trách nhiệm nhận xe và các giấy tờ liên quan.</p>
@@ -689,13 +689,65 @@ const fetchDealershipInfo = async (dealershipId: string | undefined): Promise<an
   }
   
   try {
+    console.log('[fetchDealershipInfo] Fetching dealership:', dealershipId);
     const response = await get<any>(`/api/dealerships/${dealershipId}`);
-    if (response?.success && response?.data) {
+    console.log('[fetchDealershipInfo] Raw API response:', response);
+    console.log('[fetchDealershipInfo] Response type:', typeof response);
+    console.log('[fetchDealershipInfo] Response keys:', Object.keys(response || {}));
+    
+    // httpClient.get returns response.data, so response structure is:
+    // { status: 200, success: true, message: "...", data: { ... } }
+    if (response && response.success && response.data) {
+      // Response structure: { success: true, data: { ... } }
+      console.log('[fetchDealershipInfo] ✅ Fetched dealership info:', response.data);
+      console.log('[fetchDealershipInfo] Dealership address:', response.data.address);
       return response.data;
+    } else if (response && typeof response === 'object' && !response.success) {
+      // Response is direct data object (no wrapper)
+      console.log('[fetchDealershipInfo] ✅ Fetched dealership info (direct):', response);
+      return response;
     }
+    
+    console.warn('[fetchDealershipInfo] ❌ Unexpected response structure:', response);
     return null;
   } catch (error) {
-    console.error('Error fetching dealership info:', error);
+    console.error('[fetchDealershipInfo] ❌ Error fetching dealership info:', error);
+    return null;
+  }
+};
+
+/**
+ * Helper: Fetch customer info from API
+ */
+const fetchCustomerInfo = async (customerId: string | undefined): Promise<any> => {
+  if (!customerId || typeof customerId !== 'string') {
+    return null;
+  }
+  
+  try {
+    console.log('[fetchCustomerInfo] Fetching customer:', customerId);
+    const response = await get<any>(`/api/customers/${customerId}`);
+    console.log('[fetchCustomerInfo] Raw API response:', response);
+    console.log('[fetchCustomerInfo] Response type:', typeof response);
+    console.log('[fetchCustomerInfo] Response keys:', Object.keys(response || {}));
+    
+    // httpClient.get returns response.data, so response structure is:
+    // { status: 200, success: true, message: "...", data: { ... } }
+    if (response && response.success && response.data) {
+      // Response structure: { success: true, data: { ... } }
+      console.log('[fetchCustomerInfo] ✅ Fetched customer info:', response.data);
+      console.log('[fetchCustomerInfo] Customer address:', response.data.address);
+      return response.data;
+    } else if (response && typeof response === 'object' && !response.success) {
+      // Response is direct data object (no wrapper)
+      console.log('[fetchCustomerInfo] ✅ Fetched customer info (direct):', response);
+      return response;
+    }
+    
+    console.warn('[fetchCustomerInfo] ❌ Unexpected response structure:', response);
+    return null;
+  } catch (error) {
+    console.error('[fetchCustomerInfo] ❌ Error fetching customer info:', error);
     return null;
   }
 };
@@ -717,7 +769,19 @@ const mapOrderToContractPDFSync = (
     email?: string;
   }
 ): ContractPDFData => {
-  const customer = typeof order.customer_id === 'object' ? order.customer_id : {};
+  // Get customer info - try multiple sources (giống như mapQuoteToQuotePDF)
+  let customer: any = {};
+  if (order.customer && typeof order.customer === 'object') {
+    customer = order.customer;
+    console.log('[mapOrderToContractPDFSync] Using order.customer:', customer);
+  } else if (order.customer_id && typeof order.customer_id === 'object') {
+    customer = order.customer_id;
+    console.log('[mapOrderToContractPDFSync] Using order.customer_id:', customer);
+  } else {
+    // Nếu customer_id là string, sẽ được fetch trong mapOrderToContractPDF
+    console.warn('[mapOrderToContractPDFSync] No customer info found in order, will be fetched in async function');
+    customer = {};
+  }
   
   // Try multiple sources for dealership info
   let dealership: any = {};
@@ -725,14 +789,19 @@ const mapOrderToContractPDFSync = (
   // Priority 1: dealershipInfo parameter
   if (dealershipInfo) {
     dealership = dealershipInfo;
+    console.log('[mapOrderToContractPDFSync] Using dealershipInfo parameter:', dealership);
   }
   // Priority 2: order.dealership (populated)
   else if (order.dealership && typeof order.dealership === 'object') {
     dealership = order.dealership;
+    console.log('[mapOrderToContractPDFSync] Using order.dealership:', dealership);
   }
   // Priority 3: order.dealership_id (if populated as object)
   else if (order.dealership_id && typeof order.dealership_id === 'object') {
     dealership = order.dealership_id;
+    console.log('[mapOrderToContractPDFSync] Using order.dealership_id:', dealership);
+  } else {
+    console.warn('[mapOrderToContractPDFSync] No dealership info found in order or parameter');
   }
   
   // Helper function to get nested address
@@ -746,28 +815,52 @@ const mapOrderToContractPDFSync = (
     return 'N/A';
   };
   
-  // Helper function to get phone
-  const getPhone = (contact: any): string => {
-    if (!contact) return 'N/A';
-    if (typeof contact === 'string') return contact;
-    if (contact.phone) return contact.phone;
-    return 'N/A';
-  };
+  // Get dealership name - theo API structure
+  const dealershipName = dealership.company_name || dealership.name || 'Đại lý xe điện';
   
-  // Get dealership name (try multiple fields)
-  const dealershipName = dealership.company_name || dealership.name || dealership.dealership_name || 'Đại lý xe điện';
+  // Get address - theo API structure: address.full_address hoặc address object (giống như mapQuoteToQuotePDF)
+  let dealershipAddress = 'N/A';
+  if (dealership && dealership.address) {
+    if (dealership.address.full_address && typeof dealership.address.full_address === 'string' && dealership.address.full_address.trim() !== '') {
+      dealershipAddress = dealership.address.full_address;
+    } else if (typeof dealership.address === 'string' && dealership.address.trim() !== '') {
+      dealershipAddress = dealership.address;
+    } else if (typeof dealership.address === 'object') {
+      // Nếu address là object, dùng getAddress
+      dealershipAddress = getAddress(dealership.address);
+    }
+  }
   
-  // Get address
-  const dealershipAddress = getAddress(dealership.address);
+  console.log('[mapOrderToContractPDFSync] Dealership address check:', {
+    hasAddress: !!dealership?.address,
+    addressType: typeof dealership?.address,
+    fullAddress: dealership?.address?.full_address,
+    dealershipAddress
+  });
   
-  // Get phone
-  const dealershipPhone = getPhone(dealership.contact) || dealership.phone || 'N/A';
+  // Get phone - theo API structure: contact.phone
+  let dealershipPhone = 'N/A';
+  if (dealership.contact && dealership.contact.phone) {
+    dealershipPhone = dealership.contact.phone;
+  } else if (dealership.phone) {
+    dealershipPhone = dealership.phone;
+  }
   
-  // Get tax code
-  const dealershipTaxCode = dealership.tax_code || dealership.mst || 'N/A';
+  // Get tax code - theo API structure: tax_code
+  let dealershipTaxCode = 'N/A';
+  if (dealership.tax_code) {
+    dealershipTaxCode = dealership.tax_code;
+  } else if (dealership.mst) {
+    dealershipTaxCode = dealership.mst;
+  }
   
-  // Get representative
-  const representative = dealership.legal_representative || dealership.representative || dealership.manager_name || 'Đại diện đại lý';
+  // Get representative - theo API structure: legal_representative
+  let representative = 'Đại diện đại lý';
+  if (dealership.legal_representative) {
+    representative = dealership.legal_representative;
+  } else if (dealership.representative) {
+    representative = dealership.representative;
+  }
   
   // Get location (city)
   const getLocation = (): string => {
@@ -777,12 +870,41 @@ const mapOrderToContractPDFSync = (
     return 'Hồ Chí Minh';
   };
   
+  // Get customer address - customer.address is a string in API response (giống như mapQuoteToQuotePDF)
+  // Kiểm tra kỹ hơn: customer.address có thể là string, null, undefined, hoặc empty string
+  let customerAddress = 'N/A';
+  if (customer && customer.address) {
+    if (typeof customer.address === 'string' && customer.address.trim() !== '') {
+      customerAddress = customer.address;
+    } else if (typeof customer.address === 'object') {
+      // Nếu address là object, dùng getAddress
+      customerAddress = getAddress(customer.address);
+    }
+  }
+  
+  console.log('[mapOrderToContractPDFSync] Customer info:', {
+    full_name: customer?.full_name,
+    phone: customer?.phone,
+    email: customer?.email,
+    address: customer?.address,
+    addressType: typeof customer?.address,
+    customerAddress
+  });
+  
+  console.log('[mapOrderToContractPDFSync] Dealership info:', {
+    company_name: dealershipName,
+    address: dealershipAddress,
+    phone: dealershipPhone,
+    tax_code: dealershipTaxCode,
+    representative
+  });
+  
   return {
     contractCode: order.code || `HD${Date.now()}`,
     customerName: customer.full_name || 'N/A',
     customerPhone: customer.phone || 'N/A',
     customerEmail: customer.email || 'N/A',
-    customerAddress: typeof customer.address === 'string' ? customer.address : getAddress(customer.address),
+    customerAddress,
     dealershipName,
     dealershipAddress,
     dealershipPhone,
@@ -808,7 +930,9 @@ const mapOrderToContractPDFSync = (
     paidAmount: order.paid_amount || 0,
     remainingAmount: (order.final_amount || 0) - (order.paid_amount || 0),
     paymentMethod: order.payment_method || 'cash',
-    deliveryAddress: order.delivery?.delivery_address?.full_address || getAddress(dealership.address),
+    deliveryAddress: order.delivery?.delivery_address?.full_address || 
+                     (order.delivery?.delivery_address ? getAddress(order.delivery.delivery_address) : null) ||
+                     getAddress(dealership.address),
     deliveryDate: order.delivery?.scheduled_date ? new Date(order.delivery.scheduled_date) : undefined,
     notes: order.notes,
   };
@@ -832,23 +956,81 @@ export const mapOrderToContractPDF = async (
     email?: string;
   }
 ): Promise<ContractPDFData> => {
-  // If dealershipInfo is provided or dealership is already populated, use sync version
-  if (dealershipInfo || 
-      (order.dealership && typeof order.dealership === 'object') ||
-      (order.dealership_id && typeof order.dealership_id === 'object')) {
-    return mapOrderToContractPDFSync(order, dealershipInfo);
+  // Fetch dealership info - ALWAYS fetch from API to get full info (including address, contact, tax_code)
+  // Backend getOrderById only populates: company_name (missing address, contact, tax_code, legal_representative!)
+  let finalDealershipInfo = dealershipInfo;
+  
+  // Get dealership ID (could be string or populated object)
+  let dealershipId: string | null = null;
+  if (dealershipInfo && (dealershipInfo as any)._id) {
+    dealershipId = (dealershipInfo as any)._id;
+  } else if (typeof order.dealership_id === 'string') {
+    dealershipId = order.dealership_id;
+  } else if (order.dealership_id && typeof order.dealership_id === 'object' && order.dealership_id._id) {
+    dealershipId = order.dealership_id._id;
+  } else if (order.dealership && typeof order.dealership === 'object' && order.dealership._id) {
+    dealershipId = order.dealership._id;
   }
   
-  // Otherwise, try to fetch from API if dealership_id is a string
-  if (order.dealership_id && typeof order.dealership_id === 'string') {
-    const fetchedDealership = await fetchDealershipInfo(order.dealership_id);
-    if (fetchedDealership) {
-      return mapOrderToContractPDFSync(order, fetchedDealership);
+  if (dealershipId) {
+    // Check if dealership already has full info (address, contact, tax_code)
+    const existingDealership = finalDealershipInfo || order.dealership || (order.dealership_id && typeof order.dealership_id === 'object' ? order.dealership_id : null);
+    const hasFullDealershipInfo = existingDealership && existingDealership.address && existingDealership.contact && existingDealership.tax_code;
+    
+    if (!hasFullDealershipInfo) {
+      console.log('[mapOrderToContractPDF] Dealership populated but missing full info, fetching full dealership info for:', dealershipId);
+      const fetchedDealership = await fetchDealershipInfo(dealershipId);
+      if (fetchedDealership) {
+        console.log('[mapOrderToContractPDF] ✅ Fetched full dealership info:', fetchedDealership);
+        console.log('[mapOrderToContractPDF] Dealership address:', fetchedDealership.address);
+        finalDealershipInfo = fetchedDealership;
+      } else {
+        console.warn('[mapOrderToContractPDF] ❌ Failed to fetch dealership info, using existing data');
+      }
+    } else {
+      console.log('[mapOrderToContractPDF] Dealership already has full info (including address, contact, tax_code)');
     }
+  } else {
+    console.warn('[mapOrderToContractPDF] ❌ No dealership_id found in order');
   }
   
-  // Fallback to sync version (will use defaults)
-  return mapOrderToContractPDFSync(order, dealershipInfo);
+  // Fetch customer info - ALWAYS fetch from API to get full info (including address)
+  // Backend getOrderById only populates: full_name, email, phone (missing address!)
+  let enrichedOrder = { ...order };
+  
+  // Get customer ID (could be string or populated object)
+  let customerId: string | null = null;
+  if (typeof order.customer_id === 'string') {
+    customerId = order.customer_id;
+  } else if (order.customer_id && typeof order.customer_id === 'object' && order.customer_id._id) {
+    customerId = order.customer_id._id;
+  } else if (order.customer && typeof order.customer === 'object' && order.customer._id) {
+    customerId = order.customer._id;
+  }
+  
+  if (customerId) {
+    // Check if customer already has address (full info)
+    const existingCustomer = order.customer || (order.customer_id && typeof order.customer_id === 'object' ? order.customer_id : null);
+    const hasFullCustomerInfo = existingCustomer && existingCustomer.address;
+    
+    if (!hasFullCustomerInfo) {
+      console.log('[mapOrderToContractPDF] Customer populated but missing address, fetching full customer info for:', customerId);
+      const fetchedCustomer = await fetchCustomerInfo(customerId);
+      if (fetchedCustomer) {
+        console.log('[mapOrderToContractPDF] ✅ Fetched full customer info:', fetchedCustomer);
+        console.log('[mapOrderToContractPDF] Customer address:', fetchedCustomer.address);
+        enrichedOrder.customer = fetchedCustomer;
+      } else {
+        console.warn('[mapOrderToContractPDF] ❌ Failed to fetch customer info, using existing data');
+      }
+    } else {
+      console.log('[mapOrderToContractPDF] Customer already has full info (including address)');
+    }
+  } else {
+    console.warn('[mapOrderToContractPDF] ❌ No customer_id found in order');
+  }
+  
+  return mapOrderToContractPDFSync(enrichedOrder, finalDealershipInfo);
 };
 
 /**

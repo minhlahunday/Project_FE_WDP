@@ -238,13 +238,13 @@ export default function PaymentHistoryModal({
 
   // Format date safely
   const formatDate = (date: string | Date | null | undefined) => {
-    if (!date) return 'N/A';
+    if (!date) return 'Không có thông tin';
     try {
       const dateObj = new Date(date);
-      if (isNaN(dateObj.getTime())) return 'N/A';
+      if (isNaN(dateObj.getTime())) return 'Không hợp lệ';
       return dateObj.toLocaleString('vi-VN');
     } catch (error) {
-      return 'N/A';
+      return 'Không hợp lệ';
     }
   };
 
@@ -335,7 +335,17 @@ export default function PaymentHistoryModal({
             <div className="space-y-4">
               {orderHistory.timeline && orderHistory.timeline.length > 0 && (
                 <div className="relative">
-                  {orderHistory.timeline.map((item: any, index: number) => (
+                  {/* Sắp xếp timeline theo thời gian mới nhất trước (descending) */}
+                  {[...orderHistory.timeline]
+                    .sort((a: any, b: any) => {
+                      // API trả về created_at, nhưng có thể có timestamp
+                      const dateA = a.created_at || a.timestamp;
+                      const dateB = b.created_at || b.timestamp;
+                      const timeA = dateA ? new Date(dateA).getTime() : 0;
+                      const timeB = dateB ? new Date(dateB).getTime() : 0;
+                      return timeB - timeA; // Mới nhất trước
+                    })
+                    .map((item: any, index: number) => (
                     <div key={item.id || index} className={`flex gap-4 ${!item.is_current ? 'pb-6' : ''}`}>
                       {/* Timeline dot */}
                       <div className="flex flex-col items-center">
@@ -388,15 +398,15 @@ export default function PaymentHistoryModal({
                               )}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {formatDate(item.timestamp)}
+                              {formatDate(item.created_at || item.timestamp)}
                             </div>
                           </div>
                           
-                          {item.changed_by && (
+                          {item.changed_by ? (
                             <p className="text-xs text-gray-500 mt-1">
-                              Thay đổi bởi: {item.changed_by.full_name || item.changed_by.email || 'N/A'}
+                              Thay đổi bởi: {item.changed_by.full_name || item.changed_by.email || 'Không xác định'}
                             </p>
-                          )}
+                          ) : null}
                           
                           {item.reason && (
                             <p className="text-sm text-gray-600 mt-2">

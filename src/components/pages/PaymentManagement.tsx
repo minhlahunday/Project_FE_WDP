@@ -29,6 +29,7 @@ import { paymentService, Payment } from '../../services/paymentService';
 import { orderHistoryService } from '../../services/orderHistoryService';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateContractPDF, mapOrderToContractPDF } from '../../utils/pdfUtils';
+import Swal from 'sweetalert2';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -147,10 +148,31 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     // Check dealership permission
     if (user?.role === 'dealer_staff' || user?.role === 'dealer_manager') {
       const userDealershipId = user.dealership_id || user.dealerId;
-      if (order.dealership_id !== userDealershipId) {
-        message.error(`Bạn không có quyền thanh toán cho đơn hàng này. Đơn hàng thuộc về dealership khác.`);
+      // Xử lý cả trường hợp dealership_id là object hoặc string
+      const orderDealershipId = typeof order.dealership_id === 'object' && order.dealership_id !== null
+        ? (order.dealership_id as any)?._id || (order.dealership_id as any)?.id
+        : order.dealership_id;
+      
+      if (orderDealershipId !== userDealershipId) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Lỗi!',
+          text: 'Bạn không có quyền thanh toán cho đơn hàng này. Đơn hàng thuộc về dealership khác.',
+          confirmButtonText: 'Đóng',
+          // Đảm bảo SweetAlert hiển thị trên modal
+          didOpen: () => {
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+            if (swalContainer) {
+              swalContainer.style.zIndex = '99999';
+              if (swalContainer.parentElement !== document.body) {
+                document.body.appendChild(swalContainer);
+              }
+            }
+          }
+        });
         console.error('Dealership mismatch:', {
-          order_dealership_id: order.dealership_id,
+          order_dealership_id: orderDealershipId,
+          order_dealership_id_raw: order.dealership_id,
           user_dealership_id: userDealershipId
         });
         return;
@@ -159,7 +181,63 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     
     // Guard: đặt cọc chỉ khi order.pending
     if (isFirstPayment && order.status !== 'pending') {
-      message.error(`Không thể đặt cọc khi đơn hàng ở trạng thái "${order.status}". Yêu cầu trạng thái pending.`);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Lỗi!',
+        text: `Không thể đặt cọc khi đơn hàng ở trạng thái "${order.status}". Yêu cầu trạng thái pending.`,
+        confirmButtonText: 'Đóng',
+        // Đảm bảo SweetAlert hiển thị trên modal
+        didOpen: () => {
+          const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+          if (swalContainer) {
+            swalContainer.style.zIndex = '99999';
+            if (swalContainer.parentElement !== document.body) {
+              document.body.appendChild(swalContainer);
+            }
+          }
+        }
+      });
+      return;
+    }
+
+    // Guard: Thanh toán đủ chỉ khi order.vehicle_ready
+    // Nếu xe có sẵn trong kho (deposit_paid) nhưng chưa mark vehicle ready, không được thanh toán đủ
+    if (!isFirstPayment && order.status !== 'vehicle_ready') {
+      if (order.status === 'deposit_paid') {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Lỗi!',
+          text: 'Không thể thanh toán đủ. Xe có sẵn trong kho nhưng chưa được đánh dấu sẵn sàng. Vui lòng đánh dấu xe sẵn sàng trước khi thanh toán đủ.',
+          confirmButtonText: 'Đóng',
+          // Đảm bảo SweetAlert hiển thị trên modal
+          didOpen: () => {
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+            if (swalContainer) {
+              swalContainer.style.zIndex = '99999';
+              if (swalContainer.parentElement !== document.body) {
+                document.body.appendChild(swalContainer);
+              }
+            }
+          }
+        });
+      } else {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Lỗi!',
+          text: `Không thể thanh toán đủ khi đơn hàng ở trạng thái "${order.status}". Yêu cầu trạng thái vehicle_ready.`,
+          confirmButtonText: 'Đóng',
+          // Đảm bảo SweetAlert hiển thị trên modal
+          didOpen: () => {
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+            if (swalContainer) {
+              swalContainer.style.zIndex = '99999';
+              if (swalContainer.parentElement !== document.body) {
+                document.body.appendChild(swalContainer);
+              }
+            }
+          }
+        });
+      }
       return;
     }
 
@@ -176,6 +254,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         });
       } else {
         // BƯỚC 2: Thanh toán cuối - Dùng API payFinal (tự động tính số tiền còn lại)
+        // Yêu cầu: Order phải ở trạng thái vehicle_ready (phải mark vehicle ready thủ công trước)
         response = await orderService.payFinal(order._id, {
           payment_method: values.method,
           notes: values.notes
@@ -837,114 +916,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
           />
         )}
 
-        {/* Order Status History Timeline */}
-        {orderHistory && (
-          <Card title="Lịch sử trạng thái đơn hàng" loading={loadingOrderHistory}>
-            <div className="space-y-4">
-              {orderHistory.timeline && orderHistory.timeline.length > 0 && (
-                <div className="relative">
-                  {orderHistory.timeline.map((item: any, index: number) => (
-                    <div key={item.id || index} className={`flex gap-4 ${!item.is_current ? 'pb-6' : ''}`}>
-                      {/* Timeline dot */}
-                      <div className="flex flex-col items-center">
-                        <div className={`w-4 h-4 rounded-full border-2 ${
-                          item.is_current 
-                            ? 'bg-blue-500 border-blue-500' 
-                            : 'bg-white border-gray-400'
-                        }`} />
-                        {index < orderHistory.timeline.length - 1 && (
-                          <div className="w-0.5 h-16 bg-gray-300 mt-2" />
-                        )}
-                      </div>
-                      
-                      {/* Timeline content */}
-                      <div className="flex-1 pb-4">
-                        <div className="bg-white border rounded-lg p-4 shadow-sm">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              {item.status_change && (
-                                <p className="text-sm font-semibold text-gray-800">
-                                  Trạng thái: <span className="text-red-600">{item.status_change.from}</span> → <span className="text-green-600">{item.status_change.to}</span>
-                                </p>
-                              )}
-                              {item.delivery_status_change && (
-                                <p className="text-sm text-gray-600 mt-1">
-                                  Giao hàng: {item.delivery_status_change.from} → {item.delivery_status_change.to}
-                                </p>
-                              )}
-                              {item.current_status && (
-                                <p className="text-sm font-semibold text-blue-600">
-                                  Trạng thái hiện tại: {item.current_status}
-                                </p>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {new Date(item.timestamp).toLocaleString('vi-VN')}
-                            </div>
-                          </div>
-                          
-                          {item.changed_by && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Thay đổi bởi: {item.changed_by.full_name || item.changed_by.email || 'N/A'}
-                            </p>
-                          )}
-                          
-                          {item.reason && (
-                            <p className="text-sm text-gray-600 mt-2">
-                              <strong>Lý do:</strong> {item.reason}
-                            </p>
-                          )}
-                          
-                          {item.notes && (
-                            <p className="text-sm text-gray-500 mt-1">
-                              <strong>Ghi chú:</strong> {item.notes}
-                            </p>
-                          )}
-                          
-                          {item.payment_info && (
-                            <div className="mt-2 text-xs bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-                              <strong className="text-blue-800">Thông tin thanh toán:</strong>
-                              <div className="mt-2 space-y-1">
-                                {item.payment_info.amount && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Số tiền:</span>
-                                    <span className="font-medium text-green-600">
-                                      {formatCurrency(item.payment_info.amount)}
-                                    </span>
-                                  </div>
-                                )}
-                                {item.payment_info.method && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Phương thức:</span>
-                                    <span className="font-medium">
-                                      {item.payment_info.method === 'cash' ? 'Tiền mặt' :
-                                       item.payment_info.method === 'bank' ? 'Chuyển khoản' :
-                                       item.payment_info.method === 'card' ? 'Thẻ' :
-                                       item.payment_info.method === 'qr' ? 'QR Code' :
-                                       item.payment_info.method}
-                                    </span>
-                                  </div>
-                                )}
-                                {item.payment_info.reference && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Mã tham chiếu:</span>
-                                    <span className="font-mono text-xs bg-gray-200 px-2 py-1 rounded">
-                                      {item.payment_info.reference}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Card>
-        )}
+       
 
         {/* Payment History */}
         <Card title="Lịch sử thanh toán">

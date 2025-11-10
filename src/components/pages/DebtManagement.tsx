@@ -839,14 +839,14 @@ export const DebtManagement: React.FC = () => {
                   {selectedDebt.payments && selectedDebt.payments.length > 0 && (
                     <div>
                       <AntTypography.Title level={5}>Lịch sử thanh toán</AntTypography.Title>
-                      <div style={{ marginRight: '16px' }}>
+                      <div style={{ marginRight: '10px' }}>
                         <AntTable
                         columns={[
                           {
                             title: 'Số tiền',
                             dataIndex: 'amount',
                             key: 'amount',
-                            align: 'right' as const,
+                            align: 'left' as const,
                             render: (amount: number) => (
                               <span className="font-medium text-green-600">
                                 {formatCurrency(amount)}
@@ -883,13 +883,13 @@ export const DebtManagement: React.FC = () => {
                           const total = pageData.reduce((sum: number, payment: any) => sum + payment.amount, 0);
                           return (
                             <AntTable.Summary.Row>
-                              <AntTable.Summary.Cell index={0} align="right">
+                              <AntTable.Summary.Cell index={0} colSpan={3}>
+                                <span className="font-bold">Tổng đã trả:</span>
+                              </AntTable.Summary.Cell>
+                              <AntTable.Summary.Cell index={3} align="right">
                                 <span className="font-bold text-green-600">
                                   {formatCurrency(total)}
                                 </span>
-                              </AntTable.Summary.Cell>
-                              <AntTable.Summary.Cell index={1} colSpan={3}>
-                                <span className="font-bold">Tổng đã trả:</span>
                               </AntTable.Summary.Cell>
                             </AntTable.Summary.Row>
                           );

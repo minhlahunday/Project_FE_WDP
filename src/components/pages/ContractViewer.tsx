@@ -19,6 +19,7 @@ import {
   ReloadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import Swal from 'sweetalert2';
 
 import { contractService, ContractInfo } from '../../services/contractService';
 import { Order } from '../../types/index';
@@ -67,7 +68,7 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
           console.log('Contract data from backend:', contractData);
           
           // Transform backend contract structure to frontend format
-          const transformedContract: ContractInfo = {
+          const transformedContract = {
             _id: contractData._id,
             signed_contract_urls: (contractData as any).signed_contract_urls || [],
             contract_url: (contractData as any).signed_contract_urls?.[0]?.url || (contractData as any).signed_contract_url, // Backward compatibility
@@ -78,7 +79,7 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
             signed_by: (contractData as any).signed_by,
             uploaded_by: (contractData as any).uploaded_by,
             template_used: (contractData as any).template_used
-          };
+          } as ContractInfo;
           
           setContractInfo(transformedContract);
           console.log('Contract info loaded successfully:', transformedContract);
@@ -143,22 +144,118 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
   const handleDelete = async (contractUrl: string) => {
     if (!order?._id) return;
     
+    // Debug: Log contract info trước khi xóa
+    console.log('🔍 Contract info before delete:', {
+      contractInfo,
+      signed_contract_urls: contractInfo?.signed_contract_urls,
+      contractUrl,
+      allUrls: contractInfo?.signed_contract_urls?.map(c => c.url)
+    });
+    
+    // Xác nhận trước khi xóa bằng SweetAlert2
+    const result = await Swal.fire({
+      title: 'Xác nhận xóa hợp đồng',
+      text: 'Bạn có chắc chắn muốn xóa hợp đồng này? Hành động này không thể hoàn tác.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#ff4d4f',
+      cancelButtonColor: '#6c757d',
+      reverseButtons: true,
+      // Đảm bảo SweetAlert hiển thị trên modal
+      didOpen: () => {
+        const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+        if (swalContainer) {
+          swalContainer.style.zIndex = '99999';
+          if (swalContainer.parentElement !== document.body) {
+            document.body.appendChild(swalContainer);
+          }
+        }
+      }
+    });
+    
+    if (!result.isConfirmed) return;
+    
     try {
+      console.log('🗑️ Deleting contract:', { 
+        orderId: order._id, 
+        contractUrl,
+        contractUrlType: typeof contractUrl,
+        contractUrlLength: contractUrl?.length,
+        contractUrlExact: JSON.stringify(contractUrl)
+      });
       const response = await contractService.deleteSignedContract(order._id, contractUrl);
-      console.log('Delete contract response:', response);
+      console.log('✅ Delete contract response:', response);
       
       // Handle backend response structure: {status: 200, success: true, message, data}
       if (response && (response.success === true || response.success === undefined)) {
-        message.success('Đã xóa hợp đồng thành công');
+        // Refresh data trước
         loadContractInfo();
         onRefresh?.();
+        
+        // Hiển thị SweetAlert (z-index cao, hiển thị trên modal)
+        await Swal.fire({
+          icon: 'success',
+          title: 'Thành công!',
+          text: 'Đã xóa hợp đồng thành công',
+          confirmButtonText: 'Đóng',
+          timer: 3000,
+          timerProgressBar: true,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          // Đảm bảo SweetAlert hiển thị trên modal
+          didOpen: () => {
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+            if (swalContainer) {
+              swalContainer.style.zIndex = '99999';
+              // Đảm bảo SweetAlert được append vào body, không phải trong modal
+              if (swalContainer.parentElement !== document.body) {
+                document.body.appendChild(swalContainer);
+              }
+            }
+          }
+        });
       } else {
-        console.log('Delete failed, response:', response);
-        throw new Error(response?.message || 'Failed to delete contract');
+        console.log('❌ Delete failed, response:', response);
+        const errorMessage = response?.message || 'Không thể xóa hợp đồng';
+        await Swal.fire({
+          icon: 'error',
+          title: 'Lỗi!',
+          text: errorMessage,
+          confirmButtonText: 'Đóng',
+          // Đảm bảo SweetAlert hiển thị trên modal
+          didOpen: () => {
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+            if (swalContainer) {
+              swalContainer.style.zIndex = '99999';
+              if (swalContainer.parentElement !== document.body) {
+                document.body.appendChild(swalContainer);
+              }
+            }
+          }
+        });
       }
     } catch (error: any) {
-      console.error('Error deleting contract:', error);
-      message.error('Lỗi khi xóa hợp đồng');
+      console.error('❌ Error deleting contract:', error);
+      // Hiển thị message lỗi chi tiết hơn
+      const errorMessage = error?.message || error?.response?.data?.message || 'Lỗi khi xóa hợp đồng';
+      await Swal.fire({
+        icon: 'error',
+        title: 'Lỗi!',
+        text: errorMessage,
+        confirmButtonText: 'Đóng',
+        // Đảm bảo SweetAlert hiển thị trên modal
+        didOpen: () => {
+          const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+          if (swalContainer) {
+            swalContainer.style.zIndex = '99999';
+            if (swalContainer.parentElement !== document.body) {
+              document.body.appendChild(swalContainer);
+            }
+          }
+        }
+      });
     }
   };
 
@@ -406,9 +503,9 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
               <Descriptions.Item label="Email">
                 {order.customer?.email || 'N/A'}
               </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ khách hàng">
+              {/* <Descriptions.Item label="Địa chỉ khách hàng">
                 {order.customer?.address || 'N/A'}
-              </Descriptions.Item>
+              </Descriptions.Item> */}
               <Descriptions.Item label="Nhân viên bán hàng">
                 {order.salesperson?.full_name || 'Chưa phân công'}
               </Descriptions.Item>
@@ -509,7 +606,7 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
                   </div>
                 </Descriptions.Item>
               )}
-              {(contractInfo as any).signed_by && (
+              {/* {(contractInfo as any).signed_by && (
                 <Descriptions.Item label="Người ký">
                   {(contractInfo as any).signed_by}
                 </Descriptions.Item>
@@ -518,13 +615,13 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
                 <Descriptions.Item label="Người upload">
                   {(contractInfo as any).uploaded_by}
                 </Descriptions.Item>
-              )}
+              )} */}
               {contractInfo.notes && (
                 <Descriptions.Item label="Template sử dụng">
                   {contractInfo.notes}
                 </Descriptions.Item>
               )}
-              {contractInfo.contract_url && (
+              {/* {contractInfo.contract_url && (
                 <Descriptions.Item label="Link hợp đồng" span={2}>
                   <div className="break-all text-blue-600">
                     <a href={contractInfo.contract_url} target="_blank" rel="noopener noreferrer">
@@ -532,7 +629,7 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
                     </a>
                   </div>
                 </Descriptions.Item>
-              )}
+              )} */}
             </Descriptions>
           </Card>
 
@@ -694,7 +791,7 @@ export const ContractViewer: React.FC<ContractViewerProps> = ({
                           onClick={() => {
                             const link = document.createElement('a');
                             link.href = contract.url;
-                            link.download = `hop-dong-${index + 1}.${contract.type.includes('pdf') ? 'pdf' : 'jpg'}`;
+                            link.download = `hop-dong-${index + 1}.${contract.type?.includes('pdf') ? 'pdf' : 'jpg'}`;
                             link.click();
                           }}
                         >

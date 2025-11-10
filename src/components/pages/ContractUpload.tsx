@@ -32,6 +32,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import Swal from 'sweetalert2';
+import { message } from 'antd';
 
 // Import services and types (Giả định đã có)
 import { orderService } from '../../services/orderService';
@@ -253,24 +254,70 @@ export const ContractUpload: React.FC<ContractUploadProps> = ({
 
       // Hiển thị kết quả
       if (successCount === totalFiles) {
+        // Gọi onSuccess để refresh data
+        onSuccess();
+        
+        // Hiển thị SweetAlert (z-index cao, hiển thị trên modal)
         await Swal.fire({
           icon: 'success',
           title: 'Thành công!',
           text: `Đã upload thành công ${successCount} hợp đồng!`,
           confirmButtonText: 'Đóng',
-          timer: 2000,
-          timerProgressBar: true
+          timer: 3000,
+          timerProgressBar: true,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          // Đảm bảo SweetAlert hiển thị trên modal
+          customClass: {
+            container: 'swal2-container-custom'
+          },
+          // Tăng z-index để hiển thị trên modal và append vào body
+          didOpen: () => {
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+            if (swalContainer) {
+              swalContainer.style.zIndex = '99999';
+              // Đảm bảo SweetAlert được append vào body, không phải trong modal
+              if (swalContainer.parentElement !== document.body) {
+                document.body.appendChild(swalContainer);
+              }
+            }
+          }
         });
-        onSuccess();
+        
+        // Đóng modal sau khi SweetAlert đã hiển thị
         onClose();
       } else if (successCount > 0) {
+        // Gọi onSuccess để refresh data
+        onSuccess();
+        
+        // Hiển thị SweetAlert (z-index cao, hiển thị trên modal)
         await Swal.fire({
           icon: 'warning',
           title: 'Hoàn thành một phần',
           text: `Đã upload thành công ${successCount}/${totalFiles} hợp đồng. ${failCount} file thất bại.`,
-          confirmButtonText: 'Đóng'
+          confirmButtonText: 'Đóng',
+          timer: 3000,
+          timerProgressBar: true,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          // Đảm bảo SweetAlert hiển thị trên modal
+          customClass: {
+            container: 'swal2-container-custom'
+          },
+          // Tăng z-index để hiển thị trên modal và append vào body
+          didOpen: () => {
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
+            if (swalContainer) {
+              swalContainer.style.zIndex = '99999';
+              // Đảm bảo SweetAlert được append vào body, không phải trong modal
+              if (swalContainer.parentElement !== document.body) {
+                document.body.appendChild(swalContainer);
+              }
+            }
+          }
         });
-        onSuccess();
+        
+        // Đóng modal sau khi SweetAlert đã hiển thị
         onClose();
       } else {
         throw new Error('Tất cả các file upload đều thất bại');

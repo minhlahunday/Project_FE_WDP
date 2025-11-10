@@ -8,6 +8,14 @@ export interface ContractInfo {
   signed_date?: string;
   upload_date?: string;
   notes?: string;
+  signed_by?: string;
+  uploaded_by?: string;
+  template_used?: string;
+  signed_contract_urls?: Array<{
+    url: string;
+    uploaded_at?: string;
+    type?: string;
+  }>;
 }
 
 export interface ContractTemplate {
@@ -71,10 +79,17 @@ export const contractService = {
 
   // Delete signed contract
   async deleteSignedContract(orderId: string, signedContractUrl: string): Promise<ContractResponse> {
+    // Backend API yêu cầu signed_contract_url trong request body (theo API documentation)
+    console.log('🗑️ deleteSignedContract called:', { orderId, signedContractUrl });
+    const requestData = { signed_contract_url: signedContractUrl };
+    console.log('📤 Sending DELETE request with body:', requestData);
+    // del() đã trả về response.data rồi, không cần gọi .data nữa
     const response = await del(`/api/contracts/orders/${orderId}`, {
-      data: { signed_contract_url: signedContractUrl }
+      data: requestData
     });
-    return response.data;
+    console.log('📥 DELETE response:', response);
+    // Response đã là data rồi (từ httpClient.request), không cần .data
+    return response as ContractResponse;
   }
 };
 

@@ -1119,9 +1119,9 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
           >
             Gửi yêu cầu đặt xe
           </Button> */}
-          <Button variant="outlined" startIcon={<PrintIcon />}>
+          {/* <Button variant="outlined" startIcon={<PrintIcon />}>
             In đơn hàng
-          </Button>
+          </Button> */}
           {/* Giao xe button - chỉ hiển thị khi order đã thanh toán đủ */}
           {(order?.status === 'fully_paid' || order?.status === 'fullyPayment') && (
             <Button 
