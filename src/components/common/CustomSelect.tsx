@@ -132,7 +132,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
               <input
                 type="text"
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="🔍 Tìm kiếm..."
+                placeholder="Tìm kiếm..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onClick={(e) => e.stopPropagation()}

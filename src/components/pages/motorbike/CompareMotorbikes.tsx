@@ -311,15 +311,7 @@ export const CompareMotorbikes: React.FC = () => {
                         );
                       })}
                     </tr>
-                    <tr className="hover:bg-gray-50">
-                      <td className="p-6 font-medium text-gray-900">Model</td>
-                      {selectedModels.map((vehicle, index) => {
-                        const v = vehicle as Record<string, unknown>;
-                        return (
-                          <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">{v.model as string}</td>
-                        );
-                      })}
-                    </tr>
+                    {/* image.png */}
                     <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Phiên bản</td>
                       {selectedModels.map((vehicle, index) => {
@@ -644,14 +636,11 @@ export const CompareMotorbikes: React.FC = () => {
                         return (
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center">
                             <div className="space-y-1">
-                              {safetyFeatures.slice(0, 3).map((feature, featureIndex) => (
+                              {safetyFeatures.map((feature, featureIndex) => (
                                 <div key={featureIndex} className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
                                   {feature}
                                 </div>
                               ))}
-                              {safetyFeatures.length > 3 && (
-                                <div className="text-xs text-gray-500">+{safetyFeatures.length - 3} tính năng khác</div>
-                              )}
                             </div>
                           </td>
                         );
@@ -699,14 +688,11 @@ export const CompareMotorbikes: React.FC = () => {
                         return (
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-700">
                           <div className="space-y-1">
-                              {colorOptions.slice(0, 3).map((color, colorIndex) => (
+                              {colorOptions.map((color, colorIndex) => (
                                 <div key={colorIndex} className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
                                   {color}
                               </div>
                             ))}
-                              {colorOptions.length > 3 && (
-                                <div className="text-xs text-gray-500">+{colorOptions.length - 3} màu khác</div>
-                              )}
                           </div>
                         </td>
                         );

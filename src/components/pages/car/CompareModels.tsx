@@ -731,14 +731,11 @@ export const CompareModels: React.FC = () => {
                         return (
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center">
                             <div className="space-y-1">
-                              {safetyFeatures.slice(0, 3).map((feature, featureIndex) => (
+                              {safetyFeatures.map((feature, featureIndex) => (
                                 <div key={featureIndex} className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
                                   {feature}
                                 </div>
                               ))}
-                              {safetyFeatures.length > 3 && (
-                                <div className="text-xs text-gray-500">+{safetyFeatures.length - 3} tính năng khác</div>
-                              )}
                             </div>
                           </td>
                         );

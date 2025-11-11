@@ -13,7 +13,6 @@ import {
   TableRow,
   Paper,
   Button,
-  Chip,
   Pagination,
   CircularProgress,
   Dialog,
@@ -915,17 +914,30 @@ export const QuotationManagement: React.FC = () => {
     });
   };
 
-  const getStatusColor = (status: string): 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info' => {
-    const colors: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info'> = {
-      valid: 'success',
-      expired: 'warning',
-      canceled: 'error',
-      cancelled: 'error',
-      invalid: 'default',
-      used: 'info',
-      converted: 'info'
+  const getStatusColor = (status: string): string => {
+    const colors: Record<string, string> = {
+      valid: '#52c41a',      // Green
+      expired: '#faad14',    // Orange
+      canceled: '#f5222d',   // Red
+      cancelled: '#f5222d',  // Red
+      invalid: '#8c8c8c',    // Gray
+      used: '#1890ff',       // Blue
+      converted: '#1890ff'   // Blue
     };
-    return colors[status] || 'default';
+    return colors[status] || '#8c8c8c';
+  };
+
+  const getStatusColorForTag = (status: string): string => {
+    const colorMap: Record<string, string> = {
+      valid: 'success',      // Green
+      expired: 'warning',    // Orange
+      canceled: 'error',     // Red
+      cancelled: 'error',    // Red
+      invalid: 'default',    // Gray
+      used: 'blue',          // Blue
+      converted: 'blue'      // Blue
+    };
+    return colorMap[status] || 'default';
   };
 
   const getStatusText = (status: string) => {
@@ -1331,11 +1343,17 @@ export const QuotationManagement: React.FC = () => {
                                 </Typography>
                               </TableCell>
                               <TableCell>
-                                <Chip 
-                                  label={getStatusText(currentStatus)} 
-                                  color={getStatusColor(currentStatus)}
-                                  size="small"
-                                />
+                                <Tag 
+                                  color={getStatusColorForTag(currentStatus)} 
+                                  style={{ 
+                                    fontSize: 13, 
+                                    fontWeight: 600, 
+                                    padding: '4px 12px', 
+                                    borderRadius: 20 
+                                  }}
+                                >
+                                  {getStatusText(currentStatus)}
+                                </Tag>
                               </TableCell>
                               <TableCell align="center">
                                 <Box display="flex" gap={1} justifyContent="center">
@@ -1542,7 +1560,7 @@ export const QuotationManagement: React.FC = () => {
               </Descriptions.Item>
               
               <Descriptions.Item label="Trạng thái">
-                <Tag color={getStatusColor(selectedQuotation.status || 'valid')} style={{ fontSize: 14, fontWeight: 600, padding: '4px 12px' }}>
+                <Tag color={getStatusColorForTag(selectedQuotation.status || 'valid')} style={{ fontSize: 14, fontWeight: 600, padding: '6px 14px', borderRadius: 6 }}>
                   {getStatusText(selectedQuotation.status || 'valid')}
                 </Tag>
               </Descriptions.Item>
@@ -2173,7 +2191,7 @@ export const QuotationManagement: React.FC = () => {
                     <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
                       Trạng thái
                     </Text>
-                    <Tag color={getStatusColor(selectedQuotation.status || 'valid')} style={{ fontSize: 13 }}>
+                    <Tag color={getStatusColorForTag(selectedQuotation.status || 'valid')} style={{ fontSize: 13 }}>
                       {getStatusText(selectedQuotation.status || 'valid')}
                     </Tag>
                   </div>
