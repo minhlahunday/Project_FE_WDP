@@ -798,7 +798,7 @@ export const QuotationManagement: React.FC = () => {
           message.success({
             content: (
               <div>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>✅ Hủy báo giá thành công!</div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}> Hủy báo giá thành công!</div>
                 <div style={{ fontSize: 12, color: '#52c41a' }}>
                   Báo giá đã được đánh dấu là "Đã hủy"
                 </div>
