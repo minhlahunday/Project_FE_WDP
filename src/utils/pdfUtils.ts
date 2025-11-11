@@ -636,7 +636,7 @@ export const generateContractPDF = async (data: ContractPDFData): Promise<void> 
     </tr>
   </table>
     <div class="date-section">
-      <p>Ngày đồng ý</p>
+      <p>Ngày ký : </p>
     </div>
   </div>
 </body>

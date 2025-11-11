@@ -14,7 +14,6 @@ import {
   message,
   Space,
   Table,
-  Radio,
   Tag
 } from 'antd';
 import {
@@ -130,6 +129,80 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
       setOrderWithCustomer(null);
     }
   }, [visible, order]);
+
+  // Inject CSS for native select dropdown menu styling
+  useEffect(() => {
+    if (visible && isFirstPayment) {
+      const styleId = 'deposit-percent-select-style';
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+          /* Style cho native select dropdown menu */
+          select[name="depositPercent"] {
+            border-radius: 1rem !important;
+            border: 2px solid #d1d5db !important;
+          }
+          
+          /* Style cho dropdown menu khi mở - tạo cảm giác gắn kết */
+          select[name="depositPercent"]:focus {
+            border-radius: 1rem 1rem 0.5rem 0.5rem !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+          }
+          
+          /* Style cho option items - cải thiện padding và spacing */
+          select[name="depositPercent"] option {
+            padding: 14px 20px !important;
+            background: white !important;
+            color: #1f2937 !important;
+            font-weight: 500 !important;
+            font-size: 15px !important;
+            line-height: 1.5 !important;
+            border: none !important;
+          }
+          
+          /* Hover và selected state cho options */
+          select[name="depositPercent"] option:checked {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            color: white !important;
+            font-weight: 600 !important;
+          }
+          
+          /* Hover effect (chỉ hoạt động trên một số browser) */
+          select[name="depositPercent"] option:hover {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+            color: #1e40af !important;
+            font-weight: 600 !important;
+          }
+          
+          /* Disabled option styling */
+          select[name="depositPercent"] option:disabled {
+            background: #f9fafb !important;
+            color: #9ca3af !important;
+            font-style: italic !important;
+            font-weight: 400 !important;
+          }
+          
+          /* Thử style cho dropdown menu container với webkit */
+          select[name="depositPercent"]::-webkit-list-box {
+            border-radius: 0.5rem !important;
+            padding: 8px !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+            border: 2px solid #e5e7eb !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      return () => {
+        const styleElement = document.getElementById(styleId);
+        if (styleElement) {
+          styleElement.remove();
+        }
+      };
+    }
+  }, [visible, isFirstPayment]);
 
   // Auto-fill remaining amount when payment history changes or already has deposit
   useEffect(() => {
@@ -616,7 +689,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     >
       <div className="space-y-4">
         {/* Order Info */}
-        <Card title="Thông tin đơn hàng" size="small">
+        <Card 
+          title={<span className="text-lg font-bold text-gray-800">Thông tin đơn hàng</span>} 
+          size="small"
+          className="shadow-lg border-2 border-gray-200 rounded-2xl mb-4"
+          style={{
+            borderRadius: '1rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          }}
+        >
           <Row gutter={16}>
             <Col span={12}>
               <Text strong>Mã đơn hàng:</Text> {order.code}
@@ -650,7 +731,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         </Card>
 
         {/* Payment Progress */}
-        <Card title="Tiến độ thanh toán" size="small">
+        <Card 
+          title={<span className="text-lg font-bold text-gray-800">Tiến độ thanh toán</span>} 
+          size="small"
+          className="shadow-lg border-2 border-gray-200 rounded-2xl mb-4"
+          style={{
+            borderRadius: '1rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          }}
+        >
           <div>
             <Title level={4}>Tiến độ thanh toán</Title>
             <Progress
@@ -668,7 +757,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
 
         {/* Payment Form */}
         {paymentProgress < 100 && (
-          <Card title="Thêm thanh toán" size="small">
+          <Card 
+            title={<span className="text-lg font-bold text-gray-800">Thêm thanh toán</span>} 
+            size="small"
+            className="shadow-lg border-2 border-gray-200 rounded-2xl"
+            style={{
+              borderRadius: '1rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+            }}
+          >
             {isFirstPayment && (
               <Alert
                 message="Quy định về tiền cọc"
@@ -736,34 +833,55 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                   ] : [])
                 ]}
               >
-                {/* Lần 1: Chọn % cọc, Lần 2: Bắt buộc trả hết */}
+                {/* Lần 1: Chọn % cọc (10-30%), Lần 2: Bắt buộc trả hết */}
                 {isFirstPayment ? (
-                  <Radio.Group
-                    onChange={(e) => {
-                      const percent = e.target.value;
-                      const calculatedAmount = Math.round(totalAmount * (percent / 100));
-                      form.setFieldsValue({
-                        depositPercent: percent,
-                        amount: calculatedAmount
-                      });
-                    }}
-                  >
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      {[10, 15, 20, 25, 30].map((percent) => {
+                  <div className="relative">
+                    <select
+                      name="depositPercent"
+                      className="w-full px-5 py-4 pr-14 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl hover:scale-[1.01] appearance-none cursor-pointer text-base"
+                      style={{
+                        backgroundImage: 'none',
+                        paddingRight: '3.5rem',
+                        borderRadius: '1rem',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        zIndex: 1
+                      }}
+                      onChange={(e) => {
+                        const percent = Number(e.target.value);
+                        const calculatedAmount = Math.round(totalAmount * (percent / 100));
+                        form.setFieldsValue({
+                          depositPercent: percent,
+                          amount: calculatedAmount
+                        });
+                      }}
+                    >
+                      <option value="" disabled className="text-gray-400 font-normal py-2">
+                        -- Chọn phần trăm cọc (10% - 30%) --
+                      </option>
+                      {Array.from({ length: 21 }, (_, i) => {
+                        const percent = 10 + i; // 10, 11, 12, ..., 30
                         const calculatedAmount = Math.round(totalAmount * (percent / 100));
                         return (
-                          <Radio key={percent} value={percent}>
-                            <div className="flex items-center justify-between w-full">
-                              <span className="font-semibold">{percent}%</span>
-                              <span className="ml-4 text-green-600 font-medium">
-                                {formatCurrency(calculatedAmount)}
-                              </span>
-                            </div>
-                          </Radio>
+                          <option key={percent} value={percent} className="py-3 font-medium text-gray-800">
+                            {percent}% - {formatCurrency(calculatedAmount)}
+                          </option>
                         );
                       })}
-                    </Space>
-                  </Radio.Group>
+                    </select>
+                    {/* Custom dropdown arrow */}
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none z-10">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm">
+                        <svg 
+                          className="w-5 h-5 text-blue-600 transition-all duration-200" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div>
                     {/* <div style={{ 
@@ -847,26 +965,54 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               )}
 
               <Form.Item
-                label="Phương thức thanh toán"
+                label={<span className="text-base font-semibold text-gray-700">Phương thức thanh toán</span>}
                 name="method"
                 rules={[{ required: true, message: 'Vui lòng chọn phương thức thanh toán' }]}
               >
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <div className="relative">
+                  <select 
+                    className="w-full px-5 py-4 pr-14 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl hover:scale-[1.01] appearance-none cursor-pointer text-base"
+                    style={{
+                      backgroundImage: 'none',
+                      paddingRight: '3.5rem',
+                      borderRadius: '1rem',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }}
+                  >
                   <option value="">Chọn phương thức</option>
                   <option value="cash">Tiền mặt</option>
                   <option value="bank">Chuyển khoản</option>
                   <option value="qr">QR Code</option>
                   <option value="card">Thẻ</option>
                 </select>
+                  {/* Custom dropdown arrow */}
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                      <svg 
+                        className="w-5 h-5 text-blue-600 transition-all duration-200" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
               </Form.Item>
 
               <Form.Item
-                label="Ghi chú"
+                label={<span className="text-base font-semibold text-gray-700">Ghi chú</span>}
                 name="notes"
               >
                 <TextArea
                   rows={3}
                   placeholder="Nhập ghi chú (tùy chọn)"
+                  className="rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
+                  style={{
+                    borderRadius: '0.75rem',
+                    padding: '0.75rem 1rem'
+                  }}
                 />
               </Form.Item>
 
@@ -919,7 +1065,14 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
        
 
         {/* Payment History */}
-        <Card title="Lịch sử thanh toán">
+        <Card 
+          title={<span className="text-lg font-bold text-gray-800">Lịch sử thanh toán</span>}
+          className="shadow-lg border-2 border-gray-200 rounded-2xl"
+          style={{
+            borderRadius: '1rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          }}
+        >
           <Table
             columns={historyColumns}
             dataSource={paymentHistory}
