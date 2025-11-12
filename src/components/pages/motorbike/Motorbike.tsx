@@ -76,6 +76,63 @@ export const Motorbike: React.FC = () => {
       return 0;
     }
   }, [user]);
+
+  // Helper function to get stock by color for each vehicle
+  const getStockByColor = useCallback((vehicle: unknown): Record<string, number> => {
+    try {
+      const v = vehicle as Record<string, unknown>;
+      
+      // Lấy dealership_id từ user hoặc JWT token
+      let dealerId: string | null = null;
+      
+      if (user?.dealership_id) {
+        dealerId = user.dealership_id;
+      } else {
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            dealerId = payload.dealership_id || null;
+          }
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+        }
+      }
+      
+      if (!dealerId) {
+        return {};
+      }
+      
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return {};
+      }
+      
+      // Lọc stocks của dealer và nhóm theo màu
+      const colorStock: Record<string, number> = {};
+      
+      stocks.forEach((stock) => {
+        if (
+          stock.owner_type === 'dealer' &&
+          stock.status === 'active' &&
+          stock.owner_id === dealerId
+        ) {
+          const color = (stock.color as string) || 'Không rõ';
+          const remaining = (stock.remaining_quantity as number) || 0;
+          
+          if (remaining > 0) {
+            colorStock[color] = (colorStock[color] || 0) + remaining;
+          }
+        }
+      });
+      
+      return colorStock;
+    } catch (error) {
+      console.error('Error calculating stock by color:', error);
+      return {};
+    }
+  }, [user]);
   
   // Professional filter states based on API
   const [filters, setFilters] = useState({
@@ -717,6 +774,36 @@ export const Motorbike: React.FC = () => {
                             <span>{getDealerStock(vehicle)} xe</span>
                           </div>
                         </div>
+
+                        {/* Stock by Color */}
+                        {(() => {
+                          const stockByColor = getStockByColor(vehicle);
+                          const colorEntries = Object.entries(stockByColor);
+                          
+                          if (colorEntries.length > 0) {
+                            return (
+                              <div className="mb-4 pb-3 border-b border-gray-200">
+                                <p className="text-xs font-medium text-gray-600 mb-2">Tồn kho theo màu:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {colorEntries.map(([color, quantity]) => (
+                                    <div
+                                      key={color}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                                      style={{
+                                        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                                        border: '1px solid #bae7ff'
+                                      }}
+                                    >
+                                      <span className="font-semibold text-gray-700">{color}:</span>
+                                      <span className="text-green-600 font-bold">{quantity} xe</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
 
                         <div className="flex space-x-2">
                           <button

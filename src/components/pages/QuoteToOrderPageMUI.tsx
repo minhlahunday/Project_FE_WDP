@@ -57,15 +57,15 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
 
     const getStatusColor = (status: string) => {
         const statusColors = {
-            valid: 'success',
-            expired: 'warning',
-            canceled: 'error',
-            cancelled: 'error',
-            invalid: 'default',
-            used: 'info',
-            converted: 'info',
+            valid: '#52c41a',      // Green
+            expired: '#faad14',    // Orange
+            canceled: '#ff4d4f',   // Red
+            cancelled: '#ff4d4f',  // Red
+            invalid: '#d9d9d9',    // Gray
+            used: '#1890ff',       // Blue
+            converted: '#1890ff',  // Blue
         };
-        return statusColors[status as keyof typeof statusColors] || 'default';
+        return statusColors[status as keyof typeof statusColors] || '#d9d9d9';
     };
 
     const getStatusText = (status: string) => {
@@ -75,7 +75,7 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
             canceled: 'Đã hủy',
             cancelled: 'Đã hủy',
             invalid: 'Không hợp lệ',
-            used: 'Đã sử dụng',
+            used: 'Đã chuyển đổi',
             converted: 'Đã chuyển đổi',
         };
         return statusTexts[status as keyof typeof statusTexts] || status;
@@ -432,8 +432,16 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
                                                     <TableCell>
                                                         <Chip 
                                                             label={getStatusText(quote.status)} 
-                                                            color={getStatusColor(quote.status) as any}
                                                             size="small"
+                                                            sx={{
+                                                                backgroundColor: getStatusColor(quote.status),
+                                                                color: '#fff',
+                                                                fontWeight: 600,
+                                                                border: 'none',
+                                                                '& .MuiChip-label': {
+                                                                    padding: '4px 12px'
+                                                                }
+                                                            }}
                                                         />
                                                     </TableCell>
                                                     <TableCell align="center">

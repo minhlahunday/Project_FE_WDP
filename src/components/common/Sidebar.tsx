@@ -304,11 +304,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const getRoleDisplayName = () => {
     switch (user?.role) {
       case "admin":
-        return "Admin Panel";
+        return "Quản trị hệ thống";
       case "evm_staff":
-        return "EVM Management";
+        return "Quản lý hãng";
+      case "dealer_manager":
+        return "Quản lý đại lý";
+      case "dealer_staff":
+        return "Nhân viên đại lý";
       default:
-        return "Dealer Management";
+        return "Portal";
     }
   };
 
@@ -345,7 +349,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="github-sidebar-title">
               <h1 className="text-sm font-semibold text-gray-900">
-                VinFast EVM
+                VinFast 
               </h1>
               <p className="text-xs text-gray-600">{getRoleDisplayName()}</p>
             </div>
@@ -361,29 +365,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="github-sidebar-search">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search menu..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="github-search-input"
-            />
-          </div>
-        </div>
-
         {/* Navigation Menu */}
         <nav className="github-sidebar-nav">
           <div className="github-sidebar-section">
             <h3 className="github-sidebar-section-title">
               {user?.role === "admin"
-                ? "Administration"
+                ? "Quản trị hệ thống"
                 : user?.role === "evm_staff"
-                ? "EVM Operations"
-                : "Portal Features"}
+                ? "Chức năng hãng"
+                : "Chức năng đại lý"}
             </h3>
 
             <ul className="github-sidebar-menu">
@@ -412,23 +402,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </ul>
           </div>
         </nav>
-
-        {/* User Profile */}
-        <div className="github-sidebar-footer">
-          <div className="flex items-center gap-3 p-3">
-            <div className="github-sidebar-avatar">
-              <User className="w-4 h-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.email || "Admin User"}
-              </p>
-              <p className="text-xs text-gray-600 truncate">
-                {user?.role || "Administrator"}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );

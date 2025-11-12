@@ -204,12 +204,118 @@ export const MotorbikeDetail: React.FC = () => {
     }
   };
 
+  // Helper function to get stock by color
+  const getStockByColor = (): Record<string, number> => {
+    if (!vehicle) return {};
+    
+    try {
+      const v = vehicle as Record<string, unknown>;
+      
+      // Lấy dealership_id từ user hoặc JWT token
+      let dealerId: string | null = null;
+      
+      if (user?.dealership_id) {
+        dealerId = user.dealership_id;
+      } else {
+        // Fallback: lấy từ JWT token
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            dealerId = payload.dealership_id || null;
+          }
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+        }
+      }
+      
+      // Lấy stocks array từ vehicle
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return {};
+      }
+      
+      // Lọc stocks của dealer
+      const dealerStocks = dealerId 
+        ? stocks.filter((stock) => {
+            return (
+              stock.owner_type === 'dealer' &&
+              stock.status === 'active' &&
+              stock.owner_id === dealerId
+            );
+          })
+        : stocks.filter((stock) => stock.status === 'active');
+      
+      // Nhóm theo màu và tính tổng
+      const colorStockMap: Record<string, number> = {};
+      
+      dealerStocks.forEach((stock) => {
+        const color = (stock.color as string) || 'Unknown';
+        const remainingQty = (stock.remaining_quantity as number) || 0;
+        
+        if (colorStockMap[color]) {
+          colorStockMap[color] += remainingQty;
+        } else {
+          colorStockMap[color] = remainingQty;
+        }
+      });
+      
+      return colorStockMap;
+    } catch (error) {
+      console.error('Error calculating stock by color:', error);
+      return {};
+    }
+  };
+
   const handleTestDrive = (vehicleId: string) => {
     navigate(`/portal/motorbike-schedule?vehicleId=${vehicleId}`);
   };
 
   const handleDeposit = (vehicleId: string) => {
     navigate(`/portal/motorbike-deposit?vehicleId=${vehicleId}`);
+  };
+
+  // Helper function to get color hex code from color name
+  const getColorHex = (colorName: string): string => {
+    const colorMap: Record<string, string> = {
+      // Tiếng Việt
+      'Đỏ': '#DC2626',
+      'Xanh': '#2563EB',
+      'Xanh dương': '#2563EB',
+      'Xanh lá': '#16A34A',
+      'Vàng': '#EAB308',
+      'Trắng': '#FFFFFF',
+      'Đen': '#000000',
+      'Xám': '#6B7280',
+      'Bạc': '#C0C0C0',
+      'Cam': '#EA580C',
+      'Hồng': '#EC4899',
+      'Tím': '#9333EA',
+      'Nâu': '#92400E',
+      'Xanh ngọc': '#14B8A6',
+      // English
+      'Red': '#DC2626',
+      'Blue': '#2563EB',
+      'Green': '#16A34A',
+      'Yellow': '#EAB308',
+      'White': '#FFFFFF',
+      'Black': '#000000',
+      'Gray': '#6B7280',
+      'Grey': '#6B7280',
+      'Silver': '#C0C0C0',
+      'Orange': '#EA580C',
+      'Pink': '#EC4899',
+      'Purple': '#9333EA',
+      'Brown': '#92400E',
+      'Teal': '#14B8A6',
+      'Cyan': '#06B6D4',
+      'Lime': '#84CC16',
+      'Indigo': '#6366F1',
+      'Violet': '#8B5CF6'
+    };
+    
+    return colorMap[colorName] || colorName.toLowerCase();
   };
 
   // Get image array
@@ -442,18 +548,99 @@ export const MotorbikeDetail: React.FC = () => {
                   {/* Color Options */}
                   <div className="mb-6">
                     <Title level={5}>Màu sắc có sẵn</Title>
-                    <Space wrap>
-                      {(getVehicleProperty('color_options', ['red']) as string[]).map((color, index) => (
-                        <div key={index} className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      {(getVehicleProperty('color_options', ['red']) as string[]).map((color, index) => {
+                        const stockByColor = getStockByColor();
+                        const colorStock = stockByColor[color] || 0;
+                        const colorHex = getColorHex(color);
+                        
+                        return (
                           <div 
-                            className="w-6 h-6 rounded-full border-2 border-gray-300"
-                            style={{ backgroundColor: color.toLowerCase() }}
-                          />
-                          <Text className="font-medium">{color}</Text>
-                  </div>
-                      ))}
-                    </Space>
+                            key={index} 
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '16px',
+                              background: colorStock > 0 ? 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                              border: `2px solid ${colorStock > 0 ? '#bae7ff' : '#fecaca'}`,
+                              borderRadius: '12px',
+                              minWidth: '100px',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.06)';
+                            }}
+                          >
+                            <div 
+                              style={{ 
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '50%',
+                                backgroundColor: colorHex,
+                                border: colorHex === '#FFFFFF' ? '3px solid #e5e7eb' : '3px solid white',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                position: 'relative'
+                              }}
+                            >
+                              {colorStock > 0 && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-4px',
+                                    right: '-4px',
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    background: '#52c41a',
+                                    border: '2px solid white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '10px',
+                                    color: 'white',
+                                    fontWeight: 'bold'
+                                  }}
+                                >
+                                  ✓
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              <Text 
+                                style={{ 
+                                  fontSize: 14, 
+                                  fontWeight: 600,
+                                  display: 'block',
+                                  marginBottom: '4px',
+                                  color: '#1a1a2e'
+                                }}
+                              >
+                                {color}
+                              </Text>
+                              <Text 
+                                style={{ 
+                                  fontSize: 12,
+                                  color: colorStock > 0 ? '#52c41a' : '#ff4d4f',
+                                  fontWeight: 600 
+                                }}
+                              >
+                                {colorStock > 0 ? `${colorStock} xe` : 'Hết hàng'}
+                              </Text>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+                  </div>
 
                   {/* Safety Features */}
                   <div className="mb-6">
@@ -511,7 +698,7 @@ export const MotorbikeDetail: React.FC = () => {
                         Tạo báo giá
                       </span>
                     </Button>
-                    <Row gutter={8}>
+                    {/* <Row gutter={8}>
                       <Col span={12}>
                         <Button
                           icon={<Heart size={18} />}
@@ -527,7 +714,7 @@ export const MotorbikeDetail: React.FC = () => {
                           Chia sẻ
                         </Button>
                       </Col>
-                    </Row>
+                    </Row> */}
                   </Space>
                 </Card>
               </Col>

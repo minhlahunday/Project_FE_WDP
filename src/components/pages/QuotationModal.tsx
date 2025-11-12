@@ -912,7 +912,7 @@ export const QuotationModal: React.FC<QuotationModalProps> = ({
                     <td style={{ padding: '12px 16px', fontSize: 14, color: '#262626' }}>
                       {accessoryData?.name || 'Phụ kiện'}
                     </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Chiếc</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#595959' }}>Cái</td>
                     <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#262626', fontWeight: 500 }}>
                       {quantity}
                     </td>

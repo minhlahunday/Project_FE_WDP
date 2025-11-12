@@ -65,11 +65,21 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
               className={`text-xl font-semibold cursor-pointer ${
                 isTransparent ? 'text-white' : 'text-white'
               }`}
-              onClick={() => navigate('/portal/dashboard')}
+              onClick={() => {
+                if (user?.role === "admin") {
+                  navigate("/admin/admin-staff-management");
+                } else if (user?.role === "evm_staff") {
+                  navigate("/evm/manufacturer-dashboard");
+                } else if (user?.role === "dealer_staff") {
+                  navigate("/portal/car");
+                } else {
+                  navigate("/portal/dashboard");
+                }
+              }}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              VinFast Dashboard
+              VinFast 
             </h1>
             
             {/* Tooltip được cải thiện */}
@@ -92,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className={`p-2 rounded-lg transition-colors ${
+          {/* <button className={`p-2 rounded-lg transition-colors ${
             isTransparent 
               ? 'text-white hover:bg-white/10' 
               : 'text-white hover:bg-gray-800'
@@ -106,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
               : 'text-white hover:bg-gray-800'
           }`}>
             <Bell className="h-5 w-5" />
-          </button>
+          </button> */}
 
           {/* User menu */}
           <div className="relative">
@@ -152,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
                   className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
+                  <span>Đăng xuất</span>
                 </button>
               </div>
             )}

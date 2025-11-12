@@ -35,8 +35,8 @@ export function LoginPage() {
   const handleRedirect = (user: any) => {
     if (user?.role === "admin" ) {
       navigate("/admin/admin-staff-management");
-    } else if (user?.role === "evm") {
-      navigate("/");
+    } else if (user?.role === "evm_staff") {
+      navigate("/evm/manufacturer-dashboard");
     } else if (user?.role === "dealer_staff") {
       navigate("/portal/car");
     } else {

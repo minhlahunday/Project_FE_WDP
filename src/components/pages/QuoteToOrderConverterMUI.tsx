@@ -515,7 +515,7 @@ export const QuoteToOrderConverterMUI: React.FC<QuoteToOrderConverterProps> = ({
                                   <TableCell>
                                     <Typography variant="body2">{acc.name || 'N/A'}</Typography>
                           </TableCell>
-                                  <TableCell align="center">Chiếc</TableCell>
+                                  <TableCell align="center">Cái</TableCell>
                                   <TableCell align="center">{accQuantity}</TableCell>
                                   <TableCell align="right">{formatCurrency(accPrice)}</TableCell>
                                   <TableCell align="right">{formatCurrency(accAmount)}</TableCell>

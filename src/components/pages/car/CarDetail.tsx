@@ -32,6 +32,7 @@ import {
 import { authService } from "../../../services/authService";
 import { quoteService } from "../../../services/quoteService";
 import { QuotationModal } from "../QuotationModal";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -54,6 +55,7 @@ const colorHexMap: Record<string, string> = {
 export const CarDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   // Local UI states
   const [vehicle, setVehicle] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,6 +142,65 @@ export const CarDetail: React.FC = () => {
     const vehicleObj = vehicle as Record<string, unknown>;
     const value = vehicleObj[property] as T | undefined;
     return (value ?? defaultValue) as T;
+  };
+
+  // Hàm tính số lượng xe theo màu từ stocks của dealer
+  const getStockByColor = (): Record<string, number> => {
+    try {
+      if (!vehicle) return {};
+      
+      const vehicleObj = vehicle as Record<string, unknown>;
+      
+      // Lấy dealership_id từ user hoặc JWT token
+      let dealerId: string | null = null;
+      
+      if (user?.dealership_id) {
+        dealerId = user.dealership_id;
+      } else {
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            dealerId = payload.dealership_id || null;
+          }
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+        }
+      }
+      
+      if (!dealerId) {
+        return {};
+      }
+      
+      const stocks = vehicleObj.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return {};
+      }
+      
+      // Lọc stocks của dealer và nhóm theo màu
+      const colorStock: Record<string, number> = {};
+      
+      stocks.forEach((stock) => {
+        if (
+          stock.owner_type === 'dealer' &&
+          stock.status === 'active' &&
+          stock.owner_id === dealerId
+        ) {
+          const color = (stock.color as string) || 'Không rõ';
+          const remaining = (stock.remaining_quantity as number) || 0;
+          
+          if (remaining > 0) {
+            colorStock[color] = (colorStock[color] || 0) + remaining;
+          }
+        }
+      });
+      
+      return colorStock;
+    } catch (error) {
+      console.error('Error calculating stock by color:', error);
+      return {};
+    }
   };
 
   // Scroll to section
@@ -324,34 +385,7 @@ export const CarDetail: React.FC = () => {
               </Space>
             </Col>
             <Col>
-              <Space>
-                <Button
-                  icon={<HeartOutlined />}
-                  shape="circle"
-                  size="large"
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  style={{
-                    borderColor: isFavorite ? "#ff4d4f" : "#e5e7eb",
-                    color: isFavorite ? "#ff4d4f" : "#6b7280",
-                  }}
-                />
-                {/* <Button 
-                  type="primary" 
-                  size="large"
-                  onClick={() => navigate(`/car-deposit?vehicleId=${id}`)}
-                  style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none',
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    height: 44,
-                    paddingLeft: 24,
-                    paddingRight: 24
-                  }}
-                >
-                  Đặt cọc ngay
-                </Button> */}
-              </Space>
+             
             </Col>
           </Row>
         </Header>
@@ -529,7 +563,7 @@ export const CarDetail: React.FC = () => {
                     <Text
                       style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}
                     >
-                      Đã bao gồm VAT • Hỗ trợ trả góp 0%
+                      Đã bao gồm VAT 
                     </Text>
                   </div>
 
@@ -936,62 +970,147 @@ export const CarDetail: React.FC = () => {
                 style={{
                   display: "flex",
                   justifyContent: "center",
-                  gap: 20,
+                  gap: 24,
                   flexWrap: "wrap",
+                  padding: "0 20px",
                 }}
               >
-                {colorOptions.map((color, index) => {
-                  console.log("🎨 Available color option:", color);
-                  const colorLower = color.toLowerCase();
-                  const colorCode = colorHexMap[colorLower] || "#ccc";
+                {(() => {
+                  const stockByColor = getStockByColor();
+                  
+                  return colorOptions.map((color, index) => {
+                    console.log("🎨 Available color option:", color);
+                    const colorLower = color.toLowerCase();
+                    const colorCode = colorHexMap[colorLower] || "#ccc";
+                    const stockCount = stockByColor[color] || 0;
 
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => setSelectedColor(index)}
-                      style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: "50%",
-                        backgroundColor: colorCode,
-                        cursor: "pointer",
-                        border:
-                          index === selectedColor
-                            ? "4px solid #667eea"
-                            : "4px solid transparent",
-                        boxShadow:
-                          index === selectedColor
-                            ? "0 8px 32px rgba(102, 126, 234, 0.4), inset 0 0 0 2px white"
-                            : "0 4px 20px rgba(0,0,0,0.1)",
-                        transition: "all 0.3s ease",
-                        transform:
-                          index === selectedColor ? "scale(1.1)" : "scale(1)",
-                        position: "relative",
-                      }}
-                    >
-                      {index === selectedColor && (
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "12px",
+                          borderRadius: "12px",
+                          background: index === selectedColor 
+                            ? "linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)"
+                            : "transparent",
+                          transition: "all 0.3s ease",
+                        }}
+                      >
                         <div
+                          onClick={() => setSelectedColor(index)}
                           style={{
-                            position: "absolute",
-                            top: -8,
-                            right: -8,
-                            width: 20,
-                            height: 20,
-                            background: "#667eea",
+                            width: 64,
+                            height: 64,
                             borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            backgroundColor: colorCode,
+                            cursor: "pointer",
+                            border:
+                              index === selectedColor
+                                ? "4px solid #667eea"
+                                : "3px solid #e5e7eb",
+                            boxShadow:
+                              index === selectedColor
+                                ? "0 8px 32px rgba(102, 126, 234, 0.4), inset 0 0 0 2px white"
+                                : "0 4px 16px rgba(0,0,0,0.08)",
+                            transition: "all 0.3s ease",
+                            transform:
+                              index === selectedColor ? "scale(1.08)" : "scale(1)",
+                            position: "relative",
                           }}
                         >
-                          <CheckCircleOutlined
-                            style={{ color: "white", fontSize: 12 }}
-                          />
+                          {index === selectedColor && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: -10,
+                                right: -10,
+                                width: 24,
+                                height: 24,
+                                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+                              }}
+                            >
+                              <CheckCircleOutlined
+                                style={{ color: "white", fontSize: 14 }}
+                              />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <Text
+                            strong
+                            style={{
+                              fontSize: 14,
+                              color: index === selectedColor ? "#667eea" : "#1f2937",
+                              fontWeight: 600,
+                              transition: "color 0.3s ease",
+                            }}
+                          >
+                            {color}
+                          </Text>
+                          {stockCount > 0 ? (
+                            <div
+                              style={{
+                                background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                                border: "1px solid #86efac",
+                                borderRadius: "12px",
+                                padding: "4px 12px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <CarOutlined style={{ fontSize: 12, color: "#16a34a" }} />
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  color: "#16a34a",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {stockCount} xe
+                              </Text>
+                            </div>
+                          ) : (
+                            <div
+                              style={{
+                                background: "#f3f4f6",
+                                border: "1px solid #d1d5db",
+                                borderRadius: "12px",
+                                padding: "4px 12px",
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  color: "#9ca3af",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                Hết hàng
+                              </Text>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>

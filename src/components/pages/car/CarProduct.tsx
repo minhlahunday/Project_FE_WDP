@@ -362,6 +362,63 @@ export const CarProduct: React.FC = () => {
     }
   }, [user]);
 
+  // Hàm tính số lượng xe theo màu từ stocks của dealer
+  const getStockByColor = useCallback((vehicle: unknown): Record<string, number> => {
+    try {
+      const v = vehicle as Record<string, unknown>;
+      
+      // Lấy dealership_id từ user hoặc JWT token
+      let dealerId: string | null = null;
+      
+      if (user?.dealership_id) {
+        dealerId = user.dealership_id;
+      } else {
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            dealerId = payload.dealership_id || null;
+          }
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+        }
+      }
+      
+      if (!dealerId) {
+        return {};
+      }
+      
+      const stocks = v.stocks as Array<Record<string, unknown>> | undefined;
+      
+      if (!stocks || !Array.isArray(stocks)) {
+        return {};
+      }
+      
+      // Lọc stocks của dealer và nhóm theo màu
+      const colorStock: Record<string, number> = {};
+      
+      stocks.forEach((stock) => {
+        if (
+          stock.owner_type === 'dealer' &&
+          stock.status === 'active' &&
+          stock.owner_id === dealerId
+        ) {
+          const color = (stock.color as string) || 'Không rõ';
+          const remaining = (stock.remaining_quantity as number) || 0;
+          
+          if (remaining > 0) {
+            colorStock[color] = (colorStock[color] || 0) + remaining;
+          }
+        }
+      });
+      
+      return colorStock;
+    } catch (error) {
+      console.error('Error calculating stock by color:', error);
+      return {};
+    }
+  }, [user]);
+
   const resetFilters = () => {
     setFilters({
       search: '',
@@ -731,8 +788,45 @@ export const CarProduct: React.FC = () => {
                             <Car className="h-4 w-4 text-gray-500" />
                             <span>{getDealerStock(vehicle)} xe</span>
                           </div>
-
                         </div>
+
+                        {/* Hiển thị số lượng xe theo màu */}
+                        {(() => {
+                          const stockByColor = getStockByColor(vehicle);
+                          const hasStock = Object.keys(stockByColor).length > 0;
+                          
+                          if (!hasStock) return null;
+                          
+                          return (
+                            <div className="mb-4 flex flex-wrap items-center gap-2">
+                              {Object.entries(stockByColor).map(([color, quantity]) => (
+                                <div
+                                  key={color}
+                                  className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded text-xs"
+                                  title={`${color}: ${quantity} xe`}
+                                >
+                                  <div
+                                    className="w-3 h-3 rounded-full border border-gray-300"
+                                    style={{ 
+                                      backgroundColor: color.toLowerCase() === 'trắng' || color.toLowerCase() === 'white' ? '#FFFFFF' :
+                                                      color.toLowerCase() === 'đen' || color.toLowerCase() === 'black' ? '#000000' :
+                                                      color.toLowerCase() === 'đỏ' || color.toLowerCase() === 'red' ? '#DC2626' :
+                                                      color.toLowerCase() === 'xanh' || color.toLowerCase() === 'blue' ? '#2563EB' :
+                                                      color.toLowerCase() === 'xám' || color.toLowerCase() === 'gray' || color.toLowerCase() === 'grey' ? '#6B7280' :
+                                                      color.toLowerCase() === 'bạc' || color.toLowerCase() === 'silver' ? '#D1D5DB' :
+                                                      color.toLowerCase() === 'vàng' || color.toLowerCase() === 'yellow' ? '#FBBF24' :
+                                                      color.toLowerCase() === 'xanh lá' || color.toLowerCase() === 'green' ? '#16A34A' :
+                                                      color.toLowerCase() === 'nâu' || color.toLowerCase() === 'brown' ? '#92400E' :
+                                                      color.toLowerCase()
+                                    }}
+                                  />
+                                  <span className="text-gray-700 font-medium">{color}: {quantity} xe</span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+
 
                         <div className="flex space-x-2">
                           <button

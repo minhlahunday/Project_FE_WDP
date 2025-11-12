@@ -254,7 +254,7 @@ export const generateQuotePDF = async (data: QuotePDFData): Promise<void> => {
               <tr>
                 <td style="text-align: center;">${rowIndex++}</td>
                 <td>${acc.name}</td>
-                <td style="text-align: center;">Chiếc</td>
+                <td style="text-align: center;">Cái</td>
                 <td style="text-align: center;">${acc.quantity}</td>
                 <td style="text-align: right;">${formatCurrency(acc.price)}</td>
                 <td style="text-align: right;">${formatCurrency(accAmount)}</td>
@@ -509,7 +509,7 @@ export const generateContractPDF = async (data: ContractPDFData): Promise<void> 
             <tr>
               <td style="text-align: center;">${rowIndex++}</td>
               <td>${acc.name}</td>
-              <td style="text-align: center;">Chiếc</td>
+              <td style="text-align: center;">Cái</td>
               <td style="text-align: center;">${acc.quantity}</td>
               <td style="text-align: right;">${formatCurrency(acc.price)}</td>
               <td style="text-align: right;">${formatCurrency(accAmount)}</td>

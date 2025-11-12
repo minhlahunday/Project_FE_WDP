@@ -929,15 +929,15 @@ export const QuotationManagement: React.FC = () => {
 
   const getStatusColorForTag = (status: string): string => {
     const colorMap: Record<string, string> = {
-      valid: 'success',      // Green
-      expired: 'warning',    // Orange
-      canceled: 'error',     // Red
-      cancelled: 'error',    // Red
-      invalid: 'default',    // Gray
-      used: 'blue',          // Blue
-      converted: 'blue'      // Blue
+      valid: '#52c41a',      // Green
+      expired: '#faad14',    // Orange
+      canceled: '#ff4d4f',   // Red
+      cancelled: '#ff4d4f',  // Red
+      invalid: '#d9d9d9',    // Gray
+      used: '#1890ff',       // Blue
+      converted: '#1890ff'   // Blue
     };
-    return colorMap[status] || 'default';
+    return colorMap[status] || '#d9d9d9';
   };
 
   const getStatusText = (status: string) => {
@@ -947,7 +947,7 @@ export const QuotationManagement: React.FC = () => {
       canceled: 'Đã hủy',
       cancelled: 'Đã hủy',
       invalid: 'Không hợp lệ',
-      used: 'Đã sử dụng',
+      used: 'Đã chuyển đổi',
       converted: 'Đã chuyển đổi'
     };
     return texts[status] || status;
@@ -1344,8 +1344,10 @@ export const QuotationManagement: React.FC = () => {
                               </TableCell>
                               <TableCell>
                                 <Tag 
-                                  color={getStatusColorForTag(currentStatus)} 
                                   style={{ 
+                                    backgroundColor: getStatusColorForTag(currentStatus),
+                                    color: '#fff',
+                                    border: 'none',
                                     fontSize: 13, 
                                     fontWeight: 600, 
                                     padding: '4px 12px', 
@@ -1560,7 +1562,17 @@ export const QuotationManagement: React.FC = () => {
               </Descriptions.Item>
               
               <Descriptions.Item label="Trạng thái">
-                <Tag color={getStatusColorForTag(selectedQuotation.status || 'valid')} style={{ fontSize: 14, fontWeight: 600, padding: '6px 14px', borderRadius: 6 }}>
+                <Tag 
+                  style={{ 
+                    backgroundColor: getStatusColorForTag(selectedQuotation.status || 'valid'),
+                    color: '#fff',
+                    border: 'none',
+                    fontSize: 14, 
+                    fontWeight: 600, 
+                    padding: '6px 14px', 
+                    borderRadius: 6 
+                  }}
+                >
                   {getStatusText(selectedQuotation.status || 'valid')}
                 </Tag>
               </Descriptions.Item>
@@ -1920,7 +1932,7 @@ export const QuotationManagement: React.FC = () => {
                           key: `accessory-${stt}`,
                           stt: stt++,
                           tenHangHoa: acc.name || acc.accessory_id || 'Phụ kiện',
-                          donViTinh: 'Chiếc',
+                          donViTinh: 'Cái',
                           soLuong: accQuantity,
                           donGia: accPrice,
                           thanhTien: accPrice * accQuantity
@@ -2142,24 +2154,12 @@ export const QuotationManagement: React.FC = () => {
                 alignItems: 'center',
                 gap: 12
               }}>
-                <div style={{
-                  width: 40,
-                  height: 40,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  borderRadius: 10,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: 20,
-                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.25)'
-                }}>
-                </div>
+                
                 <div>
-                  <Title level={5} style={{ margin: 0, color: '#1a1a2e', fontSize: 16, fontWeight: 600 }}>
+                  <Title level={5} style={{ margin: 0, color: '#1a1a2e', fontSize: 18, fontWeight: 600 }}>
                     Tóm tắt báo giá
                   </Title>
-                  <Text style={{ color: '#8c8c8c', fontSize: 12 }}>
+                  <Text style={{ color: '#8c8c8c', fontSize: 13 }}>
                     Thông tin tổng quan về báo giá
                   </Text>
                 </div>
@@ -2167,46 +2167,58 @@ export const QuotationManagement: React.FC = () => {
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} md={8}>
                   <div style={{ 
-                    padding: '12px 14px', 
+                    padding: '16px 18px', 
                     background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', 
-                    borderRadius: 10,
-                    border: '1px solid #bae7ff'
+                    borderRadius: 12,
+                    border: '1px solid #bae7ff',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
                   }}
                   >
-                    <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Mã báo giá
                     </Text>
-                    <Text strong style={{ fontSize: 14, color: '#667eea' }}>
+                    <Text strong style={{ fontSize: 15, color: '#1a1a2e' }}>
                       {selectedQuotation.code}
                     </Text>
                   </div>
                 </Col>
                 <Col xs={24} sm={12} md={8}>
                   <div style={{ 
-                    padding: 16, 
+                    padding: '16px 18px', 
                     background: 'white', 
-                    borderRadius: 8,
-                    border: '1px solid #e8eaed'
+                    borderRadius: 12,
+                    border: '1px solid #e8eaed',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
                   }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Trạng thái
                     </Text>
-                    <Tag color={getStatusColorForTag(selectedQuotation.status || 'valid')} style={{ fontSize: 13 }}>
+                    <Tag 
+                      style={{ 
+                        backgroundColor: getStatusColorForTag(selectedQuotation.status || 'valid'),
+                        color: '#fff',
+                        border: 'none',
+                        fontSize: 13, 
+                        padding: '4px 12px', 
+                        borderRadius: 6 
+                      }}
+                    >
                       {getStatusText(selectedQuotation.status || 'valid')}
                     </Tag>
                   </div>
                 </Col>
                 <Col xs={24} sm={12} md={8}>
                   <div style={{ 
-                    padding: 16, 
-                    background: 'white', 
-                    borderRadius: 8,
-                    border: '1px solid #e8eaed'
+                    padding: '16px 18px', 
+                    background: 'linear-gradient(135deg, #f0fff4 0%, #d9f7be 100%)', 
+                    borderRadius: 12,
+                    border: '1px solid #b7eb8f',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
                   }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Tổng tiền cuối cùng
                     </Text>
-                    <Text strong style={{ fontSize: 16, color: '#52c41a' }}>
+                    <Text strong style={{ fontSize: 17, color: '#1a1a2e' }}>
                       {formatPrice(selectedQuotation.final_amount || 0)}
                     </Text>
                   </div>
@@ -2214,15 +2226,16 @@ export const QuotationManagement: React.FC = () => {
                 {selectedQuotation.startDate && (
                   <Col xs={24} sm={12} md={8}>
                     <div style={{ 
-                      padding: 16, 
+                      padding: '16px 18px', 
                       background: 'white', 
-                      borderRadius: 8,
-                      border: '1px solid #e8eaed'
+                      borderRadius: 12,
+                      border: '1px solid #e8eaed',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
                     }}>
-                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                         Ngày bắt đầu
                       </Text>
-                      <Text strong style={{ fontSize: 14, color: '#1890ff' }}>
+                      <Text strong style={{ fontSize: 15, color: '#1a1a2e' }}>
                         {new Date(selectedQuotation.startDate).toLocaleDateString('vi-VN')}
                       </Text>
                     </div>
@@ -2231,17 +2244,18 @@ export const QuotationManagement: React.FC = () => {
                 {selectedQuotation.endDate && (
                   <Col xs={24} sm={12} md={8}>
                     <div style={{ 
-                      padding: 16, 
+                      padding: '16px 18px', 
                       background: 'white', 
-                      borderRadius: 8,
-                      border: '1px solid #e8eaed'
+                      borderRadius: 12,
+                      border: '1px solid #e8eaed',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
                     }}>
-                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                         Ngày kết thúc
                       </Text>
                       <Text strong style={{ 
-                        fontSize: 14,
-                        color: new Date(selectedQuotation.endDate) < new Date() ? '#ff4d4f' : '#52c41a'
+                        fontSize: 15,
+                        color: new Date(selectedQuotation.endDate) < new Date() ? '#ff4d4f' : '#1a1a2e'
                       }}>
                         {new Date(selectedQuotation.endDate).toLocaleDateString('vi-VN')}
                       </Text>
@@ -2250,15 +2264,16 @@ export const QuotationManagement: React.FC = () => {
                 )}
                 <Col xs={24} sm={12} md={8}>
                   <div style={{ 
-                    padding: 16, 
+                    padding: '16px 18px', 
                     background: 'white', 
-                    borderRadius: 8,
-                    border: '1px solid #e8eaed'
+                    borderRadius: 12,
+                    border: '1px solid #e8eaed',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
                   }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Số lượng xe
                     </Text>
-                    <Text strong style={{ fontSize: 15 }}>
+                    <Text strong style={{ fontSize: 15, color: '#1a1a2e' }}>
                       {selectedQuotation.items.reduce((sum, item) => sum + item.quantity, 0)} xe
                     </Text>
                   </div>
