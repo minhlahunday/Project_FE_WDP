@@ -38,6 +38,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateRangePicker, DateRange } from '@mui/x-date-pickers-pro';
 import { orderService, Order, OrderSearchParams } from '../../services/orderService'; 
 import { useAuth } from '../../contexts/AuthContext';
+import { authService } from '../../services/authService';
 import Swal from 'sweetalert2'; 
 import OrderDetailModalMUI from './OrderDetailModalMUI'; 
 import { DepositPayment } from './DepositPayment';
@@ -209,11 +210,79 @@ export const OrderManagement: React.FC = () => {
                 }
             }
           
-          const processedOrders = ordersData.map((order: any) => ({
-            ...order,
-            customer: order.customer_id && typeof order.customer_id === 'object' ? order.customer_id : order.customer,
-            salesperson: order.salesperson_id && typeof order.salesperson_id === 'object' ? order.salesperson_id : order.salesperson,
-          }));
+          // Collect all unique salesperson IDs that need to be fetched
+          const salespersonIdsToFetch = new Set<string>();
+          ordersData.forEach((order: any) => {
+            if (order.salesperson_id && typeof order.salesperson_id === 'string') {
+              salespersonIdsToFetch.add(order.salesperson_id);
+            }
+          });
+          
+          // Fetch all salesperson information in parallel
+          const salespersonMap = new Map<string, { _id: string; full_name: string; email: string }>();
+          if (salespersonIdsToFetch.size > 0) {
+            console.log('🔍 Fetching salesperson info for IDs:', Array.from(salespersonIdsToFetch));
+            try {
+              const fetchPromises = Array.from(salespersonIdsToFetch).map(async (id) => {
+                try {
+                  const userResponse = await authService.getUserById(id);
+                  if (userResponse.success && userResponse.data) {
+                    const user = userResponse.data;
+                    // API có thể trả về name hoặc full_name, cần xử lý cả hai
+                    const fullName = (user as any).full_name || user.name || 'Unknown';
+                    const userId = (user as any)._id || user.id || id;
+                    const userEmail = user.email || '';
+                    
+                    console.log('✅ Fetched user:', { id, userId, fullName, email: userEmail });
+                    
+                    salespersonMap.set(id, {
+                      _id: userId,
+                      full_name: fullName,
+                      email: userEmail,
+                    });
+                  } else {
+                    console.warn(`⚠️ Failed to fetch user ${id}:`, userResponse.message);
+                  }
+                } catch (error) {
+                  console.warn(`⚠️ Failed to fetch user ${id}:`, error);
+                }
+              });
+              await Promise.all(fetchPromises);
+              console.log('✅ Fetched salesperson info:', salespersonMap.size, 'users');
+            } catch (error) {
+              console.error('❌ Error fetching salesperson info:', error);
+            }
+          }
+          
+          const processedOrders = ordersData.map((order: any) => {
+            // Map customer
+            const customer = order.customer_id && typeof order.customer_id === 'object' 
+              ? order.customer_id 
+              : order.customer;
+            
+            // Map salesperson - ưu tiên populated field, sau đó là salesperson_id nếu là object, cuối cùng là fetch từ API
+            let salesperson = null;
+            if (order.salesperson && typeof order.salesperson === 'object' && order.salesperson.full_name) {
+              // Có populated salesperson field
+              salesperson = order.salesperson;
+            } else if (order.salesperson_id && typeof order.salesperson_id === 'object' && order.salesperson_id.full_name) {
+              // salesperson_id đã được populate thành object
+              salesperson = order.salesperson_id;
+            } else if (order.salesperson_id && typeof order.salesperson_id === 'string') {
+              // salesperson_id là string ID - fetch từ map
+              const fetchedSalesperson = salespersonMap.get(order.salesperson_id);
+              if (fetchedSalesperson) {
+                salesperson = fetchedSalesperson;
+              }
+              // Nếu không tìm thấy, salesperson vẫn là null -> hiển thị "Chưa phân công"
+            }
+            
+            return {
+              ...order,
+              customer,
+              salesperson,
+            };
+          });
 
           console.log('✅ Processed orders:', processedOrders);
           console.log('📊 Setting orders state with:', processedOrders.length, 'orders');
