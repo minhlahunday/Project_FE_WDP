@@ -243,13 +243,17 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
         
         // Inventory and warranty
         stock: editProduct.stocks && editProduct.stocks.length > 0 
-          ? editProduct.stocks[0].quantity 
+          ? editProduct.stocks
+              .filter((stock: any) => stock.owner_type !== 'dealer')
+              .reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
           : editProduct.stock || 0,
         stocks_by_color: editProduct.stocks && editProduct.stocks.length > 0 
-          ? JSON.stringify(editProduct.stocks.map((stock: any) => ({
-              color: stock.color || 'Unknown',
-              quantity: stock.quantity || 0
-            })))
+          ? JSON.stringify(editProduct.stocks
+              .filter((stock: any) => stock.owner_type !== 'dealer')
+              .map((stock: any) => ({
+                color: stock.color || 'Unknown',
+                quantity: stock.quantity || 0
+              })))
           : '',
         warranty_years: editProduct.warranty_years || 0,
         battery_warranty_years: editProduct.battery_warranty_years || 0,

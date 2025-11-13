@@ -47,12 +47,14 @@ export const Motorbike: React.FC = () => {
         return (v.stock as number) || 0; // Fallback to old stock field
       }
       
-      // Nếu không có dealerId, tính tổng tất cả (cho manufacturer/admin)
+      // Nếu không có dealerId, tính tổng tất cả (cho manufacturer/admin) - loại bỏ dealer stocks
       if (!dealerId) {
-        return stocks.reduce((total, stock) => {
-          const remainingQty = stock.remaining_quantity as number || 0;
-          return total + remainingQty;
-        }, 0);
+        return stocks
+          .filter((stock) => stock.owner_type !== 'dealer')
+          .reduce((total, stock) => {
+            const remainingQty = stock.remaining_quantity as number || 0;
+            return total + remainingQty;
+          }, 0);
       }
       
       // Lọc stocks của dealer: owner_type === 'dealer', status === 'active', owner_id khớp

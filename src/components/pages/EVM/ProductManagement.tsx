@@ -670,7 +670,9 @@ const ProductManagement: React.FC = () => {
                                 </Tag>
                                 <Tag color="orange" style={{ borderRadius: 4, margin: 0 }}>
                                   Kho: {product.stocks && product.stocks.length > 0 
-                                    ? product.stocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
+                                    ? product.stocks
+                                        .filter((stock: any) => stock.owner_type !== 'dealer')
+                                        .reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
                                     : product.stock || 0}
                                 </Tag>
                               </Space>
@@ -680,14 +682,14 @@ const ProductManagement: React.FC = () => {
                             </div>
                             
                             {/* Color-based stock breakdown */}
-                            {product.stocks && product.stocks.length > 0 && product.stocks.some((stock: any) => stock.color) && (
+                            {product.stocks && product.stocks.length > 0 && product.stocks.some((stock: any) => stock.owner_type !== 'dealer' && stock.color) && (
                               <div style={{ marginTop: 8 }}>
                                 <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
                                   Tồn kho theo màu:
                                 </div>
                                 <Space wrap size={2}>
                                   {product.stocks
-                                    .filter((stock: any) => stock.color && stock.quantity > 0)
+                                    .filter((stock: any) => stock.owner_type !== 'dealer' && stock.color && stock.quantity > 0)
                                     .map((stock: any, index: number) => (
                                       <Tag 
                                         key={index} 
@@ -967,7 +969,9 @@ const ProductManagement: React.FC = () => {
                                 </Tag>
                                 <Tag color="orange" style={{ borderRadius: 4, margin: 0 }}>
                                   Kho: {product.stocks && product.stocks.length > 0 
-                                    ? product.stocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
+                                    ? product.stocks
+                                        .filter((stock: any) => stock.owner_type !== 'dealer')
+                                        .reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
                                     : product.stock || 0}
                                 </Tag>
                               </Space>
@@ -977,14 +981,14 @@ const ProductManagement: React.FC = () => {
                             </div>
                             
                             {/* Color-based stock breakdown */}
-                            {product.stocks && product.stocks.length > 0 && product.stocks.some((stock: any) => stock.color) && (
+                            {product.stocks && product.stocks.length > 0 && product.stocks.some((stock: any) => stock.owner_type !== 'dealer' && stock.color) && (
                               <div style={{ marginTop: 8 }}>
                                 <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
                                   Tồn kho theo màu:
                                 </div>
                                 <Space wrap size={2}>
                                   {product.stocks
-                                    .filter((stock: any) => stock.color && stock.quantity > 0)
+                                    .filter((stock: any) => stock.owner_type !== 'dealer' && stock.color && stock.quantity > 0)
                                     .map((stock: any, index: number) => (
                                       <Tag 
                                         key={index} 
@@ -1360,17 +1364,19 @@ const ProductManagement: React.FC = () => {
                       <div>
                         <Tag color="geekblue" style={{ borderRadius: 4, marginBottom: 8 }}>
                           Tổng: {selectedProduct.stocks && selectedProduct.stocks.length > 0 
-                            ? selectedProduct.stocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
+                            ? selectedProduct.stocks
+                                .filter((stock: any) => stock.owner_type !== 'dealer')
+                                .reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0)
                             : selectedProduct.stock || 0} chiếc
                         </Tag>
-                        {selectedProduct.stocks && selectedProduct.stocks.length > 0 && selectedProduct.stocks.some((stock: any) => stock.color) && (
+                        {selectedProduct.stocks && selectedProduct.stocks.length > 0 && selectedProduct.stocks.some((stock: any) => stock.owner_type !== 'dealer' && stock.color) && (
                           <div style={{ marginTop: 8 }}>
                             <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
                               Chi tiết theo màu:
                             </div>
                             <Space wrap size={4}>
                               {selectedProduct.stocks
-                                .filter((stock: any) => stock.color && stock.quantity > 0)
+                                .filter((stock: any) => stock.owner_type !== 'dealer' && stock.color && stock.quantity > 0)
                                 .map((stock: any, index: number) => (
                                   <Tag 
                                     key={index} 

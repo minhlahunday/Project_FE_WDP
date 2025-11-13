@@ -284,7 +284,7 @@ export const CarProduct: React.FC = () => {
     return [...new Set(allValues)];
   };
 
-  // Hàm tính tổng stock từ tất cả stocks (không phân biệt dealer/manufacturer)
+  // Hàm tính tổng stock từ tất cả stocks (chỉ lấy manufacturer, loại bỏ dealer)
   const calculateTotalStock = useCallback((vehicle: unknown): number => {
     try {
       const v = vehicle as Record<string, unknown>;
@@ -294,11 +294,13 @@ export const CarProduct: React.FC = () => {
         return (v.stock as number) || 0; // Fallback to old stock field
       }
       
-      // Sum up remaining_quantity from all stock entries
-      return stocks.reduce((total, stock) => {
-        const remainingQty = stock.remaining_quantity as number || 0;
-        return total + remainingQty;
-      }, 0);
+      // Sum up remaining_quantity from all stock entries (exclude dealer stocks)
+      return stocks
+        .filter((stock) => stock.owner_type !== 'dealer')
+        .reduce((total, stock) => {
+          const remainingQty = stock.remaining_quantity as number || 0;
+          return total + remainingQty;
+        }, 0);
     } catch (error) {
       console.error('Error calculating total stock:', error);
       return 0;

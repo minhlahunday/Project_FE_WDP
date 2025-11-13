@@ -732,13 +732,13 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
 
         {/* Payment Progress */}
         <Card 
-          title={<span className="text-lg font-bold text-gray-800">Tiến độ thanh toán</span>} 
-          size="small"
-          className="shadow-lg border-2 border-gray-200 rounded-2xl mb-4"
-          style={{
-            borderRadius: '1rem',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-          }}
+          // title={<span className="text-lg font-bold text-gray-800">Tiến độ thanh toán</span>} 
+          // size="small"
+          // className="shadow-lg border-2 border-gray-200 rounded-2xl mb-4"
+          // style={{
+          //   borderRadius: '1rem',
+          //   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          // }}
         >
           <div>
             <Title level={4}>Tiến độ thanh toán</Title>
