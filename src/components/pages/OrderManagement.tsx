@@ -77,8 +77,8 @@ export const OrderManagement: React.FC = () => {
   const [selectedOrderForEdit, setSelectedOrderForEdit] = useState<Order | null>(null);
 
   const statusOptions = [
-    { value: 'pending', label: 'Chờ xác nhận', color: 'warning' },
-    { value: 'confirmed', label: 'Đã xác nhận', color: 'info' },
+    { value: 'pending', label: 'Chờ cọc', color: 'warning' },
+    { value: 'confirmed', label: 'Đã cọc', color: 'info' },
     { value: 'deposit_paid', label: 'Đã đặt cọc', color: 'warning' },
     { value: 'fully_paid', label: 'Đã thanh toán đủ', color: 'success' },
     { value: 'waiting_vehicle_request', label: 'Chờ yêu cầu xe', color: 'warning' },

@@ -182,7 +182,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
   // Status text mapping
   const getStatusText = (status: string) => {
     const statusTexts = {
-      pending: "Chờ xác nhận",
+      pending: "Chờ cọc",
       confirmed: "Đã xác nhận",
       halfPayment: "Đã đặt cọc",
       deposit_paid: "Đã đặt cọc",
