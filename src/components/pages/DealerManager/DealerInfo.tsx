@@ -189,9 +189,9 @@ export const DealerInfo: React.FC = () => {
           onClose={() => setSidebarOpen(false)}
           onOpen={() => setSidebarOpen(true)}
         />
-        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64">
-          <div className="fixed top-0 right-0 left-0 z-30 lg:left-64">
-            <div className="transition-all duration-300 lg:ml-64">
+        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[2000px]">
+          <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
+            <div className="transition-all duration-300 lg:ml-[220px]">
               <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
             </div>
           </div>
@@ -220,9 +220,9 @@ export const DealerInfo: React.FC = () => {
           onClose={() => setSidebarOpen(false)}
           onOpen={() => setSidebarOpen(true)}
         />
-        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64">
-          <div className="fixed top-0 right-0 left-0 z-30 lg:left-64">
-            <div className="transition-all duration-300 lg:ml-64">
+        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[150px]">
+          <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
+            <div className="transition-all duration-300 lg:ml-[220px]">
               <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
             </div>
           </div>
@@ -264,9 +264,9 @@ export const DealerInfo: React.FC = () => {
           onClose={() => setSidebarOpen(false)}
           onOpen={() => setSidebarOpen(true)}
         />
-        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64">
-          <div className="fixed top-0 right-0 left-0 z-30 lg:left-64">
-            <div className="transition-all duration-300 lg:ml-64">
+        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[150px]">
+          <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
+            <div className="transition-all duration-300 lg:ml-[220px]">
               <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
             </div>
           </div>
@@ -302,10 +302,10 @@ export const DealerInfo: React.FC = () => {
       />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64">
+      <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[150px]">
         {/* Header */}
-        <div className="fixed top-0 right-0 left-0 z-30 lg:left-64">
-          <div className="transition-all duration-300 lg:ml-64">
+        <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
+          <div className="transition-all duration-300 lg:ml-[220px]">
             <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
           </div>
         </div>

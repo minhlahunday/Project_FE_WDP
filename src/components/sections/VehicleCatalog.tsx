@@ -121,7 +121,7 @@ export const VehicleCatalog: React.FC = () => {
   };
 
   return (
-    <div className="-mx-6 bg-gray-900">
+    <div className="-mx-6 bg-gray-900 lg:mr-[180px]">
       {/* Three Vehicle Cards Section */}
       <section className="bg-white py-20 px-8">
         <div className="max-w-7xl mx-auto">

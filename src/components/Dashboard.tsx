@@ -106,14 +106,14 @@ export const Dashboard: React.FC = () => {
       />
 
       <div
-        className="relative transition-all duration-300 ease-in-out lg:ml-[240px]"
+        className="relative transition-all duration-300 ease-in-out lg:ml-[220px]"
       >
         {/* Hero Video Section - Full screen */}
         {activeSection === "vehicles" && (
           <>
             {/* Video Container - bọc video với overflow hidden và negative margin để sát sidebar */}
             <div
-              className="relative h-screen overflow-hidden transition-all duration-300 ease-in-out -ml-[240px] w-[calc(100%+240px)]"
+              className="relative h-screen overflow-hidden transition-all duration-300 ease-in-out -ml-[220px] w-[calc(100%+220px)]"
             >
               {/* Video Background */}
               <video
@@ -154,7 +154,7 @@ export const Dashboard: React.FC = () => {
               {/* Content Overlay */}
               <div
                 className={`absolute inset-0 flex flex-col justify-end p-8 lg:p-16 z-20 ${
-                  isSidebarOpen ? "ml-[240px]" : "ml-16"
+                  isSidebarOpen ? "ml-[220px]" : "ml-16"
                 }`}
               >
                 <div className="max-w-4xl">

@@ -28,9 +28,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         onOpen={() => setIsSidebarOpen(true)}
         onClose={() => setIsSidebarOpen(false)}
       />
-      <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64"> 
+      <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[150px]"> 
         {/* Header */}
-        <div className="fixed top-0 right-0 left-0 z-30 lg:left-64">
+        <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
           <Header 
             onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
             isSidebarOpen={isSidebarOpen}

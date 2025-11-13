@@ -114,7 +114,7 @@ export const PromotionManagementDealer: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 min-h-full">
+    <div className="p-6 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 min-h-full lg:mr-[200px]">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <div className="flex justify-between items-center">

@@ -28,7 +28,7 @@ export const PromotionsDashboard: React.FC = () => {
       />
 
       <div
-        className="transition-all duration-300 ease-in-out lg:ml-[240px]"
+        className="transition-all duration-300 ease-in-out lg:ml-[220px]"
       >
         <PromotionManagementDealer />
       </div>

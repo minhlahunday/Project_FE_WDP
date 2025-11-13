@@ -486,9 +486,9 @@ export const CarProduct: React.FC = () => {
         onOpen={() => setIsSidebarOpen(true)}
       />
 
-      <div className={`pt-16 transition-all duration-150 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className="pt-16 transition-all duration-150 lg:mr-[150px]">
         {/* Back Button */}
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <Button 
             type="default"
             icon={<ArrowLeftOutlined />}
@@ -509,7 +509,7 @@ export const CarProduct: React.FC = () => {
         </div>
         
 
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar Filters */}
             <div className="lg:col-span-1">

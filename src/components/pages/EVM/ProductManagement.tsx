@@ -285,9 +285,9 @@ const ProductManagement: React.FC = () => {
 
   return (
     <AdminLayout activeSection="product-management">
-      <div style={{ background: '#f5f7fa' }}>
+      <div style={{ background: '#f5f7fa'  }}>
         {/* Modern Page Header */}
-        <div className="mb-6 p-8 rounded-xl border border-blue-100" 
+        <div className="mb-6 p-8 rounded-xl border border-blue-100 " 
              style={{ 
                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%)',
                boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06)',

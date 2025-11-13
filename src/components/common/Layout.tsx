@@ -57,7 +57,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
         
         {/* Main Content - Sidebar luôn mở nên margin cố định */}
-        <main className="flex-1 transition-all duration-200 pt-16 lg:ml-[240px] ml-0">
+        <main className="flex-1 transition-all duration-200 pt-16 lg:ml-[220px] ml-0">
           {children}
         </main>
       </div>
