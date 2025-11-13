@@ -46,8 +46,8 @@ interface DashboardStats {
   totalOrders: number;
   totalDealerships: number;
   totalStock: number;
-  revenueGrowth: number;
-  orderGrowth: number;
+  // revenueGrowth: number;
+  // orderGrowth: number;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
@@ -59,8 +59,8 @@ export const ManufacturerDashboard: React.FC = () => {
     totalOrders: 0,
     totalDealerships: 0,
     totalStock: 0,
-    revenueGrowth: 0,
-    orderGrowth: 0
+    // revenueGrowth: 0,
+    // orderGrowth: 0
   });
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().startOf('month'),
@@ -214,12 +214,12 @@ export const ManufacturerDashboard: React.FC = () => {
         }
       }
       
-      // Mock growth data (can be calculated from previous period)
-      setStats(prev => ({
-        ...prev,
-        revenueGrowth: 15.2,
-        orderGrowth: 10.5
-      }));
+      // // Mock growth data (can be calculated from previous period)
+      // setStats(prev => ({
+      //   ...prev,
+      //   revenueGrowth: 15.2,
+      //   orderGrowth: 10.5
+      // }));
       
     } catch (error) {
       console.error('❌ Error loading dashboard data:', error);
@@ -453,11 +453,11 @@ export const ManufacturerDashboard: React.FC = () => {
                 prefix={<DollarOutlined style={{ fontSize: 24, color: '#3f8600' }} />}
                 formatter={(value) => formatCurrency(Number(value))}
                 valueStyle={{ color: '#3f8600', fontSize: 20, fontWeight: 'bold' }}
-                suffix={
-                  <span style={{ fontSize: 14, color: '#3f8600', fontWeight: 500 }}>
-                    <ArrowUpOutlined /> {stats.revenueGrowth}%
-                  </span>
-                }
+                // suffix={
+                //   <span style={{ fontSize: 14, color: '#3f8600', fontWeight: 500 }}>
+                //     <ArrowUpOutlined /> {stats.revenueGrowth}%
+                //   </span>
+                // }
               />
             </Card>
           </Col>
@@ -474,11 +474,11 @@ export const ManufacturerDashboard: React.FC = () => {
                 value={stats.totalOrders}
                 prefix={<ShoppingCartOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
                 valueStyle={{ color: '#1890ff', fontSize: 20, fontWeight: 'bold' }}
-                suffix={
-                  <span style={{ fontSize: 14, color: '#1890ff', fontWeight: 500 }}>
-                    <ArrowUpOutlined /> {stats.orderGrowth}%
-                  </span>
-                }
+                // suffix={
+                //   <span style={{ fontSize: 14, color: '#1890ff', fontWeight: 500 }}>
+                //     <ArrowUpOutlined /> {stats.orderGrowth}%
+                //   </span>
+                // }
               />
             </Card>
           </Col>
