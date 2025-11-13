@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Car,
@@ -9,7 +9,6 @@ import {
   Building2,
   Calendar,
   CreditCard,
-  MessageSquare,
   UserCog,
   Info,
   Gift,
@@ -18,10 +17,6 @@ import {
   FileText,
   Receipt,
   FileCheck,
-  Search,
-  Menu,
-  X,
-  User,
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -38,60 +33,16 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   activeSection,
   onSectionChange,
-  isOpen,
-  onClose,
-  onOpen,
+  isOpen: _isOpen,
+  onClose: _onClose,
+  onOpen: _onOpen,
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDesktop, setIsDesktop] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Handle responsive behavior
-  useEffect(() => {
-    const handleResize = () => {
-      const desktop = window.innerWidth >= 1024;
-      setIsDesktop(desktop);
-
-      // Auto close sidebar on mobile when route changes
-      if (!desktop && isOpen) {
-        onClose();
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isOpen, onClose]);
-
-  // Handle click outside to close sidebar
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!isOpen || !sidebarRef.current) return;
-
-      const target = event.target as HTMLElement;
-
-      // Don't close if clicking inside sidebar
-      if (sidebarRef.current.contains(target)) return;
-
-      // Don't close if clicking on toggle buttons
-      if (target.closest('[data-testid="sidebar-toggle"]')) return;
-
-      // Close sidebar
-      onClose();
-    };
-
-    // Add listener when sidebar is open
-    if (isOpen) {
-      document.addEventListener("click", handleClickOutside, true);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside, true);
-    };
-  }, [isOpen, onClose]);
+  // Bỏ logic click outside và auto-close để sidebar luôn mở
 
   const dealerMenuItems = [
     {
@@ -117,12 +68,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Yêu cầu đặt xe",
       icon: <FileSignature className="w-4 h-4" />,
       route: "/portal/order-requests",
-    },
-    {
-      key: "dealer-requests",
-      label: "Yêu cầu từ nhân viên",
-      icon: <FileSignature className="w-4 h-4" />,
-      route: "/portal/dealer-requests",
     },
     {
       key: "quotations",
@@ -168,6 +113,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     ...(user?.role === "dealer_manager"
       ? [
+          {
+            key: "dealer-requests",
+            label: "Yêu cầu từ nhân viên",
+            icon: <FileSignature className="w-4 h-4" />,
+            route: "/portal/dealer-requests",
+          },
           {
             key: "staff-management",
             label: "Quản lý nhân viên",
@@ -274,10 +225,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const menuItems = getMenuItems();
 
-  // Filter menu items based on search
-  const filteredMenuItems = menuItems.filter((item) =>
-    item.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Hiển thị tất cả menu items (không filter vì không có search)
+  const filteredMenuItems = menuItems;
 
   // Auto sync activeSection with current route
   useEffect(() => {
@@ -295,10 +244,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     onSectionChange(item.key);
 
-    // Close sidebar on mobile after navigation
-    if (!isDesktop) {
-      onClose();
-    }
+    // Sidebar luôn mở, không đóng sau khi navigate
   };
 
   const getRoleDisplayName = () => {
@@ -318,31 +264,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && !isDesktop && (
-        <div
-          className="github-sidebar-overlay"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-        />
-      )}
-
-      {/* Sidebar Container */}
+      {/* Sidebar Container - Luôn mở */}
       <div
         ref={sidebarRef}
-        className={`github-sidebar ${
-          isOpen ? "github-sidebar-open" : "github-sidebar-closed"
-        }`}
+        className="github-sidebar github-sidebar-open"
         style={{
-          transform:
-            isOpen || isDesktop ? "translateX(0)" : "translateX(-100%)",
+          transform: "translateX(0)", // Luôn hiển thị
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="github-sidebar-header">
+        <div className="github-sidebar-header" style={{ justifyContent: 'flex-start' }}>
           <div className="flex items-center gap-3">
             <div className="github-sidebar-logo">
               <Car className="w-6 h-6" />
@@ -354,15 +286,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-xs text-gray-600">{getRoleDisplayName()}</p>
             </div>
           </div>
-
-          {/* Toggle Button */}
-          <button
-            onClick={isOpen ? onClose : onOpen}
-            data-testid="sidebar-toggle"
-            className="github-sidebar-toggle"
-          >
-            {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
         </div>
 
         {/* Navigation Menu */}

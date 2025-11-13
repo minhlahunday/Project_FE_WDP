@@ -28,9 +28,7 @@ export const PromotionsDashboard: React.FC = () => {
       />
 
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? "lg:ml-[280px]" : "lg:ml-16"
-        }`}
+        className="transition-all duration-300 ease-in-out lg:ml-[240px]"
       >
         <PromotionManagementDealer />
       </div>

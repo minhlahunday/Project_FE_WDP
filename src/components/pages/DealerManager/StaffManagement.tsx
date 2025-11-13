@@ -629,7 +629,7 @@ export const StaffManagement: React.FC = () => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          ml: { lg: sidebarOpen ? '280px' : '70px' },
+          ml: { lg: sidebarOpen ? '240px' : '70px' },
           transition: 'margin-left 0.3s',
         }}
       >

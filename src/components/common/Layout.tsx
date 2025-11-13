@@ -56,8 +56,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           onOpen={() => setSidebarOpen(true)}
         />
         
-        {/* Main Content */}
-        <main className={`flex-1 transition-all duration-200 pt-16 ${sidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-16'} ml-0`}>
+        {/* Main Content - Sidebar luôn mở nên margin cố định */}
+        <main className="flex-1 transition-all duration-200 pt-16 lg:ml-[240px] ml-0">
           {children}
         </main>
       </div>

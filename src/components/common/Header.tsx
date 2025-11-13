@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, isTransparent = fal
         ? 'bg-transparent backdrop-blur-sm border-b border-white/10' 
         : 'bg-gray-900 border-b border-gray-700'
       }
-      ${isSidebarOpen ? 'lg:left-[280px]' : 'lg:left-16'}
+      ${isSidebarOpen ? 'lg:left-[240px]' : 'lg:left-16'}
     `}>
       <div className="h-[73px] px-6 flex items-center justify-between">
         <div className="flex items-center space-x-4">
