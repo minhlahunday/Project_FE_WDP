@@ -671,7 +671,7 @@ export const CompareMotorbikes: React.FC = () => {
                       <td></td>
                       <td></td>
                     </tr>
-                    <tr className="hover:bg-gray-50">
+                    {/* <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Tồn kho</td>
                       {selectedModels.map((vehicle, index) => {
                         const v = vehicle as Record<string, unknown>;
@@ -679,7 +679,7 @@ export const CompareMotorbikes: React.FC = () => {
                           <td key={v._id as string || v.id as string || index} className="p-6 text-center text-gray-600">{v.stock as number || 0} xe</td>
                         );
                       })}
-                    </tr>
+                    </tr> */}
                     <tr className="hover:bg-gray-50">
                       <td className="p-6 font-medium text-gray-900">Màu sắc có sẵn</td>
                       {selectedModels.map((vehicle, index) => {
