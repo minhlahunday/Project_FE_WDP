@@ -1,4 +1,4 @@
-import { get, patch, post, del } from './httpClient';
+import {get, patch, post, del, request} from "./httpClient";
 
 // Interface for Vehicle Request
 export interface VehicleRequest {
@@ -8,7 +8,7 @@ export interface VehicleRequest {
   manufacturer_id: string;
   quantity: number;
   color: string;
-  status: 'pending' | 'approved' | 'in_progress' | 'delivered' | 'rejected';
+  status: "pending" | "approved" | "in_progress" | "delivered" | "rejected";
   notes?: string;
   requested_at: string;
   approved_at?: string;
@@ -49,32 +49,58 @@ export const requestVehicleService = {
     dealership_id?: string;
     vehicle_id?: string;
   }): Promise<VehicleRequestListResponse> {
-    return get<VehicleRequestListResponse>('/api/request-vehicles', params ? { params } as any : undefined);
+    return get<VehicleRequestListResponse>(
+      "/api/request-vehicles",
+      params ? ({params} as any) : undefined
+    );
   },
-
+  async getVehicleRequestsByOrderRequest(
+    orderRequestId: string
+  ): Promise<VehicleRequestResponse> {
+    return get<VehicleRequestResponse>(
+      `/api/request-vehicles/by-order-request/${orderRequestId}`
+    );
+  },
   // Approve vehicle request (EVM Staff)
   async approveRequest(requestId: string): Promise<VehicleRequestResponse> {
-    return patch<VehicleRequestResponse>(`/api/request-vehicles/${requestId}/approve`);
+    return patch<VehicleRequestResponse>(
+      `/api/request-vehicles/${requestId}/approve`
+    );
   },
 
   // In-progress vehicle request (EVM Staff)
   async inProgressRequest(requestId: string): Promise<VehicleRequestResponse> {
-    return patch<VehicleRequestResponse>(`/api/request-vehicles/${requestId}/in-progress`);
+    return patch<VehicleRequestResponse>(
+      `/api/request-vehicles/${requestId}/in-progress`
+    );
   },
 
   // Reject vehicle request (EVM Staff)
-  async rejectRequest(requestId: string, notes?: string): Promise<VehicleRequestResponse> {
-    return patch<VehicleRequestResponse>(`/api/request-vehicles/${requestId}/reject`, { notes });
+  async rejectRequest(
+    requestId: string,
+    notes?: string
+  ): Promise<VehicleRequestResponse> {
+    return patch<VehicleRequestResponse>(
+      `/api/request-vehicles/${requestId}/reject`,
+      {notes}
+    );
   },
 
   // Update delivery status (EVM Staff)
-  async deliveredRequest(requestId: string, notes?: string): Promise<VehicleRequestResponse> {
-    return patch<VehicleRequestResponse>(`/api/request-vehicles/${requestId}/delivered`, { notes });
+  async deliveredRequest(
+    requestId: string,
+    notes?: string
+  ): Promise<VehicleRequestResponse> {
+    return patch<VehicleRequestResponse>(
+      `/api/request-vehicles/${requestId}/delivered`,
+      {notes}
+    );
   },
 
   // Delete request (Manager only)
-  async deleteRequest(requestId: string): Promise<{ success: boolean; message: string }> {
+  async deleteRequest(
+    requestId: string
+  ): Promise<{success: boolean; message: string}> {
     return del(`/api/request-vehicles/${requestId}`);
   },
 };
-

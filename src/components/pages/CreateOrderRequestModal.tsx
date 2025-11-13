@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import {
   Dialog,
   DialogTitle,
@@ -17,16 +17,16 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import {Add as AddIcon, Delete as DeleteIcon} from "@mui/icons-material";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 
 import {
   orderService,
   CreateOrderRequestData,
   OrderRequestItem,
 } from "../../services/orderService";
-import { authService } from "../../services/authService";
+import {authService} from "../../services/authService";
 
 interface VehicleOption {
   _id: string;
@@ -48,13 +48,13 @@ interface CreateOrderRequestModalProps {
 
 export const CreateOrderRequestModal: React.FC<
   CreateOrderRequestModalProps
-> = ({ open, onClose, onSuccess, initialItems, initialNotes }) => {
+> = ({open, onClose, onSuccess, initialItems, initialNotes}) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<OrderRequestItem[]>([
-    { vehicle_id: "", color: "", quantity: 1 },
+    {vehicle_id: "", color: "", quantity: 1},
   ]);
 
   // Vehicle selection states
@@ -66,7 +66,7 @@ export const CreateOrderRequestModal: React.FC<
     if (open && initialItems && initialItems.length > 0) {
       setItems(initialItems);
     } else if (open && !initialItems) {
-      setItems([{ vehicle_id: "", color: "", quantity: 1 }]);
+      setItems([{vehicle_id: "", color: "", quantity: 1}]);
     }
   }, [open, initialItems]);
 
@@ -137,7 +137,7 @@ export const CreateOrderRequestModal: React.FC<
   };
 
   const handleAddItem = () => {
-    setItems([...items, { vehicle_id: "", color: "", quantity: 1 }]);
+    setItems([...items, {vehicle_id: "", color: "", quantity: 1}]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -152,7 +152,7 @@ export const CreateOrderRequestModal: React.FC<
     value: string | number
   ) => {
     const updatedItems = items.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
+      i === index ? {...item, [field]: value} : item
     );
     setItems(updatedItems);
   };
@@ -211,7 +211,7 @@ export const CreateOrderRequestModal: React.FC<
   };
   const handleClose = () => {
     setNotes("");
-    setItems([{ vehicle_id: "", color: "", quantity: 1 }]);
+    setItems([{vehicle_id: "", color: "", quantity: 1}]);
     setError(null);
     onClose();
   };
@@ -219,13 +219,16 @@ export const CreateOrderRequestModal: React.FC<
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth={false}
       fullWidth
       sx={{
-        zIndex: "9999 !important", // Much higher zIndex with !important
+        zIndex: "9999 !important",
         "& .MuiDialog-paper": {
-          zIndex: "10000 !important",
           position: "relative !important",
+          width: "60vw", // chiếm 90% viewport
+          maxWidth: 1000, // optional giới hạn
+          margin: "0 auto", // canh giữa
+          height: "auto",
         },
         "& .MuiBackdrop-root": {
           zIndex: "9998 !important",
@@ -234,22 +237,20 @@ export const CreateOrderRequestModal: React.FC<
       BackdropProps={{
         sx: {
           zIndex: "9998 !important",
-          backgroundColor: "rgba(0, 0, 0, 0.5) !important",
+          backgroundColor: "rgba(0,0,0,0.5) !important",
         },
       }}
-      disablePortal={false}
-      keepMounted={false}
     >
       <DialogTitle>Tạo yêu cầu đặt xe mới</DialogTitle>
       <DialogContent>
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{mt: 2}}>
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert severity="error" sx={{mb: 3}}>
               {error}
             </Alert>
           )}
 
-          <Typography variant="h6" sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{mb: 2}}>
             Danh sách xe yêu cầu
           </Typography>
 
@@ -264,7 +265,7 @@ export const CreateOrderRequestModal: React.FC<
                 position: "relative",
               }}
             >
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{mb: 1}}>
                 Xe #{index + 1}
               </Typography>
 
@@ -285,7 +286,7 @@ export const CreateOrderRequestModal: React.FC<
 
               <Stack spacing={2}>
                 {vehicleLoading ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                  <Box sx={{display: "flex", justifyContent: "center", p: 2}}>
                     <CircularProgress size={24} />
                   </Box>
                 ) : (
@@ -356,7 +357,7 @@ export const CreateOrderRequestModal: React.FC<
                             <Box>
                               <Typography
                                 variant="body2"
-                                sx={{ fontWeight: 500 }}
+                                sx={{fontWeight: 500}}
                               >
                                 {vehicle.name} - {vehicle.manufacturer_name}
                               </Typography>
@@ -385,7 +386,7 @@ export const CreateOrderRequestModal: React.FC<
                   </Box>
                 )}
 
-                <Box sx={{ display: "flex", gap: 2 }}>
+                <Box sx={{display: "flex", gap: 2}}>
                   {(() => {
                     const selectedVehicle = vehicles.find(
                       (v) => v._id === item.vehicle_id
@@ -395,7 +396,7 @@ export const CreateOrderRequestModal: React.FC<
                       selectedVehicle.color_options.length > 0
                     ) {
                       return (
-                        <FormControl sx={{ flex: 1 }}>
+                        <FormControl sx={{flex: 1}}>
                           <InputLabel>Màu sắc</InputLabel>
                           <Select
                             value={item.color || ""}
@@ -429,7 +430,7 @@ export const CreateOrderRequestModal: React.FC<
                           handleItemChange(index, "color", e.target.value)
                         }
                         placeholder="Nhập màu sắc..."
-                        sx={{ flex: 1 }}
+                        sx={{flex: 1}}
                       />
                     );
                   })()}
@@ -446,8 +447,8 @@ export const CreateOrderRequestModal: React.FC<
                       )
                     }
                     required
-                    inputProps={{ min: 1 }}
-                    sx={{ width: 120 }}
+                    inputProps={{min: 1}}
+                    sx={{width: 120}}
                   />
                 </Box>
               </Stack>
@@ -458,7 +459,7 @@ export const CreateOrderRequestModal: React.FC<
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={handleAddItem}
-            sx={{ mb: 3 }}
+            sx={{mb: 3}}
           >
             Thêm xe
           </Button>
@@ -484,7 +485,7 @@ export const CreateOrderRequestModal: React.FC<
           disabled={loading}
           sx={{
             bgcolor: "#1976d2",
-            "&:hover": { bgcolor: "#1565c0" },
+            "&:hover": {bgcolor: "#1565c0"},
           }}
         >
           {loading ? "Đang xử lý..." : "Tạo yêu cầu"}

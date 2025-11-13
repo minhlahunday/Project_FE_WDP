@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { AdminLayout } from '../admin/AdminLayout';
+import React, {useState, useEffect} from "react";
+import {AdminLayout} from "../admin/AdminLayout";
 import {
   Card,
   Table,
@@ -15,9 +15,9 @@ import {
   Descriptions,
   Divider,
   Select,
-  Modal
-} from 'antd';
-import Swal from 'sweetalert2';
+  Modal,
+} from "antd";
+import Swal from "sweetalert2";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -26,27 +26,36 @@ import {
   ReloadOutlined,
   EyeOutlined,
   TruckOutlined,
-  DollarOutlined
-} from '@ant-design/icons';
-import { requestVehicleService, VehicleRequest } from '../../../services/requestVehicleService';
-import { get } from '../../../services/httpClient';
+  DollarOutlined,
+} from "@ant-design/icons";
+import {
+  requestVehicleService,
+  VehicleRequest,
+} from "../../../services/requestVehicleService";
+import {get} from "../../../services/httpClient";
 
-const { Title } = Typography;
-const { TextArea } = Input;
+const {Title} = Typography;
+const {TextArea} = Input;
 
 const RequestManagement: React.FC = () => {
   const [requests, setRequests] = useState<VehicleRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
-  
-  const [selectedRequest, setSelectedRequest] = useState<VehicleRequest | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
+  const [selectedRequest, setSelectedRequest] = useState<VehicleRequest | null>(
+    null
+  );
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeliveredModal, setShowDeliveredModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [rejectNotes, setRejectNotes] = useState('');
-  const [deliveredNotes, setDeliveredNotes] = useState('');
+  const [rejectNotes, setRejectNotes] = useState("");
+  const [deliveredNotes, setDeliveredNotes] = useState("");
   const [dealershipInfo, setDealershipInfo] = useState<any>(null);
   const [rejectLoading, setRejectLoading] = useState(false);
   const [deliveredLoading, setDeliveredLoading] = useState(false);
@@ -68,17 +77,19 @@ const RequestManagement: React.FC = () => {
 
       if (response.success) {
         setRequests(response.data.data || []);
-        setPagination(prev => ({
+        setPagination((prev) => ({
           ...prev,
           total: response.data.pagination?.total || 0,
         }));
       }
     } catch (error: any) {
       Swal.fire({
-        icon: 'error',
-        title: 'Lỗi',
-        text: 'Lỗi khi tải danh sách yêu cầu: ' + (error?.message || 'Unknown error'),
-        confirmButtonText: 'Đóng'
+        icon: "error",
+        title: "Lỗi",
+        text:
+          "Lỗi khi tải danh sách yêu cầu: " +
+          (error?.message || "Unknown error"),
+        confirmButtonText: "Đóng",
       });
     } finally {
       setLoading(false);
@@ -86,66 +97,81 @@ const RequestManagement: React.FC = () => {
   };
 
   const handleApprove = async (request: VehicleRequest) => {
-    // Đóng modal detail trước khi hiển thị SweetAlert
-    setShowDetailModal(false);
-    setSelectedRequest(null);
-    setDealershipInfo(null);
-    
-    // Delay nhỏ để modal đóng hoàn toàn
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
+    let errorMessage = "";
+    let isSuccess = false;
+
     try {
       const result = await Swal.fire({
-        title: 'Xác nhận duyệt yêu cầu',
+        title: "Xác nhận duyệt yêu cầu",
         text: `Bạn có chắc chắn muốn duyệt yêu cầu ${request._id}?`,
-        icon: 'question',
+        icon: "question",
         showCancelButton: true,
-        confirmButtonText: 'Duyệt',
-        cancelButtonText: 'Hủy',
-        confirmButtonColor: '#1890ff',
-        cancelButtonColor: '#d33',
+        confirmButtonText: "Duyệt",
+        cancelButtonText: "Hủy",
+        confirmButtonColor: "#1890ff",
+        cancelButtonColor: "#d33",
         showLoaderOnConfirm: true,
         preConfirm: async () => {
           setApproveLoading(true);
           try {
-            const response = await requestVehicleService.approveRequest(request._id);
+            const response = await requestVehicleService.approveRequest(
+              request._id
+            );
             if (!response.success) {
-              throw new Error(response.message || 'Không thể duyệt yêu cầu');
+              errorMessage = response.message || "Không thể duyệt yêu cầu";
+              Swal.showValidationMessage(errorMessage);
+              setTimeout(() => Swal.close(), 2000);
+              return false;
             }
             return response;
           } catch (error: any) {
-            Swal.showValidationMessage(error?.message || 'Lỗi khi duyệt yêu cầu');
-            throw error;
+            errorMessage = error?.message || "Đã xảy ra lỗi khi duyệt yêu cầu";
+            Swal.showValidationMessage(errorMessage);
+            setTimeout(() => Swal.close(), 2000);
+            return false;
           } finally {
             setApproveLoading(false);
           }
         },
-        allowOutsideClick: () => !approveLoading
+        allowOutsideClick: () => !approveLoading,
       });
 
+      // Xử lý kết quả
       if (result.isConfirmed) {
-        // Refresh data
-        await fetchRequests();
-        
-        // Hiển thị SweetAlert thành công
-        await Swal.fire({
-          icon: 'success',
-          title: 'Thành công!',
-          text: 'Yêu cầu đã được duyệt!',
-          confirmButtonText: 'Đóng',
-          timer: 2000,
-          timerProgressBar: true
-        });
+        if (result.value) {
+          // Thành công
+          isSuccess = true;
+          await Swal.fire({
+            icon: "success",
+            title: "Thành công!",
+            text: "Yêu cầu đã được duyệt!",
+            confirmButtonText: "Đóng",
+            timer: 2000,
+            timerProgressBar: true,
+          });
+        } else if (errorMessage) {
+          // Có lỗi từ preConfirm
+          await Swal.fire({
+            icon: "error",
+            title: "Lỗi",
+            text: errorMessage,
+            confirmButtonText: "Đóng",
+          });
+        }
       }
     } catch (error: any) {
       Swal.fire({
-        icon: 'error',
-        title: 'Lỗi',
-        text: 'Lỗi khi duyệt yêu cầu: ' + (error?.message || 'Unknown error'),
-        confirmButtonText: 'Đóng'
+        icon: "error",
+        title: "Lỗi",
+        text: "Đã xảy ra lỗi: " + (error?.message || "Unknown error"),
+        confirmButtonText: "Đóng",
       });
     } finally {
-      setApproveLoading(false);
+      // Luôn đóng modal và refresh data
+      setShowDetailModal(false);
+      setSelectedRequest(null);
+      setDealershipInfo(null);
+      await fetchRequests();
     }
   };
 
@@ -162,29 +188,29 @@ const RequestManagement: React.FC = () => {
         // Đóng tất cả modal trước khi hiển thị SweetAlert
         setShowRejectModal(false);
         setShowDetailModal(false);
-        setRejectNotes('');
+        setRejectNotes("");
         setSelectedRequest(null);
         setDealershipInfo(null);
-        
+
         // Refresh data
         await fetchRequests();
-        
+
         // Hiển thị SweetAlert sau khi đóng modal
         await Swal.fire({
-          icon: 'success',
-          title: 'Thành công!',
-          text: 'Yêu cầu đã bị từ chối!',
-          confirmButtonText: 'Đóng',
+          icon: "success",
+          title: "Thành công!",
+          text: "Yêu cầu đã bị từ chối!",
+          confirmButtonText: "Đóng",
           timer: 2000,
-          timerProgressBar: true
+          timerProgressBar: true,
         });
       }
     } catch (error: any) {
       Swal.fire({
-        icon: 'error',
-        title: 'Lỗi',
-        text: 'Lỗi khi từ chối yêu cầu: ' + (error?.message || 'Unknown error'),
-        confirmButtonText: 'Đóng'
+        icon: "error",
+        title: "Lỗi",
+        text: "Lỗi khi từ chối yêu cầu: " + (error?.message || "Unknown error"),
+        confirmButtonText: "Đóng",
       });
     } finally {
       setRejectLoading(false);
@@ -196,59 +222,66 @@ const RequestManagement: React.FC = () => {
     setShowDetailModal(false);
     setSelectedRequest(null);
     setDealershipInfo(null);
-    
+
     // Delay nhỏ để modal đóng hoàn toàn
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
     try {
       const result = await Swal.fire({
-        title: 'Xác nhận chuyển trạng thái',
+        title: "Xác nhận chuyển trạng thái",
         text: `Chuyển yêu cầu ${request._id} sang "đang xử lý"?`,
-        icon: 'question',
+        icon: "question",
         showCancelButton: true,
-        confirmButtonText: 'Xác nhận',
-        cancelButtonText: 'Hủy',
-        confirmButtonColor: '#1890ff',
-        cancelButtonColor: '#d33',
+        confirmButtonText: "Xác nhận",
+        cancelButtonText: "Hủy",
+        confirmButtonColor: "#1890ff",
+        cancelButtonColor: "#d33",
         showLoaderOnConfirm: true,
         preConfirm: async () => {
           setInProgressLoading(true);
           try {
-            const response = await requestVehicleService.inProgressRequest(request._id);
+            const response = await requestVehicleService.inProgressRequest(
+              request._id
+            );
             if (!response.success) {
-              throw new Error(response.message || 'Không thể chuyển trạng thái');
+              throw new Error(
+                response.message || "Không thể chuyển trạng thái"
+              );
             }
             return response;
           } catch (error: any) {
-            Swal.showValidationMessage(error?.message || 'Lỗi khi cập nhật trạng thái');
+            Swal.showValidationMessage(
+              error?.message || "Lỗi khi cập nhật trạng thái"
+            );
             throw error;
           } finally {
             setInProgressLoading(false);
           }
         },
-        allowOutsideClick: () => !inProgressLoading
+        allowOutsideClick: () => !inProgressLoading,
       });
 
       if (result.isConfirmed) {
         // Refresh data
         await fetchRequests();
-        
+
         // Hiển thị SweetAlert thành công
         await Swal.fire({
-          icon: 'success',
-          title: 'Thành công!',
-          text: 'Yêu cầu đã chuyển sang đang xử lý!',
-          confirmButtonText: 'Đóng',
+          icon: "success",
+          title: "Thành công!",
+          text: "Yêu cầu đã chuyển sang đang xử lý!",
+          confirmButtonText: "Đóng",
           timer: 2000,
-          timerProgressBar: true
+          timerProgressBar: true,
         });
       }
     } catch (error: any) {
       Swal.fire({
-        icon: 'error',
-        title: 'Lỗi',
-        text: 'Lỗi khi cập nhật trạng thái: ' + (error?.message || 'Unknown error'),
-        confirmButtonText: 'Đóng'
+        icon: "error",
+        title: "Lỗi",
+        text:
+          "Lỗi khi cập nhật trạng thái: " + (error?.message || "Unknown error"),
+        confirmButtonText: "Đóng",
       });
     } finally {
       setInProgressLoading(false);
@@ -268,32 +301,33 @@ const RequestManagement: React.FC = () => {
         // Đóng tất cả modal trước khi hiển thị SweetAlert
         setShowDeliveredModal(false);
         setShowDetailModal(false);
-        setDeliveredNotes('');
+        setDeliveredNotes("");
         const tempRequest = selectedRequest;
         setSelectedRequest(null);
         setDealershipInfo(null);
-        
+
         // Refresh data
         await fetchRequests();
-        
+
         // Hiển thị SweetAlert sau khi đóng modal
         await Swal.fire({
-          icon: 'success',
-          title: 'Thành công!',
+          icon: "success",
+          title: "Thành công!",
           text: `Yêu cầu ${tempRequest._id} đã được đánh dấu là đã giao hàng!`,
-          confirmButtonText: 'Đóng',
+          confirmButtonText: "Đóng",
           timer: 2000,
-          timerProgressBar: true
+          timerProgressBar: true,
         });
       } else {
-        throw new Error(response.message || 'Không thể cập nhật trạng thái');
+        throw new Error(response.message || "Không thể cập nhật trạng thái");
       }
     } catch (error: any) {
       Swal.fire({
-        icon: 'error',
-        title: 'Lỗi',
-        text: 'Lỗi khi cập nhật trạng thái: ' + (error?.message || 'Unknown error'),
-        confirmButtonText: 'Đóng'
+        icon: "error",
+        title: "Lỗi",
+        text:
+          "Lỗi khi cập nhật trạng thái: " + (error?.message || "Unknown error"),
+        confirmButtonText: "Đóng",
       });
     } finally {
       setDeliveredLoading(false);
@@ -301,15 +335,20 @@ const RequestManagement: React.FC = () => {
   };
 
   const getStatusTag = (status: string) => {
-    const statusMap: { [key: string]: { color: string; text: string; icon: any } } = {
-      pending: { color: 'orange', text: 'Đang chờ', icon: ClockCircleOutlined },
-      approved: { color: 'blue', text: 'Đã duyệt', icon: CheckCircleOutlined },
-      in_progress: { color: 'cyan', text: 'Đang xử lý', icon: TruckOutlined },
-      delivered: { color: 'green', text: 'Đã giao', icon: CheckCircleOutlined },
-      rejected: { color: 'red', text: 'Đã từ chối', icon: CloseCircleOutlined },
-    };
+    const statusMap: {[key: string]: {color: string; text: string; icon: any}} =
+      {
+        pending: {color: "orange", text: "Đang chờ", icon: ClockCircleOutlined},
+        approved: {color: "blue", text: "Đã duyệt", icon: CheckCircleOutlined},
+        in_progress: {color: "cyan", text: "Đang xử lý", icon: TruckOutlined},
+        delivered: {color: "green", text: "Đã giao", icon: CheckCircleOutlined},
+        rejected: {color: "red", text: "Đã từ chối", icon: CloseCircleOutlined},
+      };
 
-    const statusInfo = statusMap[status] || { color: 'default', text: status, icon: InfoCircleOutlined };
+    const statusInfo = statusMap[status] || {
+      color: "default",
+      text: status,
+      icon: InfoCircleOutlined,
+    };
     const Icon = statusInfo.icon;
 
     return (
@@ -320,50 +359,52 @@ const RequestManagement: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount);
   };
 
   const formatAddress = (address: any) => {
-    if (!address) return 'N/A';
-    
-    if (typeof address === 'string') return address;
-    
-    if (typeof address === 'object') {
+    if (!address) return "N/A";
+
+    if (typeof address === "string") return address;
+
+    if (typeof address === "object") {
       // Nếu có full_address thì dùng
       if (address.full_address) return address.full_address;
-      
+
       // Nếu không có thì ghép từ các thành phần
       const parts = [
         address.street,
-        address.district, 
+        address.district,
         address.city,
-        address.province
-      ].filter(part => part && part.trim() !== '');
-      
-      return parts.length > 0 ? parts.join(', ') : 'N/A';
+        address.province,
+      ].filter((part) => part && part.trim() !== "");
+
+      return parts.length > 0 ? parts.join(", ") : "N/A";
     }
-    
-    return 'N/A';
+
+    return "N/A";
   };
 
   const showRequestDetail = async (request: VehicleRequest) => {
     setSelectedRequest(request);
     setShowDetailModal(true);
-    
+
     // Fetch dealership info if dealership_id is a string
-    if (request.dealership_id && typeof request.dealership_id === 'string') {
+    if (request.dealership_id && typeof request.dealership_id === "string") {
       try {
-        const response: any = await get(`/api/dealerships/${request.dealership_id}`);
+        const response: any = await get(
+          `/api/dealerships/${request.dealership_id}`
+        );
         // Handle both response structures: { success, data } or direct data
         const dealershipData = response?.success ? response.data : response;
         if (dealershipData) {
           setDealershipInfo(dealershipData);
         }
       } catch (error) {
-        console.error('Error fetching dealership info:', error);
+        console.error("Error fetching dealership info:", error);
         setDealershipInfo(null);
       }
     } else {
@@ -374,9 +415,9 @@ const RequestManagement: React.FC = () => {
 
   const columns = [
     {
-      title: 'ID',
-      dataIndex: '_id',
-      key: '_id',
+      title: "ID",
+      dataIndex: "_id",
+      key: "_id",
       width: 120,
       render: (id: string) => (
         <Tooltip title={id}>
@@ -385,16 +426,24 @@ const RequestManagement: React.FC = () => {
       ),
     },
     {
-      title: 'Đại lý',
-      key: 'dealership',
+      title: "Đại lý",
+      key: "dealership",
       render: (_: any, record: VehicleRequest) => {
-        const dealer = typeof record.dealership_id === 'object' ? record.dealership_id : {};
+        const dealer =
+          typeof record.dealership_id === "object" ? record.dealership_id : {};
         return (
           <div>
-            <div className="font-medium">{dealer.company_name || dealer.name || 'N/A'}</div>
-            {dealer.phone && <div className="text-xs text-gray-500">{dealer.phone}</div>}
+            <div className="font-medium">
+              {dealer.company_name || dealer.name || "N/A"}
+            </div>
+            {dealer.phone && (
+              <div className="text-xs text-gray-500">{dealer.phone}</div>
+            )}
             {dealer.address && (
-              <div className="text-xs text-gray-400 truncate" style={{ maxWidth: '200px' }}>
+              <div
+                className="text-xs text-gray-400 truncate"
+                style={{maxWidth: "200px"}}
+              >
                 {formatAddress(dealer.address)}
               </div>
             )}
@@ -403,15 +452,18 @@ const RequestManagement: React.FC = () => {
       },
     },
     {
-      title: 'Thông tin xe',
-      key: 'vehicle',
+      title: "Thông tin xe",
+      key: "vehicle",
       render: (_: any, record: VehicleRequest) => {
-        const vehicle = typeof record.vehicle_id === 'object' ? record.vehicle_id : {};
+        const vehicle =
+          typeof record.vehicle_id === "object" ? record.vehicle_id : {};
         return (
           <div>
-            <div className="font-medium">{vehicle.name || vehicle.model || 'N/A'}</div>
+            <div className="font-medium">
+              {vehicle.name || vehicle.model || "N/A"}
+            </div>
             <div className="text-xs text-gray-500">
-              SKU: {vehicle.sku || 'N/A'} | Màu: {record.color}
+              SKU: {vehicle.sku || "N/A"} | Màu: {record.color}
             </div>
             {vehicle.price && (
               <div className="text-xs text-green-600">
@@ -423,42 +475,42 @@ const RequestManagement: React.FC = () => {
       },
     },
     {
-      title: 'Số lượng',
-      dataIndex: 'quantity',
-      key: 'quantity',
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
       width: 80,
-      align: 'center' as const,
-      render: (quantity: number) => (
-        <Tag color="blue">{quantity}</Tag>
-      ),
+      align: "center" as const,
+      render: (quantity: number) => <Tag color="blue">{quantity}</Tag>,
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
       width: 120,
       render: (status: string) => getStatusTag(status),
     },
     {
-      title: 'Thời gian',
-      key: 'dates',
+      title: "Thời gian",
+      key: "dates",
       width: 130,
       render: (_: any, record: VehicleRequest) => (
         <div className="text-xs">
-          <div>Tạo: {new Date(record.createdAt).toLocaleDateString('vi-VN')}</div>
+          <div>
+            Tạo: {new Date(record.createdAt).toLocaleDateString("vi-VN")}
+          </div>
           {record.delivered_at && (
             <div className="text-green-600">
-              Giao: {new Date(record.delivered_at).toLocaleDateString('vi-VN')}
+              Giao: {new Date(record.delivered_at).toLocaleDateString("vi-VN")}
             </div>
           )}
         </div>
       ),
     },
     {
-      title: 'Hành động',
-      key: 'actions',
+      title: "Hành động",
+      key: "actions",
       width: 100,
-      align: 'center' as const,
+      align: "center" as const,
       render: (_: any, record: VehicleRequest) => {
         return (
           <Button
@@ -477,18 +529,20 @@ const RequestManagement: React.FC = () => {
   // Statistics
   const stats = {
     total: requests.length,
-    pending: requests.filter(r => r.status === 'pending').length,
-    approved: requests.filter(r => r.status === 'approved').length,
-    in_progress: requests.filter(r => r.status === 'in_progress').length,
-    delivered: requests.filter(r => r.status === 'delivered').length,
-    rejected: requests.filter(r => r.status === 'rejected').length,
+    pending: requests.filter((r) => r.status === "pending").length,
+    approved: requests.filter((r) => r.status === "approved").length,
+    in_progress: requests.filter((r) => r.status === "in_progress").length,
+    delivered: requests.filter((r) => r.status === "delivered").length,
+    rejected: requests.filter((r) => r.status === "rejected").length,
   };
 
-  const filteredRequests = requests.filter(request => {
-    const dealer = typeof request.dealership_id === 'object' ? request.dealership_id : {};
-    const vehicle = typeof request.vehicle_id === 'object' ? request.vehicle_id : {};
+  const filteredRequests = requests.filter((request) => {
+    const dealer =
+      typeof request.dealership_id === "object" ? request.dealership_id : {};
+    const vehicle =
+      typeof request.vehicle_id === "object" ? request.vehicle_id : {};
     const searchLower = searchText.toLowerCase();
-    
+
     return (
       request._id.toLowerCase().includes(searchLower) ||
       dealer.company_name?.toLowerCase().includes(searchLower) ||
@@ -510,7 +564,7 @@ const RequestManagement: React.FC = () => {
               <Statistic
                 title="Tổng số"
                 value={stats.total}
-                valueStyle={{ color: '#666' }}
+                valueStyle={{color: "#666"}}
                 prefix={<InfoCircleOutlined />}
               />
             </Card>
@@ -520,7 +574,7 @@ const RequestManagement: React.FC = () => {
               <Statistic
                 title="Đang chờ"
                 value={stats.pending}
-                valueStyle={{ color: '#faad14' }}
+                valueStyle={{color: "#faad14"}}
                 prefix={<ClockCircleOutlined />}
               />
             </Card>
@@ -530,7 +584,7 @@ const RequestManagement: React.FC = () => {
               <Statistic
                 title="Đã duyệt"
                 value={stats.approved}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{color: "#1890ff"}}
                 prefix={<CheckCircleOutlined />}
               />
             </Card>
@@ -540,7 +594,7 @@ const RequestManagement: React.FC = () => {
               <Statistic
                 title="Đang xử lý"
                 value={stats.in_progress}
-                valueStyle={{ color: '#13c2c2' }}
+                valueStyle={{color: "#13c2c2"}}
                 prefix={<TruckOutlined />}
               />
             </Card>
@@ -550,7 +604,7 @@ const RequestManagement: React.FC = () => {
               <Statistic
                 title="Đã giao"
                 value={stats.delivered}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{color: "#52c41a"}}
                 prefix={<CheckCircleOutlined />}
               />
             </Card>
@@ -560,7 +614,7 @@ const RequestManagement: React.FC = () => {
               <Statistic
                 title="Đã từ chối"
                 value={stats.rejected}
-                valueStyle={{ color: '#ff4d4f' }}
+                valueStyle={{color: "#ff4d4f"}}
                 prefix={<CloseCircleOutlined />}
               />
             </Card>
@@ -574,8 +628,8 @@ const RequestManagement: React.FC = () => {
               <Input
                 placeholder="Tìm kiếm theo ID, đại lý, xe..."
                 value={searchText}
-                onChange={e => setSearchText(e.target.value)}
-                style={{ width: 300 }}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{width: 300}}
                 allowClear
               />
             </Col>
@@ -584,7 +638,7 @@ const RequestManagement: React.FC = () => {
                 placeholder="Chọn trạng thái"
                 value={statusFilter || undefined}
                 onChange={setStatusFilter}
-                style={{ width: 200 }}
+                style={{width: 200}}
                 allowClear
               >
                 <Select.Option value="pending">Đang chờ</Select.Option>
@@ -603,7 +657,7 @@ const RequestManagement: React.FC = () => {
                 Làm mới
               </Button> */}
             </Col>
-            <Col flex="auto" style={{ textAlign: 'right' }}>
+            <Col flex="auto" style={{textAlign: "right"}}>
               <Tag color="blue">Tổng: {filteredRequests.length} yêu cầu</Tag>
             </Col>
           </Row>
@@ -616,7 +670,7 @@ const RequestManagement: React.FC = () => {
             dataSource={filteredRequests}
             rowKey="_id"
             loading={loading}
-            scroll={{ x: 1200 }}
+            scroll={{x: 1200}}
             size="small"
             pagination={{
               current: pagination.current,
@@ -624,12 +678,16 @@ const RequestManagement: React.FC = () => {
               total: pagination.total,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) => 
+              showTotal: (total, range) =>
                 `${range[0]}-${range[1]} của ${total} yêu cầu`,
-              pageSizeOptions: ['10', '20', '50', '100'],
+              pageSizeOptions: ["10", "20", "50", "100"],
               onChange: (page, pageSize) => {
-                setPagination(prev => ({ ...prev, current: page, pageSize: pageSize || 10 }));
-              },  
+                setPagination((prev) => ({
+                  ...prev,
+                  current: page,
+                  pageSize: pageSize || 10,
+                }));
+              },
             }}
           />
         </Card>
@@ -642,21 +700,21 @@ const RequestManagement: React.FC = () => {
           onCancel={() => {
             if (!rejectLoading) {
               setShowRejectModal(false);
-              setRejectNotes('');
+              setRejectNotes("");
               setSelectedRequest(null);
             }
           }}
           okText="Từ chối"
           cancelText="Hủy"
-          okButtonProps={{ danger: true, loading: rejectLoading }}
-          cancelButtonProps={{ disabled: rejectLoading }}
+          okButtonProps={{danger: true, loading: rejectLoading}}
+          cancelButtonProps={{disabled: rejectLoading}}
           confirmLoading={rejectLoading}
         >
           <p>Lý do từ chối:</p>
           <TextArea
             rows={4}
             value={rejectNotes}
-            onChange={e => setRejectNotes(e.target.value)}
+            onChange={(e) => setRejectNotes(e.target.value)}
             placeholder="Nhập lý do từ chối yêu cầu..."
           />
         </Modal>
@@ -669,23 +727,29 @@ const RequestManagement: React.FC = () => {
           onCancel={() => {
             if (!deliveredLoading) {
               setShowDeliveredModal(false);
-              setDeliveredNotes('');
+              setDeliveredNotes("");
               setSelectedRequest(null);
             }
           }}
           okText="Xác nhận giao hàng"
           cancelText="Hủy"
           width={600}
-          okButtonProps={{ loading: deliveredLoading }}
-          cancelButtonProps={{ disabled: deliveredLoading }}
+          okButtonProps={{loading: deliveredLoading}}
+          cancelButtonProps={{disabled: deliveredLoading}}
           confirmLoading={deliveredLoading}
         >
           {selectedRequest && (
             <div className="mb-4">
               <Descriptions title="Thông tin yêu cầu" size="small" column={2}>
-                <Descriptions.Item label="ID">{selectedRequest._id}</Descriptions.Item>
-                <Descriptions.Item label="Số lượng">{selectedRequest.quantity}</Descriptions.Item>
-                <Descriptions.Item label="Màu xe">{selectedRequest.color}</Descriptions.Item>
+                <Descriptions.Item label="ID">
+                  {selectedRequest._id}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số lượng">
+                  {selectedRequest.quantity}
+                </Descriptions.Item>
+                <Descriptions.Item label="Màu xe">
+                  {selectedRequest.color}
+                </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   {getStatusTag(selectedRequest.status)}
                 </Descriptions.Item>
@@ -697,14 +761,15 @@ const RequestManagement: React.FC = () => {
           <TextArea
             rows={4}
             value={deliveredNotes}
-            onChange={e => setDeliveredNotes(e.target.value)}
+            onChange={(e) => setDeliveredNotes(e.target.value)}
             placeholder="Nhập thông tin giao hàng (tùy chọn)..."
           />
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
             <div className="flex items-center">
               <DollarOutlined className="text-yellow-600 mr-2" />
               <span className="text-yellow-800 font-medium">
-                Lưu ý: Việc xác nhận giao hàng sẽ tự động cập nhật kho hàng và tạo công nợ cho đại lý
+                Lưu ý: Việc xác nhận giao hàng sẽ tự động cập nhật kho hàng và
+                tạo công nợ cho đại lý
               </span>
             </div>
           </div>
@@ -721,7 +786,7 @@ const RequestManagement: React.FC = () => {
           }}
           footer={
             selectedRequest && (
-              <div style={{ textAlign: 'right' }}>
+              <div style={{textAlign: "right"}}>
                 <Space>
                   <Button
                     onClick={() => {
@@ -731,8 +796,8 @@ const RequestManagement: React.FC = () => {
                   >
                     Đóng
                   </Button>
-                  
-                  {selectedRequest.status === 'pending' && (
+
+                  {selectedRequest.status === "pending" && (
                     <>
                       <Button
                         danger
@@ -756,8 +821,8 @@ const RequestManagement: React.FC = () => {
                       </Button>
                     </>
                   )}
-                  
-                  {selectedRequest.status === 'approved' && (
+
+                  {selectedRequest.status === "approved" && (
                     <Button
                       type="primary"
                       icon={<TruckOutlined />}
@@ -766,8 +831,8 @@ const RequestManagement: React.FC = () => {
                       Chuyển đang xử lý
                     </Button>
                   )}
-                  
-                  {selectedRequest.status === 'in_progress' && (
+
+                  {selectedRequest.status === "in_progress" && (
                     <Button
                       type="primary"
                       icon={<CheckCircleOutlined />}
@@ -790,54 +855,76 @@ const RequestManagement: React.FC = () => {
         >
           {selectedRequest && (
             <div>
-              <Descriptions title="Thông tin cơ bản" bordered size="small" column={2}>
-                <Descriptions.Item label="ID yêu cầu">{selectedRequest._id}</Descriptions.Item>
+              <Descriptions
+                title="Thông tin cơ bản"
+                bordered
+                size="small"
+                column={2}
+              >
+                <Descriptions.Item label="ID yêu cầu">
+                  {selectedRequest._id}
+                </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   {getStatusTag(selectedRequest.status)}
                 </Descriptions.Item>
-                <Descriptions.Item label="Số lượng">{selectedRequest.quantity}</Descriptions.Item>
-                <Descriptions.Item label="Màu xe">{selectedRequest.color}</Descriptions.Item>
+                <Descriptions.Item label="Số lượng">
+                  {selectedRequest.quantity}
+                </Descriptions.Item>
+                <Descriptions.Item label="Màu xe">
+                  {selectedRequest.color}
+                </Descriptions.Item>
                 <Descriptions.Item label="Ngày tạo">
-                  {new Date(selectedRequest.createdAt).toLocaleString('vi-VN')}
+                  {new Date(selectedRequest.createdAt).toLocaleString("vi-VN")}
                 </Descriptions.Item>
                 <Descriptions.Item label="Cập nhật cuối">
-                  {new Date(selectedRequest.updatedAt).toLocaleString('vi-VN')}
+                  {new Date(selectedRequest.updatedAt).toLocaleString("vi-VN")}
                 </Descriptions.Item>
                 {selectedRequest.delivered_at && (
                   <Descriptions.Item label="Ngày giao hàng" span={2}>
-                    {new Date(selectedRequest.delivered_at).toLocaleString('vi-VN')}
+                    {new Date(selectedRequest.delivered_at).toLocaleString(
+                      "vi-VN"
+                    )}
                   </Descriptions.Item>
                 )}
               </Descriptions>
 
               <Divider />
 
-              <Descriptions title="Thông tin đại lý" bordered size="small" column={2}>
+              <Descriptions
+                title="Thông tin đại lý"
+                bordered
+                size="small"
+                column={2}
+              >
                 {(() => {
                   // Get dealership info - check if it's an object or use fetched info
-                  const dealership = typeof selectedRequest.dealership_id === 'object' && selectedRequest.dealership_id
-                    ? selectedRequest.dealership_id
-                    : dealershipInfo;
-                  
+                  const dealership =
+                    typeof selectedRequest.dealership_id === "object" &&
+                    selectedRequest.dealership_id
+                      ? selectedRequest.dealership_id
+                      : dealershipInfo;
+
                   if (!dealership) return null;
-                  
+
                   // Get contact info - check contact object first (from backend structure)
-                  const phone = dealership.contact?.phone 
-                    || dealership.phone 
-                    || dealership.contact_phone 
-                    || (dealership.user && dealership.user.phone) 
-                    || 'N/A';
-                  
-                  const email = dealership.contact?.email 
-                    || dealership.email 
-                    || dealership.contact_email 
-                    || (dealership.user && dealership.user.email) 
-                    || 'N/A';
-                  
+                  const phone =
+                    dealership.contact?.phone ||
+                    dealership.phone ||
+                    dealership.contact_phone ||
+                    (dealership.user && dealership.user.phone) ||
+                    "N/A";
+
+                  const email =
+                    dealership.contact?.email ||
+                    dealership.email ||
+                    dealership.contact_email ||
+                    (dealership.user && dealership.user.email) ||
+                    "N/A";
+
                   return (
                     <>
                       <Descriptions.Item label="Tên công ty" span={2}>
-                        {dealership.company_name || dealership.name || 'N/A'}
+                        {dealership.company_name || dealership.name || "N/A"}
                       </Descriptions.Item>
                       <Descriptions.Item label="Địa chỉ" span={2}>
                         {formatAddress(dealership.address)}
@@ -855,28 +942,38 @@ const RequestManagement: React.FC = () => {
 
               <Divider />
 
-              <Descriptions title="Thông tin xe" bordered size="small" column={2}>
-                {typeof selectedRequest.vehicle_id === 'object' && selectedRequest.vehicle_id && (
-                  <>
-                    <Descriptions.Item label="Tên xe" span={2}>
-                      {selectedRequest.vehicle_id.name || selectedRequest.vehicle_id.model || 'N/A'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="SKU">
-                      {selectedRequest.vehicle_id.sku || 'N/A'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Giá">
-                      {selectedRequest.vehicle_id.price ? formatCurrency(selectedRequest.vehicle_id.price) : 'N/A'}
-                    </Descriptions.Item>
-                    {/* <Descriptions.Item label="Thương hiệu">
+              <Descriptions
+                title="Thông tin xe"
+                bordered
+                size="small"
+                column={2}
+              >
+                {typeof selectedRequest.vehicle_id === "object" &&
+                  selectedRequest.vehicle_id && (
+                    <>
+                      <Descriptions.Item label="Tên xe" span={2}>
+                        {selectedRequest.vehicle_id.name ||
+                          selectedRequest.vehicle_id.model ||
+                          "N/A"}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="SKU">
+                        {selectedRequest.vehicle_id.sku || "N/A"}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Giá">
+                        {selectedRequest.vehicle_id.price
+                          ? formatCurrency(selectedRequest.vehicle_id.price)
+                          : "N/A"}
+                      </Descriptions.Item>
+                      {/* <Descriptions.Item label="Thương hiệu">
                       {typeof selectedRequest.vehicle_id.manufacturer_id === 'object' && selectedRequest.vehicle_id.manufacturer_id
                         ? selectedRequest.vehicle_id.manufacturer_id.name || 'N/A'
                         : 'N/A'}
                     </Descriptions.Item> */}
-                    <Descriptions.Item label="Mô tả" span={2}>
-                      {selectedRequest.vehicle_id.description || 'N/A'}
-                    </Descriptions.Item>
-                  </>
-                )}
+                      <Descriptions.Item label="Mô tả" span={2}>
+                        {selectedRequest.vehicle_id.description || "N/A"}
+                      </Descriptions.Item>
+                    </>
+                  )}
               </Descriptions>
 
               {selectedRequest.notes && (
@@ -898,4 +995,3 @@ const RequestManagement: React.FC = () => {
 };
 
 export default RequestManagement;
-

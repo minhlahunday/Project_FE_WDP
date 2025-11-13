@@ -1,49 +1,50 @@
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-
+import axios, {AxiosRequestConfig, AxiosResponse, AxiosError} from "axios";
 
 // Base API URL - fallback to localhost:5000 if not set in environment
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://electric-vehicle-dealer.onrender.com/';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://electric-vehicle-dealer.onrender.com";
 
-console.log('HttpClient initialized with base URL:', API_BASE_URL);
-console.log('Environment mode:', import.meta.env.MODE);
-console.log('VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL);
+console.log("HttpClient initialized with base URL:", API_BASE_URL);
+console.log("Environment mode:", import.meta.env.MODE);
+console.log("VITE_API_BASE_URL from env:", import.meta.env.VITE_API_BASE_URL);
 
 const httpClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  timeout: 10000, 
+  timeout: 10000,
 });
 
 function getAccessToken() {
-  return localStorage.getItem('accessToken');
+  return localStorage.getItem("accessToken");
 }
 function getRefreshToken() {
-  return localStorage.getItem('refreshToken');
+  return localStorage.getItem("refreshToken");
 }
 function setAccessToken(token: string) {
-  localStorage.setItem('accessToken', token);
+  localStorage.setItem("accessToken", token);
 }
 function clearTokens() {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
 }
 
 function isTokenExpired(token?: string) {
   if (!token) return true;
   try {
-    const [, payload] = token.split('.');
+    const [, payload] = token.split(".");
     if (!payload) return true;
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = decodeURIComponent(
-      atob(base64 + '='.repeat((4 - base64.length % 4) % 4))
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+      atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4))
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
     );
-    const { exp } = JSON.parse(jsonPayload);
+    const {exp} = JSON.parse(jsonPayload);
     if (!exp) return true;
     // Consider expired if less than 1 minute left
     return Date.now() >= exp * 1000 - 60 * 1000;
@@ -59,14 +60,16 @@ async function refreshAccessToken(): Promise<string | null> {
     const refreshToken = getRefreshToken();
     if (!refreshToken) return null;
     try {
-      const resp = await axios.post(`${API_BASE_URL}/api/auth/refreshToken`, { token: refreshToken });
+      const resp = await axios.post(`${API_BASE_URL}/api/auth/refreshToken`, {
+        token: refreshToken,
+      });
       if (resp.data && resp.data.accessToken) {
         setAccessToken(resp.data.accessToken);
         return resp.data.accessToken;
       }
     } catch {
       clearTokens();
-      window.location.href = '/login';
+      window.location.href = "/login";
       return null;
     } finally {
       refreshingPromise = null;
@@ -78,45 +81,56 @@ async function refreshAccessToken(): Promise<string | null> {
 
 httpClient.interceptors.request.use(
   async (config) => {
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
-    
+    console.log(
+      `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`
+    );
+
     let token = getAccessToken();
     if (!token || isTokenExpired(token)) {
-      console.log('🔄 Token expired, refreshing...');
+      console.log("🔄 Token expired, refreshing...");
       token = await refreshAccessToken();
     }
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('✅ Token attached to request');
+      console.log("✅ Token attached to request");
     } else {
-      console.log('⚠️ No token available');
+      console.log("⚠️ No token available");
     }
     return config;
   },
   (error) => {
-    console.log('❌ Request interceptor error:', error);
+    console.log("❌ Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
 
 httpClient.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    console.log(
+      `✅ API Response: ${
+        response.status
+      } ${response.config.method?.toUpperCase()} ${response.config.url}`
+    );
     return response;
   },
   async (error: AxiosError) => {
-    console.log(`❌ API Error: ${error.response?.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.response?.data);
-    
+    console.log(
+      `❌ API Error: ${
+        error.response?.status
+      } ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
+      error.response?.data
+    );
+
     if (error.response?.status === 401) {
       clearTokens();
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }
 );
 
-export const request = async<T = any>(
+export const request = async <T = any>(
   config: AxiosRequestConfig
 ): Promise<T> => {
   try {
@@ -131,31 +145,49 @@ export const request = async<T = any>(
   }
 };
 
-export const get = <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
-  return request<T>({ ...config, method: 'GET', url });
+export const get = <T = any>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  return request<T>({...config, method: "GET", url});
 };
 
-export const post = <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
-  return request<T>({ ...config, method: 'POST', url, data });
+export const post = <T = any>(
+  url: string,
+  data?: any,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  return request<T>({...config, method: "POST", url, data});
 };
 
-export const put = <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
-  return request<T>({ ...config, method: 'PUT', url, data });
+export const put = <T = any>(
+  url: string,
+  data?: any,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  return request<T>({...config, method: "PUT", url, data});
 };
 
-export const patch = <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
-  return request<T>({ ...config, method: 'PATCH', url, data });
+export const patch = <T = any>(
+  url: string,
+  data?: any,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  return request<T>({...config, method: "PATCH", url, data});
 };
 
-export const del = <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+export const del = <T = any>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<T> => {
   // DELETE request có thể có data trong body hoặc query params
   // Nếu có data trong config, truyền vào request body
-  const { data, ...restConfig } = config || {};
-  return request<T>({ 
-    ...restConfig, 
-    method: 'DELETE', 
+  const {data, ...restConfig} = config || {};
+  return request<T>({
+    ...restConfig,
+    method: "DELETE",
     url,
-    data // Truyền data vào request body nếu có
+    data, // Truyền data vào request body nếu có
   });
 };
 

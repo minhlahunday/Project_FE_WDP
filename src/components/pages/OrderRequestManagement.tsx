@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import {
   Box,
   Card,
@@ -33,35 +33,36 @@ import {
   TimelineConnector,
   TimelineContent,
   TimelineDot,
-  TimelineOppositeContent,
 } from "@mui/lab";
 import {
   Visibility as ViewIcon,
-  Delete as DeleteIcon,
   Add as AddIcon,
   Search as SearchIcon,
   Refresh as RefreshIcon,
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
 } from "@mui/icons-material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DateRange } from "@mui/x-date-pickers-pro";
-import dayjs, { Dayjs } from "dayjs";
+import {DatePicker} from "@mui/x-date-pickers/DatePicker";
+import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
+import {DateRange} from "@mui/x-date-pickers-pro";
+import dayjs, {Dayjs} from "dayjs";
 import Swal from "sweetalert2";
 
-import { useAuth } from "../../contexts/AuthContext";
+import {useAuth} from "../../contexts/AuthContext";
 import {
   orderService,
   OrderRequest,
   OrderRequestSearchParams,
-  OrderRequestHistoryEvent,
 } from "../../services/orderService";
 import CreateOrderRequestModal from "./CreateOrderRequestModal";
+import {
+  requestVehicleService,
+  VehicleRequest,
+} from "../../services/requestVehicleService";
 
 export const OrderRequestManagement: React.FC = () => {
-  const { user } = useAuth();
+  const {user} = useAuth();
   const [orderRequests, setOrderRequests] = useState<OrderRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,25 +91,58 @@ export const OrderRequestManagement: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // History states
-  const [requestHistory, setRequestHistory] = useState<
-    OrderRequestHistoryEvent[]
-  >([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [vehicleTimeline, setVehicleTimeline] = useState<VehicleRequest | null>(
+    null
+  );
 
   const statusOptions = [
-    { value: "pending", label: "Chờ duyệt", color: "warning" },
-    { value: "approved", label: "Đã duyệt", color: "success" },
-    { value: "vehicle_ready", label: "Xe đã sẵn sàng", color: "success" },
-    { value: "delivered", label: "Đã giao", color: "success" },
-    { value: "rejected", label: "Đã từ chối", color: "error" },
-    {
-      value: "waiting_vehicle_request",
-      label: "Chờ xe từ hãng",
-      color: "info",
-    },
-    { value: "completed", label: "Hoàn thành", color: "success" },
-    { value: "canceled", label: "Đã hủy", color: "error" },
+    {value: "pending", label: "Chờ duyệt", color: "warning"},
+    {value: "approved", label: "Đã duyệt", color: "success"},
+    // {value: "vehicle_ready", label: "Xe đã sẵn sàng", color: "success"},
+    {value: "delivered", label: "Đã giao", color: "success"},
+    {value: "rejected", label: "Đã từ chối", color: "error"},
+    {value: "in_progress", label: "Đang xử lý", color: "info"},
+    {value: "completed", label: "Hoàn thành", color: "success"},
+    {value: "canceled", label: "Đã hủy", color: "error"},
   ];
+
+  const allStatusSteps: VehicleRequest["status"][] = [
+    "pending",
+    "approved",
+    "in_progress",
+    "delivered",
+  ];
+
+  const getTimelineForUI = (request: VehicleRequest) => {
+    return allStatusSteps.map((status) => {
+      let timestamp: string | undefined;
+
+      switch (status) {
+        case "pending":
+          timestamp = request.requested_at;
+          break;
+        case "approved":
+          timestamp = request.approved_at;
+          break;
+        case "delivered":
+          timestamp = request.delivered_at;
+          break;
+      }
+
+      return {
+        status,
+        timestamp, // có thể undefined, nhưng vẫn hiển thị step
+        isCurrent: request.status === status,
+        isCompleted:
+          allStatusSteps.indexOf(status) <
+          allStatusSteps.indexOf(request.status),
+      };
+    });
+  };
+
+  const getStatusLabel = (status: string) =>
+    statusOptions.find((opt) => opt.value === status)?.label || status;
 
   const getStatusChip = (status: string) => {
     const option = statusOptions.find((opt) => opt.value === status);
@@ -117,32 +151,9 @@ export const OrderRequestManagement: React.FC = () => {
         label={option?.label || status}
         color={option?.color as any}
         size="small"
-        sx={{ minWidth: 90 }}
+        sx={{minWidth: 90}}
       />
     );
-  };
-
-  const getTimelineDotColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "warning";
-      case "approved":
-        return "success";
-      case "rejected":
-      case "cancelled":
-        return "error";
-      case "waiting_vehicle_request":
-        return "info";
-      case "completed":
-        return "success";
-      default:
-        return "grey";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const option = statusOptions.find((opt) => opt.value === status);
-    return option?.label || status;
   };
 
   const loadOrderRequests = useCallback(
@@ -160,12 +171,12 @@ export const OrderRequestManagement: React.FC = () => {
         endDate: params?.endDate,
       };
 
-      console.log("📋 API params being sent:", searchParams);
-      console.log("👤 User role:", user?.role);
+      console.log("API params being sent:", searchParams);
+      console.log("User role:", user?.role);
 
       try {
         const response = await orderService.getOrderRequests(searchParams);
-        console.log("📋 API response received:", response);
+        console.log("API response received:", response);
 
         if (response && response.success) {
           let requestsData: OrderRequest[] = [];
@@ -223,7 +234,7 @@ export const OrderRequestManagement: React.FC = () => {
               };
             } else if (Array.isArray(response.data)) {
               requestsData = response.data;
-              paginationData = { total: response.data.length, page: 1 };
+              paginationData = {total: response.data.length, page: 1};
             }
           }
 
@@ -248,7 +259,7 @@ export const OrderRequestManagement: React.FC = () => {
           err?.response?.data?.message || err?.message || "Lỗi kết nối API";
         setError(errorMessage);
         setOrderRequests([]);
-        setPagination((prev) => ({ ...prev, total: 0 }));
+        setPagination((prev) => ({...prev, total: 0}));
       } finally {
         setLoading(false);
       }
@@ -277,7 +288,7 @@ export const OrderRequestManagement: React.FC = () => {
       searchParams.endDate = dateRange[1].format("YYYY-MM-DD");
     }
 
-    setPagination((prev) => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({...prev, current: 1}));
     loadOrderRequests(searchParams);
   };
 
@@ -285,13 +296,13 @@ export const OrderRequestManagement: React.FC = () => {
     setSearchText("");
     setSelectedStatus("");
     setDateRange([null, null]);
-    setPagination((prev) => ({ ...prev, current: 1 }));
-    loadOrderRequests({ page: 1, limit: pagination.pageSize });
+    setPagination((prev) => ({...prev, current: 1}));
+    loadOrderRequests({page: 1, limit: pagination.pageSize});
   };
 
   const handlePageChange = (_event: unknown, newPage: number) => {
     const newCurrent = newPage + 1;
-    setPagination((prev) => ({ ...prev, current: newCurrent }));
+    setPagination((prev) => ({...prev, current: newCurrent}));
     loadOrderRequests({
       page: newCurrent,
       limit: pagination.pageSize,
@@ -306,7 +317,7 @@ export const OrderRequestManagement: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const newPageSize = parseInt(event.target.value, 10);
-    setPagination((prev) => ({ ...prev, pageSize: newPageSize, current: 1 }));
+    setPagination((prev) => ({...prev, pageSize: newPageSize, current: 1}));
     loadOrderRequests({
       page: 1,
       limit: newPageSize,
@@ -320,54 +331,32 @@ export const OrderRequestManagement: React.FC = () => {
   const handleViewRequest = (request: OrderRequest) => {
     setSelectedRequest(request);
     setDetailModalOpen(true);
-    // Use request._id for history API call
-    loadOrderRequestHistory(request.order_id._id);
+    console.log("Request ID:" + request._id);
+    // Prevent TypeError for missing or null order_id
+    if (request && request._id) {
+      loadVehicleRequestHistory(request._id);
+    } else {
+      setVehicleTimeline(null);
+    }
   };
 
-  const loadOrderRequestHistory = async (requestId: string) => {
+  const loadVehicleRequestHistory = async (orderRequestId: string) => {
     setHistoryLoading(true);
     try {
-      const response = await orderService.getOrderRequestHistory(requestId);
-      console.log("📋 Order request history response:", response);
+      const response =
+        await requestVehicleService.getVehicleRequestsByOrderRequest(
+          orderRequestId
+        );
 
-      if (response.success && response.data.timeline) {
-        // Map API response to our interface
-        const mappedTimeline: OrderRequestHistoryEvent[] =
-          response.data.timeline.map((event: any) => ({
-            _id: event._id,
-            timestamp: event.timestamp,
-            status_change: {
-              from: event.old_status,
-              to: event.new_status,
-            },
-            changed_by: event.changed_by
-              ? {
-                  _id: event.changed_by._id,
-                  full_name:
-                    event.changed_by.full_name ||
-                    event.changed_by.email ||
-                    "N/A",
-                  role: event.changed_by.role || "N/A",
-                }
-              : undefined,
-            reason: event.reason || undefined,
-            notes: event.notes || undefined,
-            is_current: false, // Will be set for the latest status
-          }));
-
-        // Mark the latest event as current
-        if (mappedTimeline.length > 0) {
-          mappedTimeline[0].is_current = true;
-        }
-
-        console.log("✅ Mapped timeline:", mappedTimeline);
-        setRequestHistory(mappedTimeline);
+      if (response.success && response.data) {
+        // Chỉ lấy status + updatedAt + vehicle info
+        setVehicleTimeline(response.data);
       } else {
-        setRequestHistory([]);
+        setVehicleTimeline(null);
       }
-    } catch (error) {
-      console.error("Error loading order request history:", error);
-      setRequestHistory([]);
+    } catch (err) {
+      console.error("Error loading vehicle request history:", err);
+      setVehicleTimeline(null);
     } finally {
       setHistoryLoading(false);
     }
@@ -437,7 +426,7 @@ export const OrderRequestManagement: React.FC = () => {
       return;
     }
 
-    const { value: reason } = await Swal.fire({
+    const {value: reason} = await Swal.fire({
       title: "Từ chối yêu cầu",
       text: "Vui lòng nhập lý do từ chối:",
       input: "textarea",
@@ -491,70 +480,6 @@ export const OrderRequestManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteRequest = async (request: OrderRequest) => {
-    // Only allow staff to delete their own pending requests
-    if (user?.role === "dealer_staff" && request.status !== "pending") {
-      setSnackbarMessage("Chỉ có thể xóa yêu cầu đang chờ duyệt");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    if (user?.role !== "dealer_manager" && user?.role !== "dealer_staff") {
-      setSnackbarMessage("Bạn không có quyền xóa yêu cầu này");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    const result = await Swal.fire({
-      title: "Xác nhận xóa yêu cầu",
-      text: `Bạn có chắc chắn muốn xóa yêu cầu ${request.code}? Hành động này không thể hoàn tác.`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
-      reverseButtons: true,
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      setLoading(true);
-      await orderService.deleteOrderRequest(request._id);
-
-      await Swal.fire({
-        title: "Thành công!",
-        text: "Yêu cầu đã được xóa thành công.",
-        icon: "success",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#10b981",
-      });
-
-      loadOrderRequests({
-        page: pagination.current,
-        limit: pagination.pageSize,
-        q: searchText || undefined,
-        status: (selectedStatus as any) || undefined,
-        startDate: dateRange[0]?.format("YYYY-MM-DD"),
-        endDate: dateRange[1]?.format("YYYY-MM-DD"),
-      });
-    } catch (error: any) {
-      console.error("Error deleting request:", error);
-      await Swal.fire({
-        title: "Lỗi!",
-        text: error.response?.data?.message || "Có lỗi xảy ra khi xóa yêu cầu",
-        icon: "error",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#ef4444",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSnackbarClose = (
     _event?: React.SyntheticEvent | Event,
     reason?: string
@@ -567,10 +492,10 @@ export const OrderRequestManagement: React.FC = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ p: 3, m: 0 }}>
+      <Box sx={{p: 3, m: 0}}>
         {/* Error Display */}
         {error && (
-          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3 }}>
+          <Alert severity="error" onClose={() => setError(null)} sx={{mb: 3}}>
             {error}
           </Alert>
         )}
@@ -584,7 +509,7 @@ export const OrderRequestManagement: React.FC = () => {
             mb: 4,
           }}
         >
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+          <Typography variant="h4" component="h1" sx={{fontWeight: 600}}>
             Quản lý yêu cầu đặt xe
           </Typography>
 
@@ -595,7 +520,7 @@ export const OrderRequestManagement: React.FC = () => {
               onClick={() => setCreateModalOpen(true)}
               sx={{
                 bgcolor: "#1976d2",
-                "&:hover": { bgcolor: "#1565c0" },
+                "&:hover": {bgcolor: "#1565c0"},
                 borderRadius: 2,
                 px: 3,
               }}
@@ -606,9 +531,9 @@ export const OrderRequestManagement: React.FC = () => {
         </Box>
 
         {/* Search and Filters */}
-        <Card sx={{ p: 3, mb: 4, boxShadow: 3 }}>
+        <Card sx={{p: 3, mb: 4, boxShadow: 3}}>
           <Stack spacing={3}>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Box sx={{display: "flex", gap: 2, flexWrap: "wrap"}}>
               <TextField
                 label="Tìm kiếm"
                 placeholder="Mã yêu cầu, nhân viên..."
@@ -616,10 +541,10 @@ export const OrderRequestManagement: React.FC = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 InputProps={{
                   startAdornment: (
-                    <SearchIcon sx={{ color: "action.active", mr: 1 }} />
+                    <SearchIcon sx={{color: "action.active", mr: 1}} />
                   ),
                 }}
-                sx={{ minWidth: 200 }}
+                sx={{minWidth: 200}}
               />
 
               {/* <FormControl sx={{ minWidth: 150 }}>
@@ -642,14 +567,14 @@ export const OrderRequestManagement: React.FC = () => {
                 label="Từ ngày"
                 value={dateRange[0]}
                 onChange={(newValue) => setDateRange([newValue, dateRange[1]])}
-                slotProps={{ textField: { sx: { minWidth: 150 } } }}
+                slotProps={{textField: {sx: {minWidth: 150}}}}
               />
 
               <DatePicker
                 label="Đến ngày"
                 value={dateRange[1]}
                 onChange={(newValue) => setDateRange([dateRange[0], newValue])}
-                slotProps={{ textField: { sx: { minWidth: 150 } } }}
+                slotProps={{textField: {sx: {minWidth: 150}}}}
               />
             </Box>
 
@@ -658,7 +583,7 @@ export const OrderRequestManagement: React.FC = () => {
                 variant="contained"
                 onClick={handleSearch}
                 startIcon={<SearchIcon />}
-                sx={{ minWidth: 120 }}
+                sx={{minWidth: 120}}
               >
                 Tìm kiếm
               </Button>
@@ -674,17 +599,17 @@ export const OrderRequestManagement: React.FC = () => {
         </Card>
 
         {/* Data Table */}
-        <Card sx={{ boxShadow: 3 }}>
+        <Card sx={{boxShadow: 3}}>
           <TableContainer component={Paper}>
             <Table>
-              <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+              <TableHead sx={{bgcolor: "#f5f5f5"}}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Mã yêu cầu</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Nhân viên</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Loại xe</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Ngày tạo</TableCell>
-                  <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
+                  <TableCell sx={{fontWeight: 600}}>Mã yêu cầu</TableCell>
+                  <TableCell sx={{fontWeight: 600}}>Nhân viên</TableCell>
+                  <TableCell sx={{fontWeight: 600}}>Danh sách xe</TableCell>
+                  <TableCell sx={{fontWeight: 600}}>Trạng thái</TableCell>
+                  <TableCell sx={{fontWeight: 600}}>Ngày tạo</TableCell>
+                  <TableCell sx={{fontWeight: 600, textAlign: "center"}}>
                     Thao tác
                   </TableCell>
                 </TableRow>
@@ -692,13 +617,13 @@ export const OrderRequestManagement: React.FC = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
+                    <TableCell colSpan={6} sx={{textAlign: "center", py: 4}}>
                       <Typography>Đang tải...</Typography>
                     </TableCell>
                   </TableRow>
                 ) : orderRequests.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
+                    <TableCell colSpan={6} sx={{textAlign: "center", py: 4}}>
                       <Typography color="text.secondary">
                         Không có dữ liệu
                       </Typography>
@@ -707,7 +632,7 @@ export const OrderRequestManagement: React.FC = () => {
                 ) : (
                   orderRequests.map((request) => (
                     <TableRow key={request._id} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>
+                      <TableCell sx={{fontWeight: 500}}>
                         {request.code}
                       </TableCell>
                       <TableCell>
@@ -716,25 +641,45 @@ export const OrderRequestManagement: React.FC = () => {
                           "N/A"}
                       </TableCell>
                       <TableCell>
-                        {request.items?.length || 0} xe
                         {request.items && request.items.length > 0 && (
-                          <Typography
-                            variant="caption"
-                            display="block"
-                            color="text.secondary"
+                          <Tooltip
+                            title={request.items
+                              .map(
+                                (i) =>
+                                  `${
+                                    i.vehicle_name || i.vehicle_id
+                                  } - Số lượng (${i.quantity || 1})`
+                              )
+                              .join(", ")}
+                            arrow
                           >
-                            {request.items[0].vehicle_name ||
-                              request.items[0].vehicle_id}
-                            {request.items.length > 1 &&
-                              ` +${request.items.length - 1} xe khác`}
-                          </Typography>
+                            <Typography
+                              variant="caption"
+                              display="block"
+                              color="text.secondary"
+                              sx={{
+                                whiteSpace: "pre-wrap", // xuống dòng nếu quá dài
+                                wordBreak: "break-word", // ngắt từ nếu cần
+                              }}
+                            >
+                              {request.items
+                                .map(
+                                  (i) =>
+                                    `${i.vehicle_name || i.vehicle_id} (${
+                                      i.quantity || 1
+                                    })`
+                                )
+                                .join(", ")}
+                            </Typography>
+                          </Tooltip>
                         )}
                       </TableCell>
+
                       <TableCell>{getStatusChip(request.status)}</TableCell>
                       <TableCell>
                         {dayjs(request.createdAt).format("DD/MM/YYYY HH:mm")}
                       </TableCell>
-                      <TableCell sx={{ textAlign: "center" }}>
+                      <TableCell sx={{textAlign: "center"}}>
                         <Stack
                           direction="row"
                           spacing={1}
@@ -744,7 +689,7 @@ export const OrderRequestManagement: React.FC = () => {
                             <IconButton
                               size="small"
                               onClick={() => handleViewRequest(request)}
-                              sx={{ color: "#1976d2" }}
+                              sx={{color: "#1976d2"}}
                             >
                               <ViewIcon />
                             </IconButton>
@@ -759,7 +704,7 @@ export const OrderRequestManagement: React.FC = () => {
                                     onClick={() =>
                                       handleApproveRequest(request)
                                     }
-                                    sx={{ color: "#10b981" }}
+                                    sx={{color: "#10b981"}}
                                   >
                                     <ApproveIcon />
                                   </IconButton>
@@ -769,7 +714,7 @@ export const OrderRequestManagement: React.FC = () => {
                                   <IconButton
                                     size="small"
                                     onClick={() => handleRejectRequest(request)}
-                                    sx={{ color: "#ef4444" }}
+                                    sx={{color: "#ef4444"}}
                                   >
                                     <RejectIcon />
                                   </IconButton>
@@ -794,7 +739,7 @@ export const OrderRequestManagement: React.FC = () => {
             onRowsPerPageChange={handleRowsPerPageChange}
             rowsPerPageOptions={[5, 10, 25, 50]}
             labelRowsPerPage="Số dòng mỗi trang:"
-            labelDisplayedRows={({ from, to, count }) =>
+            labelDisplayedRows={({from, to, count}) =>
               `${from}-${to} của ${count !== -1 ? count : `hơn ${to}`}`
             }
           />
@@ -812,45 +757,45 @@ export const OrderRequestManagement: React.FC = () => {
           </DialogTitle>
           <DialogContent>
             {selectedRequest && (
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{mt: 2}}>
                 <Stack spacing={3}>
                   {/* Basic Information */}
                   <Box>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{mb: 2}}>
                       Thông tin cơ bản
                     </Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                      <Box sx={{ flex: "1 1 300px" }}>
+                    <Box sx={{display: "flex", flexWrap: "wrap", gap: 2}}>
+                      <Box sx={{flex: "1 1 300px"}}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Mã yêu cầu:
                         </Typography>
-                        <Typography variant="body1" sx={{ mb: 2 }}>
+                        <Typography variant="body1" sx={{mb: 2}}>
                           {selectedRequest.code}
                         </Typography>
                       </Box>
-                      <Box sx={{ flex: "1 1 300px" }}>
+                      <Box sx={{flex: "1 1 300px"}}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Trạng thái:
                         </Typography>
-                        <Box sx={{ mb: 2 }}>
+                        <Box sx={{mb: 2}}>
                           {getStatusChip(selectedRequest.status)}
                         </Box>
                       </Box>
-                      <Box sx={{ flex: "1 1 300px" }}>
+                      <Box sx={{flex: "1 1 300px"}}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Nhân viên:
                         </Typography>
-                        <Typography variant="body1" sx={{ mb: 2 }}>
+                        <Typography variant="body1" sx={{mb: 2}}>
                           {selectedRequest.dealer_staff?.full_name ||
                             selectedRequest.requested_by?.full_name ||
                             "N/A"}
                         </Typography>
                       </Box>
-                      <Box sx={{ flex: "1 1 300px" }}>
+                      <Box sx={{flex: "1 1 300px"}}>
                         <Typography variant="subtitle2" color="text.secondary">
                           Ngày tạo:
                         </Typography>
-                        <Typography variant="body1" sx={{ mb: 2 }}>
+                        <Typography variant="body1" sx={{mb: 2}}>
                           {dayjs(selectedRequest.createdAt).format(
                             "DD/MM/YYYY HH:mm"
                           )}
@@ -858,15 +803,13 @@ export const OrderRequestManagement: React.FC = () => {
                       </Box>
                     </Box>
                   </Box>
-
                   <Divider />
-
                   {/* Vehicle List */}
                   <Box>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{mb: 2}}>
                       Danh sách xe
                     </Typography>
-                    <Box sx={{ mt: 1 }}>
+                    <Box sx={{mt: 1}}>
                       {selectedRequest.items?.map((item, index) => (
                         <Box
                           key={index}
@@ -895,12 +838,11 @@ export const OrderRequestManagement: React.FC = () => {
                       ))}
                     </Box>
                   </Box>
-
                   {selectedRequest.notes && (
                     <>
                       <Divider />
                       <Box>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
+                        <Typography variant="h6" sx={{mb: 2}}>
                           Ghi chú
                         </Typography>
                         <Typography
@@ -917,93 +859,81 @@ export const OrderRequestManagement: React.FC = () => {
                       </Box>
                     </>
                   )}
-
                   <Divider />
-
                   {/* Status Timeline */}
                   <Box>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                      Lịch sử trạng thái
+                    <Typography variant="h6" sx={{mb: 2}}>
+                      Trạng thái giao xe
                     </Typography>
                     {historyLoading ? (
                       <Box
-                        sx={{ display: "flex", justifyContent: "center", p: 3 }}
+                        sx={{display: "flex", justifyContent: "center", p: 3}}
                       >
                         <CircularProgress />
                       </Box>
-                    ) : requestHistory.length > 0 ? (
-                      <Timeline>
-                        {requestHistory.map((event, index) => (
-                          <TimelineItem key={index}>
-                            <TimelineOppositeContent
-                              sx={{ m: "auto 0" }}
-                              align="right"
-                              variant="body2"
-                              color="text.secondary"
-                            >
-                              {dayjs(event.timestamp).format(
-                                "DD/MM/YYYY HH:mm"
-                              )}
-                            </TimelineOppositeContent>
+                    ) : vehicleTimeline ? (
+                      <Timeline position="alternate">
+                        {getTimelineForUI(vehicleTimeline).map((step, idx) => (
+                          <TimelineItem key={step.status}>
                             <TimelineSeparator>
-                              <TimelineConnector sx={{ bgcolor: "grey.300" }} />
+                              {/* Connector trước */}
+                              <TimelineConnector
+                                sx={{
+                                  bgcolor:
+                                    step.isCompleted || step.isCurrent
+                                      ? "success.main"
+                                      : "grey.300",
+                                  height: 30,
+                                }}
+                              />
+                              {/* Dot */}
                               <TimelineDot
+                                variant={step.isCurrent ? "filled" : "outlined"}
                                 color={
-                                  event.status_change?.to
-                                    ? getTimelineDotColor(
-                                        event.status_change.to
-                                      )
+                                  step.isCurrent
+                                    ? "primary"
+                                    : step.isCompleted
+                                    ? "success"
                                     : "grey"
                                 }
+                                sx={{width: 18, height: 18}}
                               />
-                              <TimelineConnector sx={{ bgcolor: "grey.300" }} />
+                              {/* Connector sau */}
+                              {/* <TimelineConnector
+                                sx={{
+                                  bgcolor:
+                                    idx === vehicleTimeline?.length - 1
+                                      ? "transparent"
+                                      : "grey.300",
+                                  height: 30,
+                                }}
+                              /> */}
                             </TimelineSeparator>
-                            <TimelineContent sx={{ py: "12px", px: 2 }}>
-                              <Typography variant="h6" component="span">
-                                {event.status_change?.from &&
-                                event.status_change?.to
-                                  ? `${getStatusLabel(
-                                      event.status_change.from
-                                    )} → ${getStatusLabel(
-                                      event.status_change.to
-                                    )}`
-                                  : getStatusLabel(
-                                      event.status_change?.to ||
-                                        event.status_change?.from ||
-                                        "pending"
-                                    )}
+
+                            <TimelineContent sx={{py: 1, px: 2}}>
+                              <Typography
+                                variant="subtitle1"
+                                sx={{
+                                  fontWeight: step.isCurrent ? 600 : 500,
+                                  color: step.isCurrent
+                                    ? "primary.main"
+                                    : step.isCompleted
+                                    ? "success.main"
+                                    : "text.disabled",
+                                }}
+                              >
+                                {getStatusLabel(step.status)}
                               </Typography>
-                              {event.changed_by && (
+
+                              {step.timestamp && (
                                 <Typography
-                                  variant="body2"
+                                  variant="caption"
                                   color="text.secondary"
+                                  sx={{display: "block", mt: 0.5}}
                                 >
-                                  Bởi: {event.changed_by.full_name}{" "}
-                                  {event.changed_by.role &&
-                                    `(${event.changed_by.role})`}
-                                </Typography>
-                              )}
-                              {event.reason && (
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                >
-                                  Lý do: {event.reason}
-                                </Typography>
-                              )}
-                              {event.notes && (
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{
-                                    mt: 1,
-                                    p: 1.5,
-                                    bgcolor: "#f8f9fa",
-                                    borderRadius: 1,
-                                    border: "1px solid #e9ecef",
-                                  }}
-                                >
-                                  {event.notes}
+                                  {dayjs(step.timestamp).format(
+                                    "DD/MM/YYYY HH:mm"
+                                  )}
                                 </Typography>
                               )}
                             </TimelineContent>
@@ -1013,7 +943,7 @@ export const OrderRequestManagement: React.FC = () => {
                     ) : (
                       <Typography
                         color="text.secondary"
-                        sx={{ p: 2, textAlign: "center" }}
+                        sx={{p: 2, textAlign: "center"}}
                       >
                         Chưa có lịch sử trạng thái
                       </Typography>
@@ -1033,12 +963,12 @@ export const OrderRequestManagement: React.FC = () => {
           open={snackbarOpen}
           autoHideDuration={6000}
           onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          anchorOrigin={{vertical: "bottom", horizontal: "right"}}
         >
           <Alert
             onClose={handleSnackbarClose}
             severity={snackbarSeverity}
-            sx={{ width: "100%" }}
+            sx={{width: "100%"}}
           >
             {snackbarMessage}
           </Alert>
