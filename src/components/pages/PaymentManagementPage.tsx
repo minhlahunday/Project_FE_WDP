@@ -445,14 +445,14 @@ export const PaymentManagementPage: React.FC<
       dataIndex: "code",
       key: "code",
       ellipsis: true,
-      width: 120,
+      width: 100,
       render: (text: string) => <Tooltip title={text}>{text}</Tooltip>,
     },
     {
       title: "Khách hàng",
       key: "customerName",
       ellipsis: true,
-      width: 150,
+      width: 120,
       render: (_: unknown, record: Order) => {
         const customer =
           (record as any).customer || (record as any).customer_id;
@@ -476,7 +476,7 @@ export const PaymentManagementPage: React.FC<
       title: "Tổng tiền",
       dataIndex: "final_amount",
       key: "final_amount",
-      width: 120,
+      width: 140,
       ellipsis: true,
       render: (amount: number) => `${amount.toLocaleString("vi-VN")} VNĐ`,
     },
@@ -484,14 +484,14 @@ export const PaymentManagementPage: React.FC<
       title: "Đã thanh toán",
       dataIndex: "paid_amount",
       key: "paid_amount",
-      width: 120,
+      width: 140,
       ellipsis: true,
       render: (amount: number) => `${amount.toLocaleString("vi-VN")} VNĐ`,
     },
     {
       title: "Còn lại",
       key: "remaining",
-      width: 120,
+      width: 140,
       ellipsis: true,
       render: (_: unknown, record: Order) => {
         const remaining = record.final_amount - record.paid_amount;
@@ -524,7 +524,7 @@ export const PaymentManagementPage: React.FC<
     {
       title: "Hành động",
       key: "actions",
-      width: 200,
+      width: 100,
       fixed: "right",
       render: (_: unknown, record: Order) => (
         <Space size="small">
