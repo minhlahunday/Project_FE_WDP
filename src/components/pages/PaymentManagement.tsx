@@ -900,7 +900,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                         </div>
                       </div>
                     </div>
-                    
+                    <div className="text-center text-gray-500 mt-3">Hoặc nhập phần trăm cọc tùy chỉnh:</div>
                     {/* Input để nhập % tùy chỉnh */}
                     <Form.Item name="customPercent" noStyle>
                       <InputNumber
