@@ -372,20 +372,19 @@ export const DealerStockManagement: React.FC = () => {
                   <TableCell sx={{ fontWeight: 'bold' }} align="center">Tổng số lượng</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }} align="center">Đã bán</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }} align="center">Còn lại</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align="center">Số lô</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }} align="center">Thao tác</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
                 ) : stocks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                       <Typography variant="body2" color="text.secondary">
                         Không có dữ liệu
                       </Typography>
@@ -441,11 +440,6 @@ export const DealerStockManagement: React.FC = () => {
                             stock.summary.total_quantity
                           ) as any}
                         />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2">
-                          {stock.summary.batches_count}
-                        </Typography>
                       </TableCell>
                       <TableCell align="center">
                         <Tooltip title="Xem chi tiết">
@@ -578,7 +572,7 @@ export const DealerStockManagement: React.FC = () => {
                         </Typography>
                       </Card>
                     </Grid>
-                    <Grid item xs={3}>
+                    {/* <Grid item xs={3}>
                       <Card sx={{ p: 2, textAlign: 'center', backgroundColor: '#f5f5f5' }}>
                         <Typography variant="h6">
                           {selectedStock.summary.batches_count}
@@ -587,7 +581,7 @@ export const DealerStockManagement: React.FC = () => {
                           Số lô
                         </Typography>
                       </Card>
-                    </Grid>
+                    </Grid> */}
                   </Grid>
                 </Box>
 
