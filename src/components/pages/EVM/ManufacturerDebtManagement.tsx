@@ -355,7 +355,7 @@ const ManufacturerDebtManagement: React.FC = () => {
                 title="Tổng tiền công nợ"
                 value={statistics.totalAmount}
                 valueStyle={{color: "#1890ff"}}
-                suffix="₫"
+                // suffix="₫"
                 formatter={(value) => formatCurrency(value as number)}
               />
             </Card>
@@ -366,7 +366,7 @@ const ManufacturerDebtManagement: React.FC = () => {
                 title="Tiền chưa thanh toán"
                 value={statistics.remainingAmount}
                 valueStyle={{color: "#ff4d4f"}}
-                suffix="₫"
+                // suffix="₫"
                 formatter={(value) => formatCurrency(value as number)}
               />
             </Card>

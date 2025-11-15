@@ -175,6 +175,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       completed: "success",
       closed: "default",
       cancelled: "error",
+      canceled: "error",
     };
     return statusColors[status as keyof typeof statusColors] || "default";
   };
@@ -194,6 +195,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       completed: "Hoàn thành",
       closed: "Đã đóng",
       cancelled: "Đã hủy",
+      canceled: "Đã hủy",
     };
     return statusTexts[status as keyof typeof statusTexts] || status;
   };
@@ -285,6 +287,13 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
         fontWeight: 600,
         boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
       },
+      canceled: {
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
+      },
     };
     return styleMap[status] || {};
   };
@@ -297,6 +306,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       in_transit: "Đang giao",
       delivered: "Đã giao",
       cancelled: "Đã hủy",
+      canceled: "Đã hủy",
     };
     return deliveryStatusTexts[status as keyof typeof deliveryStatusTexts] || status;
   };
@@ -1000,9 +1010,17 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                             Trạng thái giao hàng
                           </Typography>
                           <Chip
-                            label={getDeliveryStatusText(order.delivery.status)}
+                            label={
+                              // Nếu đơn hàng đã bị hủy, delivery status cũng phải là "Đã hủy"
+                              order.status === 'cancelled' || order.status === 'canceled' || (order as any).is_deleted
+                                ? "Đã hủy"
+                                : getDeliveryStatusText(order.delivery.status)
+                            }
                             color={
-                              order.delivery.status === "delivered"
+                              // Nếu đơn hàng đã bị hủy, hiển thị màu đỏ
+                              order.status === 'cancelled' || order.status === 'canceled' || (order as any).is_deleted
+                                ? "error"
+                                : order.delivery.status === "delivered"
                                 ? "success"
                                 : order.delivery.status === "in_transit"
                                 ? "info"
@@ -1010,6 +1028,8 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                                 ? "warning"
                                 : order.delivery.status === "pending"
                                 ? "warning"
+                                : order.delivery.status === "failed"
+                                ? "error"
                                 : "default"
                             }
                             size="small"

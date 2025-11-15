@@ -336,9 +336,15 @@ export const orderService = {
 
   // Delete order (if allowed)
   async deleteOrder(
-    orderId: string
+    orderId: string,
+    cancellationReason: string
   ): Promise<{ success: boolean; message: string }> {
-    return del(`/api/orders/${orderId}`);
+    return del(`/api/orders/${orderId}`, {
+      data: {
+        cancellation_reason: cancellationReason,
+        refund_method: "cash"
+      }
+    });
   },
 
   // Cancel order with refund

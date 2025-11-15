@@ -88,6 +88,7 @@ export const OrderManagement: React.FC = () => {
     { value: 'completed', label: 'Hoàn thành', color: 'success' },
     { value: 'closed', label: 'Đã đóng', color: 'secondary' },
     { value: 'cancelled', label: 'Đã hủy', color: 'error' },
+    { value: 'canceled', label: 'Đã hủy', color: 'error' },
   ];
 
   const paymentMethodOptions = [
@@ -96,12 +97,25 @@ export const OrderManagement: React.FC = () => {
   ];
 
   const getStatusChip = (status: string) => {
-    const option = statusOptions.find(opt => opt.value === status);
+    // Normalize status: map "canceled" to "cancelled" for consistency
+    const normalizedStatus = status === 'canceled' ? 'cancelled' : status;
+    const option = statusOptions.find(opt => opt.value === normalizedStatus || opt.value === status);
     if (option) {
       return (
         <Chip 
           label={option.label} 
           color={option.color as any} 
+          size="small" 
+          sx={{ minWidth: 90, fontWeight: 500 }} 
+        />
+      );
+    }
+    // Fallback: hiển thị "Đã hủy" nếu status là cancelled/canceled
+    if (status === 'cancelled' || status === 'canceled') {
+      return (
+        <Chip 
+          label="Đã hủy" 
+          color="error" 
           size="small" 
           sx={{ minWidth: 90, fontWeight: 500 }} 
         />
@@ -574,30 +588,88 @@ export const OrderManagement: React.FC = () => {
     // Kiểm tra nếu đã cọc → hiển thị thông báo về hoàn tiền
     const hasDeposit = (order.paid_amount || 0) > 0;
     
-    // Xác nhận hủy đơn hàng
-    const confirmMessage = hasDeposit
-      ? `Đơn hàng <strong>${order.code}</strong> đã có tiền cọc.<br/><br/><strong>Số tiền sẽ được hoàn lại:</strong> ${formatCurrency(order.paid_amount || 0)}<br/><br/>Bạn có chắc chắn muốn hủy đơn hàng này? Hệ thống sẽ tự động hoàn tiền và khôi phục stock.`
-      : `Bạn có chắc chắn muốn hủy đơn hàng <strong>${order.code}</strong>? Hành động này không thể hoàn tác.`;
-
-    const result = await Swal.fire({
+    // Yêu cầu nhập lý do hủy đơn hàng
+    const { value: formValues } = await Swal.fire({
       title: hasDeposit ? 'Hủy đơn hàng và hoàn tiền' : 'Xác nhận hủy đơn hàng',
-      html: confirmMessage,
+      html: `
+        <div style="text-align: left; padding: 0 8px;">
+          ${hasDeposit 
+            ? `<div style="background: #fff7e6; border: 1px solid #ffd591; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                 <p style="margin: 0 0 12px 0; font-size: 15px; color: #262626;">
+                   Đơn hàng <strong style="color: #1890ff;">${order.code}</strong> đã có tiền cọc.
+                 </p>
+                 <div style="background: #fff1f0; border: 1px solid #ffccc7; border-radius: 6px; padding: 12px; margin-top: 12px;">
+                   <p style="margin: 0; font-size: 14px; color: #595959; margin-bottom: 6px;">Số tiền sẽ được hoàn lại:</p>
+                   <p style="margin: 0; font-size: 20px; font-weight: bold; color: #cf1322;">
+                     ${formatCurrency(order.paid_amount || 0)}
+                   </p>
+                 </div>
+                 <p style="margin: 12px 0 0 0; font-size: 13px; color: #8c8c8c;">
+                   Hệ thống sẽ tự động hoàn tiền và khôi phục stock.
+                 </p>
+               </div>`
+            : `<div style="background: #fff7e6; border: 1px solid #ffd591; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                 <p style="margin: 0; font-size: 15px; color: #262626;">
+                   Bạn có chắc chắn muốn hủy đơn hàng <strong style="color: #1890ff;">${order.code}</strong>?
+                 </p>
+                 <p style="margin: 12px 0 0 0; font-size: 14px; color: #cf1322; font-weight: 500;">
+                   ⚠️ Hành động này không thể hoàn tác.
+                 </p>
+               </div>`
+          }
+          <div style="margin-top: 24px;">
+            <label style="display: block; font-size: 14px; font-weight: 600; color: #262626; margin-bottom: 8px;">
+              Lý do hủy đơn hàng <span style="color: #ff4d4f;">*</span>
+            </label>
+            <textarea 
+              id="cancellation_reason" 
+              placeholder="Ví dụ: Khách hàng yêu cầu huỷ đơn vì lý do cá nhân..."
+              style="width: 100%; min-height: 120px; padding: 12px; border: 2px solid #d9d9d9; border-radius: 8px; font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical; transition: all 0.2s;"
+              required
+              onfocus="this.style.borderColor='#1890ff'; this.style.boxShadow='0 0 0 2px rgba(24, 144, 255, 0.2)';"
+              onblur="this.style.borderColor='#d9d9d9'; this.style.boxShadow='none';"
+            ></textarea>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #8c8c8c;">
+              Vui lòng nhập ít nhất 10 ký tự để mô tả lý do hủy đơn hàng.
+            </p>
+          </div>
+        </div>
+      `,
       icon: 'warning',
+      iconColor: '#faad14',
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
+      cancelButtonColor: '#6c757d',
       confirmButtonText: 'Xác nhận hủy',
       cancelButtonText: 'Hủy',
-      reverseButtons: true
+      reverseButtons: true,
+      width: '600px',
+      customClass: {
+        popup: 'swal2-popup-custom',
+        htmlContainer: 'swal2-html-container-custom'
+      },
+      preConfirm: () => {
+        const reason = (document.getElementById('cancellation_reason') as HTMLTextAreaElement)?.value?.trim();
+        if (!reason) {
+          Swal.showValidationMessage('Vui lòng nhập lý do hủy đơn hàng');
+          return false;
+        }
+        if (reason.length < 10) {
+          Swal.showValidationMessage('Lý do hủy đơn hàng phải có ít nhất 10 ký tự');
+          return false;
+        }
+        return reason;
+      },
+      allowOutsideClick: () => !Swal.isLoading()
     });
 
-    if (!result.isConfirmed) {
+    if (!formValues) {
       return;
     }
 
     try {
       setLoading(true);
-      await orderService.deleteOrder(order._id);
+      await orderService.deleteOrder(order._id, formValues);
       
       // Show success message
       await Swal.fire({

@@ -130,79 +130,6 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     }
   }, [visible, order]);
 
-  // Inject CSS for native select dropdown menu styling
-  useEffect(() => {
-    if (visible && isFirstPayment) {
-      const styleId = 'deposit-percent-select-style';
-      if (!document.getElementById(styleId)) {
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = `
-          /* Style cho native select dropdown menu */
-          select[name="depositPercent"] {
-            border-radius: 1rem !important;
-            border: 2px solid #d1d5db !important;
-          }
-          
-          /* Style cho dropdown menu khi mở - tạo cảm giác gắn kết */
-          select[name="depositPercent"]:focus {
-            border-radius: 1rem 1rem 0.5rem 0.5rem !important;
-            border-color: #3b82f6 !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
-          }
-          
-          /* Style cho option items - cải thiện padding và spacing */
-          select[name="depositPercent"] option {
-            padding: 14px 20px !important;
-            background: white !important;
-            color: #1f2937 !important;
-            font-weight: 500 !important;
-            font-size: 15px !important;
-            line-height: 1.5 !important;
-            border: none !important;
-          }
-          
-          /* Hover và selected state cho options */
-          select[name="depositPercent"] option:checked {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-            color: white !important;
-            font-weight: 600 !important;
-          }
-          
-          /* Hover effect (chỉ hoạt động trên một số browser) */
-          select[name="depositPercent"] option:hover {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-            color: #1e40af !important;
-            font-weight: 600 !important;
-          }
-          
-          /* Disabled option styling */
-          select[name="depositPercent"] option:disabled {
-            background: #f9fafb !important;
-            color: #9ca3af !important;
-            font-style: italic !important;
-            font-weight: 400 !important;
-          }
-          
-          /* Thử style cho dropdown menu container với webkit */
-          select[name="depositPercent"]::-webkit-list-box {
-            border-radius: 0.5rem !important;
-            padding: 8px !important;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-            border: 2px solid #e5e7eb !important;
-          }
-        `;
-        document.head.appendChild(style);
-      }
-      
-      return () => {
-        const styleElement = document.getElementById(styleId);
-        if (styleElement) {
-          styleElement.remove();
-        }
-      };
-    }
-  }, [visible, isFirstPayment]);
 
   // Auto-fill remaining amount when payment history changes or already has deposit
   useEffect(() => {
@@ -830,14 +757,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                   // Chỉ required cho lần cọc đầu tiên
                   ...(isFirstPayment ? [
                     { required: true, message: 'Vui lòng chọn hoặc nhập phần trăm cọc' },
-                    { 
-                      type: 'number', 
-                      min: 10, 
-                      message: 'Phần trăm cọc tối thiểu là 10%' 
-                    },
                     {
                       validator: (_: any, value: number) => {
-                        if (value && value > 30) {
+                        if (!value) {
+                          return Promise.resolve();
+                        }
+                        if (value < 10) {
+                          return Promise.reject(new Error('Phần trăm cọc tối thiểu là 10%'));
+                        }
+                        if (value > 30) {
                           return Promise.reject(new Error('Phần trăm cọc không được vượt quá 30%'));
                         }
                         return Promise.resolve();
@@ -848,146 +776,74 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               >
                 {/* Lần 1: Chọn % cọc (10, 15, 20, 25, 30%) hoặc nhập tùy chỉnh, Lần 2: Bắt buộc trả hết */}
                 {isFirstPayment ? (
-                  <div className="space-y-3">
-                    {/* Select với các giá trị cố định */}
-                    <div className="relative">
-                      <select
-                        name="depositPercentSelect"
-                        className="w-full px-5 py-4 pr-14 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl hover:scale-[1.01] appearance-none cursor-pointer text-base"
-                        style={{
-                          backgroundImage: 'none',
-                          paddingRight: '3.5rem',
-                          borderRadius: '1rem',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                          zIndex: 1
-                        }}
-                        onChange={(e) => {
-                          const percent = Number(e.target.value);
-                          if (percent) {
-                            const calculatedAmount = Math.round(totalAmount * (percent / 100));
+                  <Form.Item name="depositPercent" noStyle>
+                    <InputNumber<number>
+                      placeholder="Nhập phần trăm cọc (10-30%)"
+                      min={10}
+                      max={30}
+                      className="w-full px-5 py-4 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl"
+                      style={{
+                        borderRadius: '1rem',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        width: '100%'
+                      }}
+                      onChange={(value) => {
+                        if (value !== null && value !== undefined) {
+                          const percent = Number(value);
+                          
+                          // Chỉ tự động điều chỉnh nếu < 10, nếu > 30 thì để nguyên để validation báo lỗi
+                          if (percent < 10) {
+                            form.setFieldValue('depositPercent', 10);
+                            const calculatedAmount = Math.round(totalAmount * (10 / 100));
                             form.setFieldsValue({
-                              depositPercent: percent,
                               amount: calculatedAmount
                             });
-                            // Clear custom input
-                            form.setFieldValue('customPercent', undefined);
-                          }
-                        }}
-                      >
-                        <option value="" className="text-gray-400 font-normal py-2">
-                          -- Chọn phần trăm cọc --
-                        </option>
-                        {[10, 15, 20, 25, 30].map((percent) => {
-                          const calculatedAmount = Math.round(totalAmount * (percent / 100));
-                          return (
-                            <option key={percent} value={percent} className="py-3 font-medium text-gray-800">
-                              {percent}% - {formatCurrency(calculatedAmount)}
-                            </option>
-                          );
-                        })}
-                      </select>
-                      {/* Custom dropdown arrow */}
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none z-10">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm">
-                          <svg 
-                            className="w-5 h-5 text-blue-600 transition-all duration-200" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-center text-gray-500 mt-3">Hoặc nhập phần trăm cọc tùy chỉnh:</div>
-                    {/* Input để nhập % tùy chỉnh */}
-                    <Form.Item name="customPercent" noStyle>
-                      <InputNumber
-                        placeholder="Hoặc nhập phần trăm cọc (10-30%)"
-                        min={10}
-                        max={30}
-                        className="w-full px-5 py-4 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl"
-                        style={{
-                          borderRadius: '1rem',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                          width: '100%'
-                        }}
-                        onChange={(value) => {
-                          if (value !== null && value !== undefined) {
-                            const percent = Number(value);
-                            
-                            // Chỉ tự động điều chỉnh nếu < 10, nếu > 30 thì để nguyên để validation báo lỗi
-                            if (percent < 10) {
-                              form.setFieldValue('customPercent', 10);
-                              const calculatedAmount = Math.round(totalAmount * (10 / 100));
-                              form.setFieldsValue({
-                                depositPercent: 10,
-                                amount: calculatedAmount
-                              });
-                            } else if (percent > 30) {
-                              // Không tự động set về 30, để validation báo lỗi
-                              form.setFieldValue('customPercent', percent);
-                              // Vẫn set depositPercent để validation có thể check
-                              form.setFieldsValue({
-                                depositPercent: percent,
-                                amount: undefined // Không tính amount nếu vượt quá 30
-                              });
-                              // Clear select
-                              const selectElement = document.querySelector('select[name="depositPercentSelect"]') as HTMLSelectElement;
-                              if (selectElement) {
-                                selectElement.value = '';
-                              }
-                            } else {
-                              // Giá trị hợp lệ (10-30), giữ nguyên
-                              const calculatedAmount = Math.round(totalAmount * (percent / 100));
-                              form.setFieldsValue({
-                                depositPercent: percent,
-                                amount: calculatedAmount
-                              });
-                              // Clear select
-                              const selectElement = document.querySelector('select[name="depositPercentSelect"]') as HTMLSelectElement;
-                              if (selectElement) {
-                                selectElement.value = '';
-                              }
-                            }
-                          } else {
-                            // Clear depositPercent if input is cleared
+                          } else if (percent > 30) {
+                            // Không tự động set về 30, để validation báo lỗi
+                            form.setFieldValue('depositPercent', percent);
                             form.setFieldsValue({
-                              depositPercent: undefined,
-                              amount: undefined
+                              amount: undefined // Không tính amount nếu vượt quá 30
+                            });
+                          } else {
+                            // Giá trị hợp lệ (10-30), giữ nguyên
+                            const calculatedAmount = Math.round(totalAmount * (percent / 100));
+                            form.setFieldsValue({
+                              amount: calculatedAmount
                             });
                           }
-                        }}
-                        formatter={(value) => value !== null && value !== undefined ? `${value}%` : ''}
-                        parser={(value) => {
-                          if (!value) return 0;
-                          const parsed = value.replace('%', '').trim();
-                          const num = Number(parsed);
-                          // Trả về giá trị đã parse, không return 0 nếu parse thành công
-                          return isNaN(num) ? 0 : num;
-                        }}
-                        onBlur={(e) => {
-                          // Khi blur, validate và tính toán lại nếu hợp lệ
-                          const currentValue = form.getFieldValue('customPercent');
-                          if (currentValue !== null && currentValue !== undefined) {
-                            const percent = Number(currentValue);
-                            if (percent >= 10 && percent <= 30) {
-                              // Giữ nguyên giá trị và tính toán lại amount
-                              const calculatedAmount = Math.round(totalAmount * (percent / 100));
-                              form.setFieldsValue({
-                                depositPercent: percent,
-                                amount: calculatedAmount
-                              });
-                            } else if (percent > 30) {
-                              // Nếu > 30, trigger validation để báo lỗi
-                              form.validateFields(['depositPercent']);
-                            }
+                        } else {
+                          // Clear amount if input is cleared
+                          form.setFieldsValue({
+                            amount: undefined
+                          });
+                        }
+                      }}
+                      formatter={(value) => value !== null && value !== undefined ? `${value}%` : ''}
+                      parser={(value) => {
+                        if (!value) return 0;
+                        const parsed = value.replace('%', '').trim();
+                        const num = Number(parsed);
+                        return isNaN(num) ? 0 : num;
+                      }}
+                      onBlur={() => {
+                        // Khi blur, validate và tính toán lại nếu hợp lệ
+                        const currentValue = form.getFieldValue('depositPercent');
+                        if (currentValue !== null && currentValue !== undefined) {
+                          const percent = Number(currentValue);
+                          if (percent >= 10 && percent <= 30) {
+                            // Giữ nguyên giá trị và tính toán lại amount
+                            const calculatedAmount = Math.round(totalAmount * (percent / 100));
+                            form.setFieldsValue({
+                              amount: calculatedAmount
+                            });
+                          } else if (percent > 30) {
+                            // Nếu > 30, trigger validation để báo lỗi
+                            form.validateFields(['depositPercent']);
                           }
-                        }}
-                      />
-                    </Form.Item>
-                  </div>
+                        }
+                      }}
+                    />
+                  </Form.Item>
                 ) : (
                   <div>
                     {/* <div style={{ 
