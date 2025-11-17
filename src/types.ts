@@ -32,7 +32,7 @@ export interface TestDrive {
   customerId: string;
   vehicleId: string;
   date: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: "pending" | "confirmed" | "completed" | "cancelled";
 }
 
 export interface Order {
@@ -40,7 +40,7 @@ export interface Order {
   customerId: string;
   vehicleId: string;
   dealerId: string;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  status: "pending" | "processing" | "completed" | "cancelled";
   totalAmount: number;
   paymentMethod: string;
   createdAt: string;

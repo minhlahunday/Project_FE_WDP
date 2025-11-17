@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, {useEffect, useRef} from "react";
+import {useNavigate, useLocation} from "react-router-dom";
 import {
   Car,
   ShoppingCart,
@@ -19,7 +19,7 @@ import {
   FileCheck,
   ChevronRight,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import {useAuth} from "../../contexts/AuthContext";
 import "../../styles/sidebar-github.css";
 
 interface SidebarProps {
@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose: _onClose,
   onOpen: _onOpen,
 }) => {
-  const { user } = useAuth();
+  const {user} = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -274,15 +274,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="github-sidebar-header" style={{ justifyContent: 'flex-start' }}>
+        <div
+          className="github-sidebar-header"
+          style={{justifyContent: "flex-start"}}
+        >
           <div className="flex items-center gap-3">
             <div className="github-sidebar-logo">
               <Car className="w-6 h-6" />
             </div>
             <div className="github-sidebar-title">
-              <h1 className="text-sm font-semibold text-gray-900">
-                VinFast 
-              </h1>
+              <h1 className="text-sm font-semibold text-gray-900">VinFast</h1>
               <p className="text-xs text-gray-600">{getRoleDisplayName()}</p>
             </div>
           </div>

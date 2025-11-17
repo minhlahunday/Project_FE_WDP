@@ -1,52 +1,52 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { LoginPage } from "./components/LoginPage";
-import { Dashboard } from "./components/Dashboard";
-import { Layout } from "./components/common/Layout";
-import { CarDetail } from "./components/pages/car/CarDetail";
-import { CarProduct } from "./components/pages/car/CarProduct";
-import { CompareModels } from "./components/pages/car/CompareModels";
-import { ModelSelector } from "./components/pages/car/ModelSelector";
-import { TestDrive } from "./components/pages/car/TestDrive";
-import { Motorbike } from "./components/pages/motorbike/Motorbike";
-import { MotorbikeDetail } from "./components/pages/motorbike/MotorbikeDetail";
-import { CompareMotorbikes } from "./components/pages/motorbike/CompareMotorbikes";
-import { MotorbikeModelSelector } from "./components/pages/motorbike/MotorbikeModelSelector";
-import { MotorbikeDeposit } from "./components/pages/motorbike/MotorbikeDeposit";
-import { MotorbikeSchedule } from "./components/pages/motorbike/MotorbikeSchedule";
+import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
+import {AuthProvider, useAuth} from "./contexts/AuthContext";
+import {LoginPage} from "./components/LoginPage";
+import {Dashboard} from "./components/Dashboard";
+import {Layout} from "./components/common/Layout";
+import {CarDetail} from "./components/pages/car/CarDetail";
+import {CarProduct} from "./components/pages/car/CarProduct";
+import {CompareModels} from "./components/pages/car/CompareModels";
+import {ModelSelector} from "./components/pages/car/ModelSelector";
+import {Motorbike} from "./components/pages/motorbike/Motorbike";
+import {MotorbikeDetail} from "./components/pages/motorbike/MotorbikeDetail";
+import {CompareMotorbikes} from "./components/pages/motorbike/CompareMotorbikes";
+import {MotorbikeModelSelector} from "./components/pages/motorbike/MotorbikeModelSelector";
+import {MotorbikeDeposit} from "./components/pages/motorbike/MotorbikeDeposit";
+import {MotorbikeSchedule} from "./components/pages/motorbike/MotorbikeSchedule";
 
-import { AdminStaffManagement } from "./components/pages/admin/AdminStaffManagement";
+import {AdminStaffManagement} from "./components/pages/admin/AdminStaffManagement";
 
-import { CarDeposit } from "./components/pages/car/CarDeposit";
-import { StaffManagement } from "./components/pages/DealerManager/StaffManagement";
-import { ReportDashboard } from "./components/pages/DealerManager/ReportDashboard";
+import {CarDeposit} from "./components/pages/car/CarDeposit";
+import {StaffManagement} from "./components/pages/DealerManager/StaffManagement";
+import {ReportDashboard} from "./components/pages/DealerManager/ReportDashboard";
 import ProductManagement from "./components/pages/EVM/ProductManagement";
-import { CustomerManagement } from "./components/pages/EVM/CustomerManagement";
-import { AdminDealerManagement } from "./components/pages/EVM/DealerManagement";
-import { AddDealer } from "./components/pages/EVM/AddDealer";
+import {CustomerManagement} from "./components/pages/EVM/CustomerManagement";
+import {AdminDealerManagement} from "./components/pages/EVM/DealerManagement";
+import {AddDealer} from "./components/pages/EVM/AddDealer";
 import InventoryManagement from "./components/pages/EVM/InventoryManagement";
 import PromotionManagement from "./components/pages/EVM/PromotionManagement";
 import RequestManagement from "./components/pages/EVM/RequestManagement";
 import ManufacturerDebtManagement from "./components/pages/EVM/ManufacturerDebtManagement";
-import { ManufacturerDashboard } from "./components/pages/Manufacturer/ManufacturerDashboard";
-import { DealerInfo } from "./components/pages/DealerManager/DealerInfo";
-import { PromotionsDashboard } from "./components/PromotionsDashboard";
-import { SalesManagement } from "./components/pages/Dealerstaff/SalesManagementNew";
-import { QuotationManagement } from "./components/pages/Dealerstaff/QuotationManagement";
-import { CustomerManagement as DealerCustomerManagement } from "./components/pages/Dealerstaff/CustomerManagement";
-import { DealerStockManagement } from "./components/pages/Dealerstaff/DealerStockManagement";
+import {ManufacturerDashboard} from "./components/pages/Manufacturer/ManufacturerDashboard";
+import {DealerInfo} from "./components/pages/DealerManager/DealerInfo";
+import {PromotionsDashboard} from "./components/PromotionsDashboard";
+import {SalesManagement} from "./components/pages/Dealerstaff/SalesManagementNew";
+import {QuotationManagement} from "./components/pages/Dealerstaff/QuotationManagement";
+import {CustomerManagement as DealerCustomerManagement} from "./components/pages/Dealerstaff/CustomerManagement";
+import {DealerStockManagement} from "./components/pages/Dealerstaff/DealerStockManagement";
 import TestAPI from "./components/pages/TestAPI";
 
 // Order Management Components
-import { OrderManagement } from "./components/pages/OrderManagement";
-import { QuoteToOrderPageMUI } from "./components/pages/QuoteToOrderPageMUI";
-import { PaymentManagementPage } from "./components/pages/PaymentManagementPage";
+import {OrderManagement} from "./components/pages/OrderManagement";
+import {QuoteToOrderPageMUI} from "./components/pages/QuoteToOrderPageMUI";
+import {PaymentManagementPage} from "./components/pages/PaymentManagementPage";
 import DebtManagement from "./components/pages/DebtManagement";
-import { OrderRequestManagement } from "./components/pages/OrderRequestManagement";
-import { DealerRequestManagement } from "./components/pages/DealerRequestManagement";
+import {OrderRequestManagement} from "./components/pages/OrderRequestManagement";
+import {DealerRequestManagement} from "./components/pages/DealerRequestManagement";
+import TestDriveManagementPage from "./components/pages/TestDriveManagementPage";
 
 function AppContent() {
-  const { user, isLoading } = useAuth();
+  const {user, isLoading} = useAuth();
 
   if (isLoading) {
     return (
@@ -66,7 +66,7 @@ function AppContent() {
       <Route path="/portal/car-product" element={<CarProduct />} />
       <Route path="/portal/compare-models" element={<CompareModels />} />
       <Route path="/portal/model-selector" element={<ModelSelector />} />
-      <Route path="/portal/test-drive" element={<TestDrive />} />
+      <Route path="/portal/test-drives" element={<TestDriveManagementPage />} />
       <Route path="/portal/motorbike-product" element={<Motorbike />} />
       <Route
         path="/portal/motorbike-detail/:id"

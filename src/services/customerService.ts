@@ -1,5 +1,5 @@
-import { get, post, put } from "./httpClient";
-import { Customer } from "../types";
+import {get, post, put} from "./httpClient";
+import {Customer} from "../types";
 
 export interface CreateCustomerRequest {
   full_name: string;
@@ -58,7 +58,9 @@ const transformCustomerResponse = (
 const transformToApiRequest = (
   customer: Partial<Customer>
 ): CreateCustomerRequest | UpdateCustomerRequest => ({
-  full_name: customer.name || "",
+  // Ưu tiên field full_name nếu được truyền trực tiếp (như từ form tạo khách),
+  // fallback sang name trong kiểu Customer
+  full_name: (customer as any).full_name || customer.name || "",
   phone: customer.phone || "",
   email: customer.email || "",
   address: customer.address || "",
