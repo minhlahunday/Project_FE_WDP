@@ -245,9 +245,7 @@ export const ManufacturerDashboard: React.FC = () => {
   // Prepare chart data
   const salesChartData = salesByDealership.map((item, index) => {
     const chartItem = {
-      name: item.dealership_name && item.dealership_name.length > 15 
-        ? item.dealership_name.substring(0, 15) + '...' 
-        : item.dealership_name || 'Unknown',
+      name: item.dealership_name || 'Unknown',
       fullName: item.dealership_name || 'Unknown',
       doanhThu: Number(item.total_revenue) || 0,
       donHang: Number(item.total_orders) || 0,
@@ -260,9 +258,7 @@ export const ManufacturerDashboard: React.FC = () => {
   console.log('📊 Full salesChartData:', salesChartData);
 
   const stockChartData = dealerStock.map(item => ({
-    name: item.dealership_name && item.dealership_name.length > 15 
-      ? item.dealership_name.substring(0, 15) + '...' 
-      : item.dealership_name || 'Unknown',
+    name: item.dealership_name || 'Unknown',
     fullName: item.dealership_name || 'Unknown',
     tonKho: item.total_stock || item.totalVehicles || 0
   }));
@@ -272,9 +268,7 @@ export const ManufacturerDashboard: React.FC = () => {
     .sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0))
     .slice(0, 8)
     .map(item => ({
-      name: item.dealership_name && item.dealership_name.length > 20 
-        ? item.dealership_name.substring(0, 20) + '...' 
-        : item.dealership_name || 'Unknown',
+      name: item.dealership_name || 'Unknown',
       value: item.total_revenue || 0
     }));
 

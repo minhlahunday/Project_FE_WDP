@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react";
-import { Box } from "@mui/material";
+import {AdminLayout} from "../admin/AdminLayout";
 import {
   Card,
   Table,
@@ -581,8 +581,8 @@ const RequestManagement: React.FC = () => {
   });
 
   return (
-    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, minHeight: '100vh' }}>
-      <div>
+    <AdminLayout>
+      <div className="p-6 pr-16">
         <Title level={2}>Quản lý yêu cầu đặt xe</Title>
 
         {/* Statistics */}
@@ -928,18 +928,48 @@ const RequestManagement: React.FC = () => {
                   )}
 
                   {selectedRequest.status === "in_progress" && (
+                    <>
+                      <Button
+                        danger
+                        icon={<CloseCircleOutlined />}
+                        onClick={() => {
+                          setShowDetailModal(false);
+                          setTimeout(() => {
+                            setShowRejectModal(true);
+                          }, 150);
+                        }}
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<CheckCircleOutlined />}
+                        onClick={() => {
+                          setShowDetailModal(false); // Đóng modal chi tiết trước
+                          // Delay nhỏ để tạo hiệu ứng mượt mà
+                          setTimeout(() => {
+                            setShowDeliveredModal(true); // Sau đó mở modal đánh dấu đã giao
+                          }, 150);
+                        }}
+                      >
+                        Đánh dấu đã giao
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Nút hủy cho tất cả status khác */}
+                  {!["pending", "approved", "in_progress"].includes(selectedRequest.status) && (
                     <Button
-                      type="primary"
-                      icon={<CheckCircleOutlined />}
+                      danger
+                      icon={<CloseCircleOutlined />}
                       onClick={() => {
-                        setShowDetailModal(false); // Đóng modal chi tiết trước
-                        // Delay nhỏ để tạo hiệu ứng mượt mà
+                        setShowDetailModal(false);
                         setTimeout(() => {
-                          setShowDeliveredModal(true); // Sau đó mở modal đánh dấu đã giao
+                          setShowRejectModal(true);
                         }, 150);
                       }}
                     >
-                      Đánh dấu đã giao
+                      Hủy
                     </Button>
                   )}
                 </Space>
@@ -1085,7 +1115,7 @@ const RequestManagement: React.FC = () => {
           )}
         </Modal>
       </div>
-    </Box>
+    </AdminLayout>
   );
 };
 
