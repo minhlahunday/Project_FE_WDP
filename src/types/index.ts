@@ -156,8 +156,7 @@ export interface Order {
     uploaded_by?: string;
     template_used?: string;
   };
-
-  // Populated fields from backend
+  stock_source: string;
   customer?: {
     _id: string;
     full_name: string;
