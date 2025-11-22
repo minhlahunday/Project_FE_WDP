@@ -56,8 +56,6 @@ import {
   Business as BusinessIcon,
   CalendarToday as CalendarTodayIcon,
 } from '@mui/icons-material';
-import { Header } from '../../common/Header';
-import { Sidebar } from '../../common/Sidebar';
 import { authService, CreateUserRequest, UpdateUserRequest, UserFilters } from '../../../services/authService';
 
 interface Staff {
@@ -83,7 +81,6 @@ interface Staff {
 }
 
 export const StaffManagement: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [filteredStaff, setFilteredStaff] = useState<Staff[]>(staffList);
   const [searchTerm, setSearchTerm] = useState('');
@@ -597,11 +594,6 @@ export const StaffManagement: React.FC = () => {
     ));
   };
 
-  // Handle section change for sidebar
-  const handleSectionChange = (section: string) => {
-    console.log('Section changed to:', section);
-    // Có thể implement navigation logic ở đây nếu cần
-  };
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -613,33 +605,9 @@ export const StaffManagement: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Sidebar */}
-      <Sidebar
-        activeSection="staff-management"
-        onSectionChange={handleSectionChange}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onOpen={() => setSidebarOpen(true)}
-      />
-      
-      {/* Main Content */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          ml: { lg: sidebarOpen ? '220px' : '70px' },
-          transition: 'margin-left 0.3s',
-        }}
-      >
-        {/* Header */}
-        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        
-        {/* Page Content */}
-        <Box sx={{ flex: 1, overflowY: 'auto', pl: 3.75, pr: 2, py: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
-          <Card>
-            <CardContent>
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, bgcolor: 'grey.50', minHeight: '100vh' }}>
+      <Card>
+        <CardContent>
               <Box sx={{ mb: 3 }}>
                 {/* Page Header */}
                 <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
@@ -839,10 +807,8 @@ export const StaffManagement: React.FC = () => {
                   </Box>
                 )}
               </Box>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+        </CardContent>
+      </Card>
 
       {/* Add Staff Modal */}
       <Dialog
