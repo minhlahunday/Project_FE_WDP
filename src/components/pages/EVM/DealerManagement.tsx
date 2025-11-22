@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapPin, Phone, Mail, MoreVertical, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { AdminLayout } from '../admin/AdminLayout';
+import { Box } from '@mui/material';
 import { get, patch } from '../../../services/httpClient';
 import ReactModal from 'react-modal';
 import { useNavigate } from 'react-router-dom';
@@ -337,8 +337,8 @@ export const AdminDealerManagement: React.FC = () => {
   }
 
   return (
-    <AdminLayout activeSection="dealer-management">
-      <div className="min-h-screen bg-gray-50">
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      <div>
         {/* Page Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center text-sm text-gray-500 mb-2">
@@ -783,6 +783,6 @@ export const AdminDealerManagement: React.FC = () => {
           </div>
         </ReactModal>
       </div>
-    </AdminLayout>
+    </Box>
   );
 };

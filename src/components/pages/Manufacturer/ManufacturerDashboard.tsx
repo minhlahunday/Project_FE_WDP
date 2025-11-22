@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AdminLayout } from '../admin/AdminLayout';
+import { Box } from '@mui/material';
 import { 
   Card, 
   Row, 
@@ -279,8 +279,8 @@ export const ManufacturerDashboard: React.FC = () => {
     }));
 
   return (
-    <AdminLayout>
-      <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, bgcolor: '#f0f2f5', minHeight: '100vh' }}>
+      <div>
       <Card style={{ marginBottom: 24 }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Col>
@@ -1044,8 +1044,8 @@ export const ManufacturerDashboard: React.FC = () => {
           </Col>
         </Row>
       </Spin>
-    </div>
-    </AdminLayout>
+      </div>
+    </Box>
   );
 };
 

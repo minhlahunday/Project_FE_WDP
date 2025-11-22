@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react";
-import {AdminLayout} from "../admin/AdminLayout";
+import { Box } from "@mui/material";
 import {
   Card,
   Table,
@@ -581,8 +581,8 @@ const RequestManagement: React.FC = () => {
   });
 
   return (
-    <AdminLayout>
-      <div className="p-6">
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, minHeight: '100vh' }}>
+      <div>
         <Title level={2}>Quản lý yêu cầu đặt xe</Title>
 
         {/* Statistics */}
@@ -1085,7 +1085,7 @@ const RequestManagement: React.FC = () => {
           )}
         </Modal>
       </div>
-    </AdminLayout>
+    </Box>
   );
 };
 

@@ -16,7 +16,7 @@ import {
   Descriptions,
   Divider,
 } from "antd";
-import {AdminLayout} from "../admin/AdminLayout";
+import { Box } from "@mui/material";
 import {
   DollarOutlined,
   SearchOutlined,
@@ -323,8 +323,8 @@ const ManufacturerDebtManagement: React.FC = () => {
   ];
 
   return (
-    <AdminLayout activeSection="manufacturer-debt-management">
-      <div className="bg-gray-50">
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      <div>
         {/* Header */}
         <div className="mb-6">
           <Title level={2}>
@@ -546,7 +546,7 @@ const ManufacturerDebtManagement: React.FC = () => {
           )}
         </Modal>
       </div>
-    </AdminLayout>
+    </Box>
   );
 };
 

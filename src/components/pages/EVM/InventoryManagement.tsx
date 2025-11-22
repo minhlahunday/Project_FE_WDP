@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AdminLayout } from "../admin/AdminLayout";
+import { Box } from "@mui/material";
 import { get, put, post } from "../../../services/httpClient";
 import { authService } from "../../../services/authService";
 import "../../../styles/antd-custom.css";
@@ -1044,7 +1044,7 @@ const InventoryManagement: React.FC = () => {
   // Early return if critical error
   if (error && !products.length) {
     return (
-      <AdminLayout activeSection="inventory-management">
+      <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, minHeight: '100vh' }}>
         <div className="p-6">
           <div style={{ 
             background: '#fff2f0', 
@@ -1060,12 +1060,12 @@ const InventoryManagement: React.FC = () => {
             <Button onClick={() => window.location.reload()}>Tải lại trang</Button>
           </div>
         </div>
-      </AdminLayout>
+      </Box>
     );
   }
 
   return (
-    <AdminLayout activeSection="inventory-management">
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, minHeight: '100vh' }}>
       <div>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
@@ -1960,7 +1960,7 @@ const InventoryManagement: React.FC = () => {
           )}
         </Modal>
       </div>
-    </AdminLayout>
+    </Box>
   );
 };
 

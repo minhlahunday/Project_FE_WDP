@@ -16,7 +16,7 @@ import {
   Statistic,
   Transfer
 } from 'antd';
-import { AdminLayout } from '../admin/AdminLayout';
+import { Box } from '@mui/material';
 import Swal from 'sweetalert2';
 import {
   PlusOutlined,
@@ -1020,8 +1020,8 @@ const PromotionManagement: React.FC = () => {
   ];
 
   return (
-    <AdminLayout activeSection="promotion-management">
-      <div className="bg-gray-50">
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      <div>
         {/* Header */}
         <div className="mb-6">
           <Title level={2}>
@@ -1675,7 +1675,7 @@ const PromotionManagement: React.FC = () => {
       </Modal>
       
       </div>
-    </AdminLayout>
+    </Box>
   );
 };
 

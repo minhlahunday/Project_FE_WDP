@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AdminLayout } from "../admin/AdminLayout";
+import { Box } from "@mui/material";
 import { get } from "../../../services/httpClient";
 import { authService } from "../../../services/authService";
 import AddProduct from "./AddProduct";
@@ -284,8 +284,8 @@ const ProductManagement: React.FC = () => {
   };
 
   return (
-    <AdminLayout activeSection="product-management">
-      <div style={{ background: '#f5f7fa'  }}>
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
+      <div>
         {/* Modern Page Header */}
         <div className="mb-6 p-8 rounded-xl border border-blue-100 " 
              style={{ 
@@ -1537,7 +1537,7 @@ const ProductManagement: React.FC = () => {
           )}
         </Modal>
       </div>
-    </AdminLayout>
+    </Box>
   );
 };
 
