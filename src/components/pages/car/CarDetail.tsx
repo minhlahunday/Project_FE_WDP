@@ -608,7 +608,7 @@ export const CarDetail: React.FC = () => {
                         backdropFilter: "blur(20px)",
                       }}
                     >
-                      Đăng ký lái thử miễn phí
+                      Đặt lịch lái thử
                     </Button>
                     <Button
                       size="large"

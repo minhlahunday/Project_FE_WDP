@@ -178,13 +178,25 @@ const RequestManagement: React.FC = () => {
   const handleReject = async () => {
     if (!selectedRequest) return;
 
+    // Validate input
+    if (!rejectNotes.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Thiếu thông tin",
+        text: "Vui lòng nhập lý do từ chối yêu cầu",
+        confirmButtonText: "Đóng",
+      });
+      return;
+    }
+
     setRejectLoading(true);
     try {
       const response = await requestVehicleService.rejectRequest(
         selectedRequest._id,
-        rejectNotes
+        rejectNotes.trim()
       );
-      if (response.success) {
+      
+      if (response && response.success) {
         // Đóng tất cả modal trước khi hiển thị SweetAlert
         setShowRejectModal(false);
         setShowDetailModal(false);
@@ -204,12 +216,28 @@ const RequestManagement: React.FC = () => {
           timer: 2000,
           timerProgressBar: true,
         });
+      } else {
+        // Handle API response error
+        const errorMessage = response?.message || "Không thể từ chối yêu cầu. Vui lòng thử lại.";
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
+      console.error("Reject request error:", error);
+      
+      let errorMessage = "Đã xảy ra lỗi khi từ chối yêu cầu.";
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
       Swal.fire({
         icon: "error",
         title: "Lỗi",
-        text: "Lỗi khi từ chối yêu cầu: " + (error?.message || "Unknown error"),
+        text: errorMessage,
         confirmButtonText: "Đóng",
       });
     } finally {
@@ -696,7 +724,10 @@ const RequestManagement: React.FC = () => {
         <Modal
           title="Từ chối yêu cầu"
           open={showRejectModal}
-          onOk={handleReject}
+          onOk={() => {
+            console.log("Reject button clicked, notes:", rejectNotes);
+            handleReject();
+          }}
           onCancel={() => {
             if (!rejectLoading) {
               setShowRejectModal(false);
@@ -704,19 +735,68 @@ const RequestManagement: React.FC = () => {
               setSelectedRequest(null);
             }
           }}
-          okText="Từ chối"
+          okText="Xác nhận từ chối"
           cancelText="Hủy"
-          okButtonProps={{danger: true, loading: rejectLoading}}
+          okButtonProps={{
+            danger: true, 
+            loading: rejectLoading,
+            disabled: !rejectNotes.trim()
+          }}
           cancelButtonProps={{disabled: rejectLoading}}
           confirmLoading={rejectLoading}
+          width={600}
         >
-          <p>Lý do từ chối:</p>
-          <TextArea
-            rows={4}
-            value={rejectNotes}
-            onChange={(e) => setRejectNotes(e.target.value)}
-            placeholder="Nhập lý do từ chối yêu cầu..."
-          />
+          {selectedRequest && (
+            <div className="mb-4">
+              <Descriptions title="Thông tin yêu cầu" size="small" column={2}>
+                <Descriptions.Item label="ID">
+                  {selectedRequest._id}
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  {getStatusTag(selectedRequest.status)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số lượng">
+                  {selectedRequest.quantity}
+                </Descriptions.Item>
+                <Descriptions.Item label="Màu xe">
+                  {selectedRequest.color}
+                </Descriptions.Item>
+              </Descriptions>
+              <Divider />
+            </div>
+          )}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Lý do từ chối <span className="text-red-500">*</span>
+            </label>
+            <TextArea
+              rows={5}
+              value={rejectNotes}
+              onChange={(e) => setRejectNotes(e.target.value)}
+              placeholder="Vui lòng nhập lý do cụ thể cho việc từ chối yêu cầu này..."
+              showCount
+              maxLength={500}
+              status={!rejectNotes.trim() ? "error" : ""}
+            />
+            {!rejectNotes.trim() && (
+              <div className="text-red-500 text-xs mt-1">
+                Vui lòng nhập lý do từ chối
+              </div>
+            )}
+          </div>
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+            <div className="flex items-start">
+              <CloseCircleOutlined className="text-red-600 mr-2 mt-0.5" />
+              <div className="text-red-800">
+                <div className="font-medium">Lưu ý quan trọng:</div>
+                <div className="text-sm mt-1">
+                  • Yêu cầu sẽ không thể phục hồi sau khi từ chối<br/>
+                  • Đại lý sẽ nhận được thông báo về lý do từ chối<br/>
+                  • Hành động này sẽ được ghi lại trong hệ thống
+                </div>
+              </div>
+            </div>
+          </div>
         </Modal>
 
         {/* Delivered Modal */}
@@ -823,13 +903,28 @@ const RequestManagement: React.FC = () => {
                   )}
 
                   {selectedRequest.status === "approved" && (
-                    <Button
-                      type="primary"
-                      icon={<TruckOutlined />}
-                      onClick={() => handleInProgress(selectedRequest)}
-                    >
-                      Chuyển đang xử lý
-                    </Button>
+                    <>
+                      <Button
+                        danger
+                        icon={<CloseCircleOutlined />}
+                        onClick={() => {
+                          setShowDetailModal(false); // Đóng modal chi tiết trước
+                          // Delay nhỏ để tạo hiệu ứng mượt mà
+                          setTimeout(() => {
+                            setShowRejectModal(true); // Sau đó mở modal từ chối
+                          }, 150);
+                        }}
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<TruckOutlined />}
+                        onClick={() => handleInProgress(selectedRequest)}
+                      >
+                        Chuyển đang xử lý
+                      </Button>
+                    </>
                   )}
 
                   {selectedRequest.status === "in_progress" && (

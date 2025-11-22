@@ -283,7 +283,7 @@ const TestDriveManagementPage: React.FC = () => {
   //   };
 
   return (
-    <Box p={4}>
+    <Box p={4} pl={10}>
       <Box
         display="flex"
         justifyContent="space-between"

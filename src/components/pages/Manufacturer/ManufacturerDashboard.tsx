@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { AdminLayout } from '../admin/AdminLayout';
 import { 
   Card, 
   Row, 
@@ -278,7 +279,8 @@ export const ManufacturerDashboard: React.FC = () => {
     }));
 
   return (
-    <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
+    <AdminLayout>
+      <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
       <Card style={{ marginBottom: 24 }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Col>
@@ -1043,6 +1045,7 @@ export const ManufacturerDashboard: React.FC = () => {
         </Row>
       </Spin>
     </div>
+    </AdminLayout>
   );
 };
 

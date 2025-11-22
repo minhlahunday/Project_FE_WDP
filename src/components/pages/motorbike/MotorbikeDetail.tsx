@@ -271,7 +271,7 @@ export const MotorbikeDetail: React.FC = () => {
   };
 
   const handleTestDrive = (vehicleId: string) => {
-    navigate(`/portal/motorbike-schedule?vehicleId=${vehicleId}`);
+    navigate(`/portal/test-drives?vehicleId=${vehicleId}`);
   };
 
   const handleDeposit = (vehicleId: string) => {
@@ -382,7 +382,7 @@ export const MotorbikeDetail: React.FC = () => {
         onOpen={() => setIsSidebarOpen(true)}
       />
 
-        <div className={`flex-1 pt-16 transition-all duration-150 pb-8 ${isSidebarOpen ? 'lg:ml-[220px]' : 'ml-0'}`}>
+        <div className={`flex-1 pt-16 transition-all duration-150 pb-8 ${isSidebarOpen ? 'lg:ml-[250px]' : 'ml-0'}`}>
           {/* Breadcrumb */}
           <div className="max-w-7xl mx-auto px-6 py-4">
             <Button 

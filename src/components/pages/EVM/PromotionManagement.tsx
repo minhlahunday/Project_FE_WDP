@@ -1144,13 +1144,13 @@ const PromotionManagement: React.FC = () => {
               >
                 Tạo khuyến mãi
               </Button>
-              <Button
+              {/* <Button
                 icon={<ReloadOutlined />}
                 onClick={fetchPromotions}
                 loading={loading}
               >
                 Làm mới
-              </Button>
+              </Button> */}
             </Space>
           </Col>
         </Row>
