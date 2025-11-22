@@ -211,8 +211,16 @@ export const OrderRequestManagement: React.FC = () => {
                 createdAt: item.createdAt,
                 updatedAt: item.updatedAt,
                 approved_by: item.approved_by,
-                rejected_by: item.rejected_by,
+                rejected_by: item.rejected_by
+                  ? {
+                      _id: item.rejected_by._id,
+                      full_name: item.rejected_by.full_name,
+                      email: item.rejected_by.email,
+                    }
+                  : undefined,
                 approved_at: item.approved_at,
+                rejected_at: item.rejected_at,
+                rejection_reason: item.rejection_reason,
                 dealership_id: item.dealership_id,
                 is_deleted: item.is_deleted,
                 order_id: item.order_id,
@@ -801,6 +809,50 @@ export const OrderRequestManagement: React.FC = () => {
                           )}
                         </Typography>
                       </Box>
+                      {/* Rejection Information */}
+                      {selectedRequest.status === 'rejected' && (
+                        <>
+                          <Box sx={{flex: "1 1 300px"}}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Người từ chối:
+                            </Typography>
+                            <Typography variant="body1" sx={{mb: 2}}>
+                              {selectedRequest.rejected_by?.full_name || "N/A"}
+                            </Typography>
+                          </Box>
+                          <Box sx={{flex: "1 1 300px"}}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Ngày từ chối:
+                            </Typography>
+                            <Typography variant="body1" sx={{mb: 2}}>
+                              {selectedRequest.rejected_at 
+                                ? dayjs(selectedRequest.rejected_at).format("DD/MM/YYYY HH:mm")
+                                : "N/A"
+                              }
+                            </Typography>
+                          </Box>
+                          {selectedRequest.rejection_reason && (
+                            <Box sx={{flex: "1 1 100%"}}>
+                              <Typography variant="subtitle2" color="text.secondary">
+                                Lý do từ chối:
+                              </Typography>
+                              <Typography 
+                                variant="body1" 
+                                sx={{
+                                  mb: 2,
+                                  p: 1.5,
+                                  bgcolor: "#ffebee",
+                                  borderRadius: 1,
+                                  border: "1px solid #ffcdd2",
+                                  color: "#c62828"
+                                }}
+                              >
+                                {selectedRequest.rejection_reason}
+                              </Typography>
+                            </Box>
+                          )}
+                        </>
+                      )}
                     </Box>
                   </Box>
                   <Divider />
@@ -873,7 +925,7 @@ export const OrderRequestManagement: React.FC = () => {
                       </Box>
                     ) : vehicleTimeline ? (
                       <Timeline position="alternate">
-                        {getTimelineForUI(vehicleTimeline).map((step, idx) => (
+                        {getTimelineForUI(vehicleTimeline).map((step) => (
                           <TimelineItem key={step.status}>
                             <TimelineSeparator>
                               {/* Connector trước */}

@@ -146,8 +146,14 @@ export interface OrderRequest {
   updatedAt: string;
   // Additional fields from API
   approved_by?: string;
-  rejected_by?: string;
+  rejected_by?: {
+    _id: string;
+    full_name: string;
+    email: string;
+  };
   approved_at?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
   dealership_id?: any;
   is_deleted?: boolean;
   order_id?: any; // Order ID when request is converted to order

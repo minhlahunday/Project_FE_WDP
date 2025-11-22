@@ -251,6 +251,20 @@ export interface OrderRequest {
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   updatedAt: string;
+  // Additional fields
+  approved_by?: string;
+  rejected_by?: {
+    _id: string;
+    full_name: string;
+    email: string;
+  };
+  approved_at?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
+  dealership_id?: any;
+  is_deleted?: boolean;
+  order_id?: any;
+  __v?: number;
   // Populated fields
   dealer_staff?: {
     _id: string;
