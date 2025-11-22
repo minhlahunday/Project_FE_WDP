@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from "react";
-import {AdminLayout} from "../admin/AdminLayout";
 import {
   Card,
   Table,
@@ -17,6 +16,7 @@ import {
   Select,
   Modal,
 } from "antd";
+import { Box } from '@mui/material';
 import Swal from "sweetalert2";
 import {
   CheckCircleOutlined,
@@ -581,8 +581,8 @@ const RequestManagement: React.FC = () => {
   });
 
   return (
-    <AdminLayout>
-      <div className="p-6 pr-16">
+    <Box sx={{ pl: 5, pr: 3, py: 3, pt: 5, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      <div>
         <Title level={2}>Quản lý yêu cầu đặt xe</Title>
 
         {/* Statistics */}
@@ -957,8 +957,8 @@ const RequestManagement: React.FC = () => {
                     </>
                   )}
 
-                  {/* Nút hủy cho tất cả status khác */}
-                  {!["pending", "approved", "in_progress"].includes(selectedRequest.status) && (
+                  {/* Nút hủy cho tất cả status khác, trừ delivered và rejected */}
+                  {!["pending", "approved", "in_progress", "delivered", "rejected"].includes(selectedRequest.status) && (
                     <Button
                       danger
                       icon={<CloseCircleOutlined />}
@@ -1115,7 +1115,7 @@ const RequestManagement: React.FC = () => {
           )}
         </Modal>
       </div>
-    </AdminLayout>
+    </Box>
   );
 };
 
