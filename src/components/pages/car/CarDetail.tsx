@@ -343,7 +343,7 @@ export const CarDetail: React.FC = () => {
                 >
                   Quay lại
                 </Button>
-                <Title
+                {/* <Title
                   level={2}
                   style={{
                     margin: 0,
@@ -356,11 +356,11 @@ export const CarDetail: React.FC = () => {
                   }}
                 >
                   {getVehicleProperty("name", "VinFast VF3") as string}
-                </Title>
+                </Title> */}
               </Space>
             </Col>
             <Col>
-              <Space size="large">
+              {/* <Space size="large">
                 <Button
                   type="text"
                   onClick={() => scrollToSection(introRef)}
@@ -382,7 +382,7 @@ export const CarDetail: React.FC = () => {
                 >
                   Thông số
                 </Button>
-              </Space>
+              </Space> */}
             </Col>
             <Col>
              
