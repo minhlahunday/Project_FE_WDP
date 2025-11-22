@@ -24,12 +24,22 @@ import {
   CircularProgress,
   Card,
   CardContent,
+  Select,
+  MenuItem,
+  FormControl,
+  Divider,
+  IconButton,
 } from "@mui/material";
+import { 
+  Close as CloseIcon, 
+  Search as SearchIcon, 
+  Refresh as RefreshIcon,
+  CalendarToday as CalendarIcon 
+} from "@mui/icons-material";
 
 import {LocalizationProvider, DateTimePicker} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {message} from "antd";
-import {CalendarToday as CalendarIcon} from "@mui/icons-material";
 
 interface TestDrive {
   _id: string;
@@ -71,10 +81,13 @@ const TestDriveManagementPage: React.FC = () => {
   const {user} = useAuth();
 
   const [testDrives, setTestDrives] = useState<TestDrive[]>([]);
+  const [allTestDrives, setAllTestDrives] = useState<TestDrive[]>([]);
   const [staffs, setStaffs] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // Detail modal
   const [selectedDrive, setSelectedDrive] = useState<TestDrive | null>(null);
@@ -131,13 +144,64 @@ const TestDriveManagementPage: React.FC = () => {
         res = await testDriveService.getMyTestDrives();
       }
       const drives: TestDrive[] = res?.data?.data || res?.data || [];
-      setTotal(drives.length);
-      setTestDrives(drives.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+      setAllTestDrives(drives);
+      applyFilters(drives, page);
     } catch (error) {
       console.error(error);
     }
     setIsLoading(false);
   };
+
+  const applyFilters = (drives: TestDrive[], page = 1) => {
+    let filtered = [...drives];
+
+    // Apply search filter
+    if (searchText.trim()) {
+      const searchLower = searchText.toLowerCase();
+      filtered = filtered.filter((drive) => {
+        const customerName = typeof drive.customer_id === "object"
+          ? drive.customer_id.full_name?.toLowerCase() || ""
+          : String(drive.customer_id).toLowerCase();
+        const vehicleName = typeof drive.vehicle_id === "object"
+          ? drive.vehicle_id.name?.toLowerCase() || ""
+          : String(drive.vehicle_id).toLowerCase();
+        const notes = (drive.notes || "").toLowerCase();
+        
+        return (
+          customerName.includes(searchLower) ||
+          vehicleName.includes(searchLower) ||
+          notes.includes(searchLower)
+        );
+      });
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((drive) => drive.status === statusFilter);
+    }
+
+    setTotal(filtered.length);
+    setTestDrives(filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    applyFilters(allTestDrives, 1);
+  };
+
+  const handleReset = () => {
+    setSearchText('');
+    setStatusFilter('all');
+    setCurrentPage(1);
+    applyFilters(allTestDrives, 1);
+  };
+
+  useEffect(() => {
+    if (allTestDrives.length > 0) {
+      applyFilters(allTestDrives, currentPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchText, statusFilter, currentPage]);
 
   const openCreateModal = async () => {
     setOpenCreate(true);
@@ -192,12 +256,24 @@ const TestDriveManagementPage: React.FC = () => {
   };
 
   const handleCreateDrive = async () => {
-    if (!form.customer || !form.vehicle || !form.schedule_at) return;
+    if (!form.customer || !form.vehicle || !form.schedule_at) {
+      message.error("Vui lòng điền đầy đủ thông tin: khách hàng, xe và ngày giờ");
+      return;
+    }
 
-    const customerId = form.customer._id || form.customer.id;
-    const vehicleId = form.vehicle._id || form.vehicle.id;
+    // Lấy customerId từ nhiều nguồn có thể
+    const customerId = form.customer._id || form.customer.id || (form.customer as any)?.customer_id;
+    // Lấy vehicleId từ nhiều nguồn có thể
+    const vehicleId = form.vehicle._id || form.vehicle.id || (form.vehicle as any)?.vehicle_id;
+    
     if (!customerId || !vehicleId) {
-      console.error("Thiếu customerId hoặc vehicleId trong form:", form);
+      console.error("Thiếu customerId hoặc vehicleId trong form:", {
+        customer: form.customer,
+        vehicle: form.vehicle,
+        customerId,
+        vehicleId
+      });
+      message.error("Không tìm thấy ID của khách hàng hoặc xe. Vui lòng chọn lại.");
       return;
     }
 
@@ -314,6 +390,108 @@ const TestDriveManagementPage: React.FC = () => {
               Tổng số: {total} lịch hẹn
             </Typography>
 
+            {/* Search and Filter Section */}
+            <Card sx={{ p: 3, mb: 3, bgcolor: 'white', boxShadow: 1 }}>
+              <Stack spacing={2}>
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} alignItems="flex-end">
+                  {/* Search Box */}
+                  <Box flex={1} minWidth={{ xs: 200, md: 300 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
+                      Tìm kiếm
+                    </Typography>
+                    <Box sx={{ position: 'relative' }}>
+                      <TextField
+                        fullWidth
+                        placeholder="Tìm kiếm theo tên khách hàng, xe, ghi chú..."
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            pl: 4,
+                            borderRadius: 2,
+                            '&:hover': {
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'grey.300',
+                              },
+                            },
+                          },
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          left: 12,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        <SearchIcon />
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Status Filter */}
+                  <Box minWidth={{ xs: '100%', md: 200 }}>
+                    {/* <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
+                      Trạng thái
+                    </Typography> */}
+                    <FormControl fullWidth size="small">
+                      <Select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        sx={{
+                          borderRadius: 2,
+                        }}
+                      >
+                        <MenuItem value="all">Tất cả</MenuItem>
+                        <MenuItem value="pending">Chờ duyệt</MenuItem>
+                        <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+                        <MenuItem value="completed">Hoàn thành</MenuItem>
+                        <MenuItem value="canceled">Đã hủy</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <Box display="flex" gap={2}>
+                    <Button
+                      variant="contained"
+                      startIcon={<SearchIcon />}
+                      onClick={handleSearch}
+                      disabled={isLoading}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1.5,
+                      }}
+                    >
+                      Tìm kiếm
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<RefreshIcon />}
+                      onClick={handleReset}
+                      disabled={isLoading}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1.5,
+                      }}
+                    >
+                      Đặt lại
+                    </Button>
+                  </Box>
+                </Box>
+              </Stack>
+            </Card>
+
             {isLoading ? (
               <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
                 <CircularProgress />
@@ -421,18 +599,23 @@ const TestDriveManagementPage: React.FC = () => {
             <Stack direction="row" spacing={1} alignItems="center">
               <Autocomplete
                 options={customerList}
-                getOptionLabel={(option: any) => option.full_name}
+                getOptionLabel={(option: any) => option.full_name || option.name || "Khách chưa đặt tên"}
                 value={form.customer}
                 onChange={(_, value) =>
                   setForm((f) => ({...f, customer: value}))
                 }
+                isOptionEqualToValue={(option, value) => {
+                  const optionId = option._id || option.id;
+                  const valueId = value?._id || value?.id;
+                  return optionId === valueId;
+                }}
                 slotProps={{
                   popper: {
                     sx: {zIndex: 9999999}, // đảm bảo nằm trên modal
                   },
                 }}
                 renderInput={(params) => (
-                  <TextField {...params} label="Khách hàng" />
+                  <TextField {...params} label="Khách hàng" required />
                 )}
                 fullWidth
               />
@@ -448,16 +631,23 @@ const TestDriveManagementPage: React.FC = () => {
             <Autocomplete
               options={vehicleList}
               getOptionLabel={(option: any) =>
-                `${option.name} - ${option.version}`
+                option.name && option.version 
+                  ? `${option.name} - ${option.version}`
+                  : option.name || option.model || "Xe chưa xác định"
               }
               value={form.vehicle}
               onChange={(_, value) => setForm((f) => ({...f, vehicle: value}))}
+              isOptionEqualToValue={(option, value) => {
+                const optionId = option._id || option.id;
+                const valueId = value?._id || value?.id;
+                return optionId === valueId;
+              }}
               slotProps={{
                 popper: {
                   sx: {zIndex: 9999999}, // đảm bảo nằm trên modal
                 },
               }}
-              renderInput={(params) => <TextField {...params} label="Xe" />}
+              renderInput={(params) => <TextField {...params} label="Xe" required />}
               fullWidth
             />
 
@@ -546,107 +736,202 @@ const TestDriveManagementPage: React.FC = () => {
         open={openDetail}
         onClose={() => setOpenDetail(false)}
         fullWidth
-        maxWidth="md"
+        maxWidth="lg"
+        disableEscapeKeyDown={false}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            maxHeight: '90vh',
+            zIndex: 1300,
+          }
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              zIndex: 1299,
+            }
+          }
+        }}
       >
-        <DialogTitle>Chi tiết lịch hẹn</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ pb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+              Chi tiết lịch hẹn
+            </Typography>
+            <IconButton
+              onClick={() => setOpenDetail(false)}
+              size="small"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 3, pt: 3 }}>
           {selectedDrive && (
-            <Stack spacing={2} mt={1}>
-              <Typography>
-                Khách hàng:{" "}
-                {typeof selectedDrive.customer_id === "object"
-                  ? selectedDrive.customer_id.full_name
-                  : selectedDrive.customer_id}
-              </Typography>
-              <Typography>
-                Xe:{" "}
-                {typeof selectedDrive.vehicle_id === "object"
-                  ? selectedDrive.vehicle_id.name
-                  : selectedDrive.vehicle_id}
-              </Typography>
-              <Typography>
-                Ngày:{" "}
-                {dayjs(selectedDrive.schedule_at).format("DD/MM/YYYY HH:mm")}
-              </Typography>
-              <Typography>Ghi chú: {selectedDrive.notes || "-"}</Typography>
+            <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
+              {/* Left Column */}
+              <Box flex={{ xs: '1 1 100%', md: '1 1 50%' }}>
+                <Stack spacing={3}>
+                  {/* Customer Info */}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
+                      Khách hàng
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
+                      {typeof selectedDrive.customer_id === "object"
+                        ? selectedDrive.customer_id.full_name
+                        : selectedDrive.customer_id}
+                    </Typography>
+                  </Box>
 
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Typography>Trạng thái:</Typography>
-                <TextField
-                  select
-                  size="small"
-                  value={selectedDrive.status}
-                  onChange={(e) =>
-                    handleUpdateStatus(
-                      selectedDrive,
-                      e.target.value as TestDrive["status"]
-                    )
-                  }
-                  SelectProps={{
-                    native: true,
-                  }}
-                >
-                  {Object.keys(statusLabels).map((key) => (
-                    <option key={key} value={key}>
-                      {statusLabels[key as keyof typeof statusLabels]}
-                    </option>
-                  ))}
-                </TextField>
-              </Stack>
+                  {/* Vehicle Info */}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
+                      Xe
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
+                      {typeof selectedDrive.vehicle_id === "object"
+                        ? selectedDrive.vehicle_id.name
+                        : selectedDrive.vehicle_id}
+                    </Typography>
+                  </Box>
 
-              <Stack spacing={1}>
-                <Typography>Nhân viên phụ trách:</Typography>
-                {user?.role === "dealer_manager" ? (
-                  <Autocomplete
-                    options={staffs}
-                    loading={assigning}
-                    getOptionLabel={(option: any) => option.full_name}
-                    slotProps={{
-                      popper: {
-                        sx: {zIndex: 9999999999}, // đảm bảo nằm trên modal
-                      },
-                    }}
-                    isOptionEqualToValue={(option, value) =>
-                      option._id === value._id
-                    }
-                    value={(() => {
-                      if (typeof selectedDrive.assigned_staff_id === "object") {
-                        const obj = selectedDrive.assigned_staff_id;
-                        const normalized: Staff = {
-                          _id: obj._id || (obj as any).id || "",
-                          full_name: obj.full_name || "Chưa gán",
-                          email: obj.email,
-                        };
-                        return (
-                          staffs.find((s) => s._id === normalized._id) ||
-                          normalized
-                        );
-                      }
-                      const id = selectedDrive.assigned_staff_id;
-                      if (!id) return null;
-                      return staffs.find((s) => s._id === id) || null;
-                    })()}
-                    onChange={(_, value) =>
-                      value && handleAssignStaff(selectedDrive, value)
-                    }
-                    renderInput={(params) => (
-                      <TextField {...params} label="Chọn nhân viên" />
+                  {/* Date Info */}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
+                      Ngày
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
+                      {dayjs(selectedDrive.schedule_at).format("DD/MM/YYYY HH:mm")}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+
+              {/* Right Column */}
+              <Box flex={{ xs: '1 1 100%', md: '1 1 50%' }}>
+                <Stack spacing={3}>
+                  {/* Notes */}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
+                      Ghi chú
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
+                      {selectedDrive.notes || "-"}
+                    </Typography>
+                  </Box>
+
+                  {/* Status */}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
+                      Trạng thái
+                    </Typography>
+                    <FormControl fullWidth>
+                      <Select
+                        value={selectedDrive.status}
+                        onChange={(e) =>
+                          handleUpdateStatus(
+                            selectedDrive,
+                            e.target.value as TestDrive["status"]
+                          )
+                        }
+                        sx={{
+                          borderRadius: 1,
+                          height: '40px',
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            style: {
+                              maxHeight: 300,
+                              zIndex: 9999,
+                            },
+                          },
+                          style: {
+                            zIndex: 9999,
+                          },
+                          disableScrollLock: true,
+                        }}
+                      >
+                        {Object.keys(statusLabels).map((key) => (
+                          <MenuItem key={key} value={key}>
+                            {statusLabels[key as keyof typeof statusLabels]}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+
+                  {/* Assigned Staff */}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
+                      Nhân viên phụ trách
+                    </Typography>
+                    {user?.role === "dealer_manager" ? (
+                      <Autocomplete
+                        options={staffs}
+                        loading={assigning}
+                        getOptionLabel={(option: any) => option.full_name}
+                        slotProps={{
+                          popper: {
+                            sx: {zIndex: 9999999999},
+                          },
+                        }}
+                        isOptionEqualToValue={(option, value) =>
+                          option._id === value._id
+                        }
+                        value={(() => {
+                          if (typeof selectedDrive.assigned_staff_id === "object") {
+                            const obj = selectedDrive.assigned_staff_id;
+                            const normalized: Staff = {
+                              _id: obj._id || (obj as any).id || "",
+                              full_name: obj.full_name || "Chưa gán",
+                              email: obj.email,
+                            };
+                            return (
+                              staffs.find((s) => s._id === normalized._id) ||
+                              normalized
+                            );
+                          }
+                          const id = selectedDrive.assigned_staff_id;
+                          if (!id) return null;
+                          return staffs.find((s) => s._id === id) || null;
+                        })()}
+                        onChange={(_, value) =>
+                          value && handleAssignStaff(selectedDrive, value)
+                        }
+                        renderInput={(params) => (
+                          <TextField 
+                            {...params} 
+                            placeholder="Chọn nhân viên"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 1,
+                                height: '40px',
+                              }
+                            }}
+                          />
+                        )}
+                      />
+                    ) : (
+                      <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
+                        {typeof selectedDrive.assigned_staff_id === "object"
+                          ? selectedDrive.assigned_staff_id.full_name
+                          : selectedDrive.assigned_staff_id || "-"}
+                      </Typography>
                     )}
-                  />
-                ) : (
-                  <Typography>
-                    {typeof selectedDrive.assigned_staff_id === "object"
-                      ? selectedDrive.assigned_staff_id.full_name
-                      : selectedDrive.assigned_staff_id || "-"}
-                  </Typography>
-                )}
-              </Stack>
-            </Stack>
+                  </Box>
+                </Stack>
+              </Box>
+            </Box>
           )}
         </DialogContent>
-        <DialogActions>
+        <Divider />
+        <DialogActions sx={{ p: 3, pt: 2 }}>
           {selectedDrive && (
-            <Stack mt={2} gap={2} direction="row" justifyContent="flex-end">
+            <Stack direction="row" spacing={2} sx={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 color="error"
                 variant="outlined"
@@ -656,14 +941,37 @@ const TestDriveManagementPage: React.FC = () => {
                     setOpenDetail(false);
                     setSelectedDrive(null);
                     fetchList(currentPage);
+                    message.success("Xóa lịch hẹn thành công");
                   } catch (error) {
                     console.error(error);
+                    message.error("Xóa lịch hẹn thất bại");
                   }
                 }}
+                sx={{
+                  borderRadius: 1,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1,
+                  borderWidth: 1.5,
+                }}
               >
-                Xóa lịch hẹn
+                XÓA LỊCH HẸN
               </Button>
-              <Button onClick={() => setOpenDetail(false)}>Đóng</Button>
+              <Button 
+                onClick={() => setOpenDetail(false)}
+                variant="text"
+                sx={{
+                  borderRadius: 1,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1,
+                  color: 'primary.main',
+                }}
+              >
+                ĐÓNG
+              </Button>
             </Stack>
           )}
         </DialogActions>
