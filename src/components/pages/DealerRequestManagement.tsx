@@ -462,7 +462,7 @@ export const DealerRequestManagement: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3, m: 0 }}>
+    <Box sx={{ pl: 3.75, pr: 3, py: 3, m: 0 }}>
       {/* Error Display */}
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3 }}>

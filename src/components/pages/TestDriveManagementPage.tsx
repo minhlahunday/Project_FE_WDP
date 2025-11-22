@@ -22,11 +22,14 @@ import {
   Typography,
   Autocomplete,
   CircularProgress,
+  Card,
+  CardContent,
 } from "@mui/material";
 
 import {LocalizationProvider, DateTimePicker} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {message} from "antd";
+import {CalendarToday as CalendarIcon} from "@mui/icons-material";
 
 interface TestDrive {
   _id: string;
@@ -283,86 +286,110 @@ const TestDriveManagementPage: React.FC = () => {
   //   };
 
   return (
-    <Box p={4}>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
-        <div>
-          <Typography variant="h4">Quản lý lịch hẹn lái thử</Typography>
-          <Typography variant="subtitle1">Tổng số: {total}</Typography>
-        </div>
-        {
-          <Button variant="contained" onClick={openCreateModal}>
-            + Tạo lịch hẹn
-          </Button>
-        }
-      </Box>
-
-      <Box mb={2}>
-        {isLoading ? (
-          <Box textAlign="center">
-            <CircularProgress />
-          </Box>
-        ) : testDrives.length === 0 ? (
-          <Typography textAlign="center" color="text.secondary">
-            Không có lịch hẹn nào.
-          </Typography>
-        ) : (
-          <Box
-            display="grid"
-            gridTemplateColumns="repeat(auto-fill, minmax(300px, 1fr))"
-            gap={2}
-          >
-            {testDrives.map((d) => (
-              <Box
-                key={d._id}
-                p={2}
-                border={1}
-                borderRadius={2}
-                borderColor="grey.300"
-                onClick={() => {
-                  setSelectedDrive(d);
-                  setOpenDetail(true);
-                }}
-                sx={{cursor: "pointer", "&:hover": {boxShadow: 3}}}
-              >
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb={1}
-                >
-                  <Typography fontWeight="bold" noWrap>
-                    {typeof d.customer_id === "object"
-                      ? d.customer_id.full_name
-                      : d.customer_id}
-                  </Typography>
-                  <Chip
-                    label={statusLabels[d.status]}
-                    color={statusColors[d.status]}
-                    size="small"
-                  />
-                </Box>
-                <Typography variant="body2">
-                  Xe:{" "}
-                  {typeof d.vehicle_id === "object"
-                    ? d.vehicle_id.name
-                    : d.vehicle_id}
-                </Typography>
-                <Typography variant="body2">
-                  Ngày: {dayjs(d.schedule_at).format("DD/MM/YYYY HH:mm")}
-                </Typography>
-                <Typography variant="body2">
-                  Ghi chú: {d.notes || "-"}
+    <div className="pl-8 pr-3 py-3 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 min-h-full">
+      <Card>
+        <CardContent>
+          <Box sx={{ mb: 3 }}>
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <CalendarIcon color="primary" sx={{ fontSize: 32 }} />
+                <Typography variant="h4" component="h1" fontWeight="bold">
+                  Quản lý lịch hẹn lái thử
                 </Typography>
               </Box>
-            ))}
+              <Button 
+                variant="contained" 
+                onClick={openCreateModal}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                + Tạo lịch hẹn
+              </Button>
+            </Box>
+            
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Tổng số: {total} lịch hẹn
+            </Typography>
+
+            {isLoading ? (
+              <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                <CircularProgress />
+              </Box>
+            ) : testDrives.length === 0 ? (
+              <Box textAlign="center" py={8}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Không có lịch hẹn nào
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Hãy tạo lịch hẹn mới để bắt đầu
+                </Typography>
+              </Box>
+            ) : (
+              <Box
+                display="grid"
+                gridTemplateColumns="repeat(auto-fill, minmax(300px, 1fr))"
+                gap={3}
+              >
+                {testDrives.map((d) => (
+                  <Card
+                    key={d._id}
+                    onClick={() => {
+                      setSelectedDrive(d);
+                      setOpenDetail(true);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      "&:hover": {
+                        boxShadow: 4,
+                        transform: "translateY(-2px)",
+                        transition: "all 0.2s",
+                      },
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <CardContent>
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        mb={2}
+                      >
+                        <Typography variant="h6" fontWeight="bold" noWrap>
+                          {typeof d.customer_id === "object"
+                            ? d.customer_id.full_name
+                            : d.customer_id}
+                        </Typography>
+                        <Chip
+                          label={statusLabels[d.status]}
+                          color={statusColors[d.status]}
+                          size="small"
+                        />
+                      </Box>
+                      <Stack spacing={1}>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Xe:</strong>{" "}
+                          {typeof d.vehicle_id === "object"
+                            ? d.vehicle_id.name
+                            : d.vehicle_id}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Ngày:</strong> {dayjs(d.schedule_at).format("DD/MM/YYYY HH:mm")}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Ghi chú:</strong> {d.notes || "-"}
+                        </Typography>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
+        </CardContent>
+      </Card>
 
       {/* Create Test Drive Modal */}
       <Dialog
@@ -641,7 +668,7 @@ const TestDriveManagementPage: React.FC = () => {
           )}
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

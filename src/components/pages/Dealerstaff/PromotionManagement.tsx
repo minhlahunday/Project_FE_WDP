@@ -114,9 +114,9 @@ export const PromotionManagementDealer: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 min-h-full lg:mr-[200px]">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+    <div className="pl-8 pr-3 py-3 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 min-h-full">
+      <div className="w-full">
+        <div className="bg-white rounded-2xl shadow-lg p-4 mb-4">
           <div className="flex justify-between items-center">
             <div>
               <div className="flex items-center space-x-3 mb-4">
@@ -153,7 +153,7 @@ export const PromotionManagementDealer: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -203,7 +203,7 @@ export const PromotionManagementDealer: React.FC = () => {
         </div>
 
         {error && (
-          <div className="mb-8 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 px-6 py-4 rounded-xl shadow-lg">
+          <div className="mb-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl shadow-lg">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-red-500 rounded-full"></div>
               <span className="font-medium">{error}</span>
@@ -240,7 +240,7 @@ export const PromotionManagementDealer: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredPromotions.map((promotion) => {
               const status = getPromotionStatus(promotion);
 
@@ -349,7 +349,7 @@ export const PromotionManagementDealer: React.FC = () => {
 
         {/* Summary Footer */}
         {!loading && (
-          <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+          <div className="mt-4 bg-white rounded-xl shadow-lg p-4">
             <div className="text-center text-gray-500">
               <p className="text-sm">
                 Hiển thị{" "}

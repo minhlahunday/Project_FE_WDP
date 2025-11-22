@@ -20,8 +20,6 @@ import {
   Refresh as RefreshIcon,
   Description as DescriptionIcon,
 } from '@mui/icons-material';
-import { Sidebar } from '../../common/Sidebar';
-import { Header } from '../../common/Header';
 import { authService } from '../../../services/authService';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -86,8 +84,6 @@ interface DealerInfo {
 
 export const DealerInfo: React.FC = () => {
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('dealer-info');
   const [dealerInfo, setDealerInfo] = useState<DealerInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -181,141 +177,66 @@ export const DealerInfo: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-50 overflow-hidden">
-        <Sidebar
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          onOpen={() => setSidebarOpen(true)}
-        />
-        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[2000px]">
-          <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
-            <div className="transition-all duration-300 lg:ml-[220px]">
-              <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-            </div>
-          </div>
-          <main className="flex-1 overflow-y-auto pt-16">
-            <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Box textAlign="center">
-                <CircularProgress size={60} sx={{ mb: 2 }} />
-                <Typography variant="body1" color="text.secondary">
-                  Đang tải thông tin đại lý...
-                </Typography>
-              </Box>
-            </Box>
-          </main>
-        </div>
-      </div>
+      <Box sx={{ pl: 8, pr: 3, py: 3, pt: 3.75, bgcolor: 'grey.50', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Box textAlign="center">
+          <CircularProgress size={60} sx={{ mb: 2 }} />
+          <Typography variant="body1" color="text.secondary">
+            Đang tải thông tin đại lý...
+          </Typography>
+        </Box>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen bg-gray-50 overflow-hidden">
-        <Sidebar
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          onOpen={() => setSidebarOpen(true)}
-        />
-        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[150px]">
-          <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
-            <div className="transition-all duration-300 lg:ml-[220px]">
-              <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-            </div>
-          </div>
-          <main className="flex-1 overflow-y-auto pt-16">
-            <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
-              <Card>
-                <CardContent>
-                  <Alert 
-                    severity="error" 
-                    action={
-                      <Button color="inherit" size="small" onClick={loadDealerInfo}>
-                        Thử lại
-                      </Button>
-                    }
-                  >
-                    <Typography variant="h6" gutterBottom>
-                      Lỗi tải thông tin
-                    </Typography>
-                    <Typography variant="body2">
-                      {error}
-                    </Typography>
-                  </Alert>
-                </CardContent>
-              </Card>
-            </Box>
-          </main>
-        </div>
-      </div>
+      <Box sx={{ pl: 8, pr: 3, py: 3, pt: 3.75, bgcolor: 'grey.50', minHeight: '100vh' }}>
+        <Card>
+          <CardContent>
+            <Alert 
+              severity="error" 
+              action={
+                <Button color="inherit" size="small" onClick={loadDealerInfo}>
+                  Thử lại
+                </Button>
+              }
+            >
+              <Typography variant="h6" gutterBottom>
+                Lỗi tải thông tin
+              </Typography>
+              <Typography variant="body2">
+                {error}
+              </Typography>
+            </Alert>
+          </CardContent>
+        </Card>
+      </Box>
     );
   }
 
   if (!dealerInfo) {
     return (
-      <div className="flex h-screen bg-gray-50 overflow-hidden">
-        <Sidebar
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          onOpen={() => setSidebarOpen(true)}
-        />
-        <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[150px]">
-          <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
-            <div className="transition-all duration-300 lg:ml-[220px]">
-              <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-            </div>
-          </div>
-          <main className="flex-1 overflow-y-auto pt-16">
-            <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                  <BusinessIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    Không có thông tin đại lý
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Vui lòng liên hệ quản trị viên để được hỗ trợ.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-          </main>
-        </div>
-      </div>
+      <Box sx={{ pl: 8, pr: 3, py: 3, pt: 3.75, bgcolor: 'grey.50', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Card>
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <BusinessIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Không có thông tin đại lý
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Vui lòng liên hệ quản trị viên để được hỗ trợ.
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onOpen={() => setSidebarOpen(true)}
-      />
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-[220px] lg:mr-[150px]">
-        {/* Header */}
-        <div className="fixed top-0 right-0 left-0 z-30 lg:left-[220px]">
-          <div className="transition-all duration-300 lg:ml-[220px]">
-            <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-          </div>
-        </div>
-        
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto pt-16">
-          <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
-            {/* Header */}
-            <Card sx={{ mb: 3, bgcolor: 'white', border: '1px solid', borderColor: 'grey.300' }}>
-              <CardContent sx={{ p: 4 }}>
+    <Box sx={{ pl: 8, pr: 3, py: 3, pt: 3.75, bgcolor: 'grey.50', minHeight: '100vh' }}>
+      {/* Header */}
+      <Card sx={{ mb: 3, bgcolor: 'white', border: '1px solid', borderColor: 'grey.300' }}>
+        <CardContent sx={{ p: 4 }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
                   <Box>
                     <Typography variant="h4" component="h1" fontWeight="bold" color="text.primary" gutterBottom>
@@ -338,13 +259,13 @@ export const DealerInfo: React.FC = () => {
                     Làm mới
                   </Button>
                 </Box>
-              </CardContent>
-            </Card>
+        </CardContent>
+      </Card>
 
-            {/* Company Status Banner */}
-            <Card sx={{ mb: 3, bgcolor: '#fafafa', border: '1px solid', borderColor: 'grey.300' }}>
-              <CardContent sx={{ p: 3 }}>
-                <Stack direction="row" spacing={2} alignItems="center">
+      {/* Company Status Banner */}
+      <Card sx={{ mb: 3, bgcolor: '#fafafa', border: '1px solid', borderColor: 'grey.300' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
                   <Box
                     sx={{
                       width: 56,
@@ -378,17 +299,17 @@ export const DealerInfo: React.FC = () => {
                       />
                     </Stack>
                   </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+          </Stack>
+        </CardContent>
+      </Card>
 
-            <Box display="flex" flexDirection={{ xs: 'column', lg: 'row' }} gap={3}>
-              {/* Main Info */}
-              <Box flex={{ lg: '2 1 0%' }} display="flex" flexDirection="column" gap={3}>
-                {/* Company Information */}
-                <Card>
-                  <CardContent sx={{ p: 4 }}>
-                    <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
+      <Box display="flex" flexDirection={{ xs: 'column', lg: 'row' }} gap={3}>
+        {/* Main Info */}
+        <Box flex={{ lg: '2 1 0%' }} display="flex" flexDirection="column" gap={3}>
+          {/* Company Information */}
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
                       <Box
                         sx={{
                           width: 40,
@@ -487,13 +408,13 @@ export const DealerInfo: React.FC = () => {
                         </Typography>
                       </Box>
                     </Box>
-                  </CardContent>
-                </Card>
+            </CardContent>
+          </Card>
 
-                {/* Manufacturer Information */}
-                <Card>
-                  <CardContent sx={{ p: 4 }}>
-                    <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
+          {/* Manufacturer Information */}
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
                       <Box
                         sx={{
                           width: 40,
@@ -546,13 +467,13 @@ export const DealerInfo: React.FC = () => {
                         </Typography>
                       </Box>
                     </Box>
-                  </CardContent>
-                </Card>
+            </CardContent>
+          </Card>
 
-                {/* Contract Information */}
-                <Card>
-                  <CardContent sx={{ p: 4 }}>
-                    <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
+          {/* Contract Information */}
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
                       <Box
                         sx={{
                           width: 40,
@@ -619,13 +540,13 @@ export const DealerInfo: React.FC = () => {
                         </Typography>
                       </Box>
                     </Box>
-                  </CardContent>
-                </Card>
+            </CardContent>
+          </Card>
 
-                {/* Contact Information */}
-                <Card>
-                  <CardContent sx={{ p: 4 }}>
-                    <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
+          {/* Contact Information */}
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.300">
                       <Box
                         sx={{
                           width: 40,
@@ -764,18 +685,18 @@ export const DealerInfo: React.FC = () => {
                         </Box>
                       </Box>
                     </Stack>
-                  </CardContent>
-                </Card>
+            </CardContent>
+          </Card>
 
-                {/* Capabilities */}
-                
-              </Box>
+          {/* Capabilities */}
+          
+        </Box>
 
-              {/* Statistics Sidebar */}
-              <Box flex={{ lg: '1 1 0%' }} display="flex" flexDirection="column" gap={3}>
-                {/* Company Overview */}
-                <Card sx={{ bgcolor: 'white', border: '1px solid', borderColor: 'grey.300' }}>
-                  <CardContent sx={{ p: 3 }}>
+        {/* Statistics Sidebar */}
+        <Box flex={{ lg: '1 1 0%' }} display="flex" flexDirection="column" gap={3}>
+          {/* Company Overview */}
+          <Card sx={{ bgcolor: 'white', border: '1px solid', borderColor: 'grey.300' }}>
+            <CardContent sx={{ p: 3 }}>
                     <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="1px solid" borderColor="grey.300">
                       <BusinessIcon sx={{ color: 'text.secondary', mr: 1 }} />
                       <Typography variant="h6" fontWeight="bold" color="text.primary">
@@ -818,12 +739,12 @@ export const DealerInfo: React.FC = () => {
                         />
                       </Box>
                     </Stack>
-                  </CardContent>
-                </Card>
+            </CardContent>
+          </Card>
 
-                {/* Contract Status */}
-                <Card sx={{ bgcolor: 'white', border: '1px solid', borderColor: 'grey.300' }}>
-                  <CardContent sx={{ p: 3 }}>
+          {/* Contract Status */}
+          <Card sx={{ bgcolor: 'white', border: '1px solid', borderColor: 'grey.300' }}>
+            <CardContent sx={{ p: 3 }}>
                     <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="1px solid" borderColor="grey.300">
                       <DescriptionIcon sx={{ color: 'text.secondary', mr: 1 }} />
                       <Typography variant="h6" fontWeight="bold" color="text.primary">
@@ -856,12 +777,12 @@ export const DealerInfo: React.FC = () => {
                         </Typography>
                       </Box>
                     </Stack>
-                  </CardContent>
-                </Card>
+            </CardContent>
+          </Card>
 
-                {/* System Information */}
-                <Card>
-                  <CardContent sx={{ p: 3 }}>
+          {/* System Information */}
+          <Card>
+            <CardContent sx={{ p: 3 }}>
                     <Box display="flex" alignItems="center" mb={3} pb={2} borderBottom="2px solid" borderColor="grey.200">
                       <Box
                         sx={{
@@ -923,13 +844,10 @@ export const DealerInfo: React.FC = () => {
                         </Typography>
                       </Box>
                     </Stack>
-                  </CardContent>
-                </Card>
-              </Box>
-            </Box>
-          </Box>
-        </main>
-  </div>
-</div>
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
+    </Box>
   );
 };
