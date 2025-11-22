@@ -637,303 +637,210 @@ export const StaffManagement: React.FC = () => {
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         
         {/* Page Content */}
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 3, pt: 2 }}>
-          {/* Page Header */}
-          <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', pl: 3.75, pr: 2, py: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
+          <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                <Box>
-                  <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 1 }}>
-                    Quản lý nhân viên
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                    Quản lý thông tin nhân viên trong đại lý của bạn
-                  </Typography>
-                </Box>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddStaff}
-                  sx={{
-                    bgcolor: 'white',
-                    color: '#667eea',
-                    '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.9)',
-                    },
-                  }}
-                >
-                  Thêm nhân viên
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Search Bar */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <Box sx={{ position: 'relative', flex: 1 }}>
-                  <SearchIcon
+              <Box sx={{ mb: 3 }}>
+                {/* Page Header */}
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <PeopleIcon color="primary" sx={{ fontSize: 32 }} />
+                    <Typography variant="h4" component="h1" fontWeight="bold">
+                      Quản lý nhân viên
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddStaff}
                     sx={{
-                      position: 'absolute',
-                      left: 16,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'text.secondary',
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
                     }}
-                  />
-                  <TextField
-                    fullWidth
-                    placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch();
-                      }
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        pl: 5,
-                      },
-                    }}
-                  />
+                  >
+                    Thêm nhân viên
+                  </Button>
                 </Box>
-                <Button
-                  variant="contained"
-                  startIcon={<SearchIcon />}
-                  onClick={handleSearch}
-                  sx={{ minWidth: 120 }}
-                >
-                  Tìm kiếm
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
 
-          {/* Stats Cards */}
-          <Stack direction="row" spacing={3} sx={{ mb: 3, flexWrap: 'wrap' }}>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <Card sx={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
-                        Tổng nhân viên
-                      </Typography>
-                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                        {totalUsers}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
-                      <PeopleIcon sx={{ fontSize: 32 }} />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <Card sx={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
-                        Đang hoạt động
-                      </Typography>
-                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                        {staffList.filter(s => s.status === 'active').length}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
-                      <CheckCircleIcon sx={{ fontSize: 32 }} />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <Card sx={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
-                        Bị khóa
-                      </Typography>
-                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                        {staffList.filter(s => s.status === 'inactive').length}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
-                      <BlockIcon sx={{ fontSize: 32 }} />
+                {/* Search Section */}
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} alignItems="flex-end" mb={3}>
+                  <Box flex={1} minWidth={{ xs: 200, md: 300 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
+                      Tìm kiếm
+                    </Typography>
+                    <Box sx={{ position: 'relative' }}>
+                      <TextField
+                        fullWidth
+                        placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            pl: 4,
+                            borderRadius: 2,
+                            '&:hover': {
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'grey.300',
+                              },
+                            },
+                          },
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          left: 12,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        <SearchIcon />
+                      </Box>
                     </Box>
                   </Box>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }, minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <Card sx={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
-                        Chờ duyệt
-                      </Typography>
-                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                        {staffList.filter(s => s.status === 'pending').length}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', p: 2, borderRadius: 2 }}>
-                      <AccessTimeIcon sx={{ fontSize: 32 }} />
-                    </Box>
+                  
+                  <Box display="flex" gap={2}>
+                    <Button
+                      variant="contained"
+                      startIcon={<SearchIcon />}
+                      onClick={handleSearch}
+                      disabled={loading}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1.5,
+                      }}
+                    >
+                      Tìm kiếm
+                    </Button>
                   </Box>
-                </CardContent>
-              </Card>
-            </Box>
-          </Stack>
+                </Box>
 
-          {/* Staff Table */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    Danh sách nhân viên
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Tổng cộng {filteredStaff.length} nhân viên
-                  </Typography>
-                </Box>
-              </Box>
-              
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
-                  <CircularProgress />
-                </Box>
-              ) : filteredStaff.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 8 }}>
-                  <PeopleIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    Không tìm thấy nhân viên nào
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Hãy thử thay đổi bộ lọc hoặc thêm nhân viên mới
-                  </Typography>
-                </Box>
-              ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Nhân viên</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Trạng thái</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Thao tác</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredStaff.map((staff) => (
-                        <TableRow key={staff.id} hover>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Avatar
-                                sx={{
-                                  bgcolor: 'primary.main',
-                                  width: 56,
-                                  height: 56,
-                                }}
-                              >
-                                {staff.fullName?.charAt(0) || '?'}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                  {staff.fullName}
+                {/* Staff Table */}
+                {loading ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                    <CircularProgress />
+                  </Box>
+                ) : (
+                  <>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Tổng cộng {totalUsers} nhân viên
+                      </Typography>
+                    </Box>
+                    <TableContainer component={Paper} variant="outlined">
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: 'grey.100' } }}>
+                            <TableCell>Nhân viên</TableCell>
+                            <TableCell>Trạng thái</TableCell>
+                            <TableCell align="center">Thao tác</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {filteredStaff.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} align="center">
+                                <Typography color="text.secondary" py={2}>
+                                  Không tìm thấy nhân viên nào
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                  <EmailIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                                  <Typography variant="body2" color="text.secondary">
-                                    {staff.email}
-                                  </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                  <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                                  <Typography variant="body2" color="text.secondary">
-                                    {staff.phone}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(staff.status)}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                              <Tooltip title="Xem chi tiết">
-                                <IconButton
-                                  size="small"
-                                  color="success"
-                                  onClick={() => handleViewStaffDetail(staff)}
-                                >
-                                  <VisibilityIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Chỉnh sửa">
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => handleEditStaff(staff)}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title={staff.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}>
-                                <IconButton
-                                  size="small"
-                                  color={staff.status === 'active' ? 'error' : 'success'}
-                                  onClick={() => handleToggleStatus(staff.id)}
-                                >
-                                  {staff.status === 'active' ? <BlockIcon /> : <LockOpenIcon />}
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Xóa nhân viên">
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => handleDeleteStaff(staff.id)}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            filteredStaff.map((staff) => (
+                              <TableRow key={staff.id} hover>
+                                <TableCell>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Avatar
+                                      sx={{
+                                        bgcolor: 'primary.main',
+                                        width: 40,
+                                        height: 40,
+                                      }}
+                                    >
+                                      {staff.fullName?.charAt(0) || '?'}
+                                    </Avatar>
+                                    <Box>
+                                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                        {staff.fullName}
+                                      </Typography>
+                                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                                        {staff.email}
+                                      </Typography>
+                                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                                        {staff.phone}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </TableCell>
+                                <TableCell>
+                                  {getStatusBadge(staff.status)}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                    <Tooltip title="Xem chi tiết">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleViewStaffDetail(staff)}
+                                        sx={{ color: 'primary.main' }}
+                                      >
+                                        <VisibilityIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Chỉnh sửa">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleEditStaff(staff)}
+                                        sx={{ color: 'primary.main' }}
+                                      >
+                                        <EditIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Xóa nhân viên">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleDeleteStaff(staff.id)}
+                                        sx={{ color: 'error.main' }}
+                                      >
+                                        <DeleteIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Hiển thị {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalUsers)} trong tổng số {totalUsers} nhân viên
+                    </Typography>
+                    <Pagination
+                      count={totalPages}
+                      page={currentPage}
+                      onChange={handlePageChange}
+                      color="primary"
+                      showFirstButton
+                      showLastButton
+                    />
+                  </Box>
+                )}
+              </Box>
             </CardContent>
           </Card>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Hiển thị {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalUsers)} trong tổng số {totalUsers} nhân viên
-                  </Typography>
-                  <Pagination
-                    count={totalPages}
-                    page={currentPage}
-                    onChange={handlePageChange}
-                    color="primary"
-                    showFirstButton
-                    showLastButton
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          )}
         </Box>
       </Box>
 
@@ -947,20 +854,19 @@ export const StaffManagement: React.FC = () => {
           sx: { maxHeight: '90vh' }
         }}
       >
-        <DialogTitle sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+        <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Thêm nhân viên mới
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 Tạo tài khoản cho nhân viên mới
               </Typography>
             </Box>
             <IconButton
               onClick={() => setShowAddModal(false)}
               disabled={loading}
-              sx={{ color: 'white' }}
             >
               <CloseIcon />
             </IconButton>
@@ -978,8 +884,7 @@ export const StaffManagement: React.FC = () => {
             <Stack spacing={3}>
               {/* Personal Information */}
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PersonIcon color="primary" />
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   Thông tin cá nhân
                 </Typography>
                 <Stack spacing={2}>
@@ -1022,8 +927,7 @@ export const StaffManagement: React.FC = () => {
 
               {/* Account Information */}
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <SettingsIcon color="primary" />
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   Thông tin tài khoản
                 </Typography>
                 <Stack spacing={2}>
@@ -1077,8 +981,7 @@ export const StaffManagement: React.FC = () => {
 
               {/* Organization Info */}
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <BusinessIcon color="primary" />
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   Thông tin tổ chức
                 </Typography>
                 <TextField
@@ -1129,13 +1032,13 @@ export const StaffManagement: React.FC = () => {
           sx: { maxHeight: '90vh' }
         }}
       >
-        <DialogTitle sx={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
+        <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Chỉnh sửa nhân viên
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 Cập nhật thông tin nhân viên
               </Typography>
             </Box>
@@ -1145,7 +1048,6 @@ export const StaffManagement: React.FC = () => {
                 setEditingStaff(null);
               }}
               disabled={loading}
-              sx={{ color: 'white' }}
             >
               <CloseIcon />
             </IconButton>
@@ -1163,8 +1065,7 @@ export const StaffManagement: React.FC = () => {
             <Stack spacing={3}>
               {/* Personal Information */}
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PersonIcon color="primary" />
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   Thông tin cá nhân
                 </Typography>
                 <Stack spacing={2}>
@@ -1207,8 +1108,7 @@ export const StaffManagement: React.FC = () => {
 
               {/* Account Information */}
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <SettingsIcon color="primary" />
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   Thông tin tài khoản
                 </Typography>
                 <Stack spacing={2}>
@@ -1244,8 +1144,7 @@ export const StaffManagement: React.FC = () => {
 
               {/* Organization Info */}
               <Box>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <BusinessIcon color="primary" />
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   Thông tin tổ chức
                 </Typography>
                 <TextField
@@ -1298,13 +1197,13 @@ export const StaffManagement: React.FC = () => {
           sx: { maxHeight: '90vh' }
         }}
       >
-        <DialogTitle sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+        <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Thông tin chi tiết nhân viên
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 Xem thông tin đầy đủ của nhân viên
               </Typography>
             </Box>
@@ -1313,7 +1212,6 @@ export const StaffManagement: React.FC = () => {
                 setShowDetailModal(false);
                 setDetailStaff(null);
               }}
-              sx={{ color: 'white' }}
             >
               <CloseIcon />
             </IconButton>
@@ -1358,8 +1256,7 @@ export const StaffManagement: React.FC = () => {
               {/* Contact Information */}
               <Card>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <InfoIcon color="primary" />
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                     Thông tin liên hệ
                   </Typography>
                   <Stack spacing={3}>
@@ -1416,8 +1313,7 @@ export const StaffManagement: React.FC = () => {
               {/* Organization Information */}
               <Card>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <BusinessIcon color="primary" />
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                     Thông tin tổ chức
                   </Typography>
                   <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} flexWrap="wrap">

@@ -228,8 +228,9 @@ export const DealerStockManagement: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          mt: 8,
+          px: 2,
+          py: 3,
+          pt: 3.75,
           ml: { lg: sidebarOpen ? '220px' : '16px', xs: 0 },
           transition: 'margin-left 0.2s',
         }}

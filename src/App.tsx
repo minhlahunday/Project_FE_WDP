@@ -29,7 +29,7 @@ import RequestManagement from "./components/pages/EVM/RequestManagement";
 import ManufacturerDebtManagement from "./components/pages/EVM/ManufacturerDebtManagement";
 import {ManufacturerDashboard} from "./components/pages/Manufacturer/ManufacturerDashboard";
 import {DealerInfo} from "./components/pages/DealerManager/DealerInfo";
-import {PromotionsDashboard} from "./components/PromotionsDashboard";
+import {PromotionManagementDealer} from "./components/pages/Dealerstaff/PromotionManagement";
 import {SalesManagement} from "./components/pages/Dealerstaff/SalesManagementNew";
 import {QuotationManagement} from "./components/pages/Dealerstaff/QuotationManagement";
 import {CustomerManagement as DealerCustomerManagement} from "./components/pages/Dealerstaff/CustomerManagement";
@@ -88,7 +88,7 @@ function AppContent() {
       <Route path="/portal/deposit" element={<CarDeposit />} />
       <Route path="/portal/staff-management" element={<StaffManagement />} />
       <Route path="/portal/report-dashboard" element={<ReportDashboard />} />
-      <Route path="/portal/promotions" element={<PromotionsDashboard />} />
+      <Route path="/portal/promotions" element={<PromotionManagementDealer />} />
       <Route path="/portal/dealer-info" element={<DealerInfo />} />
       <Route path="/portal/sales" element={<SalesManagement />} />
       <Route path="/portal/quotations" element={<QuotationManagement />} />

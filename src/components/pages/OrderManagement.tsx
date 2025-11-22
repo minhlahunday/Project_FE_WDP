@@ -984,7 +984,7 @@ export const OrderManagement: React.FC = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ p: 3, m: 0 }}>
+      <Box sx={{ pl: 5, pr: 3, py: 3, m: 0 }}>
         {/* Error Display */}
         {error && (
           <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3 }}>
