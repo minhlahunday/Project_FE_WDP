@@ -462,7 +462,7 @@ export const CarProduct: React.FC = () => {
   };
 
   // const handleTestDrive = (vehicleId: string) => {
-  //   navigate(`/portal/test-drive?vehicleId=${vehicleId}`);
+  //   navigate(`/portal/test-drives?vehicleId=${vehicleId}`);
   // };
 
   const handleDeposit = (vehicleId: string) => {

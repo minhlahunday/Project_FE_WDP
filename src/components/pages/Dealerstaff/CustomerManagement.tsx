@@ -187,7 +187,7 @@ export const CustomerManagement: React.FC = () => {
       const vehicle = allVehicles.find((v) => v.id === scheduleForm.vehicleId);
       if (vehicle) {
         navigate(
-          `/portal/test-drive?vehicleId=${scheduleForm.vehicleId}&customerId=${selectedCustomer.id}`
+          `/portal/test-drives?vehicleId=${scheduleForm.vehicleId}&customerId=${selectedCustomer.id}`
         );
       }
     }

@@ -112,7 +112,7 @@ export const VehicleCatalog: React.FC = () => {
 
   const handleTestDrive = (vehicleId: string) => {
     // Use handleNavigation instead of direct navigate
-    handleNavigation(`/portal/test-drive?vehicleId=${vehicleId}`);
+    handleNavigation(`/portal/test-drives?vehicleId=${vehicleId}`);
   };
 
   const handleDeposit = (vehicleId: string) => {

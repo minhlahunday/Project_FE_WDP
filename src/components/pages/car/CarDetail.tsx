@@ -595,7 +595,7 @@ export const CarDetail: React.FC = () => {
                       size="large"
                       icon={<CarOutlined />}
                       onClick={() =>
-                        navigate(`/portal/test-drive?vehicleId=${id}`)
+                        navigate(`/portal/test-drives?vehicleId=${id}`)
                       }
                       style={{
                         borderColor: "rgba(255,255,255,0.4)",
