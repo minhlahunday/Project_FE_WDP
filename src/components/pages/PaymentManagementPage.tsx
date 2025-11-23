@@ -268,7 +268,39 @@ export const PaymentManagementPage: React.FC<
     }
   };
 
-  const getOrderStatusTag = (status: string) => {
+  // Check if order is motorbike with in_stock (should show "Chờ thanh toán" instead of "Chờ cọc")
+  const shouldShowWaitingPayment = (order: Order) => {
+    const hasMotorbike = order.items?.some(
+      (item) => item.category === "motorbike"
+    );
+    const stockSource = (order as any).stock_source || order.stock_source;
+    return (
+      hasMotorbike &&
+      stockSource === "in_stock" &&
+      (order.status === "pending" || order.status === "confirmed")
+    );
+  };
+
+  const getOrderStatusTag = (status: string, order?: Order) => {
+    // For motorbike with in_stock, show "Chờ thanh toán" instead of status-based text
+    if (order && shouldShowWaitingPayment(order)) {
+      return (
+        <Tag
+          style={{
+            background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
+            color: "#fff",
+            border: "none",
+            fontWeight: 600,
+            padding: "4px 12px",
+            borderRadius: "6px",
+            boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
+          }}
+        >
+          Chờ thanh toán
+        </Tag>
+      );
+    }
+
     const statusMap = {
       pending: {
         text: "Chờ xác nhận",
@@ -511,7 +543,8 @@ export const PaymentManagementPage: React.FC<
       key: "status",
       width: 140,
       ellipsis: true,
-      render: (status: string) => getOrderStatusTag(status),
+      render: (status: string, record: Order) =>
+        getOrderStatusTag(status, record),
     },
     {
       title: "Phương thức",
@@ -536,7 +569,9 @@ export const PaymentManagementPage: React.FC<
               onClick={() => handleProcessPayment(record)}
               disabled={
                 record.status === "fullyPayment" ||
-                record.status === "cancelled"
+                record.status === "fully_paid" ||
+                record.status === "cancelled" ||
+                record.status === "canceled"
               }
             />
           </Tooltip>
