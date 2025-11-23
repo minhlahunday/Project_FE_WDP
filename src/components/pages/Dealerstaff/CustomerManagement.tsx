@@ -974,6 +974,7 @@ export const CustomerManagement: React.FC = () => {
                   overflow: "hidden",
                 }}
               >
+                {/* Decorative Elements */}
                 <Box
                   sx={{
                     position: "absolute",
@@ -1016,18 +1017,18 @@ export const CustomerManagement: React.FC = () => {
                     {selectedCustomer.name?.charAt(0).toUpperCase() || "?"}
                   </Avatar>
                   <Box flex={1}>
-                    <Typography variant="h5" fontWeight="600" gutterBottom>
+                    <Typography variant="h4" fontWeight="700" gutterBottom>
                       {selectedCustomer.name || "N/A"}
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
-                      <EmailIcon sx={{ fontSize: 16, opacity: 0.8 }} />
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                      <EmailIcon sx={{ fontSize: 18, opacity: 0.9 }} />
+                      <Typography variant="body1" sx={{ opacity: 0.95, fontWeight: 500 }}>
                         {selectedCustomer.email || "N/A"}
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <PhoneIcon sx={{ fontSize: 16, opacity: 0.8 }} />
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                      <PhoneIcon sx={{ fontSize: 18, opacity: 0.9 }} />
+                      <Typography variant="body1" sx={{ opacity: 0.95, fontWeight: 500 }}>
                         {selectedCustomer.phone || "N/A"}
                       </Typography>
                     </Box>
@@ -1036,294 +1037,389 @@ export const CustomerManagement: React.FC = () => {
               </Box>
 
               {/* Content Section */}
-              <Box sx={{ p: 3 }}>
+              <Box sx={{ p: 4 }}>
                 <Box
                   display="flex"
-                  gap={3}
+                  gap={4}
                   flexDirection={{ xs: "column", lg: "row" }}
                 >
                   {/* Left Column - Personal Info */}
                   <Box flex={{ xs: "1", lg: "0 0 50%" }}>
                     <Card
+                      elevation={2}
                       sx={{
                         height: "100%",
-                        background:
-                          "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-                        border: "none",
-                        boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+                        borderRadius: 3,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        overflow: "hidden",
                       }}
                     >
-                      <CardContent sx={{ p: 3 }}>
-                        <Box display="flex" alignItems="center" gap={1} mb={2}>
+                      <Box
+                        sx={{
+                          bgcolor: "grey.50",
+                          borderBottom: "1px solid",
+                          borderColor: "divider",
+                          p: 2.5,
+                        }}
+                      >
+                        <Box display="flex" alignItems="center" gap={1.5}>
                           <Box
                             sx={{
                               p: 1,
-                              borderRadius: 1.5,
+                              borderRadius: 2,
                               bgcolor: "primary.main",
                               color: "white",
                             }}
                           >
-                            <PersonIcon sx={{ fontSize: 20 }} />
+                            <PersonIcon sx={{ fontSize: 22 }} />
                           </Box>
                           <Typography
-                            variant="subtitle1"
+                            variant="h6"
                             fontWeight="600"
                             color="primary.main"
                           >
                             Thông tin cá nhân
                           </Typography>
                         </Box>
-                        <Stack spacing={2}>
-                          <Box
-                            sx={{
-                              p: 2,
-                              borderRadius: 1.5,
-                              bgcolor: "white",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              gap={1}
-                              mb={0.5}
-                            >
-                              <PersonIcon
-                                sx={{ fontSize: 16, color: "primary.main" }}
-                              />
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                fontWeight="500"
-                                textTransform="uppercase"
-                                letterSpacing={0.5}
-                              >
-                                Họ và tên
-                              </Typography>
-                            </Box>
+                      </Box>
+                      <CardContent sx={{ p: 3 }}>
+                        <Stack spacing={3}>
+                          {/* Name */}
+                          <Box>
                             <Typography
-                              variant="body2"
+                              variant="subtitle2"
+                              color="text.secondary"
+                              sx={{
+                                mb: 1,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                fontSize: "0.75rem",
+                                letterSpacing: "0.5px",
+                              }}
+                            >
+                              Họ và tên
+                            </Typography>
+                            <Typography
+                              variant="body1"
                               fontWeight="500"
                               color="text.primary"
+                              sx={{
+                                p: 1.5,
+                                bgcolor: "grey.50",
+                                borderRadius: 1.5,
+                                border: "1px solid",
+                                borderColor: "grey.200",
+                              }}
                             >
                               {selectedCustomer.name || "Chưa cập nhật"}
                             </Typography>
                           </Box>
 
-                          <Box
-                            sx={{
-                              p: 2,
-                              borderRadius: 1.5,
-                              bgcolor: "white",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              gap={1}
-                              mb={0.5}
+                          {/* Email */}
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary"
+                              sx={{
+                                mb: 1,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                fontSize: "0.75rem",
+                                letterSpacing: "0.5px",
+                              }}
                             >
-                              <EmailIcon
-                                sx={{ fontSize: 16, color: "info.main" }}
-                              />
+                              Email
+                            </Typography>
+                            <Box
+                              sx={{
+                                p: 1.5,
+                                bgcolor: "info.50",
+                                borderRadius: 1.5,
+                                border: "1px solid",
+                                borderColor: "info.200",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <EmailIcon sx={{ fontSize: 18, color: "info.main" }} />
                               <Typography
-                                variant="caption"
-                                color="text.secondary"
+                                variant="body1"
                                 fontWeight="500"
-                                textTransform="uppercase"
-                                letterSpacing={0.5}
+                                color="info.dark"
                               >
-                                Email
+                                {selectedCustomer.email || "Chưa cập nhật"}
                               </Typography>
                             </Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight="500"
-                              color="text.primary"
-                            >
-                              {selectedCustomer.email || "Chưa cập nhật"}
-                            </Typography>
                           </Box>
 
-                          <Box
-                            sx={{
-                              p: 2,
-                              borderRadius: 1.5,
-                              bgcolor: "white",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              gap={1}
-                              mb={0.5}
+                          {/* Phone */}
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary"
+                              sx={{
+                                mb: 1,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                fontSize: "0.75rem",
+                                letterSpacing: "0.5px",
+                              }}
                             >
-                              <PhoneIcon
-                                sx={{ fontSize: 16, color: "success.main" }}
-                              />
+                              Số điện thoại
+                            </Typography>
+                            <Box
+                              sx={{
+                                p: 1.5,
+                                bgcolor: "success.50",
+                                borderRadius: 1.5,
+                                border: "1px solid",
+                                borderColor: "success.200",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <PhoneIcon sx={{ fontSize: 18, color: "success.main" }} />
                               <Typography
-                                variant="caption"
-                                color="text.secondary"
+                                variant="body1"
                                 fontWeight="500"
-                                textTransform="uppercase"
-                                letterSpacing={0.5}
+                                color="success.dark"
                               >
-                                Số điện thoại
+                                {selectedCustomer.phone || "Chưa cập nhật"}
                               </Typography>
                             </Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight="500"
-                              color="text.primary"
-                            >
-                              {selectedCustomer.phone || "Chưa cập nhật"}
-                            </Typography>
                           </Box>
 
-                          <Box
-                            sx={{
-                              p: 2,
-                              borderRadius: 1.5,
-                              bgcolor: "white",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              gap={1}
-                              mb={0.5}
+                          {/* Address */}
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary"
+                              sx={{
+                                mb: 1,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                fontSize: "0.75rem",
+                                letterSpacing: "0.5px",
+                              }}
                             >
-                              <LocationOnIcon
-                                sx={{ fontSize: 16, color: "warning.main" }}
-                              />
+                              Địa chỉ
+                            </Typography>
+                            <Box
+                              sx={{
+                                p: 1.5,
+                                bgcolor: "warning.50",
+                                borderRadius: 1.5,
+                                border: "1px solid",
+                                borderColor: "warning.200",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <LocationOnIcon sx={{ fontSize: 18, color: "warning.main" }} />
                               <Typography
-                                variant="caption"
-                                color="text.secondary"
+                                variant="body1"
                                 fontWeight="500"
-                                textTransform="uppercase"
-                                letterSpacing={0.5}
+                                color="warning.dark"
                               >
-                                Địa chỉ
+                                {selectedCustomer.address || "Chưa cập nhật"}
                               </Typography>
                             </Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight="500"
-                              color="text.primary"
-                            >
-                              {selectedCustomer.address || "Chưa cập nhật"}
-                            </Typography>
                           </Box>
                         </Stack>
                       </CardContent>
                     </Card>
                   </Box>
 
-                  {/* Right Column - Status & Notes */}
+                  {/* Right Column - Status & Actions */}
                   <Box flex={{ xs: "1", lg: "0 0 50%" }}>
-                    <Stack spacing={2}>
+                    <Stack spacing={3}>
                       {/* Status Card */}
                       <Card
+                        elevation={2}
                         sx={{
-                          background:
-                            "linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%)",
+                          borderRadius: 3,
                           border: "1px solid",
-                          borderColor: "success.light",
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                          borderColor: "success.200",
+                          overflow: "hidden",
                         }}
                       >
-                        <CardContent sx={{ p: 2.5 }}>
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            gap={1}
-                            mb={1.5}
-                          >
+                        <Box
+                          sx={{
+                            bgcolor: "success.50",
+                            borderBottom: "1px solid",
+                            borderColor: "success.200",
+                            p: 2.5,
+                          }}
+                        >
+                          <Box display="flex" alignItems="center" gap={1.5}>
                             <Box
                               sx={{
                                 p: 1,
-                                borderRadius: 1.5,
+                                borderRadius: 2,
                                 bgcolor: "success.main",
                                 color: "white",
                               }}
                             >
-                              <VisibilityIcon sx={{ fontSize: 20 }} />
+                              <CheckCircleIcon sx={{ fontSize: 22 }} />
                             </Box>
                             <Typography
-                              variant="subtitle1"
+                              variant="h6"
                               fontWeight="600"
                               color="success.dark"
                             >
                               Trạng thái khách hàng
                             </Typography>
                           </Box>
-                          <Box display="flex" alignItems="center" gap={1}>
+                        </Box>
+                        <CardContent sx={{ p: 3 }}>
+                          <Box display="flex" alignItems="center" gap={2}>
                             <Box
                               sx={{
-                                width: 8,
-                                height: 8,
+                                width: 12,
+                                height: 12,
                                 borderRadius: "50%",
                                 bgcolor: "success.main",
+                                animation: "pulse 2s infinite",
                               }}
                             />
                             <Typography
-                              variant="body2"
-                              fontWeight="500"
+                              variant="body1"
+                              fontWeight="600"
                               color="success.dark"
                             >
                               Đang hoạt động
                             </Typography>
+                            <Chip
+                              label="ACTIVE"
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                              sx={{ ml: "auto", fontWeight: 600 }}
+                            />
                           </Box>
+                        </CardContent>
+                      </Card>
+
+                      {/* Quick Stats */}
+                      <Card
+                        elevation={2}
+                        sx={{
+                          borderRadius: 3,
+                          border: "1px solid",
+                          borderColor: "primary.200",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            bgcolor: "primary.50",
+                            borderBottom: "1px solid",
+                            borderColor: "primary.200",
+                            p: 2.5,
+                          }}
+                        >
+                          <Box display="flex" alignItems="center" gap={1.5}>
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: 2,
+                                bgcolor: "primary.main",
+                                color: "white",
+                              }}
+                            >
+                              <CreditCardIcon sx={{ fontSize: 22 }} />
+                            </Box>
+                            <Typography
+                              variant="h6"
+                              fontWeight="600"
+                              color="primary.dark"
+                            >
+                              Thống kê nhanh
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <CardContent sx={{ p: 3 }}>
+                          <Stack direction="row" spacing={3} justifyContent="space-around">
+                            <Box textAlign="center">
+                              <Typography variant="h6" color="primary.main" fontWeight="700">
+                                0
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Đơn hàng
+                              </Typography>
+                            </Box>
+                            <Box textAlign="center">
+                              <Typography variant="h6" color="success.main" fontWeight="700">
+                                0
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Thanh toán
+                              </Typography>
+                            </Box>
+                            <Box textAlign="center">
+                              <Typography variant="h6" color="warning.main" fontWeight="700">
+                                0
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Lái thử
+                              </Typography>
+                            </Box>
+                          </Stack>
                         </CardContent>
                       </Card>
 
                       {/* Notes Card */}
                       <Card
+                        elevation={2}
                         sx={{
-                          background:
-                            "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+                          borderRadius: 3,
                           border: "1px solid",
                           borderColor: "grey.300",
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                          overflow: "hidden",
                           flex: 1,
                         }}
                       >
-                        <CardContent sx={{ p: 2.5 }}>
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            gap={1}
-                            mb={1.5}
-                          >
+                        <Box
+                          sx={{
+                            bgcolor: "grey.100",
+                            borderBottom: "1px solid",
+                            borderColor: "grey.300",
+                            p: 2.5,
+                          }}
+                        >
+                          <Box display="flex" alignItems="center" gap={1.5}>
                             <Box
                               sx={{
                                 p: 1,
-                                borderRadius: 1.5,
-                                bgcolor: "primary.main",
+                                borderRadius: 2,
+                                bgcolor: "grey.600",
                                 color: "white",
                               }}
                             >
-                              <EditIcon sx={{ fontSize: 20 }} />
+                              <MessageIcon sx={{ fontSize: 22 }} />
                             </Box>
                             <Typography
-                              variant="subtitle1"
+                              variant="h6"
                               fontWeight="600"
-                              color="primary.main"
+                              color="text.primary"
                             >
                               Ghi chú
                             </Typography>
                           </Box>
+                        </Box>
+                        <CardContent sx={{ p: 3 }}>
                           <Box
                             sx={{
-                              p: 2,
-                              borderRadius: 1.5,
-                              bgcolor: "white",
-                              border: "1px solid",
-                              borderColor: "grey.200",
-                              minHeight: 100,
+                              p: 3,
+                              borderRadius: 2,
+                              bgcolor: "grey.50",
+                              border: "1px dashed",
+                              borderColor: "grey.300",
+                              minHeight: 80,
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -1333,56 +1429,11 @@ export const CustomerManagement: React.FC = () => {
                               variant="body2"
                               color="text.secondary"
                               fontStyle="italic"
+                              textAlign="center"
                             >
                               Chưa có ghi chú nào cho khách hàng này
                             </Typography>
                           </Box>
-                        </CardContent>
-                      </Card>
-
-                      {/* Quick Actions */}
-                      <Card
-                        sx={{
-                          background:
-                            "linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)",
-                          border: "1px solid",
-                          borderColor: "warning.light",
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                        }}
-                      >
-                        <CardContent sx={{ p: 2.5 }}>
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            gap={1}
-                            mb={1.5}
-                          >
-                            <Box
-                              sx={{
-                                p: 1,
-                                borderRadius: 1.5,
-                                bgcolor: "warning.main",
-                                color: "white",
-                              }}
-                            >
-                              <CreditCardIcon sx={{ fontSize: 20 }} />
-                            </Box>
-                            <Typography
-                              variant="subtitle1"
-                              fontWeight="600"
-                              color="warning.dark"
-                            >
-                              Thao tác nhanh
-                            </Typography>
-                          </Box>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            mb={1}
-                          >
-                            Sử dụng các nút bên dưới để thực hiện các thao tác
-                            nhanh
-                          </Typography>
                         </CardContent>
                       </Card>
                     </Stack>
@@ -1403,9 +1454,9 @@ export const CustomerManagement: React.FC = () => {
             justifyContent: "space-between",
           }}
         >
-          <Box display="flex" gap={1}>
+          <Box display="flex" gap={2}>
             <Button
-              variant="outlined"
+              variant="contained"
               startIcon={<EditIcon />}
               onClick={() => {
                 if (selectedCustomer) {
@@ -1413,11 +1464,15 @@ export const CustomerManagement: React.FC = () => {
                 }
               }}
               sx={{
-                borderColor: "primary.main",
-                color: "primary.main",
+                bgcolor: "primary.main",
+                color: "white",
+                fontWeight: 600,
+                px: 3,
+                py: 1.2,
+                borderRadius: 2,
+                textTransform: 'none',
                 "&:hover": {
-                  bgcolor: "primary.light",
-                  color: "white",
+                  bgcolor: "primary.dark",
                 },
               }}
             >
@@ -1437,9 +1492,16 @@ export const CustomerManagement: React.FC = () => {
               sx={{
                 borderColor: "success.main",
                 color: "success.main",
+                fontWeight: 600,
+                px: 3,
+                py: 1.2,
+                borderRadius: 2,
+                textTransform: 'none',
+                borderWidth: 2,
                 "&:hover": {
                   bgcolor: "success.light",
                   color: "white",
+                  borderWidth: 2,
                 },
               }}
             >
@@ -1448,10 +1510,19 @@ export const CustomerManagement: React.FC = () => {
           </Box>
           <Button
             onClick={() => setSelectedCustomer(null)}
-            variant="contained"
+            variant="outlined"
             sx={{
-              bgcolor: "grey.600",
-              "&:hover": { bgcolor: "grey.700" },
+              color: 'text.secondary',
+              borderColor: 'grey.400',
+              fontWeight: 600,
+              px: 4,
+              py: 1.2,
+              borderRadius: 2,
+              textTransform: 'none',
+              '&:hover': { 
+                bgcolor: 'grey.100',
+                borderColor: 'grey.500'
+              }
             }}
           >
             Đóng

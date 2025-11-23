@@ -207,6 +207,9 @@ const ManufacturerDebtManagement: React.FC = () => {
         return <Tag color="orange">Thanh toán một phần</Tag>;
       case "settled":
         return <Tag color="green">Đã thanh toán</Tag>;
+      case "canceled":
+      case "cancelled":
+        return <Tag color="gray">Đã hủy</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }

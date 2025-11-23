@@ -40,6 +40,7 @@ import {
 import {LocalizationProvider, DateTimePicker} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {message} from "antd";
+import Swal from "sweetalert2";
 
 interface TestDrive {
   _id: string;
@@ -771,208 +772,361 @@ const TestDriveManagementPage: React.FC = () => {
         <Divider />
         <DialogContent sx={{ p: 3, pt: 3 }}>
           {selectedDrive && (
-            <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
-              {/* Left Column */}
-              <Box flex={{ xs: '1 1 100%', md: '1 1 50%' }}>
-                <Stack spacing={3}>
-                  {/* Customer Info */}
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
-                      Khách hàng
+            <Box sx={{ maxWidth: '100%' }}>
+              <Box display="flex" flexDirection={{ xs: 'column', lg: 'row' }} gap={4}>
+                {/* Left Column - Customer & Vehicle Info */}
+                <Box flex="1">
+                  <Card elevation={1} sx={{ p: 3, height: 'fit-content' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, color: 'primary.main' }}>
+                      Thông tin lịch hẹn
                     </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
-                      {typeof selectedDrive.customer_id === "object"
-                        ? selectedDrive.customer_id.full_name
-                        : selectedDrive.customer_id}
-                    </Typography>
-                  </Box>
-
-                  {/* Vehicle Info */}
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
-                      Xe
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
-                      {typeof selectedDrive.vehicle_id === "object"
-                        ? selectedDrive.vehicle_id.name
-                        : selectedDrive.vehicle_id}
-                    </Typography>
-                  </Box>
-
-                  {/* Date Info */}
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
-                      Ngày
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
-                      {dayjs(selectedDrive.schedule_at).format("DD/MM/YYYY HH:mm")}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
-
-              {/* Right Column */}
-              <Box flex={{ xs: '1 1 100%', md: '1 1 50%' }}>
-                <Stack spacing={3}>
-                  {/* Notes */}
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}>
-                      Ghi chú
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
-                      {selectedDrive.notes || "-"}
-                    </Typography>
-                  </Box>
-
-                  {/* Status */}
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
-                      Trạng thái
-                    </Typography>
-                    <FormControl fullWidth>
-                      <Select
-                        value={selectedDrive.status}
-                        onChange={(e) =>
-                          handleUpdateStatus(
-                            selectedDrive,
-                            e.target.value as TestDrive["status"]
-                          )
-                        }
-                        sx={{
+                    <Stack spacing={3}>
+                      {/* Customer Info */}
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ 
+                          mb: 1, 
+                          fontWeight: 600, 
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Khách hàng
+                        </Typography>
+                        <Box sx={{ 
+                          p: 2, 
+                          backgroundColor: 'grey.50', 
                           borderRadius: 1,
-                          height: '40px',
-                        }}
-                        MenuProps={{
-                          PaperProps: {
-                            style: {
-                              maxHeight: 300,
-                              zIndex: 9999,
-                            },
-                          },
-                          style: {
-                            zIndex: 9999,
-                          },
-                          disableScrollLock: true,
-                        }}
-                      >
-                        {Object.keys(statusLabels).map((key) => (
-                          <MenuItem key={key} value={key}>
-                            {statusLabels[key as keyof typeof statusLabels]}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
+                          border: '1px solid',
+                          borderColor: 'grey.200'
+                        }}>
+                          <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
+                            {typeof selectedDrive.customer_id === "object"
+                              ? selectedDrive.customer_id.full_name
+                              : selectedDrive.customer_id}
+                          </Typography>
+                          {typeof selectedDrive.customer_id === "object" && selectedDrive.customer_id.phone && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                              {selectedDrive.customer_id.phone}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
 
-                  {/* Assigned Staff */}
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600, fontSize: '0.875rem' }}>
-                      Nhân viên phụ trách
+                      {/* Vehicle Info */}
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ 
+                          mb: 1, 
+                          fontWeight: 600, 
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Xe thử nghiệm
+                        </Typography>
+                        <Box sx={{ 
+                          p: 2, 
+                          backgroundColor: 'primary.50', 
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: 'primary.200'
+                        }}>
+                          <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem', color: 'primary.dark' }}>
+                            {typeof selectedDrive.vehicle_id === "object"
+                              ? `${selectedDrive.vehicle_id.name} ${selectedDrive.vehicle_id.model || ''}`.trim()
+                              : selectedDrive.vehicle_id}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Date Info */}
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ 
+                          mb: 1, 
+                          fontWeight: 600, 
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Thời gian lái thử
+                        </Typography>
+                        <Box sx={{ 
+                          p: 2, 
+                          backgroundColor: 'warning.50', 
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: 'warning.200',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1
+                        }}>
+                          <CalendarIcon sx={{ color: 'warning.main', fontSize: '1.2rem' }} />
+                          <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem', color: 'warning.dark' }}>
+                            {dayjs(selectedDrive.schedule_at).format("DD/MM/YYYY HH:mm")}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Stack>
+                  </Card>
+                </Box>
+
+                {/* Right Column - Status & Staff */}
+                <Box flex="1">
+                  <Card elevation={1} sx={{ p: 3, height: 'fit-content' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, color: 'success.main' }}>
+                      Quản lý & Ghi chú
                     </Typography>
-                    {user?.role === "dealer_manager" ? (
-                      <Autocomplete
-                        options={staffs}
-                        loading={assigning}
-                        getOptionLabel={(option: any) => option.full_name}
-                        slotProps={{
-                          popper: {
-                            sx: {zIndex: 9999999999},
-                          },
-                        }}
-                        isOptionEqualToValue={(option, value) =>
-                          option._id === value._id
-                        }
-                        value={(() => {
-                          if (typeof selectedDrive.assigned_staff_id === "object") {
-                            const obj = selectedDrive.assigned_staff_id;
-                            const normalized: Staff = {
-                              _id: obj._id || (obj as any).id || "",
-                              full_name: obj.full_name || "Chưa gán",
-                              email: obj.email,
-                            };
-                            return (
-                              staffs.find((s) => s._id === normalized._id) ||
-                              normalized
-                            );
-                          }
-                          const id = selectedDrive.assigned_staff_id;
-                          if (!id) return null;
-                          return staffs.find((s) => s._id === id) || null;
-                        })()}
-                        onChange={(_, value) =>
-                          value && handleAssignStaff(selectedDrive, value)
-                        }
-                        renderInput={(params) => (
-                          <TextField 
-                            {...params} 
-                            placeholder="Chọn nhân viên"
+                    <Stack spacing={3}>
+                      {/* Notes */}
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ 
+                          mb: 1, 
+                          fontWeight: 600, 
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Ghi chú
+                        </Typography>
+                        <Box sx={{ 
+                          p: 2, 
+                          backgroundColor: 'grey.50', 
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: 'grey.200',
+                          minHeight: '60px'
+                        }}>
+                          <Typography variant="body1" sx={{ 
+                            fontStyle: selectedDrive.notes ? 'normal' : 'italic',
+                            color: selectedDrive.notes ? 'text.primary' : 'text.secondary'
+                          }}>
+                            {selectedDrive.notes || "Chưa có ghi chú"}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Status */}
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ 
+                          mb: 1.5, 
+                          fontWeight: 600, 
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Trạng thái
+                        </Typography>
+                        <FormControl fullWidth>
+                          <Select
+                            value={selectedDrive.status}
+                            onChange={(e) =>
+                              handleUpdateStatus(
+                                selectedDrive,
+                                e.target.value as TestDrive["status"]
+                              )
+                            }
                             sx={{
-                              '& .MuiOutlinedInput-root': {
-                                borderRadius: 1,
-                                height: '40px',
+                              borderRadius: 2,
+                              height: '48px',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderWidth: 2,
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'primary.main',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'primary.main',
                               }
                             }}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  maxHeight: 300,
+                                  zIndex: 9999,
+                                  borderRadius: 12,
+                                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                                },
+                              },
+                              style: {
+                                zIndex: 9999,
+                              },
+                              disableScrollLock: true,
+                            }}
+                          >
+                            {Object.keys(statusLabels).map((key) => (
+                              <MenuItem 
+                                key={key} 
+                                value={key}
+                                sx={{
+                                  py: 1.5,
+                                  '&:hover': {
+                                    backgroundColor: 'primary.50',
+                                  }
+                                }}
+                              >
+                                <Chip
+                                  label={statusLabels[key as keyof typeof statusLabels]}
+                                  color={statusColors[key as keyof typeof statusColors] as any}
+                                  size="small"
+                                  sx={{ minWidth: '80px' }}
+                                />
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Box>
+
+                      {/* Assigned Staff */}
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ 
+                          mb: 1.5, 
+                          fontWeight: 600, 
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Nhân viên phụ trách
+                        </Typography>
+                        {user?.role === "dealer_manager" ? (
+                          <Autocomplete
+                            options={staffs}
+                            loading={assigning}
+                            getOptionLabel={(option: any) => option.full_name}
+                            slotProps={{
+                              popper: {
+                                sx: {zIndex: 9999999999},
+                              },
+                            }}
+                            isOptionEqualToValue={(option, value) =>
+                              option._id === value._id
+                            }
+                            value={(() => {
+                              if (typeof selectedDrive.assigned_staff_id === "object") {
+                                const obj = selectedDrive.assigned_staff_id;
+                                const normalized: Staff = {
+                                  _id: obj._id || (obj as any).id || "",
+                                  full_name: obj.full_name || "Chưa gán",
+                                  email: obj.email,
+                                };
+                                return (
+                                  staffs.find((s) => s._id === normalized._id) ||
+                                  normalized
+                                );
+                              }
+                              const id = selectedDrive.assigned_staff_id;
+                              if (!id) return null;
+                              return staffs.find((s) => s._id === id) || null;
+                            })()}
+                            onChange={(_, value) =>
+                              value && handleAssignStaff(selectedDrive, value)
+                            }
+                            renderInput={(params) => (
+                              <TextField 
+                                {...params} 
+                                placeholder="Chọn nhân viên"
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    height: '48px',
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      borderWidth: 2,
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: 'primary.main',
+                                    },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: 'primary.main',
+                                    }
+                                  }
+                                }}
+                              />
+                            )}
                           />
+                        ) : (
+                          <Box sx={{ 
+                            p: 2, 
+                            backgroundColor: 'success.50', 
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'success.200'
+                          }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem', color: 'success.dark' }}>
+                              {typeof selectedDrive.assigned_staff_id === "object"
+                                ? selectedDrive.assigned_staff_id.full_name
+                                : selectedDrive.assigned_staff_id || "Chưa phân công"}
+                            </Typography>
+                          </Box>
                         )}
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1rem' }}>
-                        {typeof selectedDrive.assigned_staff_id === "object"
-                          ? selectedDrive.assigned_staff_id.full_name
-                          : selectedDrive.assigned_staff_id || "-"}
-                      </Typography>
-                    )}
-                  </Box>
-                </Stack>
+                      </Box>
+                    </Stack>
+                  </Card>
+                </Box>
               </Box>
             </Box>
           )}
         </DialogContent>
-        <Divider />
-        <DialogActions sx={{ p: 3, pt: 2 }}>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2.5,
+            backgroundColor: 'grey.50',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            gap: 2
+          }}
+        >
           {selectedDrive && (
-            <Stack direction="row" spacing={2} sx={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button
-                color="error"
-                variant="outlined"
-                onClick={async () => {
-                  try {
-                    await testDriveService.deleteTestDrive(selectedDrive._id);
-                    setOpenDetail(false);
-                    setSelectedDrive(null);
-                    fetchList(currentPage);
-                    message.success("Xóa lịch hẹn thành công");
-                  } catch (error) {
-                    console.error(error);
-                    message.error("Xóa lịch hẹn thất bại");
-                  }
-                }}
-                sx={{
-                  borderRadius: 1,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 4,
-                  py: 1,
-                  borderWidth: 1.5,
-                }}
-              >
-                XÓA LỊCH HẸN
-              </Button>
+            <>
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <Chip 
+                  label={`ID: ${selectedDrive._id}`} 
+                  size="small" 
+                  variant="outlined"
+                  sx={{ fontFamily: 'monospace' }}
+                />
+              </Box>
               <Button 
-                onClick={() => setOpenDetail(false)}
-                variant="text"
-                sx={{
-                  borderRadius: 1,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 4,
-                  py: 1,
-                  color: 'primary.main',
+                onClick={() => setOpenDetail(false)} 
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { backgroundColor: 'grey.100' }
                 }}
               >
-                ĐÓNG
+                Đóng
               </Button>
-            </Stack>
+              <Button
+                onClick={() => {
+                  Swal.fire({
+                    title: 'Xác nhận xóa',
+                    text: 'Bạn có chắc muốn xóa lịch lái thử này?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy'
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      // Handle delete logic here
+                      setOpenDetail(false);
+                      Swal.fire('Đã xóa!', 'Lịch lái thử đã được xóa.', 'success');
+                    }
+                  });
+                }}
+                color="error"
+                sx={{ 
+                  '&:hover': { backgroundColor: 'error.dark' }
+                }}
+              >
+                Xóa
+              </Button>
+            </>
           )}
         </DialogActions>
       </Dialog>

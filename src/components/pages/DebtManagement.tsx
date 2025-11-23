@@ -869,7 +869,7 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
             title={
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900 mb-0">
-                  Chi tiết công nợ
+                  Thông tin khách hàng
                 </h3>
                 <button
                   onClick={() => setDetailModalOpen(false)}
@@ -907,11 +907,47 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
               style={{padding: "0 16px 0 8px"}}
             >
               <Row gutter={[24, 24]}>
+                {/* Partner Information */}
+                <Col xs={24} lg={8}>
+                  <div className="mb-6">
+                    {/* <AntTypography.Title level={5}>Thông tin đối tác</AntTypography.Title> */}
+                    <Descriptions column={1} size="small">
+                      {activeTab === "customers" &&
+                        (selectedDebt.customer_id || selectedCustomer) && (
+                          <>
+                            <Descriptions.Item label="Khách hàng">
+                              {selectedCustomer?.name ||
+                                getCustomerName(selectedDebt)}
+                            </Descriptions.Item>
+                            {(selectedCustomer?.email ||
+                              getCustomerEmail(selectedDebt)) && (
+                              <Descriptions.Item label="Email">
+                                {selectedCustomer?.email ||
+                                  getCustomerEmail(selectedDebt)}
+                              </Descriptions.Item>
+                            )}
+                            {(selectedCustomer?.phone ||
+                              getCustomerPhone(selectedDebt)) && (
+                              <Descriptions.Item label="Số điện thoại">
+                                {selectedCustomer?.phone ||
+                                  getCustomerPhone(selectedDebt)}
+                              </Descriptions.Item>
+                            )}
+                          </>
+                        )}
+                      {/* <Descriptions.Item label="Đại lý ID">
+                        <span className="font-mono text-blue-600">
+                          {typeof selectedDebt.dealership_id === 'object' ? selectedDebt.dealership_id._id : selectedDebt.dealership_id}
+                        </span>
+                      </Descriptions.Item> */}
+                    </Descriptions>
+                  </div>
+                </Col>
                 {/* Debt Information */}
                 <Col xs={24} lg={24}>
                   <div className="mb-6">
                     <AntTypography.Title level={5}>
-                      Thông tin công nợ
+                      Chi tiết công nợ
                     </AntTypography.Title>
                     <Descriptions
                       column={2}
@@ -1179,42 +1215,7 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                     )}
                 </Col>
 
-                {/* Partner Information */}
-                <Col xs={24} lg={8}>
-                  <div className="mb-6">
-                    {/* <AntTypography.Title level={5}>Thông tin đối tác</AntTypography.Title> */}
-                    <Descriptions column={1} size="small">
-                      {activeTab === "customers" &&
-                        (selectedDebt.customer_id || selectedCustomer) && (
-                          <>
-                            <Descriptions.Item label="Khách hàng">
-                              {selectedCustomer?.name ||
-                                getCustomerName(selectedDebt)}
-                            </Descriptions.Item>
-                            {(selectedCustomer?.email ||
-                              getCustomerEmail(selectedDebt)) && (
-                              <Descriptions.Item label="Email">
-                                {selectedCustomer?.email ||
-                                  getCustomerEmail(selectedDebt)}
-                              </Descriptions.Item>
-                            )}
-                            {(selectedCustomer?.phone ||
-                              getCustomerPhone(selectedDebt)) && (
-                              <Descriptions.Item label="Số điện thoại">
-                                {selectedCustomer?.phone ||
-                                  getCustomerPhone(selectedDebt)}
-                              </Descriptions.Item>
-                            )}
-                          </>
-                        )}
-                      {/* <Descriptions.Item label="Đại lý ID">
-                        <span className="font-mono text-blue-600">
-                          {typeof selectedDebt.dealership_id === 'object' ? selectedDebt.dealership_id._id : selectedDebt.dealership_id}
-                        </span>
-                      </Descriptions.Item> */}
-                    </Descriptions>
-                  </div>
-                </Col>
+                
               </Row>
             </div>
           </Modal>

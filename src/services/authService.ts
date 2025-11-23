@@ -569,9 +569,19 @@ export const authService = {
     } catch (error: unknown) {
       console.error('❌ Error getting user by ID:', error);
       
-      // Log chi tiết lỗi từ backend
+      // Handle specific error types
       if (error && typeof error === 'object') {
         const errorObj = error as Record<string, unknown>;
+        
+        // Check for 403 Forbidden error
+        if (errorObj.status === 403 || (errorObj.response as any)?.status === 403) {
+          console.warn('🔐 Access denied - User does not have permission to view this user');
+          return {
+            success: false,
+            message: 'Không có quyền truy cập thông tin người dùng này'
+          };
+        }
+        
         console.error('❌ Error details:', {
           message: errorObj.message,
           status: errorObj.status,

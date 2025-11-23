@@ -41,6 +41,7 @@ import ContractUpload from "./ContractUpload";
 import DepositPayment from "./DepositPayment";
 import ContractViewer from "./ContractViewer";
 import CreateOrderRequestModal from "./CreateOrderRequestModal";
+import Swal from "sweetalert2";
 
 interface OrderDetailModalProps {
   visible: boolean;
@@ -390,7 +391,13 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
 
     // Validate required fields
     if (!deliveryFormData.recipient_name || !deliveryFormData.recipient_phone) {
-      alert('Vui lòng nhập đầy đủ thông tin người nhận');
+      await Swal.fire({
+        title: "Thiếu thông tin",
+        text: "Vui lòng nhập đầy đủ thông tin người nhận",
+        icon: "warning",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#faad14",
+      });
       return;
     }
 
@@ -414,16 +421,34 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       const response = await orderService.deliverOrder(orderId, deliveryData);
       
       if (response.success) {
-        alert('Giao xe thành công!');
+        await Swal.fire({
+          title: "Thành công!",
+          text: "Đã giao xe cho khách hàng thành công.",
+          icon: "success",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#10b981",
+        });
         handleCloseDeliveryModal();
         handleWorkflowSuccess(); // Reload order
       } else {
-        alert(response.message || 'Có lỗi xảy ra khi giao xe');
+        await Swal.fire({
+          title: "Lỗi!",
+          text: response.message || 'Có lỗi xảy ra khi giao xe',
+          icon: "error",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#ef4444",
+        });
       }
     } catch (err: any) {
       console.error('Error delivering order:', err);
       const errorMessage = err?.response?.data?.message || err?.message || 'Lỗi kết nối API';
-      alert(errorMessage);
+      await Swal.fire({
+        title: "Lỗi!",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#ef4444",
+      });
     } finally {
       setDeliveryLoading(false);
     }
@@ -453,7 +478,20 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
         const hoursSinceDelivery = now.diff(deliveryDateTime, 'hour');
         const remainingHours = 24 - hoursSinceDelivery;
         
-        alert(`Chưa thể hoàn tất đơn hàng. Đơn hàng chỉ có thể hoàn tất sau ít nhất 1 ngày kể từ khi giao xe.\n\nNgày giao xe: ${deliveryDateTime.format('DD/MM/YYYY HH:mm')}\nThời gian đã trôi qua: ${hoursSinceDelivery} giờ\nCòn lại: ${remainingHours} giờ`);
+        await Swal.fire({
+          title: "Chưa thể hoàn tất",
+          html: `
+            <p>Đơn hàng chỉ có thể hoàn tất sau ít nhất <strong>1 ngày</strong> kể từ khi giao xe.</p>
+            <p style="margin-top: 10px;">
+              <strong>Ngày giao xe:</strong> ${deliveryDateTime.format('DD/MM/YYYY HH:mm')}<br/>
+              <strong>Thời gian đã trôi qua:</strong> ${hoursSinceDelivery} giờ<br/>
+              <strong>Còn lại:</strong> ${remainingHours} giờ
+            </p>
+          `,
+          icon: "warning",
+          confirmButtonText: "Đã hiểu",
+          confirmButtonColor: "#3b82f6",
+        });
         return;
       }
     }
@@ -465,16 +503,34 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       });
       
       if (response.success) {
-        alert('Hoàn tất đơn hàng thành công!');
+        await Swal.fire({
+          title: "Thành công!",
+          text: "Đã hoàn tất đơn hàng thành công.",
+          icon: "success",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#10b981",
+        });
         handleCloseCompleteModal();
         handleWorkflowSuccess(); // Reload order
       } else {
-        alert(response.message || 'Có lỗi xảy ra khi hoàn tất đơn hàng');
+        await Swal.fire({
+          title: "Lỗi!",
+          text: response.message || 'Có lỗi xảy ra khi hoàn tất đơn hàng',
+          icon: "error",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#ef4444",
+        });
       }
     } catch (err: any) {
       console.error('Error completing order:', err);
       const errorMessage = err?.response?.data?.message || err?.message || 'Lỗi kết nối API';
-      alert(errorMessage);
+      await Swal.fire({
+        title: "Lỗi!",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#ef4444",
+      });
     } finally {
       setCompleteLoading(false);
     }

@@ -84,6 +84,7 @@ export default function PaymentHistoryModal({
       completed: 'Hoàn thành',
       closed: 'Đã đóng',
       cancelled: 'Đã hủy',
+      canceled: 'Đã hủy',
     };
     return statusMap[status] || status;
   };
@@ -213,6 +214,17 @@ export default function PaymentHistoryModal({
         display: 'inline-block'
       },
       cancelled: {
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
+        fontSize: '12px',
+        display: 'inline-block'
+      },
+      canceled: {
         background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
         color: '#fff',
         border: 'none',

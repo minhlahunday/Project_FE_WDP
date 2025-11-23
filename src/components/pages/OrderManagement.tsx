@@ -33,6 +33,12 @@ import {
   CheckCircle as CheckCircleIcon,
   LocalShipping as LocalShippingIcon,
 } from "@mui/icons-material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 import {DateRangePicker, DateRange} from "@mui/x-date-pickers-pro";
@@ -84,6 +90,21 @@ export const OrderManagement: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedOrderForEdit, setSelectedOrderForEdit] =
     useState<Order | null>(null);
+
+  // Delivery Modal
+  const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState<Order | null>(null);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [deliveryFormData, setDeliveryFormData] = useState({
+    delivery_person_name: '',
+    delivery_person_phone: '',
+    delivery_person_id_card: '',
+    recipient_name: '',
+    recipient_phone: '',
+    recipient_relationship: '',
+    actual_delivery_date: '',
+    delivery_notes: ''
+  });
 
   const statusOptions = [
     {value: "pending", label: "Chờ cọc", color: "warning"},
@@ -303,9 +324,25 @@ export const OrderManagement: React.FC = () => {
                         `⚠️ Failed to fetch user ${id}:`,
                         userResponse.message
                       );
+                      // Set fallback data for failed user fetch
+                      salespersonMap.set(id, {
+                        _id: id,
+                        full_name: "User không xác định",
+                        email: "",
+                      });
                     }
-                  } catch (error) {
+                  } catch (error: any) {
                     console.warn(`⚠️ Failed to fetch user ${id}:`, error);
+                    // Handle 403 Forbidden error specifically
+                    if (error.status === 403 || error.response?.status === 403) {
+                      console.warn(`🔐 Access denied for user ${id}, using fallback data`);
+                    }
+                    // Set fallback data for failed user fetch
+                    salespersonMap.set(id, {
+                      _id: id,
+                      full_name: "User không có quyền truy cập",
+                      email: "",
+                    });
                   }
                 }
               );
@@ -668,9 +705,13 @@ export const OrderManagement: React.FC = () => {
 
   const handleDeleteOrder = async (order: Order) => {
     if (!user || user.role !== "dealer_manager") {
-      setSnackbarMessage("Chỉ dealer manager mới có quyền xóa đơn hàng");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
+      Swal.fire({
+        title: 'Không có quyền',
+        text: 'Chỉ dealer manager mới có quyền xóa đơn hàng',
+        icon: 'warning',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#f59e0b'
+      });
       return;
     }
 
@@ -838,7 +879,7 @@ export const OrderManagement: React.FC = () => {
 
       await Swal.fire({
         title: "Lỗi!",
-        text: error.response?.data?.message || "Có lỗi xảy ra khi hủy đơn hàng",
+        text: error.response?.data?.message || "Không thể hủy đơn hàng. Có thể đơn hàng đã được xử lý hoặc bạn không có quyền thực hiện thao tác này",
         icon: "error",
         confirmButtonText: "OK",
         confirmButtonColor: "#ef4444",
@@ -872,13 +913,13 @@ export const OrderManagement: React.FC = () => {
       // Call API to mark vehicle ready
       await orderService.markVehicleReady(order._id);
 
-      // Show success message
-      await Swal.fire({
-        title: "Thành công!",
-        text: "Đã đánh dấu xe sẵn sàng. Khách hàng có thể thanh toán tiếp.",
-        icon: "success",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#10b981",
+      // Show success message with SweetAlert
+      Swal.fire({
+        title: 'Thành công!',
+        text: 'Đã đánh dấu xe sẵn sàng. Khách hàng có thể thanh toán tiếp.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#10b981'
       });
 
       // Reload orders to show updated status
@@ -894,143 +935,115 @@ export const OrderManagement: React.FC = () => {
     } catch (error: any) {
       console.error("Error marking order as ready:", error);
 
-      // Show error message
-      await Swal.fire({
-        title: "Lỗi!",
-        text:
-          error.response?.data?.message ||
-          "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng",
-        icon: "error",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#ef4444",
+      // Show more specific error message based on response
+      let errorMessage = "Không thể đánh dấu xe sẵn sàng";
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 400) {
+        errorMessage = "Xe chưa được giao về hoặc chưa đủ điều kiện để đánh dấu sẵn sàng";
+      } else if (error.response?.status === 403) {
+        errorMessage = "Bạn không có quyền thực hiện thao tác này";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Không tìm thấy đơn hàng";
+      } else if (error.response?.status >= 500) {
+        errorMessage = "Lỗi hệ thống, vui lòng liên hệ admin hoặc thử lại sau";
+      } else {
+        errorMessage = "Xe chưa được giao về hoặc hãng chưa phản hồi, vui lòng thử lại sau";
+      }
+
+      Swal.fire({
+        title: 'Không thể đánh dấu xe sẵn sàng',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ef4444'
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeliverOrder = async (order: Order) => {
+  const handleDeliverOrder = (order: Order) => {
     // Get customer info for default values
     const defaultRecipientName = order.customer?.full_name || "";
     const defaultRecipientPhone = order.customer?.phone || "";
-
-    // Create HTML form for delivery info
-    const {value: formValues} = await Swal.fire({
-      title: "Giao xe cho khách hàng",
-      html: `
-        <div style="text-align: left;">
-          <p style="font-weight: bold; margin-bottom: 10px;">Thông tin người giao xe </p>
-          <input id="delivery_person_name" class="swal2-input" placeholder="Họ tên người giao">
-          <input id="delivery_person_phone" class="swal2-input" placeholder="Số điện thoại người giao">
-          <input id="delivery_person_id_card" class="swal2-input" placeholder="CMND/CCCD người giao">
-          
-          <p style="font-weight: bold; margin-top: 20px; margin-bottom: 10px;">Thông tin người nhận xe </p>
-          <input id="recipient_name" class="swal2-input" placeholder="Họ tên người nhận *" value="${defaultRecipientName}" required>
-          <input id="recipient_phone" class="swal2-input" placeholder="Số điện thoại người nhận *" value="${defaultRecipientPhone}" required>
-          <input id="recipient_relationship" class="swal2-input" placeholder="Mối quan hệ (VD: Chính chủ)" value="Chính chủ">
-          
-          <p style="font-weight: bold; margin-top: 20px; margin-bottom: 10px;">Ghi chú</p>
-          <input id="actual_delivery_date" class="swal2-input" type="datetime-local" placeholder="Ngày giờ giao xe">
-          <textarea id="delivery_notes" class="swal2-textarea" placeholder="Ghi chú giao xe (tùy chọn)" style="height: 80px;"></textarea>
-        </div>
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: "Xác nhận giao xe",
-      cancelButtonText: "Hủy",
-      confirmButtonColor: "#3b82f6",
-      cancelButtonColor: "#6b7280",
-      reverseButtons: true,
-      preConfirm: () => {
-        const recipientName = (
-          document.getElementById("recipient_name") as HTMLInputElement
-        )?.value;
-        const recipientPhone = (
-          document.getElementById("recipient_phone") as HTMLInputElement
-        )?.value;
-
-        if (!recipientName || !recipientPhone) {
-          Swal.showValidationMessage(
-            "Vui lòng nhập đầy đủ thông tin người nhận (Họ tên và Số điện thoại)"
-          );
-          return false;
-        }
-
-        return {
-          delivery_person_name:
-            (
-              document.getElementById(
-                "delivery_person_name"
-              ) as HTMLInputElement
-            )?.value || undefined,
-          delivery_person_phone:
-            (
-              document.getElementById(
-                "delivery_person_phone"
-              ) as HTMLInputElement
-            )?.value || undefined,
-          delivery_person_id_card:
-            (
-              document.getElementById(
-                "delivery_person_id_card"
-              ) as HTMLInputElement
-            )?.value || undefined,
-          recipient_name: recipientName,
-          recipient_phone: recipientPhone,
-          recipient_relationship:
-            (
-              document.getElementById(
-                "recipient_relationship"
-              ) as HTMLInputElement
-            )?.value || "Chính chủ",
-          actual_delivery_date:
-            (
-              document.getElementById(
-                "actual_delivery_date"
-              ) as HTMLInputElement
-            )?.value || undefined,
-          delivery_notes:
-            (document.getElementById("delivery_notes") as HTMLTextAreaElement)
-              ?.value || undefined,
-        };
-      },
-      allowOutsideClick: () => !Swal.isLoading(),
+    
+    setSelectedOrderForDelivery(order);
+    setDeliveryFormData({
+      delivery_person_name: '',
+      delivery_person_phone: '',
+      delivery_person_id_card: '',
+      recipient_name: defaultRecipientName,
+      recipient_phone: defaultRecipientPhone,
+      recipient_relationship: 'Chính chủ',
+      actual_delivery_date: '',
+      delivery_notes: ''
     });
+    setDeliveryModalOpen(true);
+  };
 
-    if (!formValues) {
+  const handleCloseDeliveryModal = () => {
+    setDeliveryModalOpen(false);
+    setSelectedOrderForDelivery(null);
+    setDeliveryFormData({
+      delivery_person_name: '',
+      delivery_person_phone: '',
+      delivery_person_id_card: '',
+      recipient_name: '',
+      recipient_phone: '',
+      recipient_relationship: '',
+      actual_delivery_date: '',
+      delivery_notes: ''
+    });
+  };
+
+  const handleSubmitDelivery = async () => {
+    // Validate required fields
+    if (!deliveryFormData.recipient_name.trim() || !deliveryFormData.recipient_phone.trim()) {
+      Swal.fire({
+        title: 'Thông tin không đầy đủ',
+        text: 'Vui lòng nhập đầy đủ họ tên và số điện thoại người nhận',
+        icon: 'warning',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#f59e0b'
+      });
       return;
     }
 
+    if (!selectedOrderForDelivery) return;
+
     try {
-      setLoading(true);
+      setDeliveryLoading(true);
 
       const deliveryData = {
         recipient_info: {
-          name: formValues.recipient_name,
-          phone: formValues.recipient_phone,
-          relationship: formValues.recipient_relationship,
+          name: deliveryFormData.recipient_name,
+          phone: deliveryFormData.recipient_phone,
+          relationship: deliveryFormData.recipient_relationship,
         },
-        delivery_person: formValues.delivery_person_name
+        delivery_person: deliveryFormData.delivery_person_name
           ? {
-              name: formValues.delivery_person_name,
-              phone: formValues.delivery_person_phone || undefined,
-              id_card: formValues.delivery_person_id_card || undefined,
+              name: deliveryFormData.delivery_person_name,
+              phone: deliveryFormData.delivery_person_phone || undefined,
+              id_card: deliveryFormData.delivery_person_id_card || undefined,
             }
           : undefined,
-        delivery_notes: formValues.delivery_notes || undefined,
-        actual_delivery_date: formValues.actual_delivery_date || undefined,
+        delivery_notes: deliveryFormData.delivery_notes || undefined,
+        actual_delivery_date: deliveryFormData.actual_delivery_date || undefined,
       };
 
-      const response = await orderService.deliverOrder(order._id, deliveryData);
+      const response = await orderService.deliverOrder(selectedOrderForDelivery._id, deliveryData);
 
       if (response.success) {
-        await Swal.fire({
-          title: "Thành công!",
-          text: "Đã giao xe cho khách hàng thành công.",
-          icon: "success",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#10b981",
+        Swal.fire({
+          title: 'Giao xe thành công!',
+          text: 'Đã giao xe cho khách hàng thành công.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#10b981'
         });
+        handleCloseDeliveryModal();
 
         // Reload orders
         loadOrders({
@@ -1043,22 +1056,27 @@ export const OrderManagement: React.FC = () => {
           endDate: dateRange[1]?.format("YYYY-MM-DD"),
         });
       } else {
-        throw new Error(response.message || "Có lỗi xảy ra khi giao xe");
+        throw new Error(response.message || "Không thể hoàn tất giao xe. Vui lòng kiểm tra thông tin hoặc liên hệ admin");
       }
     } catch (error: any) {
       console.error("Error delivering order:", error);
-      await Swal.fire({
-        title: "Lỗi!",
-        text:
-          error.response?.data?.message ||
-          error.message ||
-          "Có lỗi xảy ra khi giao xe",
-        icon: "error",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#ef4444",
+      let deliveryErrorMessage = "Không thể hoàn tất giao xe";      
+      if (error.response?.data?.message) {
+        deliveryErrorMessage = error.response.data.message;
+      } else if (error.message.includes('thông tin')) {
+        deliveryErrorMessage = "Thông tin giao xe không hợp lệ, vui lòng kiểm tra lại";
+      } else {
+        deliveryErrorMessage = "Xe chưa sẵn sàng hoặc có lỗi trong quá trình giao xe. Vui lòng thử lại sau";
+      }
+      Swal.fire({
+        title: 'Không thể giao xe',
+        text: deliveryErrorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#ef4444'
       });
     } finally {
-      setLoading(false);
+      setDeliveryLoading(false);
     }
   };
 
@@ -1122,7 +1140,7 @@ export const OrderManagement: React.FC = () => {
         } catch (error: any) {
           const errorMessage =
             error.response?.data?.message ||
-            "Có lỗi xảy ra khi hoàn tất đơn hàng";
+            "Không thể hoàn tất đơn hàng. Có thể đơn hàng chưa được thanh toán đủ hoặc chưa được giao xe";
           Swal.showValidationMessage(errorMessage);
           return false;
         }
@@ -1131,12 +1149,12 @@ export const OrderManagement: React.FC = () => {
     });
 
     if (result.isConfirmed && result.value) {
-      await Swal.fire({
-        title: "Thành công!",
-        text: "Đã hoàn tất đơn hàng thành công.",
-        icon: "success",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#10b981",
+      Swal.fire({
+        title: 'Hoàn tất thành công!',
+        text: 'Đã hoàn tất đơn hàng thành công!',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#10b981'
       });
 
       // Reload orders
@@ -1839,6 +1857,120 @@ export const OrderManagement: React.FC = () => {
             {snackbarMessage}
           </Alert>
         </Snackbar>
+
+        {/* Delivery Modal */}
+        <Dialog 
+          open={deliveryModalOpen} 
+          onClose={handleCloseDeliveryModal}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>Giao xe cho khách hàng</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2 }}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                  Thông tin người giao xe
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <TextField
+                    sx={{ flex: 1, minWidth: '200px' }}
+                    label="Họ tên người giao"
+                    value={deliveryFormData.delivery_person_name}
+                    onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_name: e.target.value })}
+                    size="small"
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: '200px' }}
+                    label="Số điện thoại"
+                    value={deliveryFormData.delivery_person_phone}
+                    onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_phone: e.target.value })}
+                    size="small"
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: '200px' }}
+                    label="CMND/CCCD"
+                    value={deliveryFormData.delivery_person_id_card}
+                    onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_id_card: e.target.value })}
+                    size="small"
+                  />
+                </Box>
+              </Box>
+              
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                  Thông tin người nhận xe (Bắt buộc)
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <TextField
+                    sx={{ flex: 1, minWidth: '200px' }}
+                    required
+                    label="Họ tên người nhận"
+                    value={deliveryFormData.recipient_name}
+                    onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_name: e.target.value })}
+                    size="small"
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: '200px' }}
+                    required
+                    label="Số điện thoại"
+                    value={deliveryFormData.recipient_phone}
+                    onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_phone: e.target.value })}
+                    size="small"
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: '200px' }}
+                    label="Mối quan hệ"
+                    value={deliveryFormData.recipient_relationship}
+                    onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_relationship: e.target.value })}
+                    size="small"
+                    placeholder="VD: Chính chủ, Người thân..."
+                  />
+                </Box>
+              </Box>
+              
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  fullWidth
+                  label="Ngày giờ giao xe"
+                  type="datetime-local"
+                  value={deliveryFormData.actual_delivery_date}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, actual_delivery_date: e.target.value })}
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </Box>
+              
+              <Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Ghi chú giao xe"
+                  value={deliveryFormData.delivery_notes}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_notes: e.target.value })}
+                  size="small"
+                  placeholder="Ghi chú về quá trình giao xe, tình trạng xe..."
+                />
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeliveryModal} disabled={deliveryLoading}>
+              Hủy
+            </Button>
+            <Button 
+              onClick={handleSubmitDelivery} 
+              variant="contained" 
+              color="primary"
+              disabled={deliveryLoading}
+            >
+              {deliveryLoading ? <CircularProgress size={20} /> : 'Xác nhận giao xe'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </LocalizationProvider>
   );
