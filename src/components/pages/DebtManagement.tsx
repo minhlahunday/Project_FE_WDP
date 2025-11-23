@@ -127,6 +127,24 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
         setLoading(true);
         setError(null);
 
+        // Check if user has permission to view debt management
+        //toast 
+        if (user?.role !== 'dealer_manager' && user?.role !== 'admin' && user?.role !== 'evm_staff') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Chỉ Quản Lý mới có thể xem công nợ!',
+            text: 'Bạn cần quyền Quản Lý để truy cập trang này. Vui lòng liên hệ quản trị viên.',
+            timer: 5000,
+            timerProgressBar: true,
+            toast: true,
+            position: 'center',
+            showConfirmButton: false,
+            width: '400px',
+          });
+          setLoading(false);
+          return;
+        }
+
         const params: DebtSearchParams = {
           page: searchParams?.page || pagination.current,
           limit: searchParams?.limit || pagination.pageSize,
@@ -207,14 +225,32 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
             }
           }
         } else {
-          setError(response.message || "Có lỗi xảy ra khi tải dữ liệu công nợ");
+          // Don't set error state for display, only use SweetAlert2 toast
+          // setError(response.message || "Có lỗi xảy ra khi tải dữ liệu công nợ");
         }
       } catch (error: any) {
         console.error("Error loading debts:", error);
-        setError(
-          error.response?.data?.message ||
-            "Có lỗi xảy ra khi tải dữ liệu công nợ"
-        );
+        
+        // Check for 403 Forbidden error - only show this specific message
+        if (error.response?.status === 403) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Bạn không thể xem thông tin này!',
+            text: 'Bạn không có quyền truy cập. Vui lòng liên hệ quản trị viên.',
+            timer: 4000,
+            timerProgressBar: true,
+            toast: true,
+            position: 'center',
+            showConfirmButton: false,
+          });
+        }
+        // Don't show other errors, just log them
+        
+        // Don't set error state for display, only use SweetAlert2 toast
+        // setError(
+        //   error.response?.data?.message ||
+        //     "Có lỗi xảy ra khi tải dữ liệu công nợ"
+        // );
       } finally {
         setLoading(false);
       }
@@ -611,8 +647,8 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
           </h3>
         </div>
 
-        {/* Error Alert */}
-        {error && (
+        {/* Error Alert - Hidden, only using SweetAlert2 toast */}
+        {false && error && (
           <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
