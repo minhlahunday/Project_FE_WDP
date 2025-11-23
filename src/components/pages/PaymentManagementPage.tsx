@@ -536,7 +536,9 @@ export const PaymentManagementPage: React.FC<
               onClick={() => handleProcessPayment(record)}
               disabled={
                 record.status === "fullyPayment" ||
-                record.status === "cancelled"
+                record.status === "cancelled" ||
+                record.status === "fully_paid" ||
+                record.status === "canceled"
               }
             />
           </Tooltip>
