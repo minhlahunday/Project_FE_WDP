@@ -21,6 +21,7 @@ import {
     ShoppingCart as ShoppingCartIcon,
     Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import Swal from 'sweetalert2';
 // Giả định các services và types đã được import đúng
 import { quoteService, Quote, QuoteSearchParams } from '../../services/quoteService'; 
 import { QuoteToOrderConverterMUI } from './QuoteToOrderConverterMUI';
@@ -48,6 +49,27 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
     });
 
     // --- Helper Functions ---
+
+    // Handle successful quote conversion
+    const handleConverterSuccess = () => {
+        setShowConverter(false);
+        setSelectedQuote(null);
+        
+        // Show success toast notification with SweetAlert2
+        Swal.fire({
+            icon: 'success',
+            title: 'Thành công!',
+            text: 'Chuyển đổi báo giá thành đơn hàng thành công!',
+            timer: 3000,
+            timerProgressBar: true,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+        });
+        
+        // Reload data after successful conversion
+        fetchQuotes(pagination.current, pagination.pageSize, searchText, statusFilter);
+    };
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -260,13 +282,6 @@ export const QuoteToOrderPageMUI: React.FC<QuoteToOrderPageProps> = () => {
     const handleConvertQuote = (quote: Quote) => {
         setSelectedQuote(quote);
         setShowConverter(true);
-    };
-
-    const handleConverterSuccess = () => {
-        setShowConverter(false);
-        setSelectedQuote(null);
-        // Tải lại dữ liệu sau khi chuyển đổi thành công
-        fetchQuotes(1, pagination.pageSize, searchText, statusFilter); 
     };
 
     return (

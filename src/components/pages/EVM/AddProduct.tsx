@@ -113,6 +113,8 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
   const [promotions, setPromotions] = useState<any[]>([]);
   const [primaryImageIndex, setPrimaryImageIndex] = useState<number>(0); // Track ảnh chính
 
+
+  //lưu file iamge vào đây sau đó send data lên server bằng from data
   const resetForm = () => {
     // Cleanup object URLs to prevent memory leaks
     imageFiles.forEach(file => {
@@ -811,6 +813,8 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
       });
       console.log('Image files:', imageFiles);
 
+
+      // gửi form data tới backend
       // Send data to backend with multipart/form-data if there are images
       let response;
       const url = isEditMode ? `/api/vehicles/${editProduct._id}` : "/api/vehicles";
@@ -1241,7 +1245,7 @@ const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onProductCreat
                 </div>
               ))}
               <div className="text-xs text-blue-600 mt-2">
-                💡 Màu sắc sẽ tự động cập nhật vào "Màu sắc" bên dưới
+                 Màu sắc sẽ tự động cập nhật vào "Màu sắc" bên dưới
                 </div>
               </div>
             ) : (
