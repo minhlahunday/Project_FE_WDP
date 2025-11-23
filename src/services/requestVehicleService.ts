@@ -4,6 +4,7 @@ import {get, patch, post, del, request} from "./httpClient";
 export interface VehicleRequest {
   _id: string;
   vehicle_id: any;
+  vehicle?: any; // Populated vehicle data
   dealership_id: any;
   manufacturer_id: string;
   quantity: number;
@@ -48,10 +49,18 @@ export const requestVehicleService = {
     status?: string;
     dealership_id?: string;
     vehicle_id?: string;
+    populate?: boolean;
   }): Promise<VehicleRequestListResponse> {
     return get<VehicleRequestListResponse>(
       "/api/request-vehicles",
       params ? ({params} as any) : undefined
+    );
+  },
+
+  // Get single vehicle request by ID with full details
+  async getVehicleRequestById(requestId: string): Promise<VehicleRequestResponse> {
+    return get<VehicleRequestResponse>(
+      `/api/request-vehicles/${requestId}?populate=true`
     );
   },
   async getVehicleRequestsByOrderRequest(

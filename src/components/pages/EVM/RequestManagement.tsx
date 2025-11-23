@@ -73,6 +73,7 @@ const RequestManagement: React.FC = () => {
         page: pagination.current,
         limit: pagination.pageSize,
         status: statusFilter || undefined,
+        populate: true, // Lấy đầy đủ thông tin vehicle
       });
 
       if (response.success) {
@@ -93,6 +94,20 @@ const RequestManagement: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch detailed request information
+  const fetchRequestDetails = async (requestId: string) => {
+    try {
+      const response = await requestVehicleService.getVehicleRequestById(requestId);
+      if (response.success) {
+        return response.data;
+      }
+      return null;
+    } catch (error: any) {
+      console.error('Error fetching request details:', error);
+      return null;
     }
   };
 
@@ -813,31 +828,130 @@ const RequestManagement: React.FC = () => {
           }}
           okText="Xác nhận giao hàng"
           cancelText="Hủy"
-          width={600}
+          width={900}
           okButtonProps={{loading: deliveredLoading}}
           cancelButtonProps={{disabled: deliveredLoading}}
           confirmLoading={deliveredLoading}
         >
           {selectedRequest && (
             <div className="mb-4">
-              <Descriptions title="Thông tin yêu cầu" size="small" column={2}>
-                <Descriptions.Item label="ID">
-                  {selectedRequest._id}
+              <Descriptions title="Thông tin yêu cầu chi tiết" bordered size="small" column={2}>
+                <Descriptions.Item label="ID yêu cầu" span={2}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '13px', backgroundColor: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>
+                    {selectedRequest._id}
+                  </span>
                 </Descriptions.Item>
-                <Descriptions.Item label="Số lượng">
-                  {selectedRequest.quantity}
+                <Descriptions.Item label="Số lượng yêu cầu">
+                  <strong style={{ color: '#1890ff' }}>{selectedRequest.quantity}</strong>
                 </Descriptions.Item>
-                <Descriptions.Item label="Màu xe">
-                  {selectedRequest.color}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">
+                <Descriptions.Item label="Trạng thái hiện tại">
                   {getStatusTag(selectedRequest.status)}
                 </Descriptions.Item>
+                <Descriptions.Item label="Màu sắc xe">
+                  <span><strong>{selectedRequest.color || 'Không xác định'}</strong></span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo yêu cầu">
+                  {new Date(selectedRequest.createdAt).toLocaleString("vi-VN", {
+                    year: 'numeric',
+                    month: '2-digit', 
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày cập nhật cuối">
+                  {new Date(selectedRequest.updatedAt).toLocaleString("vi-VN", {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit', 
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </Descriptions.Item>
+                
+                {selectedRequest.requested_at && (
+                  <Descriptions.Item label="Thời gian yêu cầu">
+                    {new Date(selectedRequest.requested_at).toLocaleString("vi-VN")}
+                  </Descriptions.Item>
+                )}
+                
+                {selectedRequest.approved_at && (
+                  <Descriptions.Item label="Thời gian duyệt">
+                    {new Date(selectedRequest.approved_at).toLocaleString("vi-VN")}
+                  </Descriptions.Item>
+                )}
+                
+                {selectedRequest.delivered_at && (
+                  <Descriptions.Item label="Thời gian giao hàng">
+                    {new Date(selectedRequest.delivered_at).toLocaleString("vi-VN")}
+                  </Descriptions.Item>
+                )}
+                
+                {selectedRequest.rejected_at && (
+                  <Descriptions.Item label="Thời gian từ chối">
+                    {new Date(selectedRequest.rejected_at).toLocaleString("vi-VN")}
+                  </Descriptions.Item>
+                )}
+                
+                
+                <Descriptions.Item label="Tên xe">
+                  <strong style={{ color: '#1890ff' }}>
+                    {typeof selectedRequest.vehicle_id === 'object' && selectedRequest.vehicle_id.name ? 
+                      selectedRequest.vehicle_id.name : 
+                      (selectedRequest.vehicle?.name || 'Đang tải...')
+                    }
+                  </strong>
+                </Descriptions.Item>
+                <Descriptions.Item label="Tên đại lý">
+                  <strong style={{ color: '#52c41a' }}>
+                    {typeof selectedRequest.dealership_id === 'object' && selectedRequest.dealership_id ? 
+                      (selectedRequest.dealership_id.company_name || selectedRequest.dealership_id.name || 'Đang tải...') :
+                      (dealershipInfo?.company_name || dealershipInfo?.name || 'Đang tải...')
+                    }
+                  </strong>
+                </Descriptions.Item>
+                
+                {selectedRequest.manufacturer_id && (
+                  <Descriptions.Item label="Manufacturer ID">
+                    <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                      {selectedRequest.manufacturer_id}
+                    </span>
+                  </Descriptions.Item>
+                )}
+                
+                {selectedRequest.approved_by && (
+                  <Descriptions.Item label="Người duyệt">
+                    {typeof selectedRequest.approved_by === 'object' ? 
+                      selectedRequest.approved_by.full_name || selectedRequest.approved_by.email : 
+                      selectedRequest.approved_by
+                    }
+                  </Descriptions.Item>
+                )}
+                
+                {selectedRequest.rejected_by && (
+                  <Descriptions.Item label="Người từ chối">
+                    {typeof selectedRequest.rejected_by === 'object' ? 
+                      selectedRequest.rejected_by.full_name || selectedRequest.rejected_by.email : 
+                      selectedRequest.rejected_by
+                    }
+                  </Descriptions.Item>
+                )}
+
+                {selectedRequest.notes && (
+                  <Descriptions.Item label="Ghi chú yêu cầu" span={2}>
+                    <div style={{ backgroundColor: '#f9f9f9', padding: '8px', borderRadius: '4px', fontStyle: 'italic' }}>
+                      {selectedRequest.notes}
+                    </div>
+                  </Descriptions.Item>
+                )}
               </Descriptions>
+              
               <Divider />
             </div>
           )}
-          <p>Ghi chú giao hàng:</p>
+          <p><strong>Ghi chú giao hàng:</strong></p>
           <TextArea
             rows={4}
             value={deliveredNotes}
@@ -848,7 +962,7 @@ const RequestManagement: React.FC = () => {
             <div className="flex items-center">
               <DollarOutlined className="text-yellow-600 mr-2" />
               <span className="text-yellow-800 font-medium">
-                Lưu ý: Việc xác nhận giao hàng sẽ tự động cập nhật kho hàng và
+                <strong>Lưu ý:</strong> Việc xác nhận giao hàng sẽ tự động cập nhật kho hàng và
                 tạo công nợ cho đại lý
               </span>
             </div>
@@ -944,8 +1058,15 @@ const RequestManagement: React.FC = () => {
                       <Button
                         type="primary"
                         icon={<CheckCircleOutlined />}
-                        onClick={() => {
+                        onClick={async () => {
                           setShowDetailModal(false); // Đóng modal chi tiết trước
+                          
+                          // Lấy thông tin chi tiết của request
+                          const detailedRequest = await fetchRequestDetails(selectedRequest._id);
+                          if (detailedRequest) {
+                            setSelectedRequest(detailedRequest);
+                          }
+                          
                           // Delay nhỏ để tạo hiệu ứng mượt mà
                           setTimeout(() => {
                             setShowDeliveredModal(true); // Sau đó mở modal đánh dấu đã giao
