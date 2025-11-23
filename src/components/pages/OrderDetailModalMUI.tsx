@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -34,8 +34,8 @@ import {
 } from "@mui/icons-material";
 import dayjs from "dayjs";
 
-import {orderService} from "../../services/orderService";
-import {Order} from "../../types/index";
+import { orderService } from "../../services/orderService";
+import { Order } from "../../types/index";
 import ContractGenerator from "./ContractGenerator";
 import ContractUpload from "./ContractUpload";
 import DepositPayment from "./DepositPayment";
@@ -74,20 +74,20 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
   const [deliveryFormData, setDeliveryFormData] = useState({
-    delivery_person_name: "",
-    delivery_person_phone: "",
-    delivery_person_id_card: "",
-    recipient_name: "",
-    recipient_phone: "",
-    recipient_relationship: "Chính chủ",
-    delivery_notes: "",
-    actual_delivery_date: dayjs().format("YYYY-MM-DDTHH:mm"),
+    delivery_person_name: '',
+    delivery_person_phone: '',
+    delivery_person_id_card: '',
+    recipient_name: '',
+    recipient_phone: '',
+    recipient_relationship: 'Chính chủ',
+    delivery_notes: '',
+    actual_delivery_date: dayjs().format('YYYY-MM-DDTHH:mm')
   });
 
   // Complete order modal states
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [completeLoading, setCompleteLoading] = useState(false);
-  const [completionNotes, setCompletionNotes] = useState("");
+  const [completionNotes, setCompletionNotes] = useState('');
 
   // Load order details
   const loadOrderDetail = useCallback(async () => {
@@ -180,30 +180,10 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
     return statusColors[status as keyof typeof statusColors] || "default";
   };
 
-  // Check if order is motorbike with in_stock (should show "Chờ thanh toán" instead of "Chờ cọc")
-  const shouldShowWaitingPayment = (currentOrder: Order | null) => {
-    if (!currentOrder) return false;
-    const hasMotorbike = currentOrder.items?.some(
-      (item) => item.category === "motorbike"
-    );
-    const stockSource =
-      (currentOrder as any).stock_source || currentOrder.stock_source;
-    return (
-      hasMotorbike &&
-      stockSource === "in_stock" &&
-      currentOrder.status === "pending"
-    );
-  };
-
   // Status text mapping
-  const getStatusText = (status: string, currentOrder?: Order | null) => {
-    // For motorbike with in_stock, show "Chờ thanh toán" instead of status-based text
-    if (currentOrder && shouldShowWaitingPayment(currentOrder)) {
-      return "Chờ thanh toán";
-    }
-
+  const getStatusText = (status: string) => {
     const statusTexts = {
-      pending: "Chờ (Cọc/Thanh toán)",
+      pending: "Chờ cọc",
       confirmed: "Đã xác nhận",
       halfPayment: "Đã đặt cọc",
       deposit_paid: "Đã đặt cọc",
@@ -221,109 +201,98 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
   };
 
   // Get status chip style with gradient background for MUI Chip
-  const getStatusChipStyle = (status: string, currentOrder?: Order | null) => {
-    // For motorbike with in_stock showing "Chờ thanh toán", use confirmed style
-    if (currentOrder && shouldShowWaitingPayment(currentOrder)) {
-      return {
-        background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
-        color: "#fff",
-        border: "none",
-        fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
-      };
-    }
-
-    const styleMap: {[key: string]: any} = {
+  const getStatusChipStyle = (status: string) => {
+    const styleMap: { [key: string]: any } = {
       pending: {
-        background: "linear-gradient(135deg, #faad14 0%, #ffc53d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(250, 173, 20, 0.3)",
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
       },
       confirmed: {
-        background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)',
       },
       halfPayment: {
-        background: "linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(250, 140, 22, 0.3)",
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
       },
       deposit_paid: {
-        background: "linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(250, 140, 22, 0.3)",
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)',
       },
       fullyPayment: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
       },
       fully_paid: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
       },
       waiting_vehicle_request: {
-        background: "linear-gradient(135deg, #faad14 0%, #ffc53d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(250, 173, 20, 0.3)",
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)',
       },
       vehicle_ready: {
-        background: "linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(19, 194, 194, 0.3)",
+        boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)',
       },
       delivered: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
       },
       completed: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)',
       },
       closed: {
-        background: "linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(140, 140, 140, 0.3)",
+        boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)',
       },
       cancelled: {
-        background: "linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(255, 77, 79, 0.3)",
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
       },
       canceled: {
-        background: "linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        boxShadow: "0 2px 4px rgba(255, 77, 79, 0.3)",
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)',
       },
     };
     return styleMap[status] || {};
@@ -339,9 +308,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       cancelled: "Đã hủy",
       canceled: "Đã hủy",
     };
-    return (
-      deliveryStatusTexts[status as keyof typeof deliveryStatusTexts] || status
-    );
+    return deliveryStatusTexts[status as keyof typeof deliveryStatusTexts] || status;
   };
 
   // Format currency
@@ -396,9 +363,9 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
     if (order?.customer) {
       setDeliveryFormData({
         ...deliveryFormData,
-        recipient_name: order.customer.full_name || "",
-        recipient_phone: order.customer.phone || "",
-        recipient_relationship: "Chính chủ",
+        recipient_name: order.customer.full_name || '',
+        recipient_phone: order.customer.phone || '',
+        recipient_relationship: 'Chính chủ'
       });
     }
     setDeliveryModalOpen(true);
@@ -407,14 +374,14 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
   const handleCloseDeliveryModal = () => {
     setDeliveryModalOpen(false);
     setDeliveryFormData({
-      delivery_person_name: "",
-      delivery_person_phone: "",
-      delivery_person_id_card: "",
-      recipient_name: "",
-      recipient_phone: "",
-      recipient_relationship: "Chính chủ",
-      delivery_notes: "",
-      actual_delivery_date: dayjs().format("YYYY-MM-DDTHH:mm"),
+      delivery_person_name: '',
+      delivery_person_phone: '',
+      delivery_person_id_card: '',
+      recipient_name: '',
+      recipient_phone: '',
+      recipient_relationship: 'Chính chủ',
+      delivery_notes: '',
+      actual_delivery_date: dayjs().format('YYYY-MM-DDTHH:mm')
     });
   };
 
@@ -423,7 +390,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
 
     // Validate required fields
     if (!deliveryFormData.recipient_name || !deliveryFormData.recipient_phone) {
-      alert("Vui lòng nhập đầy đủ thông tin người nhận");
+      alert('Vui lòng nhập đầy đủ thông tin người nhận');
       return;
     }
 
@@ -433,33 +400,29 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
         recipient_info: {
           name: deliveryFormData.recipient_name,
           phone: deliveryFormData.recipient_phone,
-          relationship: deliveryFormData.recipient_relationship,
+          relationship: deliveryFormData.recipient_relationship
         },
-        delivery_person: deliveryFormData.delivery_person_name
-          ? {
-              name: deliveryFormData.delivery_person_name,
-              phone: deliveryFormData.delivery_person_phone || undefined,
-              id_card: deliveryFormData.delivery_person_id_card || undefined,
-            }
-          : undefined,
+        delivery_person: deliveryFormData.delivery_person_name ? {
+          name: deliveryFormData.delivery_person_name,
+          phone: deliveryFormData.delivery_person_phone || undefined,
+          id_card: deliveryFormData.delivery_person_id_card || undefined
+        } : undefined,
         delivery_notes: deliveryFormData.delivery_notes || undefined,
-        actual_delivery_date:
-          deliveryFormData.actual_delivery_date || undefined,
+        actual_delivery_date: deliveryFormData.actual_delivery_date || undefined
       };
 
       const response = await orderService.deliverOrder(orderId, deliveryData);
-
+      
       if (response.success) {
-        alert("Giao xe thành công!");
+        alert('Giao xe thành công!');
         handleCloseDeliveryModal();
         handleWorkflowSuccess(); // Reload order
       } else {
-        alert(response.message || "Có lỗi xảy ra khi giao xe");
+        alert(response.message || 'Có lỗi xảy ra khi giao xe');
       }
     } catch (err: any) {
-      console.error("Error delivering order:", err);
-      const errorMessage =
-        err?.response?.data?.message || err?.message || "Lỗi kết nối API";
+      console.error('Error delivering order:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Lỗi kết nối API';
       alert(errorMessage);
     } finally {
       setDeliveryLoading(false);
@@ -473,29 +436,24 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
 
   const handleCloseCompleteModal = () => {
     setCompleteModalOpen(false);
-    setCompletionNotes("");
+    setCompletionNotes('');
   };
 
   const handleSubmitComplete = async () => {
     if (!order || !orderId) return;
 
     // Kiểm tra điều kiện: phải giao xe ít nhất 1 ngày trước
-    const deliveryDate =
-      order.delivery?.actual_date || order.delivery?.signed_at;
+    const deliveryDate = order.delivery?.actual_date || order.delivery?.signed_at;
     if (deliveryDate) {
       const deliveryDateTime = dayjs(deliveryDate);
       const now = dayjs();
-      const daysSinceDelivery = now.diff(deliveryDateTime, "day");
-
+      const daysSinceDelivery = now.diff(deliveryDateTime, 'day');
+      
       if (daysSinceDelivery < 1) {
-        const hoursSinceDelivery = now.diff(deliveryDateTime, "hour");
+        const hoursSinceDelivery = now.diff(deliveryDateTime, 'hour');
         const remainingHours = 24 - hoursSinceDelivery;
-
-        alert(
-          `Chưa thể hoàn tất đơn hàng. Đơn hàng chỉ có thể hoàn tất sau ít nhất 1 ngày kể từ khi giao xe.\n\nNgày giao xe: ${deliveryDateTime.format(
-            "DD/MM/YYYY HH:mm"
-          )}\nThời gian đã trôi qua: ${hoursSinceDelivery} giờ\nCòn lại: ${remainingHours} giờ`
-        );
+        
+        alert(`Chưa thể hoàn tất đơn hàng. Đơn hàng chỉ có thể hoàn tất sau ít nhất 1 ngày kể từ khi giao xe.\n\nNgày giao xe: ${deliveryDateTime.format('DD/MM/YYYY HH:mm')}\nThời gian đã trôi qua: ${hoursSinceDelivery} giờ\nCòn lại: ${remainingHours} giờ`);
         return;
       }
     }
@@ -503,20 +461,19 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
     setCompleteLoading(true);
     try {
       const response = await orderService.completeOrder(orderId, {
-        completion_notes: completionNotes || undefined,
+        completion_notes: completionNotes || undefined
       });
-
+      
       if (response.success) {
-        alert("Hoàn tất đơn hàng thành công!");
+        alert('Hoàn tất đơn hàng thành công!');
         handleCloseCompleteModal();
         handleWorkflowSuccess(); // Reload order
       } else {
-        alert(response.message || "Có lỗi xảy ra khi hoàn tất đơn hàng");
+        alert(response.message || 'Có lỗi xảy ra khi hoàn tất đơn hàng');
       }
     } catch (err: any) {
-      console.error("Error completing order:", err);
-      const errorMessage =
-        err?.response?.data?.message || err?.message || "Lỗi kết nối API";
+      console.error('Error completing order:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Lỗi kết nối API';
       alert(errorMessage);
     } finally {
       setCompleteLoading(false);
@@ -576,7 +533,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
 
         <Divider />
 
-        <DialogContent dividers sx={{p: 3}}>
+        <DialogContent dividers sx={{ p: 3 }}>
           {loading && (
             <Box
               display="flex"
@@ -596,24 +553,24 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                   Thử lại
                 </Button>
               }
-              sx={{mb: 2}}
+              sx={{ mb: 2 }}
             >
               {error}
             </Alert>
           )}
 
           {order && !loading && (
-            <Box sx={{maxHeight: "60vh", overflow: "auto"}}>
+            <Box sx={{ maxHeight: "60vh", overflow: "auto" }}>
               <Box
                 sx={{
                   display: "flex",
-                  flexDirection: {xs: "column", md: "row"},
+                  flexDirection: { xs: "column", md: "row" },
                   gap: 3,
                 }}
               >
                 {/* Order Information */}
-                <Box sx={{flex: 2}}>
-                  <Paper elevation={1} sx={{p: 3}}>
+                <Box sx={{ flex: 2 }}>
+                  <Paper elevation={1} sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom fontWeight="bold">
                       Thông tin đơn hàng
                     </Typography>
@@ -653,8 +610,8 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                           Trạng thái
                         </Typography>
                         <Chip
-                          label={getStatusText(order.status, order)}
-                          sx={getStatusChipStyle(order.status, order)}
+                          label={getStatusText(order.status)}
+                          sx={getStatusChipStyle(order.status)}
                           size="small"
                         />
                       </Box>
@@ -688,7 +645,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Typography>
                         <Typography
                           variant="body1"
-                          sx={{color: "success.main", fontWeight: "bold"}}
+                          sx={{ color: "success.main", fontWeight: "bold" }}
                         >
                           {formatCurrency(order.final_amount)}
                         </Typography>
@@ -715,7 +672,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Typography>
                         <Typography
                           variant="body1"
-                          sx={{color: "warning.main", fontWeight: "bold"}}
+                          sx={{ color: "warning.main", fontWeight: "bold" }}
                         >
                           {formatCurrency(
                             order.final_amount - order.paid_amount
@@ -744,14 +701,12 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         </Typography>
                         <Chip
                           label={
-                            order.contract?.signed_contract_urls &&
-                            order.contract.signed_contract_urls.length > 0
+                            (order.contract?.signed_contract_urls && order.contract.signed_contract_urls.length > 0)
                               ? "Đã ký"
                               : "Chưa ký"
                           }
                           color={
-                            order.contract?.signed_contract_urls &&
-                            order.contract.signed_contract_urls.length > 0
+                            (order.contract?.signed_contract_urls && order.contract.signed_contract_urls.length > 0)
                               ? "success"
                               : "error"
                           }
@@ -759,7 +714,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                         />
                       </Box>
                       {order.notes && (
-                        <Box sx={{gridColumn: "1 / -1"}}>
+                        <Box sx={{ gridColumn: "1 / -1" }}>
                           <Typography
                             variant="body2"
                             color="text.secondary"
@@ -774,7 +729,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                   </Paper>
 
                   {/* Order Items */}
-                  <Paper elevation={1} sx={{p: 3, mt: 3}}>
+                  <Paper elevation={1} sx={{ p: 3, mt: 3 }}>
                     <Typography variant="h6" gutterBottom fontWeight="bold">
                       Sản phẩm trong đơn hàng
                     </Typography>
@@ -782,22 +737,22 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell align="center" sx={{width: "5%"}}>
+                            <TableCell align="center" sx={{ width: "5%" }}>
                               STT
                             </TableCell>
-                            <TableCell sx={{width: "40%"}}>
+                            <TableCell sx={{ width: "40%" }}>
                               Tên hàng hóa, dịch vụ
                             </TableCell>
-                            <TableCell align="center" sx={{width: "10%"}}>
+                            <TableCell align="center" sx={{ width: "10%" }}>
                               Đơn vị tính
                             </TableCell>
-                            <TableCell align="center" sx={{width: "10%"}}>
+                            <TableCell align="center" sx={{ width: "10%" }}>
                               Số lượng
                             </TableCell>
-                            <TableCell align="right" sx={{width: "15%"}}>
+                            <TableCell align="right" sx={{ width: "15%" }}>
                               Đơn giá
                             </TableCell>
-                            <TableCell align="right" sx={{width: "20%"}}>
+                            <TableCell align="right" sx={{ width: "20%" }}>
                               Thành tiền
                             </TableCell>
                           </TableRow>
@@ -805,7 +760,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                             <TableCell
                               colSpan={6}
                               align="right"
-                              sx={{fontSize: "0.75rem", fontStyle: "italic"}}
+                              sx={{ fontSize: "0.75rem", fontStyle: "italic" }}
                             >
                               (Thành tiền = Số lượng × Đơn giá)
                             </TableCell>
@@ -939,13 +894,13 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                             </TableCell>
                             <TableCell
                               align="right"
-                              sx={{borderTop: "2px solid #333"}}
+                              sx={{ borderTop: "2px solid #333" }}
                             >
                               <Typography
                                 variant="body1"
                                 fontWeight="bold"
                                 color="error.main"
-                                sx={{fontSize: "1rem"}}
+                                sx={{ fontSize: "1rem" }}
                               >
                                 {formatCurrency(
                                   order.items.reduce(
@@ -964,8 +919,8 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                 </Box>
 
                 {/* Customer Information */}
-                <Box sx={{flex: 1}}>
-                  <Paper elevation={1} sx={{p: 3}}>
+                <Box sx={{ flex: 1 }}>
+                  <Paper elevation={1} sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom fontWeight="bold">
                       Thông tin khách hàng
                     </Typography>
@@ -1045,7 +1000,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
 
                   {/* Delivery Information */}
                   {order.delivery && (
-                    <Paper elevation={1} sx={{p: 3, mt: 3}}>
+                    <Paper elevation={1} sx={{ p: 3, mt: 3 }}>
                       <Typography variant="h6" gutterBottom fontWeight="bold">
                         Thông tin giao hàng
                       </Typography>
@@ -1057,17 +1012,13 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
                           <Chip
                             label={
                               // Nếu đơn hàng đã bị hủy, delivery status cũng phải là "Đã hủy"
-                              order.status === "cancelled" ||
-                              order.status === "canceled" ||
-                              (order as any).is_deleted
+                              order.status === 'cancelled' || order.status === 'canceled' || (order as any).is_deleted
                                 ? "Đã hủy"
                                 : getDeliveryStatusText(order.delivery.status)
                             }
                             color={
                               // Nếu đơn hàng đã bị hủy, hiển thị màu đỏ
-                              order.status === "cancelled" ||
-                              order.status === "canceled" ||
-                              (order as any).is_deleted
+                              order.status === 'cancelled' || order.status === 'canceled' || (order as any).is_deleted
                                 ? "error"
                                 : order.delivery.status === "delivered"
                                 ? "success"
@@ -1130,7 +1081,7 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
 
         <Divider />
 
-        <DialogActions sx={{p: 3, gap: 1, flexWrap: "wrap"}}>
+        <DialogActions sx={{ p: 3, gap: 1, flexWrap: "wrap" }}>
           <Button onClick={handleClose} variant="outlined">
             Đóng
           </Button>
@@ -1192,10 +1143,9 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
             In đơn hàng
           </Button> */}
           {/* Giao xe button - chỉ hiển thị khi order đã thanh toán đủ */}
-          {(order?.status === "fully_paid" ||
-            order?.status === "fullyPayment") && (
-            <Button
-              variant="contained"
+          {(order?.status === 'fully_paid' || order?.status === 'fullyPayment') && (
+            <Button 
+              variant="contained" 
               color="primary"
               startIcon={<LocalShippingIcon />}
               onClick={handleOpenDeliveryModal}
@@ -1204,9 +1154,9 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
             </Button>
           )}
           {/* Hoàn tất đơn hàng button - chỉ hiển thị khi đã giao xe */}
-          {order?.status === "delivered" && (
-            <Button
-              variant="contained"
+          {order?.status === 'delivered' && (
+            <Button 
+              variant="contained" 
               color="success"
               startIcon={<CheckCircleIcon />}
               onClick={handleOpenCompleteModal}
@@ -1218,255 +1168,131 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
       </Dialog>
 
       {/* Delivery Modal */}
-      <Dialog
-        open={deliveryModalOpen}
+      <Dialog 
+        open={deliveryModalOpen} 
         onClose={handleCloseDeliveryModal}
         maxWidth="md"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "12px",
-            boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-          },
-        }}
       >
-        <DialogTitle>
-          <Box
-            display="flex"
-            alignItems="center"
-            gap={1}
-            sx={{fontWeight: "bold"}}
-          >
-            <LocalShippingIcon color="primary" />
-            <Typography variant="h6" component="span">
-              Giao xe cho khách hàng
-            </Typography>
-          </Box>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{pt: 3}}>
-          <Stack spacing={3}>
-            {/* Thông tin người giao xe */}
-            <Paper
-              elevation={0}
-              sx={{p: 2.5, bgcolor: "grey.50", borderRadius: 2}}
-            >
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{fontWeight: 600, mb: 2, color: "text.primary"}}
-              >
+        <DialogTitle>Giao xe cho khách hàng</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
                 Thông tin người giao xe
               </Typography>
-              <Stack spacing={2}>
-                <Box sx={{display: "flex", gap: 2, flexWrap: "wrap"}}>
-                  <TextField
-                    sx={{flex: 1, minWidth: "200px"}}
-                    label="Họ tên người giao"
-                    value={deliveryFormData.delivery_person_name}
-                    onChange={(e) =>
-                      setDeliveryFormData({
-                        ...deliveryFormData,
-                        delivery_person_name: e.target.value,
-                      })
-                    }
-                    size="small"
-                    fullWidth
-                  />
-                  <TextField
-                    sx={{flex: 1, minWidth: "200px"}}
-                    label="Số điện thoại"
-                    value={deliveryFormData.delivery_person_phone}
-                    onChange={(e) =>
-                      setDeliveryFormData({
-                        ...deliveryFormData,
-                        delivery_person_phone: e.target.value,
-                      })
-                    }
-                    size="small"
-                    fullWidth
-                  />
-                </Box>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                 <TextField
-                  fullWidth
-                  label="CMND/CCCD"
-                  value={deliveryFormData.delivery_person_id_card}
-                  onChange={(e) =>
-                    setDeliveryFormData({
-                      ...deliveryFormData,
-                      delivery_person_id_card: e.target.value,
-                    })
-                  }
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  label="Họ tên người giao"
+                  value={deliveryFormData.delivery_person_name}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_name: e.target.value })}
                   size="small"
                 />
-              </Stack>
-            </Paper>
-
-            {/* Thông tin người nhận xe */}
-            <Paper
-              elevation={0}
-              sx={{p: 2.5, bgcolor: "grey.50", borderRadius: 2}}
-            >
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{fontWeight: 600, mb: 2, color: "text.primary"}}
-              >
-                Thông tin người nhận xe
-                <Typography
-                  component="span"
-                  variant="caption"
-                  sx={{color: "error.main", ml: 0.5}}
-                >
-                  (Bắt buộc)
-                </Typography>
-              </Typography>
-              <Stack spacing={2}>
-                <Box sx={{display: "flex", gap: 2, flexWrap: "wrap"}}>
-                  <TextField
-                    sx={{flex: 1, minWidth: "200px"}}
-                    required
-                    label="Họ tên người nhận"
-                    value={deliveryFormData.recipient_name}
-                    onChange={(e) =>
-                      setDeliveryFormData({
-                        ...deliveryFormData,
-                        recipient_name: e.target.value,
-                      })
-                    }
-                    size="small"
-                    fullWidth
-                    error={
-                      !deliveryFormData.recipient_name.trim() &&
-                      deliveryFormData.recipient_name !== ""
-                    }
-                    helperText={
-                      !deliveryFormData.recipient_name.trim() &&
-                      deliveryFormData.recipient_name !== ""
-                        ? "Vui lòng nhập họ tên người nhận"
-                        : ""
-                    }
-                  />
-                  <TextField
-                    sx={{flex: 1, minWidth: "200px"}}
-                    required
-                    label="Số điện thoại"
-                    value={deliveryFormData.recipient_phone}
-                    onChange={(e) =>
-                      setDeliveryFormData({
-                        ...deliveryFormData,
-                        recipient_phone: e.target.value,
-                      })
-                    }
-                    size="small"
-                    fullWidth
-                    error={
-                      !deliveryFormData.recipient_phone.trim() &&
-                      deliveryFormData.recipient_phone !== ""
-                    }
-                    helperText={
-                      !deliveryFormData.recipient_phone.trim() &&
-                      deliveryFormData.recipient_phone !== ""
-                        ? "Vui lòng nhập số điện thoại"
-                        : ""
-                    }
-                  />
-                </Box>
                 <TextField
-                  fullWidth
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  label="Số điện thoại"
+                  value={deliveryFormData.delivery_person_phone}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_phone: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  label="CMND/CCCD"
+                  value={deliveryFormData.delivery_person_id_card}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_person_id_card: e.target.value })}
+                  size="small"
+                />
+              </Box>
+            </Box>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                Thông tin người nhận xe (Bắt buộc)
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  required
+                  label="Họ tên người nhận"
+                  value={deliveryFormData.recipient_name}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_name: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
+                  required
+                  label="Số điện thoại"
+                  value={deliveryFormData.recipient_phone}
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_phone: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  sx={{ flex: 1, minWidth: '200px' }}
                   label="Mối quan hệ"
                   value={deliveryFormData.recipient_relationship}
-                  onChange={(e) =>
-                    setDeliveryFormData({
-                      ...deliveryFormData,
-                      recipient_relationship: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setDeliveryFormData({ ...deliveryFormData, recipient_relationship: e.target.value })}
                   size="small"
                   placeholder="VD: Chính chủ, Người thân..."
                 />
-              </Stack>
-            </Paper>
-
-            {/* Ngày giờ và ghi chú */}
-            <Stack spacing={2}>
+              </Box>
+            </Box>
+            
+            <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
                 label="Ngày giờ giao xe"
                 type="datetime-local"
                 value={deliveryFormData.actual_delivery_date}
-                onChange={(e) =>
-                  setDeliveryFormData({
-                    ...deliveryFormData,
-                    actual_delivery_date: e.target.value,
-                  })
-                }
+                onChange={(e) => setDeliveryFormData({ ...deliveryFormData, actual_delivery_date: e.target.value })}
                 size="small"
                 InputLabelProps={{
                   shrink: true,
                 }}
               />
-
+            </Box>
+            
+            <Box>
               <TextField
                 fullWidth
                 multiline
                 rows={3}
                 label="Ghi chú giao xe"
                 value={deliveryFormData.delivery_notes}
-                onChange={(e) =>
-                  setDeliveryFormData({
-                    ...deliveryFormData,
-                    delivery_notes: e.target.value,
-                  })
-                }
+                onChange={(e) => setDeliveryFormData({ ...deliveryFormData, delivery_notes: e.target.value })}
                 size="small"
                 placeholder="Ghi chú về quá trình giao xe, tình trạng xe..."
               />
-            </Stack>
-          </Stack>
+            </Box>
+          </Box>
         </DialogContent>
-        <Divider />
-        <DialogActions sx={{p: 2.5, gap: 1}}>
-          <Button
-            onClick={handleCloseDeliveryModal}
-            disabled={deliveryLoading}
-            variant="outlined"
-          >
+        <DialogActions>
+          <Button onClick={handleCloseDeliveryModal} disabled={deliveryLoading}>
             Hủy
           </Button>
-          <Button
-            onClick={handleSubmitDelivery}
-            variant="contained"
+          <Button 
+            onClick={handleSubmitDelivery} 
+            variant="contained" 
             color="primary"
             disabled={deliveryLoading}
-            startIcon={
-              deliveryLoading ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <LocalShippingIcon />
-              )
-            }
-            sx={{minWidth: 150}}
           >
-            {deliveryLoading ? "Đang xử lý..." : "Xác nhận giao xe"}
+            {deliveryLoading ? <CircularProgress size={20} /> : 'Xác nhận giao xe'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Complete Order Modal */}
-      <Dialog
-        open={completeModalOpen}
+      <Dialog 
+        open={completeModalOpen} 
         onClose={handleCloseCompleteModal}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle>Hoàn tất đơn hàng</DialogTitle>
         <DialogContent>
-          <Box sx={{pt: 2}}>
-            <Alert severity="info" sx={{mb: 2}}>
-              Đơn hàng đã được giao xe thành công. Bạn có muốn hoàn tất đơn hàng
-              không?
+          <Box sx={{ pt: 2 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Đơn hàng đã được giao xe thành công. Bạn có muốn hoàn tất đơn hàng không?
             </Alert>
             <TextField
               fullWidth
@@ -1484,17 +1310,13 @@ export const OrderDetailModalMUI: React.FC<OrderDetailModalProps> = ({
           <Button onClick={handleCloseCompleteModal} disabled={completeLoading}>
             Hủy
           </Button>
-          <Button
-            onClick={handleSubmitComplete}
-            variant="contained"
+          <Button 
+            onClick={handleSubmitComplete} 
+            variant="contained" 
             color="success"
             disabled={completeLoading}
           >
-            {completeLoading ? (
-              <CircularProgress size={20} />
-            ) : (
-              "Hoàn tất đơn hàng"
-            )}
+            {completeLoading ? <CircularProgress size={20} /> : 'Hoàn tất đơn hàng'}
           </Button>
         </DialogActions>
       </Dialog>
