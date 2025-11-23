@@ -91,6 +91,20 @@ export const DebtManagement: React.FC = () => {
     Record<string, {name: string; email?: string; phone?: string}>
   >({});
 
+  const paymentsWithBatch = selectedDebt?.payments?.map((payment: any) => {
+    const relatedBatch = selectedDebt.items?.find((batch: any) =>
+      batch.settled_by_orders?.some((s: any) => s.order_id === payment.order_id)
+    );
+
+    return {
+      ...payment,
+      batch_name: relatedBatch
+        ? `
+${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
+        : "Không xác định",
+      batch_id: relatedBatch?._id || null,
+    };
+  });
   const statusOptions = [
     {value: "active", label: "Đang nợ", color: "warning"},
     {value: "partial", label: "Trả một phần", color: "info"},
@@ -355,6 +369,24 @@ export const DebtManagement: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     return dayjs(dateString).format("DD/MM/YYYY");
+  };
+
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+
+    const vn = date.toLocaleString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    return vn.replace(",", ""); // bỏ dấu phẩy
   };
 
   const toNumber = (value: any, fallback = 0): number => {
@@ -884,7 +916,7 @@ export const DebtManagement: React.FC = () => {
                   {selectedDebt.items && selectedDebt.items.length > 0 && (
                     <div className="mb-6">
                       <AntTypography.Title level={5}>
-                        Chi tiết sản phẩm
+                        Chi tiết Lô Hàng
                       </AntTypography.Title>
                       <div style={{marginRight: "16px"}}>
                         <AntTable
@@ -893,8 +925,10 @@ export const DebtManagement: React.FC = () => {
                               title: "Sản phẩm",
                               dataIndex: "vehicle_name",
                               key: "vehicle_name",
-                              render: (text: string) => (
-                                <span className="font-medium">{text}</span>
+                              render: (text: string, record: any) => (
+                                <span className="font-medium">
+                                  {text} ({record.request_id?.slice(-3)})
+                                </span>
                               ),
                             },
                             {
@@ -922,6 +956,17 @@ export const DebtManagement: React.FC = () => {
                               ),
                             },
                             {
+                              title: "Đã bán",
+                              dataIndex: "sold_quantity",
+                              key: "sold_quantity",
+                              align: "center" as const,
+                              render: (sold_quantity: number) => (
+                                <span className="text-green-600 font-medium">
+                                  {sold_quantity}
+                                </span>
+                              ),
+                            },
+                            {
                               title: "Thành tiền",
                               dataIndex: "amount",
                               key: "amount",
@@ -936,7 +981,38 @@ export const DebtManagement: React.FC = () => {
                               title: "Ngày giao",
                               dataIndex: "delivered_at",
                               key: "delivered_at",
+                              align: "center" as const,
+
                               render: (date: string) => formatDate(date),
+                            },
+                            {
+                              title: "Trạng thái tất toán",
+                              dataIndex: "status",
+                              key: "status",
+                              align: "center" as const,
+                              render: (status: string) => {
+                                if (status === "fully_paid") {
+                                  return (
+                                    <AntTag color="success">
+                                      Đã tất toán thành công
+                                    </AntTag>
+                                  );
+                                } else if (status === "pending_payment") {
+                                  return (
+                                    <AntTag color="warning">
+                                      Chưa tất toán
+                                    </AntTag>
+                                  );
+                                } else if (status === "partial_paid") {
+                                  return (
+                                    <AntTag color="cyan">
+                                      Thanh toán một phần
+                                    </AntTag>
+                                  );
+                                }
+
+                                return <AntTag>{status}</AntTag>;
+                              },
                             },
                           ]}
                           dataSource={selectedDebt.items}
@@ -951,16 +1027,16 @@ export const DebtManagement: React.FC = () => {
                             );
                             return (
                               <AntTable.Summary.Row>
-                                <AntTable.Summary.Cell index={0} colSpan={4}>
+                                <AntTable.Summary.Cell index={0} colSpan={5}>
                                   <span className="font-bold">Tổng cộng:</span>
                                 </AntTable.Summary.Cell>
-                                <AntTable.Summary.Cell index={4}>
+                                <AntTable.Summary.Cell index={5}>
                                   <span className="font-bold text-green-600">
                                     {formatCurrency(total)}
                                   </span>
                                 </AntTable.Summary.Cell>
                                 <AntTable.Summary.Cell
-                                  index={5}
+                                  index={6}
                                 ></AntTable.Summary.Cell>
                               </AntTable.Summary.Row>
                             );
@@ -981,6 +1057,16 @@ export const DebtManagement: React.FC = () => {
                           <AntTable
                             columns={[
                               {
+                                title: "Thuộc lô hàng",
+                                dataIndex: "batch_name",
+                                key: "batch_name",
+                                render: (batch_name: string) => (
+                                  <span className="font-medium text-blue-600">
+                                    {batch_name}
+                                  </span>
+                                ),
+                              },
+                              {
                                 title: "Số tiền",
                                 dataIndex: "amount",
                                 key: "amount",
@@ -995,15 +1081,25 @@ export const DebtManagement: React.FC = () => {
                                 title: "Phương thức",
                                 dataIndex: "method",
                                 key: "method",
-                                render: (method: string) => (
-                                  <AntTag color="blue">{method}</AntTag>
-                                ),
+                                render: (method: string) => {
+                                  const methodMap: {[key: string]: string} = {
+                                    cash: "Tiền mặt",
+                                    bank: "Chuyển khoản",
+                                    qr: "QR Code",
+                                    card: "Thẻ",
+                                  };
+                                  return (
+                                    <AntTag color="blue">
+                                      {methodMap[method] || method}
+                                    </AntTag>
+                                  );
+                                },
                               },
                               {
                                 title: "Ngày thanh toán",
                                 dataIndex: "paid_at",
                                 key: "paid_at",
-                                render: (date: string) => formatDate(date),
+                                render: (date: string) => formatDateTime(date),
                               },
                               {
                                 title: "Ghi chú",
@@ -1012,7 +1108,7 @@ export const DebtManagement: React.FC = () => {
                                 ellipsis: true,
                               },
                             ]}
-                            dataSource={selectedDebt.payments}
+                            dataSource={paymentsWithBatch}
                             rowKey="_id"
                             pagination={false}
                             size="small"
