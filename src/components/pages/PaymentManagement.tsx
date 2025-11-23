@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Form,
@@ -14,24 +14,24 @@ import {
   message,
   Space,
   Table,
-  Tag,
-} from "antd";
+  Tag
+} from 'antd';
 import {
   CheckCircleOutlined,
   FilePdfOutlined,
-  DollarOutlined,
-} from "@ant-design/icons";
-import type {ColumnsType} from "antd/es/table";
+  DollarOutlined
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
 
-import {Order, orderService} from "../../services/orderService";
-import {paymentService, Payment} from "../../services/paymentService";
-import {orderHistoryService} from "../../services/orderHistoryService";
-import {useAuth} from "../../contexts/AuthContext";
-import {generateContractPDF, mapOrderToContractPDF} from "../../utils/pdfUtils";
-import Swal from "sweetalert2";
+import { Order, orderService } from '../../services/orderService';
+import { paymentService, Payment } from '../../services/paymentService';
+import { orderHistoryService } from '../../services/orderHistoryService';
+import { useAuth } from '../../contexts/AuthContext';
+import { generateContractPDF, mapOrderToContractPDF } from '../../utils/pdfUtils';
+import Swal from 'sweetalert2';
 
-const {Title, Text} = Typography;
-const {TextArea} = Input;
+const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 interface PaymentManagementProps {
   visible: boolean;
@@ -44,9 +44,9 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   visible,
   order,
   onClose,
-  onSuccess,
+  onSuccess
 }) => {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
@@ -54,10 +54,8 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any>(null);
   const [loadingOrderHistory, setLoadingOrderHistory] = useState(false);
-  const [orderWithCustomer, setOrderWithCustomer] = useState<Order | null>(
-    null
-  );
-
+  const [orderWithCustomer, setOrderWithCustomer] = useState<Order | null>(null);
+  
   // Update loadingOrderHistory when orderHistory changes
   useEffect(() => {
     if (orderHistory) {
@@ -68,15 +66,14 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const totalAmount = order?.final_amount || 0;
   const paidAmount = order?.paid_amount || 0;
   const remainingAmount = totalAmount - paidAmount;
-  const paymentProgress =
-    totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
-
+  const paymentProgress = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+  
   const isFirstPayment = paidAmount === 0;
 
   // Load payment history
   const loadPaymentHistory = async () => {
     if (!order) return;
-
+    
     setLoadingHistory(true);
     try {
       const response = await paymentService.getPaymentsByOrder(order._id);
@@ -84,7 +81,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         setPaymentHistory(response.data.data);
       }
     } catch (error) {
-      console.error("Error loading payment history:", error);
+      console.error('Error loading payment history:', error);
     } finally {
       setLoadingHistory(false);
     }
@@ -93,7 +90,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   // Load order history
   const loadOrderHistory = async () => {
     if (!order) return;
-
+    
     setLoadingOrderHistory(true);
     try {
       const response = await orderHistoryService.getOrderHistory(order._id);
@@ -101,7 +98,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         setOrderHistory(response.data);
       }
     } catch (error) {
-      console.error("Error loading order history:", error);
+      console.error('Error loading order history:', error);
     } finally {
       setLoadingOrderHistory(false);
     }
@@ -110,7 +107,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   // Load order with customer info
   const loadOrderWithCustomer = async () => {
     if (!order) return;
-
+    
     try {
       const response = await orderService.getOrderById(order._id);
       if (response.success) {
@@ -118,7 +115,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         setOrderWithCustomer(orderData);
       }
     } catch (error) {
-      console.error("Error loading order with customer:", error);
+      console.error('Error loading order with customer:', error);
       setOrderWithCustomer(order); // Fallback to original order
     }
   };
@@ -133,213 +130,112 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     }
   }, [visible, order]);
 
+
   // Auto-fill remaining amount when payment history changes or already has deposit
   useEffect(() => {
     // Nếu đã cọc rồi (không phải lần đầu) hoặc đã thanh toán nhiều lần, tự động điền số tiền còn lại
-    if (
-      (!isFirstPayment || paymentHistory.length >= 1) &&
-      remainingAmount > 0
-    ) {
+    if ((!isFirstPayment || paymentHistory.length >= 1) && remainingAmount > 0) {
       form.setFieldsValue({
-        amount: remainingAmount,
+        amount: remainingAmount
       });
     }
   }, [paymentHistory.length, remainingAmount, isFirstPayment]);
-
-  // Check if order is motorbike with in_stock (should skip deposit and auto process)
-  const isMotorbikeInStockWaitingPayment = (currentOrder: Order) => {
-    const hasMotorbike = currentOrder.items?.some(
-      (item) => item.category === "motorbike"
-    );
-    const stockSource =
-      (currentOrder as any).stock_source || currentOrder.stock_source;
-    return (
-      hasMotorbike &&
-      stockSource === "in_stock" &&
-      currentOrder.status === "pending" &&
-      currentOrder.paid_amount === 0
-    );
-  };
 
   // Handle form submission
   const handleSubmit = async (values: any) => {
     if (!order) return;
 
     // Check dealership permission
-    if (user?.role === "dealer_staff" || user?.role === "dealer_manager") {
+    if (user?.role === 'dealer_staff' || user?.role === 'dealer_manager') {
       const userDealershipId = user.dealership_id || user.dealerId;
       // Xử lý cả trường hợp dealership_id là object hoặc string
-      const orderDealershipId =
-        typeof order.dealership_id === "object" && order.dealership_id !== null
-          ? (order.dealership_id as any)?._id ||
-            (order.dealership_id as any)?.id
-          : order.dealership_id;
-
+      const orderDealershipId = typeof order.dealership_id === 'object' && order.dealership_id !== null
+        ? (order.dealership_id as any)?._id || (order.dealership_id as any)?.id
+        : order.dealership_id;
+      
       if (orderDealershipId !== userDealershipId) {
         await Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "Bạn không có quyền thanh toán cho đơn hàng này. Đơn hàng thuộc về dealership khác.",
-          confirmButtonText: "Đóng",
+          icon: 'error',
+          title: 'Lỗi!',
+          text: 'Bạn không có quyền thanh toán cho đơn hàng này. Đơn hàng thuộc về dealership khác.',
+          confirmButtonText: 'Đóng',
           // Đảm bảo SweetAlert hiển thị trên modal
           didOpen: () => {
-            const swalContainer = document.querySelector(
-              ".swal2-container"
-            ) as HTMLElement;
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
             if (swalContainer) {
-              swalContainer.style.zIndex = "99999";
+              swalContainer.style.zIndex = '99999';
               if (swalContainer.parentElement !== document.body) {
                 document.body.appendChild(swalContainer);
               }
             }
-          },
+          }
         });
-        console.error("Dealership mismatch:", {
+        console.error('Dealership mismatch:', {
           order_dealership_id: orderDealershipId,
           order_dealership_id_raw: order.dealership_id,
-          user_dealership_id: userDealershipId,
+          user_dealership_id: userDealershipId
         });
         return;
       }
     }
-
-    // Special handling for motorbike with in_stock: skip deposit, auto mark_vehicle_ready and pay-final
-    if (isMotorbikeInStockWaitingPayment(order)) {
-      setLoading(true);
-      try {
-        message.info(
-          "Đơn hàng xe máy có sẵn trong kho. Đang tự động xử lý thanh toán..."
-        );
-
-        // Step 1: Mark vehicle ready
-        await orderService.markVehicleReady(order._id);
-        message.success("Đã đánh dấu xe sẵn sàng.");
-
-        // Step 2: Pay final amount (full payment)
-        const payFinalResponse = await orderService.payFinal(order._id, {
-          payment_method:
-            values.method || order.payment_method === "cash" ? "cash" : "bank",
-          notes:
-            values.notes ||
-            "Tự động thanh toán đủ cho đơn hàng xe máy có sẵn trong kho",
-        });
-
-        if (payFinalResponse.success) {
-          message.success(
-            "Đã tự động thanh toán đủ thành công cho đơn hàng xe máy có sẵn trong kho."
-          );
-
-          // Check if fully paid to automatically generate contract
-          if (payFinalResponse.data.order.status === "fully_paid") {
-            message.info(
-              "Đơn hàng đã được thanh toán đủ! Đang tạo hợp đồng..."
-            );
-
-            // Automatically generate contract PDF on frontend
-            try {
-              const contractData = await mapOrderToContractPDF(
-                payFinalResponse.data.order
-              );
-              await generateContractPDF(contractData);
-              message.success("Hợp đồng đã được tạo và tải xuống thành công!");
-            } catch (error) {
-              console.error("Error generating contract:", error);
-              message.warning(
-                "Thanh toán thành công nhưng không thể tạo hợp đồng. Vui lòng thử lại sau."
-              );
-            }
-          }
-
-          // Reload payment history
-          await loadPaymentHistory();
-
-          // Pass updated order data to parent for immediate state update
-          onSuccess(payFinalResponse.data.order);
-          handleClose();
-          return;
-        } else {
-          message.error(
-            "Đánh dấu xe sẵn sàng thành công nhưng thanh toán đủ thất bại. Vui lòng thử lại."
-          );
-        }
-      } catch (error: any) {
-        console.error("Error processing motorbike payment:", error);
-        const errorMsg =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Lỗi khi xử lý thanh toán";
-        message.error(
-          `Lỗi khi xử lý thanh toán cho đơn hàng xe máy: ${errorMsg}`
-        );
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // Guard: đặt cọc chỉ khi order.pending (for non-motorbike orders)
-    if (isFirstPayment && order.status !== "pending") {
+    
+    // Guard: đặt cọc chỉ khi order.pending
+    if (isFirstPayment && order.status !== 'pending') {
       await Swal.fire({
-        icon: "error",
-        title: "Lỗi!",
+        icon: 'error',
+        title: 'Lỗi!',
         text: `Không thể đặt cọc khi đơn hàng ở trạng thái "${order.status}". Yêu cầu trạng thái pending.`,
-        confirmButtonText: "Đóng",
+        confirmButtonText: 'Đóng',
         // Đảm bảo SweetAlert hiển thị trên modal
         didOpen: () => {
-          const swalContainer = document.querySelector(
-            ".swal2-container"
-          ) as HTMLElement;
+          const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
           if (swalContainer) {
-            swalContainer.style.zIndex = "99999";
+            swalContainer.style.zIndex = '99999';
             if (swalContainer.parentElement !== document.body) {
               document.body.appendChild(swalContainer);
             }
           }
-        },
+        }
       });
       return;
     }
 
     // Guard: Thanh toán đủ chỉ khi order.vehicle_ready
     // Nếu xe có sẵn trong kho (deposit_paid) nhưng chưa mark vehicle ready, không được thanh toán đủ
-    if (!isFirstPayment && order.status !== "vehicle_ready") {
-      if (order.status === "deposit_paid") {
+    if (!isFirstPayment && order.status !== 'vehicle_ready') {
+      if (order.status === 'deposit_paid') {
         await Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "Không thể thanh toán đủ. Xe có sẵn trong kho nhưng chưa được đánh dấu sẵn sàng. Vui lòng đánh dấu xe sẵn sàng trước khi thanh toán đủ.",
-          confirmButtonText: "Đóng",
+          icon: 'error',
+          title: 'Lỗi!',
+          text: 'Không thể thanh toán đủ. Xe có sẵn trong kho nhưng chưa được đánh dấu sẵn sàng. Vui lòng đánh dấu xe sẵn sàng trước khi thanh toán đủ.',
+          confirmButtonText: 'Đóng',
           // Đảm bảo SweetAlert hiển thị trên modal
           didOpen: () => {
-            const swalContainer = document.querySelector(
-              ".swal2-container"
-            ) as HTMLElement;
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
             if (swalContainer) {
-              swalContainer.style.zIndex = "99999";
+              swalContainer.style.zIndex = '99999';
               if (swalContainer.parentElement !== document.body) {
                 document.body.appendChild(swalContainer);
               }
             }
-          },
+          }
         });
       } else {
         await Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
+          icon: 'error',
+          title: 'Lỗi!',
           text: `Không thể thanh toán đủ khi đơn hàng ở trạng thái "${order.status}". Yêu cầu trạng thái vehicle_ready.`,
-          confirmButtonText: "Đóng",
+          confirmButtonText: 'Đóng',
           // Đảm bảo SweetAlert hiển thị trên modal
           didOpen: () => {
-            const swalContainer = document.querySelector(
-              ".swal2-container"
-            ) as HTMLElement;
+            const swalContainer = document.querySelector('.swal2-container') as HTMLElement;
             if (swalContainer) {
-              swalContainer.style.zIndex = "99999";
+              swalContainer.style.zIndex = '99999';
               if (swalContainer.parentElement !== document.body) {
                 document.body.appendChild(swalContainer);
               }
             }
-          },
+          }
         });
       }
       return;
@@ -354,139 +250,91 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         response = await orderService.payDeposit(order._id, {
           deposit_amount: values.amount,
           payment_method: values.method,
-          notes: values.notes,
+          notes: values.notes
         });
       } else {
         // BƯỚC 2: Thanh toán cuối - Dùng API payFinal (tự động tính số tiền còn lại)
         // Yêu cầu: Order phải ở trạng thái vehicle_ready (phải mark vehicle ready thủ công trước)
         response = await orderService.payFinal(order._id, {
           payment_method: values.method,
-          notes: values.notes,
+          notes: values.notes
         });
       }
-
+      
       if (response.success) {
         if (isFirstPayment) {
           // Xử lý response từ payDeposit API
           const depositResponse = response as any;
-          message.success("Tiền cọc đã được ghi nhận thành công!");
-
-          // Check if this is a motorbike order with in_stock
-          const isMotorbikeInStock = await checkAndProcessMotorbikeInStock(
-            order,
-            depositResponse
-          );
-
-          if (isMotorbikeInStock) {
-            // Đã xử lý tự động mark_vehicle_ready và pay-final
-            // Reload payment history và return với order đã được update
-            await loadPaymentHistory();
-            // Get updated order after auto-processing
-            try {
-              const updatedOrderResponse = await orderService.getOrderById(
-                order._id
-              );
-              if (updatedOrderResponse.success) {
-                const updatedOrder =
-                  updatedOrderResponse.data.order || updatedOrderResponse.data;
-                onSuccess(updatedOrder);
-                handleClose();
-                return;
-              }
-            } catch (error) {
-              console.error("Error fetching updated order:", error);
-            }
-            onSuccess(depositResponse.data.order);
-            handleClose();
-            return;
-          }
-
-          // Hiển thị thông báo dựa vào có stock hay không (cho các trường hợp khác)
+          message.success('Tiền cọc đã được ghi nhận thành công!');
+          
+          // Hiển thị thông báo dựa vào có stock hay không
           if (depositResponse.data.has_stock) {
-            message.info("Xe có sẵn trong kho. Đã giữ chỗ cho khách hàng.");
+            message.info('Xe có sẵn trong kho. Đã giữ chỗ cho khách hàng.');
           } else {
-            message.info("Xe hết hàng. Đã tạo yêu cầu nhập hàng từ hãng.");
+            message.info('Xe hết hàng. Đã tạo yêu cầu nhập hàng từ hãng.');
           }
         } else {
           // Xử lý response từ payFinal API
-          message.success("Thanh toán cuối đã được ghi nhận thành công!");
-
+          message.success('Thanh toán cuối đã được ghi nhận thành công!');
+          
           // Check if fully paid to automatically generate contract
-          if (response.data.order.status === "fully_paid") {
-            message.info(
-              "Đơn hàng đã được thanh toán đủ! Đang tạo hợp đồng..."
-            );
-
+          if (response.data.order.status === 'fully_paid') {
+            message.info('Đơn hàng đã được thanh toán đủ! Đang tạo hợp đồng...');
+            
             // Automatically generate contract PDF on frontend
             try {
-              const contractData = await mapOrderToContractPDF(
-                response.data.order
-              );
+              const contractData = await mapOrderToContractPDF(response.data.order);
               await generateContractPDF(contractData);
-              message.success("Hợp đồng đã được tạo và tải xuống thành công!");
+              message.success('Hợp đồng đã được tạo và tải xuống thành công!');
             } catch (error) {
-              console.error("Error generating contract:", error);
-              message.warning(
-                "Thanh toán thành công nhưng không thể tạo hợp đồng. Vui lòng thử lại sau."
-              );
+              console.error('Error generating contract:', error);
+              message.warning('Thanh toán thành công nhưng không thể tạo hợp đồng. Vui lòng thử lại sau.');
             }
           }
         }
-
+        
         // Reload payment history
         await loadPaymentHistory();
-
+        
         // Pass updated order data to parent for immediate state update
         onSuccess(response.data.order);
         handleClose();
       } else {
-        console.error("Payment failed:", response.message);
-        message.error(response.message || "Có lỗi xảy ra khi xử lý thanh toán");
+        console.error('Payment failed:', response.message);
+        message.error(response.message || 'Có lỗi xảy ra khi xử lý thanh toán');
       }
+      
     } catch (error: any) {
-      console.error("Error processing payment:", error);
-
+      console.error('Error processing payment:', error);
+      
       // Handle specific backend error messages
-      let errorMessage = "Có lỗi xảy ra khi xử lý thanh toán";
+      let errorMessage = 'Có lỗi xảy ra khi xử lý thanh toán';
       let isStockError = false;
-
+      
       if (error?.response?.data?.message) {
-        const backendMessage = String(error.response.data.message || "");
-
+        const backendMessage = String(error.response.data.message || '');
+        
         // Translate common backend messages to Vietnamese
-        if (
-          backendMessage.includes("Insufficient stock") ||
-          backendMessage.includes("hết hàng") ||
-          backendMessage.includes("không đủ")
-        ) {
-          errorMessage =
-            "Xe hiện đang hết hàng trong kho. Hệ thống đang cố gắng tự động tạo yêu cầu nhập hàng từ hãng. Vui lòng kiểm tra lại đơn hàng sau vài giây.";
+        if (backendMessage.includes('Insufficient stock') || backendMessage.includes('hết hàng') || backendMessage.includes('không đủ')) {
+          errorMessage = 'Xe hiện đang hết hàng trong kho. Hệ thống đang cố gắng tự động tạo yêu cầu nhập hàng từ hãng. Vui lòng kiểm tra lại đơn hàng sau vài giây.';
           isStockError = true;
-        } else if (
-          backendMessage.includes("chưa chọn màu") ||
-          backendMessage.toLowerCase().includes("color")
-        ) {
-          errorMessage =
-            "Đơn hàng chưa chọn màu xe cho sản phẩm. Vui lòng cập nhật màu xe trước khi đặt cọc.";
-        } else if (
-          backendMessage.includes("Đơn hàng không ở trạng thái pending")
-        ) {
-          errorMessage =
-            "Chỉ đơn hàng ở trạng thái pending mới có thể đặt cọc.";
-        } else if (backendMessage.includes("exceeds the final order total")) {
-          errorMessage =
-            "Số tiền thanh toán vượt quá số tiền còn lại của đơn hàng";
-        } else if (backendMessage.includes("already been fully paid")) {
-          errorMessage = "Đơn hàng này đã được thanh toán đủ rồi";
+        } else if (backendMessage.includes('chưa chọn màu') || backendMessage.toLowerCase().includes('color') ) {
+          errorMessage = 'Đơn hàng chưa chọn màu xe cho sản phẩm. Vui lòng cập nhật màu xe trước khi đặt cọc.';
+        } else if (backendMessage.includes('Đơn hàng không ở trạng thái pending')) {
+          errorMessage = 'Chỉ đơn hàng ở trạng thái pending mới có thể đặt cọc.';
+        } else if (backendMessage.includes('exceeds the final order total')) {
+          errorMessage = 'Số tiền thanh toán vượt quá số tiền còn lại của đơn hàng';
+        } else if (backendMessage.includes('already been fully paid')) {
+          errorMessage = 'Đơn hàng này đã được thanh toán đủ rồi';
         } else {
           errorMessage = backendMessage;
         }
       }
-
+      
       // Hiển thị thông báo phù hợp
       if (isStockError) {
         // Hiển thị thông báo chi tiết hơn với thông tin từ error
-        const stockDetails = error?.response?.data?.message || "";
+        const stockDetails = error?.response?.data?.message || '';
         message.warning({
           content: (
             <div>
@@ -503,40 +351,30 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
           ),
           duration: 6,
         });
-
+        
         // Đợi một chút rồi reload order để kiểm tra xem backend có tạo OrderRequest không
         setTimeout(async () => {
           try {
             // Fetch lại order từ backend để xem status có thay đổi không
-            const updatedOrderResponse = await orderService.getOrderById(
-              order._id
-            );
+            const updatedOrderResponse = await orderService.getOrderById(order._id);
             if (updatedOrderResponse.success) {
-              const updatedOrder =
-                updatedOrderResponse.data.order || updatedOrderResponse.data;
+              const updatedOrder = updatedOrderResponse.data.order || updatedOrderResponse.data;
               // Nếu order status đã thay đổi thành waiting_vehicle_request, có nghĩa là backend đã tạo OrderRequest
               // Sử dụng type assertion để truy cập order_request_id (có thể có trong response nhưng chưa có trong type)
               const orderRequestId = (updatedOrder as any).order_request_id;
-              if (
-                updatedOrder.status === "waiting_vehicle_request" ||
-                orderRequestId
-              ) {
-                message.success(
-                  "Đã tạo yêu cầu nhập hàng thành công! Đơn hàng đang chờ hãng duyệt."
-                );
+              if (updatedOrder.status === 'waiting_vehicle_request' || orderRequestId) {
+                message.success('Đã tạo yêu cầu nhập hàng thành công! Đơn hàng đang chờ hãng duyệt.');
                 onSuccess(updatedOrder);
               } else {
                 // Nếu vẫn pending, có thể backend chưa kịp xử lý hoặc có lỗi
-                message.info(
-                  "Vui lòng kiểm tra lại đơn hàng sau vài giây. Nếu vẫn lỗi, vui lòng liên hệ quản trị viên."
-                );
+                message.info('Vui lòng kiểm tra lại đơn hàng sau vài giây. Nếu vẫn lỗi, vui lòng liên hệ quản trị viên.');
                 onSuccess();
               }
             } else {
               onSuccess();
             }
           } catch (reloadError) {
-            console.error("Error reloading order:", reloadError);
+            console.error('Error reloading order:', reloadError);
             onSuccess();
           }
           handleClose();
@@ -558,317 +396,211 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
   // Generate and download contract PDF
   const handleGenerateInvoice = async () => {
     if (!order) return;
-
+    
     setGeneratingInvoice(true);
     try {
-      message.info("Đang tạo hợp đồng PDF...");
-
+      message.info('Đang tạo hợp đồng PDF...');
+      
       // Generate contract PDF on frontend
       const contractData = await mapOrderToContractPDF(order);
       await generateContractPDF(contractData);
-      message.success("Hợp đồng đã được tạo và tải xuống thành công!");
+      message.success('Hợp đồng đã được tạo và tải xuống thành công!');
+      
     } catch (error: any) {
-      console.error("Error generating contract:", error);
-      const errorMessage = error?.message || "Lỗi khi tạo hợp đồng";
+      console.error('Error generating contract:', error);
+      const errorMessage = error?.message || 'Lỗi khi tạo hợp đồng';
       message.error(errorMessage);
     } finally {
       setGeneratingInvoice(false);
     }
   };
 
-  // Check and process motorbike with in_stock: auto mark_vehicle_ready and pay-final
-  const checkAndProcessMotorbikeInStock = async (
-    currentOrder: Order,
-    depositResponse: any
-  ): Promise<boolean> => {
-    try {
-      // Check if order has motorbike items
-      const hasMotorbike = currentOrder.items?.some(
-        (item) => item.category === "motorbike"
-      );
-
-      if (!hasMotorbike) {
-        // Not a motorbike order, skip auto-processing
-        return false;
-      }
-
-      // Check stock_source from order or response
-      const stockSource =
-        (currentOrder as any).stock_source || currentOrder.stock_source;
-
-      if (stockSource === "in_stock") {
-        // Motorbike with in_stock: auto mark vehicle ready and pay final
-        try {
-          message.info(
-            "Đơn hàng xe máy có sẵn trong kho. Đang tự động xử lý..."
-          );
-
-          // Step 1: Mark vehicle ready
-          await orderService.markVehicleReady(currentOrder._id);
-          message.success("Đã đánh dấu xe sẵn sàng.");
-
-          // Step 2: Pay final amount
-          const payFinalResponse = await orderService.payFinal(
-            currentOrder._id,
-            {
-              payment_method:
-                depositResponse.data.payment_method ||
-                currentOrder.payment_method === "cash"
-                  ? "cash"
-                  : "bank",
-              notes:
-                "Tự động thanh toán cuối cho đơn hàng xe máy có sẵn trong kho",
-            }
-          );
-
-          if (payFinalResponse.success) {
-            message.success(
-              "Đã tự động thanh toán cuối thành công cho đơn hàng xe máy có sẵn trong kho."
-            );
-
-            // Check if fully paid to automatically generate contract
-            if (payFinalResponse.data.order.status === "fully_paid") {
-              message.info(
-                "Đơn hàng đã được thanh toán đủ! Đang tạo hợp đồng..."
-              );
-
-              // Automatically generate contract PDF on frontend
-              try {
-                const contractData = await mapOrderToContractPDF(
-                  payFinalResponse.data.order
-                );
-                await generateContractPDF(contractData);
-                message.success(
-                  "Hợp đồng đã được tạo và tải xuống thành công!"
-                );
-              } catch (error) {
-                console.error("Error generating contract:", error);
-                message.warning(
-                  "Thanh toán thành công nhưng không thể tạo hợp đồng. Vui lòng thử lại sau."
-                );
-              }
-            }
-
-            return true;
-          } else {
-            message.error(
-              "Đánh dấu xe sẵn sàng thành công nhưng thanh toán cuối thất bại. Vui lòng thử lại."
-            );
-            return false;
-          }
-        } catch (autoProcessError: any) {
-          console.error("Error in motorbike auto-process:", autoProcessError);
-          const errorMsg =
-            autoProcessError?.response?.data?.message ||
-            autoProcessError?.message ||
-            "Lỗi khi xử lý tự động";
-          message.error(
-            `Lỗi khi xử lý tự động cho đơn hàng xe máy: ${errorMsg}`
-          );
-          return false;
-        }
-      } else if (stockSource === "requested") {
-        // Motorbike with requested: wait for deposit (keep existing flow)
-        // No auto-processing needed
-        return false;
-      }
-
-      return false;
-    } catch (error: any) {
-      console.error("Error checking motorbike auto-process:", error);
-      // Don't show error to user, just log it
-      return false;
-    }
-  };
-
   // Format currency
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
     }).format(amount);
   };
 
   // Get status text in Vietnamese
   const getStatusText = (status: string) => {
-    const statusMap: {[key: string]: string} = {
-      pending: "Chờ xác nhận",
-      confirmed: "Đã xác nhận",
-      halfPayment: "Đã đặt cọc",
-      deposit_paid: "Đã đặt cọc",
-      fullyPayment: "Đã thanh toán",
-      fully_paid: "Đã thanh toán đủ",
-      waiting_vehicle_request: "Chờ yêu cầu xe",
-      vehicle_ready: "Xe sẵn sàng",
-      delivered: "Đã giao",
-      completed: "Hoàn thành",
-      closed: "Đã đóng",
-      cancelled: "Đã hủy",
+    const statusMap: { [key: string]: string } = {
+      pending: 'Chờ xác nhận',
+      confirmed: 'Đã xác nhận',
+      halfPayment: 'Đã đặt cọc',
+      deposit_paid: 'Đã đặt cọc',
+      fullyPayment: 'Đã thanh toán',
+      fully_paid: 'Đã thanh toán đủ',
+      waiting_vehicle_request: 'Chờ yêu cầu xe',
+      vehicle_ready: 'Xe sẵn sàng',
+      delivered: 'Đã giao',
+      completed: 'Hoàn thành',
+      closed: 'Đã đóng',
+      cancelled: 'Đã hủy',
     };
     return statusMap[status] || status;
   };
 
   // Get status tag style with gradient background
   const getStatusTagStyle = (status: string) => {
-    const styleMap: {[key: string]: React.CSSProperties} = {
+    const styleMap: { [key: string]: React.CSSProperties } = {
       pending: {
-        background: "linear-gradient(135deg, #faad14 0%, #ffc53d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(250, 173, 20, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
       },
       confirmed: {
-        background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)'
       },
       halfPayment: {
-        background: "linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(250, 140, 22, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
       },
       deposit_paid: {
-        background: "linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(250, 140, 22, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 140, 22, 0.3)'
       },
       fullyPayment: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
       },
       fully_paid: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
       },
       waiting_vehicle_request: {
-        background: "linear-gradient(135deg, #faad14 0%, #ffc53d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(250, 173, 20, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
       },
       vehicle_ready: {
-        background: "linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(19, 194, 194, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(19, 194, 194, 0.3)'
       },
       delivered: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
       },
       completed: {
-        background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(82, 196, 26, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(82, 196, 26, 0.3)'
       },
       closed: {
-        background: "linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(140, 140, 140, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(140, 140, 140, 0.3)'
       },
       cancelled: {
-        background: "linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)",
-        color: "#fff",
-        border: "none",
+        background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
+        color: '#fff',
+        border: 'none',
         fontWeight: 600,
-        padding: "4px 12px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 4px rgba(255, 77, 79, 0.3)",
+        padding: '4px 12px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)'
       },
     };
-    return (
-      styleMap[status] || {
-        background: "#f0f0f0",
-        color: "#666",
-        border: "1px solid #d9d9d9",
-        fontWeight: 500,
-        padding: "4px 12px",
-        borderRadius: "6px",
-      }
-    );
+    return styleMap[status] || {
+      background: '#f0f0f0',
+      color: '#666',
+      border: '1px solid #d9d9d9',
+      fontWeight: 500,
+      padding: '4px 12px',
+      borderRadius: '6px'
+    };
   };
 
   // Payment history columns
   const historyColumns: ColumnsType<Payment> = [
     {
-      title: "Ngày thanh toán",
-      dataIndex: "paid_at",
-      key: "paid_at",
-      render: (date: string) => new Date(date).toLocaleString("vi-VN"),
+      title: 'Ngày thanh toán',
+      dataIndex: 'paid_at',
+      key: 'paid_at',
+      render: (date: string) => new Date(date).toLocaleString('vi-VN'),
     },
     {
-      title: "Số tiền",
-      dataIndex: "amount",
-      key: "amount",
+      title: 'Số tiền',
+      dataIndex: 'amount',
+      key: 'amount',
       render: (amount: number) => formatCurrency(amount),
     },
     {
-      title: "Phương thức",
-      dataIndex: "method",
-      key: "method",
+      title: 'Phương thức',
+      dataIndex: 'method',
+      key: 'method',
       render: (method: string) => {
         const methodMap = {
-          cash: "Tiền mặt",
-          bank: "Chuyển khoản",
-          qr: "QR Code",
-          card: "Thẻ",
+          cash: 'Tiền mặt',
+          bank: 'Chuyển khoản',
+          qr: 'QR Code',
+          card: 'Thẻ'
         };
         return methodMap[method as keyof typeof methodMap] || method;
       },
     },
     {
-      title: "Mã tham chiếu",
-      dataIndex: "reference",
-      key: "reference",
+      title: 'Mã tham chiếu',
+      dataIndex: 'reference',
+      key: 'reference',
     },
     {
-      title: "Ghi chú",
-      dataIndex: "notes",
-      key: "notes",
+      title: 'Ghi chú',
+      dataIndex: 'notes',
+      key: 'notes',
     },
   ];
 
@@ -884,18 +616,13 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
     >
       <div className="space-y-4">
         {/* Order Info */}
-        <Card
-          title={
-            <span className="text-lg font-bold text-gray-800">
-              Thông tin đơn hàng
-            </span>
-          }
+        <Card 
+          title={<span className="text-lg font-bold text-gray-800">Thông tin đơn hàng</span>} 
           size="small"
           className="shadow-lg border-2 border-gray-200 rounded-2xl mb-4"
           style={{
-            borderRadius: "1rem",
-            boxShadow:
-              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            borderRadius: '1rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
           }}
         >
           <Row gutter={16}>
@@ -903,12 +630,12 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               <Text strong>Mã đơn hàng:</Text> {order.code}
             </Col>
             <Col span={12}>
-              <Text strong>Khách hàng:</Text>{" "}
-              {orderWithCustomer?.customer?.full_name ||
-                (typeof order.customer_id === "object" &&
-                  order.customer_id?.full_name) ||
+              <Text strong>Khách hàng:</Text> {
+                (orderWithCustomer?.customer?.full_name) ||
+                (typeof order.customer_id === 'object' && order.customer_id?.full_name) ||
                 order.customer?.full_name ||
-                "N/A"}
+                'N/A'
+              }
             </Col>
             <Col span={12}>
               <Text strong>Tổng tiền:</Text> {formatCurrency(totalAmount)}
@@ -920,8 +647,10 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               <Text strong>Còn lại:</Text> {formatCurrency(remainingAmount)}
             </Col>
             <Col span={12}>
-              <Text strong>Trạng thái:</Text>{" "}
-              <Tag style={getStatusTagStyle(order.status)}>
+              <Text strong>Trạng thái:</Text>{' '}
+              <Tag 
+                style={getStatusTagStyle(order.status)}
+              >
                 {getStatusText(order.status)}
               </Tag>
             </Col>
@@ -929,91 +658,66 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
         </Card>
 
         {/* Payment Progress */}
-        <Card
-        // title={<span className="text-lg font-bold text-gray-800">Tiến độ thanh toán</span>}
-        // size="small"
-        // className="shadow-lg border-2 border-gray-200 rounded-2xl mb-4"
-        // style={{
-        //   borderRadius: '1rem',
-        //   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-        // }}
+        <Card 
+          // title={<span className="text-lg font-bold text-gray-800">Tiến độ thanh toán</span>} 
+          // size="small"
+          // className="shadow-lg border-2 border-gray-200 rounded-2xl mb-4"
+          // style={{
+          //   borderRadius: '1rem',
+          //   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          // }}
         >
           <div>
             <Title level={4}>Tiến độ thanh toán</Title>
             <Progress
               percent={paymentProgress}
-              strokeColor={paymentProgress === 100 ? "#52c41a" : "#1890ff"}
-              status={paymentProgress === 100 ? "success" : "active"}
+              strokeColor={paymentProgress === 100 ? '#52c41a' : '#1890ff'}
+              status={paymentProgress === 100 ? 'success' : 'active'}
             />
             <div className="text-center mt-2">
-              <Text type="secondary">{paymentProgress}% đã thanh toán</Text>
+              <Text type="secondary">
+                {paymentProgress}% đã thanh toán
+              </Text>
             </div>
           </div>
         </Card>
 
         {/* Payment Form */}
         {paymentProgress < 100 && (
-          <Card
-            title={
-              <span className="text-lg font-bold text-gray-800">
-                {isMotorbikeInStockWaitingPayment(order)
-                  ? "Thanh toán đủ"
-                  : "Thêm thanh toán"}
-              </span>
-            }
+          <Card 
+            title={<span className="text-lg font-bold text-gray-800">Thêm thanh toán</span>} 
             size="small"
             className="shadow-lg border-2 border-gray-200 rounded-2xl"
             style={{
-              borderRadius: "1rem",
-              boxShadow:
-                "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+              borderRadius: '1rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
             }}
           >
-            {isMotorbikeInStockWaitingPayment(order) && (
-              <Alert
-                message="Đơn hàng xe máy có sẵn trong kho"
-                description="Hệ thống sẽ tự động đánh dấu xe sẵn sàng và thanh toán đủ số tiền còn lại. Bạn chỉ cần chọn phương thức thanh toán và xác nhận."
-                type="info"
-                showIcon
-                style={{marginBottom: 16}}
-              />
-            )}
-            {isFirstPayment && !isMotorbikeInStockWaitingPayment(order) && (
+            {isFirstPayment && (
               <Alert
                 message="Quy định về tiền cọc"
                 description={
                   <div>
+                    
                     <div className="text-sm space-y-1 text-gray-700">
-                      <p>
-                        <strong>Đảm bảo cam kết:</strong> Khách hàng phải đặt
-                        cọc tối thiểu để thể hiện sự nghiêm túc trong giao dịch.
-                      </p>
-                      <p>
-                        <strong>Giữ hàng:</strong> Số tiền này đủ để giữ hàng
-                        trong kho và đảm bảo đơn hàng không bị hủy bởi khách
-                        hàng khác.
-                      </p>
-                      <p>
-                        <strong>Khởi động quy trình:</strong> Đủ để bắt đầu quy
-                        trình sản xuất, nhập hàng, hoặc chuẩn bị giao hàng.
-                      </p>
+                      <p><strong>Đảm bảo cam kết:</strong> Khách hàng phải đặt cọc tối thiểu để thể hiện sự nghiêm túc trong giao dịch.</p>
+                      <p><strong>Giữ hàng:</strong> Số tiền này đủ để giữ hàng trong kho và đảm bảo đơn hàng không bị hủy bởi khách hàng khác.</p>
+                      <p><strong>Khởi động quy trình:</strong> Đủ để bắt đầu quy trình sản xuất, nhập hàng, hoặc chuẩn bị giao hàng.</p>
                     </div>
                   </div>
                 }
                 type="info"
                 showIcon
-                style={{marginBottom: 16}}
+                style={{ marginBottom: 16 }}
               />
             )}
             {!isFirstPayment && (
               <Alert
                 message="Thanh toán tiếp theo"
-                description={`Đơn hàng đã có cọc ban đầu. Bạn có thể thanh toán bất kỳ số tiền nào từ 1 VNĐ đến ${formatCurrency(
-                  remainingAmount
-                )} (số tiền còn lại).`}
+                description={`Đơn hàng đã có cọc ban đầu. Bạn có thể thanh toán bất kỳ số tiền nào từ 1 VNĐ đến ${formatCurrency(remainingAmount)} (số tiền còn lại).`}
                 type="info"
                 showIcon
-                style={{marginBottom: 16}}
+                style={{ marginBottom: 16 }}
               />
             )}
             {paymentHistory.length >= 2 && (
@@ -1022,220 +726,198 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                 description="Đơn hàng này đã có hơn 2 lần thanh toán. Chỉ được thanh toán nốt phần còn lại."
                 type="info"
                 showIcon
-                style={{marginBottom: 16}}
+                style={{ marginBottom: 16 }}
               />
             )}
-            <Form form={form} layout="vertical" onFinish={handleSubmit}>
-              {!isMotorbikeInStockWaitingPayment(order) && (
-                <Form.Item
-                  label={
-                    <div>
-                      <span>Số tiền thanh toán</span>
-                      {isFirstPayment ? (
-                        <div className="text-xs text-gray-500 mt-1">
-                          <strong>Bước 1 - Đặt cọc:</strong> Chọn phần trăm cọc
-                          từ tổng giá trị đơn hàng - Từ 10% đến 30%
-                          <br />
-                          <span className="text-blue-600">
-                            Hệ thống sẽ tự động tính số tiền tương ứng
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-500 mt-1">
-                          <span className="text-orange-600">
-                            <strong>Bước 2 - Thanh toán cuối:</strong> Hệ thống
-                            tự động tính và thanh toán{" "}
-                            {formatCurrency(remainingAmount)} còn lại
-                          </span>
-                          <br />
-                        </div>
-                      )}
-                    </div>
-                  }
-                  name="depositPercent"
-                  rules={[
-                    // Chỉ required cho lần cọc đầu tiên
-                    ...(isFirstPayment
-                      ? [
-                          {
-                            required: true,
-                            message: "Vui lòng chọn hoặc nhập phần trăm cọc",
-                          },
-                          {
-                            validator: (_: any, value: number) => {
-                              if (!value) {
-                                return Promise.resolve();
-                              }
-                              if (value < 10) {
-                                return Promise.reject(
-                                  new Error("Phần trăm cọc tối thiểu là 10%")
-                                );
-                              }
-                              if (value > 30) {
-                                return Promise.reject(
-                                  new Error(
-                                    "Phần trăm cọc không được vượt quá 30%"
-                                  )
-                                );
-                              }
-                              return Promise.resolve();
-                            },
-                          },
-                        ]
-                      : []),
-                  ]}
-                >
-                  {/* Lần 1: Chọn % cọc (10, 15, 20, 25, 30%) hoặc nhập tùy chỉnh, Lần 2: Bắt buộc trả hết */}
-                  {isFirstPayment ? (
-                    <Form.Item name="depositPercent" noStyle>
-                      <InputNumber<number>
-                        placeholder="Nhập phần trăm cọc (10-30%)"
-                        min={10}
-                        max={30}
-                        className="w-full px-5 py-4 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl"
-                        style={{
-                          borderRadius: "1rem",
-                          boxShadow:
-                            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                          width: "100%",
-                        }}
-                        onChange={(value) => {
-                          if (value !== null && value !== undefined) {
-                            const percent = Number(value);
-
-                            // Chỉ tự động điều chỉnh nếu < 10, nếu > 30 thì để nguyên để validation báo lỗi
-                            if (percent < 10) {
-                              form.setFieldValue("depositPercent", 10);
-                              const calculatedAmount = Math.round(
-                                totalAmount * (10 / 100)
-                              );
-                              form.setFieldsValue({
-                                amount: calculatedAmount,
-                              });
-                            } else if (percent > 30) {
-                              // Không tự động set về 30, để validation báo lỗi
-                              form.setFieldValue("depositPercent", percent);
-                              form.setFieldsValue({
-                                amount: undefined, // Không tính amount nếu vượt quá 30
-                              });
-                            } else {
-                              // Giá trị hợp lệ (10-30), giữ nguyên
-                              const calculatedAmount = Math.round(
-                                totalAmount * (percent / 100)
-                              );
-                              form.setFieldsValue({
-                                amount: calculatedAmount,
-                              });
-                            }
-                          } else {
-                            // Clear amount if input is cleared
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+            >
+              <Form.Item
+                label={
+                  <div>
+                    <span>Số tiền thanh toán</span>
+                    {isFirstPayment ? (
+                      <div className="text-xs text-gray-500 mt-1">
+                        <strong>Bước 1 - Đặt cọc:</strong> Chọn phần trăm cọc từ tổng giá trị đơn hàng
+                        <br />
+                        <span className="text-blue-600">Hệ thống sẽ tự động tính số tiền tương ứng</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500 mt-1">
+                        <span className="text-orange-600"><strong>Bước 2 - Thanh toán cuối:</strong> Hệ thống tự động tính và thanh toán {formatCurrency(remainingAmount)} còn lại</span>
+                        <br />
+                      </div>
+                    )}
+                  </div>
+                }
+                name="depositPercent"
+                rules={[
+                  // Chỉ required cho lần cọc đầu tiên
+                  ...(isFirstPayment ? [
+                    { required: true, message: 'Vui lòng chọn hoặc nhập phần trăm cọc' },
+                    {
+                      validator: (_: any, value: number) => {
+                        if (!value) {
+                          return Promise.resolve();
+                        }
+                        if (value < 10) {
+                          return Promise.reject(new Error('Phần trăm cọc tối thiểu là 10%'));
+                        }
+                        if (value > 30) {
+                          return Promise.reject(new Error('Phần trăm cọc không được vượt quá 30%'));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ] : [])
+                ]}
+              >
+                {/* Lần 1: Chọn % cọc (10, 15, 20, 25, 30%) hoặc nhập tùy chỉnh, Lần 2: Bắt buộc trả hết */}
+                {isFirstPayment ? (
+                  <Form.Item name="depositPercent" noStyle>
+                    <InputNumber<number>
+                      placeholder="Nhập phần trăm cọc (10-30%)"
+                      min={10}
+                      max={30}
+                      className="w-full px-5 py-4 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl"
+                      style={{
+                        borderRadius: '1rem',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        width: '100%'
+                      }}
+                      onChange={(value) => {
+                        if (value !== null && value !== undefined) {
+                          const percent = Number(value);
+                          
+                          // Chỉ tự động điều chỉnh nếu < 10, nếu > 30 thì để nguyên để validation báo lỗi
+                          if (percent < 10) {
+                            form.setFieldValue('depositPercent', 10);
+                            const calculatedAmount = Math.round(totalAmount * (10 / 100));
                             form.setFieldsValue({
-                              amount: undefined,
+                              amount: calculatedAmount
+                            });
+                          } else if (percent > 30) {
+                            // Không tự động set về 30, để validation báo lỗi
+                            form.setFieldValue('depositPercent', percent);
+                            form.setFieldsValue({
+                              amount: undefined // Không tính amount nếu vượt quá 30
+                            });
+                          } else {
+                            // Giá trị hợp lệ (10-30), giữ nguyên
+                            const calculatedAmount = Math.round(totalAmount * (percent / 100));
+                            form.setFieldsValue({
+                              amount: calculatedAmount
                             });
                           }
-                        }}
-                        formatter={(value) =>
-                          value !== null && value !== undefined
-                            ? `${value}%`
-                            : ""
+                        } else {
+                          // Clear amount if input is cleared
+                          form.setFieldsValue({
+                            amount: undefined
+                          });
                         }
-                        parser={(value) => {
-                          if (!value) return 0;
-                          const parsed = value.replace("%", "").trim();
-                          const num = Number(parsed);
-                          return isNaN(num) ? 0 : num;
-                        }}
-                        onBlur={() => {
-                          // Khi blur, validate và tính toán lại nếu hợp lệ
-                          const currentValue =
-                            form.getFieldValue("depositPercent");
-                          if (
-                            currentValue !== null &&
-                            currentValue !== undefined
-                          ) {
-                            const percent = Number(currentValue);
-                            if (percent >= 10 && percent <= 30) {
-                              // Giữ nguyên giá trị và tính toán lại amount
-                              const calculatedAmount = Math.round(
-                                totalAmount * (percent / 100)
-                              );
-                              form.setFieldsValue({
-                                amount: calculatedAmount,
-                              });
-                            } else if (percent > 30) {
-                              // Nếu > 30, trigger validation để báo lỗi
-                              form.validateFields(["depositPercent"]);
-                            }
+                      }}
+                      formatter={(value) => value !== null && value !== undefined ? `${value}%` : ''}
+                      parser={(value) => {
+                        if (!value) return 0;
+                        const parsed = value.replace('%', '').trim();
+                        const num = Number(parsed);
+                        return isNaN(num) ? 0 : num;
+                      }}
+                      onBlur={() => {
+                        // Khi blur, validate và tính toán lại nếu hợp lệ
+                        const currentValue = form.getFieldValue('depositPercent');
+                        if (currentValue !== null && currentValue !== undefined) {
+                          const percent = Number(currentValue);
+                          if (percent >= 10 && percent <= 30) {
+                            // Giữ nguyên giá trị và tính toán lại amount
+                            const calculatedAmount = Math.round(totalAmount * (percent / 100));
+                            form.setFieldsValue({
+                              amount: calculatedAmount
+                            });
+                          } else if (percent > 30) {
+                            // Nếu > 30, trigger validation để báo lỗi
+                            form.validateFields(['depositPercent']);
                           }
+                        }
+                      }}
+                    />
+                  </Form.Item>
+                ) : (
+                  <div>
+                    {/* <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px',
+                      padding: '12px 16px',
+                      backgroundColor: '#fff7e6',
+                      border: '2px solid #faad14',
+                      borderRadius: '6px',
+                      marginBottom: '8px'
+                    }}>
+                      <DollarOutlined style={{ color: '#faad14', fontSize: '24px' }} />
+                      <InputNumber
+                        style={{ 
+                          flex: 1,
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          fontWeight: 'bold',
+                          fontSize: '20px',
+                          color: '#d46b08',
+                          boxShadow: 'none'
                         }}
+                        value={remainingAmount}
+                        formatter={value => value !== undefined && value !== null ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                        parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
+                        readOnly
+                        min={remainingAmount}
+                        max={remainingAmount}
+                        controls={false}
                       />
-                    </Form.Item>
-                  ) : (
-                    <div>
-                      <div className="mt-2">
-                        <Alert
-                          message={
-                            <span>
-                              <Text
-                                strong
-                                style={{color: "#fa8c16", fontSize: "16px"}}
-                              >
-                                {formatCurrency(remainingAmount)}
-                              </Text>
-                            </span>
-                          }
-                          type="info"
-                          showIcon
-                          icon={<DollarOutlined style={{color: "#1890ff"}} />}
-                          style={{
-                            backgroundColor: "#e6f7ff",
-                            borderColor: "#91d5ff",
-                          }}
-                        />
-                      </div>
+                    </div> */}
+                    <div className="mt-2">
+                      <Alert
+                        message={
+                          <span>
+                            <Text strong style={{ color: '#fa8c16', fontSize: '16px' }}>
+                              {formatCurrency(remainingAmount)}
+                            </Text>
+                            {/* <Text type="secondary" style={{ fontSize: '14px', marginLeft: '8px' }}>
+                              sẽ được thanh toán tự động
+                            </Text> */}
+                          </span>
+                        }
+                        type="info"
+                        showIcon
+                        icon={<DollarOutlined style={{ color: '#1890ff' }} />}
+                        style={{ backgroundColor: '#e6f7ff', borderColor: '#91d5ff' }}
+                      />
                     </div>
-                  )}
-                </Form.Item>
-              )}
-
-              {isMotorbikeInStockWaitingPayment(order) && (
-                <Alert
-                  message={`Số tiền thanh toán: ${formatCurrency(totalAmount)}`}
-                  description="Hệ thống sẽ tự động thanh toán đủ số tiền cho đơn hàng xe máy có sẵn trong kho."
-                  type="info"
-                  showIcon
-                  style={{marginBottom: 16}}
-                />
-              )}
+                  </div>
+                )}
+              </Form.Item>
 
               {/* Hidden field để lưu số tiền đã tính từ % */}
-              {isFirstPayment && !isMotorbikeInStockWaitingPayment(order) && (
+              {isFirstPayment && (
                 <Form.Item name="amount" hidden>
                   <InputNumber />
                 </Form.Item>
               )}
 
               {/* Hiển thị số tiền đã chọn cho lần cọc đầu tiên */}
-              {isFirstPayment && !isMotorbikeInStockWaitingPayment(order) && (
-                <Form.Item
-                  shouldUpdate={(prevValues, currentValues) =>
-                    prevValues.depositPercent !== currentValues.depositPercent
-                  }
-                >
-                  {({getFieldValue}) => {
-                    const selectedPercent = getFieldValue("depositPercent");
-                    const calculatedAmount = getFieldValue("amount");
+              {isFirstPayment && (
+                <Form.Item shouldUpdate={(prevValues, currentValues) => prevValues.depositPercent !== currentValues.depositPercent}>
+                  {({ getFieldValue }) => {
+                    const selectedPercent = getFieldValue('depositPercent');
+                    const calculatedAmount = getFieldValue('amount');
                     if (selectedPercent && calculatedAmount) {
                       return (
                         <Alert
-                          message={`Số tiền cọc đã chọn: ${formatCurrency(
-                            calculatedAmount
-                          )} (${selectedPercent}% của ${formatCurrency(
-                            totalAmount
-                          )})`}
+                          message={`Số tiền cọc đã chọn: ${formatCurrency(calculatedAmount)} (${selectedPercent}% của ${formatCurrency(totalAmount)})`}
                           type="info"
                           showIcon
-                          style={{marginBottom: 16}}
+                          style={{ marginBottom: 16 }}
                         />
                       );
                     }
@@ -1245,51 +927,36 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               )}
 
               <Form.Item
-                label={
-                  <span className="text-base font-semibold text-gray-700">
-                    Phương thức thanh toán
-                  </span>
-                }
+                label={<span className="text-base font-semibold text-gray-700">Phương thức thanh toán</span>}
                 name="method"
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng chọn phương thức thanh toán",
-                  },
-                ]}
+                rules={[{ required: true, message: 'Vui lòng chọn phương thức thanh toán' }]}
               >
                 <div className="relative">
-                  <select
+                  <select 
                     className="w-full px-5 py-4 pr-14 border-2 border-gray-300 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 bg-gradient-to-br from-white via-gray-50 to-white text-gray-900 font-semibold transition-all duration-300 hover:border-blue-500 hover:shadow-xl hover:scale-[1.01] appearance-none cursor-pointer text-base"
                     style={{
-                      backgroundImage: "none",
-                      paddingRight: "3.5rem",
-                      borderRadius: "1rem",
-                      boxShadow:
-                        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                      backgroundImage: 'none',
+                      paddingRight: '3.5rem',
+                      borderRadius: '1rem',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                     }}
                   >
-                    <option value="">Chọn phương thức</option>
-                    <option value="cash">Tiền mặt</option>
-                    <option value="bank">Chuyển khoản</option>
-                    <option value="qr">QR Code</option>
-                    <option value="card">Thẻ</option>
-                  </select>
+                  <option value="">Chọn phương thức</option>
+                  <option value="cash">Tiền mặt</option>
+                  <option value="bank">Chuyển khoản</option>
+                  <option value="qr">QR Code</option>
+                  <option value="card">Thẻ</option>
+                </select>
                   {/* Custom dropdown arrow */}
                   <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
-                      <svg
-                        className="w-5 h-5 text-blue-600 transition-all duration-200"
-                        fill="none"
-                        stroke="currentColor"
+                      <svg 
+                        className="w-5 h-5 text-blue-600 transition-all duration-200" 
+                        fill="none" 
+                        stroke="currentColor" 
                         viewBox="0 0 24 24"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2.5}
-                          d="M19 9l-7 7-7-7"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
@@ -1297,11 +964,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
               </Form.Item>
 
               <Form.Item
-                label={
-                  <span className="text-base font-semibold text-gray-700">
-                    Ghi chú
-                  </span>
-                }
+                label={<span className="text-base font-semibold text-gray-700">Ghi chú</span>}
                 name="notes"
               >
                 <TextArea
@@ -1309,8 +972,8 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                   placeholder="Nhập ghi chú (tùy chọn)"
                   className="rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
                   style={{
-                    borderRadius: "0.75rem",
-                    padding: "0.75rem 1rem",
+                    borderRadius: '0.75rem',
+                    padding: '0.75rem 1rem'
                   }}
                 />
               </Form.Item>
@@ -1325,7 +988,9 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                   >
                     Ghi nhận thanh toán
                   </Button>
-                  <Button onClick={handleClose}>Hủy</Button>
+                  <Button onClick={handleClose}>
+                    Hủy
+                  </Button>
                 </Space>
               </Form.Item>
             </Form>
@@ -1350,9 +1015,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
                   className="mt-2"
                   size="large"
                 >
-                  {generatingInvoice
-                    ? "Đang tạo hợp đồng..."
-                    : "Xuất hợp đồng PDF"}
+                  {generatingInvoice ? 'Đang tạo hợp đồng...' : 'Xuất hợp đồng PDF'}
                 </Button>
               </div>
             }
@@ -1361,18 +1024,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({
           />
         )}
 
+       
+
         {/* Payment History */}
-        <Card
-          title={
-            <span className="text-lg font-bold text-gray-800">
-              Lịch sử thanh toán
-            </span>
-          }
+        <Card 
+          title={<span className="text-lg font-bold text-gray-800">Lịch sử thanh toán</span>}
           className="shadow-lg border-2 border-gray-200 rounded-2xl"
           style={{
-            borderRadius: "1rem",
-            boxShadow:
-              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            borderRadius: '1rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
           }}
         >
           <Table

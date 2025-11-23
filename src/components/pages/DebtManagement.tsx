@@ -91,20 +91,6 @@ export const DebtManagement: React.FC = () => {
     Record<string, {name: string; email?: string; phone?: string}>
   >({});
 
-  const paymentsWithBatch = selectedDebt?.payments?.map((payment: any) => {
-    const relatedBatch = selectedDebt.items?.find((batch: any) =>
-      batch.settled_by_orders?.some((s: any) => s.order_id === payment.order_id)
-    );
-
-    return {
-      ...payment,
-      batch_name: relatedBatch
-        ? `
-${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
-        : "Không xác định",
-      batch_id: relatedBatch?._id || null,
-    };
-  });
   const statusOptions = [
     {value: "active", label: "Đang nợ", color: "warning"},
     {value: "partial", label: "Trả một phần", color: "info"},
@@ -898,7 +884,7 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                   {selectedDebt.items && selectedDebt.items.length > 0 && (
                     <div className="mb-6">
                       <AntTypography.Title level={5}>
-                        Chi tiết Lô Hàng
+                        Chi tiết sản phẩm
                       </AntTypography.Title>
                       <div style={{marginRight: "16px"}}>
                         <AntTable
@@ -907,10 +893,8 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                               title: "Sản phẩm",
                               dataIndex: "vehicle_name",
                               key: "vehicle_name",
-                              render: (text: string, record: any) => (
-                                <span className="font-medium">
-                                  {text} ({record.request_id?.slice(-3)})
-                                </span>
+                              render: (text: string) => (
+                                <span className="font-medium">{text}</span>
                               ),
                             },
                             {
@@ -952,31 +936,7 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                               title: "Ngày giao",
                               dataIndex: "delivered_at",
                               key: "delivered_at",
-                              align: "center" as const,
-
                               render: (date: string) => formatDate(date),
-                            },
-                            {
-                              title: "Trạng thái tất toán",
-                              dataIndex: "status",
-                              key: "status",
-                              align: "center" as const,
-                              render: (status: string) => {
-                                if (status === "fully_paid") {
-                                  return (
-                                    <AntTag color="success">
-                                      Đã tất toán thành công
-                                    </AntTag>
-                                  );
-                                } else if (status === "pending_payment") {
-                                  return (
-                                    <AntTag color="warning">
-                                      Chưa tất toán
-                                    </AntTag>
-                                  );
-                                }
-                                return <AntTag>{status}</AntTag>;
-                              },
                             },
                           ]}
                           dataSource={selectedDebt.items}
@@ -991,16 +951,16 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                             );
                             return (
                               <AntTable.Summary.Row>
-                                <AntTable.Summary.Cell index={0} colSpan={5}>
+                                <AntTable.Summary.Cell index={0} colSpan={4}>
                                   <span className="font-bold">Tổng cộng:</span>
                                 </AntTable.Summary.Cell>
-                                <AntTable.Summary.Cell index={5}>
+                                <AntTable.Summary.Cell index={4}>
                                   <span className="font-bold text-green-600">
                                     {formatCurrency(total)}
                                   </span>
                                 </AntTable.Summary.Cell>
                                 <AntTable.Summary.Cell
-                                  index={6}
+                                  index={5}
                                 ></AntTable.Summary.Cell>
                               </AntTable.Summary.Row>
                             );
@@ -1021,16 +981,6 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                           <AntTable
                             columns={[
                               {
-                                title: "Thuộc lô hàng",
-                                dataIndex: "batch_name",
-                                key: "batch_name",
-                                render: (batch_name: string) => (
-                                  <span className="font-medium text-blue-600">
-                                    {batch_name}
-                                  </span>
-                                ),
-                              },
-                              {
                                 title: "Số tiền",
                                 dataIndex: "amount",
                                 key: "amount",
@@ -1045,19 +995,9 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                                 title: "Phương thức",
                                 dataIndex: "method",
                                 key: "method",
-                                render: (method: string) => {
-                                  const methodMap: {[key: string]: string} = {
-                                    cash: "Tiền mặt",
-                                    bank: "Chuyển khoản",
-                                    qr: "QR Code",
-                                    card: "Thẻ",
-                                  };
-                                  return (
-                                    <AntTag color="blue">
-                                      {methodMap[method] || method}
-                                    </AntTag>
-                                  );
-                                },
+                                render: (method: string) => (
+                                  <AntTag color="blue">{method}</AntTag>
+                                ),
                               },
                               {
                                 title: "Ngày thanh toán",
@@ -1072,7 +1012,7 @@ ${relatedBatch.vehicle_name} (${relatedBatch.request_id?.slice(-3)})`
                                 ellipsis: true,
                               },
                             ]}
-                            dataSource={paymentsWithBatch}
+                            dataSource={selectedDebt.payments}
                             rowKey="_id"
                             pagination={false}
                             size="small"
